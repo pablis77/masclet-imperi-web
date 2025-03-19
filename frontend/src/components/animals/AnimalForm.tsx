@@ -40,6 +40,7 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
         
         // Si estamos editando, establecer los datos del animal
         if (isEditMode && animalData) {
+          console.log(`Cargando datos para animal ID: ${animalData.id}`);
           setFormData({
             explotacio_id: animalData.explotacio_id,
             nom: animalData.nom,
@@ -55,13 +56,18 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
           });
           
           // Cargar padres y madres potenciales
-          const [fathers, mothers] = await Promise.all([
-            animalService.getPotentialFathers(animalData.explotacio_id),
-            animalService.getPotentialMothers(animalData.explotacio_id)
-          ]);
-          
-          setPotentialFathers(fathers);
-          setPotentialMothers(mothers);
+          try {
+            const [fathers, mothers] = await Promise.all([
+              animalService.getPotentialFathers(animalData.explotacio_id),
+              animalService.getPotentialMothers(animalData.explotacio_id)
+            ]);
+            
+            setPotentialFathers(fathers);
+            setPotentialMothers(mothers);
+          } catch (parentError) {
+            console.error('Error cargando padres/madres potenciales:', parentError);
+            setError('No se pudieron cargar los padres/madres potenciales. Se mostrarán datos simulados.');
+          }
         } else if (explotaciones.length > 0) {
           // Si no estamos editando y hay explotaciones, establecer la primera como predeterminada
           setFormData(prev => ({
@@ -71,13 +77,18 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
           
           // Cargar padres y madres potenciales para la explotación predeterminada
           if (explotaciones[0].id) {
-            const [fathers, mothers] = await Promise.all([
-              animalService.getPotentialFathers(explotaciones[0].id),
-              animalService.getPotentialMothers(explotaciones[0].id)
-            ]);
-            
-            setPotentialFathers(fathers);
-            setPotentialMothers(mothers);
+            try {
+              const [fathers, mothers] = await Promise.all([
+                animalService.getPotentialFathers(explotaciones[0].id),
+                animalService.getPotentialMothers(explotaciones[0].id)
+              ]);
+              
+              setPotentialFathers(fathers);
+              setPotentialMothers(mothers);
+            } catch (parentError) {
+              console.error('Error cargando padres/madres potenciales:', parentError);
+              setError('No se pudieron cargar los padres/madres potenciales. Se mostrarán datos simulados.');
+            }
           }
         }
       } catch (err: any) {
@@ -162,10 +173,16 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
       setSubmitting(true);
       setError(null);
       
+      console.log('Enviando datos del formulario:', formData);
+      
       if (isEditMode && animalData) {
+        console.log(`Actualizando animal con ID: ${animalData.id}`);
         await animalService.updateAnimal(animalData.id, formData);
+        console.log('Animal actualizado correctamente');
       } else {
+        console.log('Creando nuevo animal');
         await animalService.createAnimal(formData);
+        console.log('Animal creado correctamente');
       }
       
       onSuccess();

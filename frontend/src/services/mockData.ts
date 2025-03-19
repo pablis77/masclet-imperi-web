@@ -395,3 +395,90 @@ export const mockDashboardData = {
     num_cries: p.num_cries
   }))
 };
+
+// Datos simulados para endpoints específicos
+// Estos objetos deben coincidir con las rutas de la API sin el prefijo /api/v1/
+export const animalsData = {
+  items: mockAnimals,
+  total: mockAnimals.length,
+  page: 1,
+  limit: 10,
+  pages: 1
+};
+
+// Para obtener un animal específico por ID
+export const getAnimalById = (id: number) => {
+  const animal = mockAnimals.find(a => a.id === id);
+  if (animal) return animal;
+  return null;
+};
+
+// Para el endpoint dashboard/stats
+export const dashboardStats = mockDashboardData;
+
+// Para el endpoint explotacions
+export const explotacionsData = {
+  items: mockExplotacions,
+  total: mockExplotacions.length,
+  page: 1,
+  limit: 10,
+  pages: 1
+};
+
+// Para obtener una explotación específica por ID
+export const getExplotacionById = (id: number) => {
+  const explotacion = mockExplotacions.find(e => e.id === id);
+  if (explotacion) return explotacion;
+  return null;
+};
+
+// Para el endpoint animals por explotación
+export const getAnimalsByExplotacion = (explotacioId: number) => {
+  const filteredAnimals = mockAnimals.filter(a => a.explotacio_id === explotacioId);
+  return {
+    items: filteredAnimals,
+    total: filteredAnimals.length,
+    page: 1,
+    limit: 10,
+    pages: 1
+  };
+};
+
+// Para el endpoint parts
+export const partsData = {
+  items: mockParts,
+  total: mockParts.length,
+  page: 1,
+  limit: 10,
+  pages: 1
+};
+
+// Para obtener los partos de un animal específico
+export const getPartsByAnimal = (animalId: number) => {
+  const filteredParts = mockParts.filter(p => p.animal_id === animalId);
+  return {
+    items: filteredParts,
+    total: filteredParts.length,
+    page: 1,
+    limit: 10,
+    pages: 1
+  };
+};
+
+// Para el endpoint import-history
+export const importHistory = {
+  items: mockImportHistory,
+  total: mockImportHistory.length,
+  page: 1,
+  limit: 10,
+  pages: 1
+};
+
+// Para el endpoint users
+export const usersData = {
+  items: mockUsers,
+  total: mockUsers.length,
+  page: 1,
+  limit: 10,
+  pages: 1
+};

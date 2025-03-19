@@ -1,14 +1,17 @@
 import React from 'react';
 
+interface LoadingStateProps {
+  isLoading?: boolean;
+  isError?: boolean;
+  errorMessage?: string;
+  children?: React.ReactNode;
+  loadingMessage?: string;
+  onRetry?: (() => void) | null;
+  message?: string;
+}
+
 /**
  * Componente para mostrar diferentes estados de carga
- * @param {Object} props - Propiedades del componente
- * @param {boolean} props.isLoading - Indica si está cargando
- * @param {boolean} props.isError - Indica si hay un error
- * @param {string} props.errorMessage - Mensaje de error
- * @param {React.ReactNode} props.children - Contenido a mostrar cuando no está cargando
- * @param {string} props.loadingMessage - Mensaje de carga personalizado
- * @param {Function} props.onRetry - Función para reintentar la carga
  * @returns {React.ReactElement}
  */
 export default function LoadingState({ 
@@ -17,8 +20,19 @@ export default function LoadingState({
   errorMessage = 'Ha ocurrido un error al cargar los datos.', 
   children, 
   loadingMessage = 'Cargando datos...',
-  onRetry = null
-}) {
+  onRetry = null,
+  message
+}: LoadingStateProps) {
+  // Si se proporciona un mensaje simple, mostrar solo el estado de carga con ese mensaje
+  if (message) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <p className="text-gray-700 dark:text-gray-300 text-center">{message}</p>
+      </div>
+    );
+  }
+  
   // Si está cargando, mostrar el estado de carga
   if (isLoading) {
     return (

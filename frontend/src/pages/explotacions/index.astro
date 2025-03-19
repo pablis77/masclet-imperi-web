@@ -80,7 +80,9 @@ const userRole = "administrador"; // Simulación de rol
 </MainLayout>
 
 <script>
-  // Datos simulados para desarrollo
+  import { getExplotacions } from '../../services/explotacioService';
+
+  // Datos simulados para desarrollo (solo se usarán si falla la conexión con el backend)
   const explotacionesMock = [
     {
       id: 1,
@@ -125,7 +127,7 @@ const userRole = "administrador"; // Simulación de rol
   ];
 
   // Función para cargar explotaciones
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     // Referencias a elementos DOM
     const searchInput = document.getElementById('search-explotacion');
     const regionFilter = document.getElementById('region-filter');
@@ -133,6 +135,78 @@ const userRole = "administrador"; // Simulación de rol
     const explotacionsContainer = document.getElementById('explotacions-container');
     const noResults = document.getElementById('no-results');
     const totalCount = document.getElementById('total-count');
+    
+    // Variable para controlar si se usan datos simulados
+    let usandoDatosSimulados = false;
+    let errorMessage = null;
+    let explotaciones = [];
+    
+    // Cargar datos desde la API
+    try {
+      console.log('Cargando explotaciones desde la API...');
+      const response = await getExplotacions();
+      explotaciones = response.results || [];
+      console.log('Explotaciones cargadas:', explotaciones);
+    } catch (error) {
+      console.error('Error al cargar explotaciones:', error);
+      errorMessage = error.message || 'Error al cargar las explotaciones';
+      usandoDatosSimulados = true;
+      explotaciones = explotacionesMock;
+    }
+    
+    // Mostrar mensaje de datos simulados si es necesario
+    if (usandoDatosSimulados) {
+      const alertContainer = document.createElement('div');
+      alertContainer.className = 'mb-4 sm:mb-6 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4';
+      alertContainer.innerHTML = `
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-yellow-700 dark:text-yellow-200">
+              Mostrando datos simulados. No se pudo conectar con el servidor. Las explotaciones mostradas son de ejemplo y no reflejan datos reales.
+            </p>
+          </div>
+        </div>
+      `;
+      
+      // Insertar el mensaje después del título
+      const titleContainer = document.querySelector('.mb-4.sm\\:mb-6:first-of-type');
+      if (titleContainer && titleContainer.nextElementSibling) {
+        titleContainer.parentNode.insertBefore(alertContainer, titleContainer.nextElementSibling);
+      }
+    }
+    
+    // Mostrar mensaje de error si es necesario
+    if (errorMessage) {
+      const errorContainer = document.createElement('div');
+      errorContainer.className = 'mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 p-4';
+      errorContainer.innerHTML = `
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700 dark:text-red-200">${errorMessage}</p>
+          </div>
+        </div>
+      `;
+      
+      // Insertar el mensaje después del título o del mensaje de datos simulados
+      const alertContainer = document.querySelector('.mb-4.sm\\:mb-6.bg-yellow-50');
+      const titleContainer = document.querySelector('.mb-4.sm\\:mb-6:first-of-type');
+      
+      if (alertContainer) {
+        alertContainer.parentNode.insertBefore(errorContainer, alertContainer.nextElementSibling);
+      } else if (titleContainer && titleContainer.nextElementSibling) {
+        titleContainer.parentNode.insertBefore(errorContainer, titleContainer.nextElementSibling);
+      }
+    }
     
     // Función para renderizar explotaciones
     const renderExplotaciones = (explotaciones) => {
@@ -152,18 +226,26 @@ const userRole = "administrador"; // Simulación de rol
       explotaciones.forEach(explotacion => {
         const card = document.createElement('div');
         card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow';
+        
+        // Adaptar los nombres de propiedades según la API real
+        const nombre = explotacion.nombre || explotacion.name || 'Sin nombre';
+        const codigo = explotacion.codigo || explotacion.code || 'Sin código';
+        const region = explotacion.region || explotacion.zona || 'Sin región';
+        const animales = explotacion.animales || explotacion.animals_count || 0;
+        const partos = explotacion.partos || explotacion.births_count || 0;
+        
         card.innerHTML = `
           <div class="p-4">
-            <h3 class="text-base sm:text-lg font-semibold mb-2 text-gray-900 dark:text-white">${explotacion.nombre}</h3>
-            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">Código: ${explotacion.codigo} • Región: ${explotacion.region.charAt(0).toUpperCase() + explotacion.region.slice(1)}</p>
+            <h3 class="text-base sm:text-lg font-semibold mb-2 text-gray-900 dark:text-white">${nombre}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">Código: ${codigo} • Región: ${typeof region === 'string' ? region.charAt(0).toUpperCase() + region.slice(1) : region}</p>
             <div class="flex items-center space-x-4 text-xs sm:text-sm mb-4 text-gray-700 dark:text-gray-300">
               <div class="flex items-center">
                 <span class="mr-2">🐄</span>
-                <span>${explotacion.animales} animales</span>
+                <span>${animales} animales</span>
               </div>
               <div class="flex items-center">
                 <span class="mr-2">🐣</span>
-                <span>${explotacion.partos} partos</span>
+                <span>${partos} partos</span>
               </div>
             </div>
             <div class="flex justify-end">
@@ -182,7 +264,7 @@ const userRole = "administrador"; // Simulación de rol
       const searchTerm = searchInput.value.toLowerCase();
       const regionSelected = regionFilter.value.toLowerCase();
       
-      const filteredExplotaciones = explotacionesMock.filter(explotacion => {
+      const filteredExplotaciones = explotaciones.filter(explotacion => {
         // Filtrar por término de búsqueda
         const matchesSearch = 
           explotacion.nombre.toLowerCase().includes(searchTerm) || 
@@ -212,6 +294,6 @@ const userRole = "administrador"; // Simulación de rol
     }
     
     // Cargar explotaciones iniciales
-    renderExplotaciones(explotacionesMock);
+    renderExplotaciones(explotaciones);
   });
 </script>

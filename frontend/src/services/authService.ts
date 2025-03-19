@@ -217,8 +217,8 @@ export const isAuthenticated = (): boolean => {
     return false; // No autenticado en el servidor
   }
   
-  const token = localStorage.getItem('token');
-  return !!token; // Devuelve true si hay un token
+  const token = getToken();
+  return !!token; // Devuelve true si hay un token válido
 };
 
 /**
@@ -230,30 +230,77 @@ export const getToken = (): string | null => {
     return null;
   }
   
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  
+  // Si no hay token, no estamos autenticados
+  if (!token) {
+    return null;
+  }
+  
+  try {
+    // Verificar si el token ha expirado
+    // Un token JWT tiene 3 partes separadas por puntos
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('Token inválido: no tiene el formato JWT esperado');
+      localStorage.removeItem('token');
+      return null;
+    }
+    
+    // Decodificar la parte de payload (segunda parte)
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Verificar si el token ha expirado
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      console.error('Token expirado');
+      localStorage.removeItem('token');
+      return null;
+    }
+    
+    return token;
+  } catch (error) {
+    console.error('Error al verificar el token:', error);
+    return token; // Devolver el token aunque no se pueda verificar
+  }
 };
 
 /**
  * Obtiene los datos del usuario actual
  * @returns Datos del usuario o null si no está autenticado
  */
-export const getCurrentUser = (): LoginResponse['user'] | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
-  const userStr = localStorage.getItem('user');
-  if (!userStr) {
-    return null;
-  }
-  
+export function getCurrentUser(): LoginResponse['user'] | null {
   try {
-    return JSON.parse(userStr);
-  } catch (e) {
-    console.error('Error al parsear datos de usuario en localStorage:', e);
+    if (!isBrowser) return null;
+    
+    const userDataStr = localStorage.getItem('userData');
+    if (!userDataStr) return null;
+    
+    const userData = JSON.parse(userDataStr);
+    return userData?.user || null;
+  } catch (error) {
+    console.error('Error al obtener el usuario actual:', error);
     return null;
   }
-};
+}
+
+/**
+ * Obtiene el usuario almacenado en localStorage
+ * @returns El objeto de usuario completo o null si no existe
+ */
+export function getStoredUser(): User | null {
+  try {
+    if (!isBrowser) return null;
+    
+    const userDataStr = localStorage.getItem('userData');
+    if (!userDataStr) return null;
+    
+    const userData = JSON.parse(userDataStr);
+    return userData?.user || null;
+  } catch (error) {
+    console.error('Error al obtener el usuario almacenado:', error);
+    return null;
+  }
+}
 
 /**
  * Obtiene el rol del usuario actual
@@ -420,7 +467,8 @@ const authService = {
   getUserById,
   updateUser,
   deleteUser,
-  updatePassword
+  updatePassword,
+  getStoredUser
 };
 
 export default authService;

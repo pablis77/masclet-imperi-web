@@ -17,6 +17,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalAnimals, setTotalAnimals] = useState<number>(0);
+  const [useMockData, setUseMockData] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -59,7 +60,15 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
       }));
     } catch (err: any) {
       console.error('Error cargando animales:', err);
-      setError(err.message || 'Error al cargar los animales');
+      
+      // Manejar específicamente el error de estado_t
+      if (err.code === 'DB_COLUMN_ERROR' || (err.message && err.message.includes('estado_t'))) {
+        setError('La columna "estado_t" no existe en la tabla de animales. Este es un problema conocido del backend que está siendo solucionado. Mientras tanto, se mostrarán datos simulados si están disponibles.');
+        setUseMockData(true);
+      } else {
+        setError(err.message || 'Error al cargar los animales');
+      }
+      
       setAnimals([]);
       setTotalAnimals(0);
       setTotalPages(0);
@@ -257,17 +266,38 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   };
 
   return (
-    <div ref={tableRef}>
+    <div ref={tableRef} className="w-full overflow-x-auto">
+      {/* Mensaje de datos simulados */}
+      {useMockData && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4 mb-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                Mostrando datos simulados. No se pudo conectar con el servidor. Los animales mostrados son de ejemplo y no reflejan datos reales.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensaje de error */}
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-          <button 
-            onClick={loadAnimals}
-            className="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-          >
-            Reintentar
-          </button>
+        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+            </div>
+          </div>
         </div>
       )}
       
@@ -356,7 +386,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                           className="inline-flex items-center px-2 py-1 bg-primary text-white rounded hover:bg-primary/80"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                           Ver

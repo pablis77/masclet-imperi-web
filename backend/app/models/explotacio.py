@@ -7,7 +7,7 @@ class Explotacio(models.Model):
     """Modelo de explotación ganadera."""
     nom = fields.CharField(max_length=255)
     activa = fields.BooleanField(default=True)
-    provincia = fields.CharField(max_length=255, null=True)
+    ubicacio = fields.CharField(max_length=255, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 

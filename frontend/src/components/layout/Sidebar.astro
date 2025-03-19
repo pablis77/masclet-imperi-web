@@ -31,13 +31,15 @@ const menuSections = [
   }
 ];
 
-// Filtrar secciones y elementos según rol - Asegurarse de que todas las secciones estén disponibles para el administrador
-const filteredSections = menuSections.map(section => {
-  return {
-    ...section,
-    items: section.items.filter(item => item.roles.includes(userRole) || (userRole === "administrador" && section.title === "ADMINISTRACIÓN"))
-  };
-}).filter(section => section.items.length > 0 || (userRole === "administrador" && section.title === "ADMINISTRACIÓN"));
+// Filtrar secciones y elementos según rol
+const filteredSections = userRole === "administrador" 
+  ? menuSections // Si es administrador, mostrar todas las secciones sin filtrar
+  : menuSections.map(section => {
+      return {
+        ...section,
+        items: section.items.filter(item => item.roles.includes(userRole))
+      };
+    }).filter(section => section.items.length > 0);
 
 // Función para determinar si un elemento está activo
 const isActive = (itemUrl: string) => {

@@ -112,22 +112,22 @@ const createMockDashboardResponse = (): DashboardResponse => {
  * Obtiene las estadísticas generales del dashboard
  */
 export const getDashboardStats = async (params: DashboardParams = {}): Promise<DashboardResponse> => {
-  let endpoint = `${API_PATH}/dashboard/stats`;
-  
-  // Añadir parámetros a la URL si existen
-  const queryParams = new URLSearchParams();
-  if (params.explotacioId) queryParams.append('explotacio_id', params.explotacioId.toString());
-  if (params.startDate) queryParams.append('start_date', params.startDate);
-  if (params.endDate) queryParams.append('end_date', params.endDate);
-  
-  const queryString = queryParams.toString();
-  if (queryString) {
-    endpoint += `?${queryString}`;
+  try {
+    // Construir los parámetros para la petición
+    const apiParams: Record<string, any> = {};
+    if (params.explotacioId) apiParams.explotacio_id = params.explotacioId;
+    if (params.startDate) apiParams.start_date = params.startDate;
+    if (params.endDate) apiParams.end_date = params.endDate;
+    
+    console.log('Obteniendo estadísticas del dashboard con parámetros:', apiParams);
+    
+    // Usar el nuevo servicio API con la ruta correcta
+    return await get<DashboardResponse>(`${API_PATH}/dashboard/stats`, { params: apiParams });
+  } catch (error) {
+    console.error('Error al obtener estadísticas del dashboard:', error);
+    // Devolver datos simulados en caso de error
+    return createMockDashboardResponse();
   }
-  
-  // Usar el nuevo servicio API con soporte para mock
-  const mockResponse = createMockDashboardResponse();
-  return get<DashboardResponse>(endpoint, mockResponse);
 };
 
 /**
@@ -137,22 +137,21 @@ export const getExplotacionStats = async (
   explotacionId: number, 
   params: Omit<DashboardParams, 'explotacioId'> = {}
 ): Promise<DashboardResponse> => {
-  let endpoint = `${API_PATH}/dashboard/explotacions/${explotacionId}`;
-  
-  // Añadir parámetros a la URL si existen
-  const queryParams = new URLSearchParams();
-  if (params.startDate) queryParams.append('start_date', params.startDate);
-  if (params.endDate) queryParams.append('end_date', params.endDate);
-  
-  const queryString = queryParams.toString();
-  if (queryString) {
-    endpoint += `?${queryString}`;
+  try {
+    // Construir los parámetros para la petición
+    const apiParams: Record<string, any> = {};
+    if (params.startDate) apiParams.start_date = params.startDate;
+    if (params.endDate) apiParams.end_date = params.endDate;
+    
+    console.log(`Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, apiParams);
+    
+    // Usar el nuevo servicio API
+    return await get<DashboardResponse>(`/dashboard/explotacions/${explotacionId}`, { params: apiParams });
+  } catch (error) {
+    console.error(`Error al obtener estadísticas de la explotación ${explotacionId}:`, error);
+    // Crear una respuesta simulada específica para esta explotación
+    const mockResponse = createMockDashboardResponse();
+    mockResponse.explotacio_name = `Explotación #${explotacionId}`;
+    return mockResponse;
   }
-  
-  // Crear una respuesta simulada específica para esta explotación
-  const mockResponse = createMockDashboardResponse();
-  mockResponse.explotacio_name = `Explotación #${explotacionId}`;
-  
-  // Usar el nuevo servicio API con soporte para mock
-  return get<DashboardResponse>(endpoint, mockResponse);
 };

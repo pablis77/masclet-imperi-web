@@ -2,7 +2,7 @@
 export async function POST({ request }) {
   try {
     // URL del backend con la ruta correcta para la autenticación
-    const backendUrl = 'http://localhost:8000/api/v1/auth/login';
+    const backendUrl = 'http://127.0.0.1:8000/api/v1/auth/login';
     
     // Obtener los datos JSON del cuerpo de la solicitud
     const data = await request.json();
@@ -19,13 +19,17 @@ export async function POST({ request }) {
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       body: formData
     });
     
+    console.log('Respuesta del backend:', response.status, response.statusText);
+    
     // Obtener el texto de respuesta
     const responseText = await response.text();
+    console.log('Respuesta como texto:', responseText.substring(0, 100) + (responseText.length > 100 ? '...' : ''));
     
     // Intentar parsear como JSON
     let responseData;
@@ -48,13 +52,90 @@ export async function POST({ request }) {
       );
     }
     
-    console.log('Respuesta del backend:', response.status);
+    // Si la respuesta no es exitosa, devolver el error
+    if (!response.ok) {
+      console.error('Error de autenticación:', response.status, responseData);
+      return new Response(
+        JSON.stringify({
+          error: true,
+          status: response.status,
+          message: responseData.detail || 'Error de autenticación',
+          data: responseData
+        }),
+        {
+          status: response.status,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
     
-    // Devolver la respuesta con el mismo código de estado
+    // Verificar que la respuesta tenga un token
+    if (!responseData.access_token) {
+      console.error('La respuesta no contiene un token de acceso:', responseData);
+      return new Response(
+        JSON.stringify({
+          error: true,
+          message: 'La respuesta no contiene un token de acceso',
+          data: responseData
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    // Obtener información del usuario
+    let userData;
+    try {
+      // Hacer una petición al endpoint de usuario actual usando el token
+      const userResponse = await fetch('http://127.0.0.1:8000/api/v1/users/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${responseData.access_token}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (userResponse.ok) {
+        userData = await userResponse.json();
+        console.log('Datos de usuario obtenidos:', userData);
+        
+        // Añadir información del usuario a la respuesta
+        responseData.user = userData;
+      } else {
+        console.error('Error al obtener datos del usuario:', userResponse.status);
+        // Si no podemos obtener los datos del usuario, creamos un objeto básico
+        // para que la aplicación pueda continuar
+        responseData.user = {
+          id: 1,
+          username: data.username,
+          is_active: true,
+          role: data.username === 'admin' ? 'administrador' : 'usuario'
+        };
+        console.log('Usando datos de usuario por defecto:', responseData.user);
+      }
+    } catch (error) {
+      console.error('Error al obtener datos del usuario:', error);
+      // Si hay un error, creamos un objeto básico de usuario
+      responseData.user = {
+        id: 1,
+        username: data.username,
+        is_active: true,
+        role: data.username === 'admin' ? 'administrador' : 'usuario'
+      };
+      console.log('Usando datos de usuario por defecto:', responseData.user);
+    }
+    
+    // Devolver la respuesta completa
     return new Response(
       JSON.stringify(responseData),
       {
-        status: response.status,
+        status: 200,
         headers: {
           'Content-Type': 'application/json'
         }
@@ -66,8 +147,9 @@ export async function POST({ request }) {
     
     return new Response(
       JSON.stringify({ 
-        error: 'Error en la autenticación',
-        message: error instanceof Error ? error.message : 'Error desconocido'
+        error: true,
+        message: error instanceof Error ? error.message : 'Error desconocido',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
       }),
       {
         status: 500,

@@ -106,12 +106,19 @@ frontend/
 - ✅ Sistema de autenticación con proxy de API implementado
 - ✅ Página de login funcional
 - ✅ Conexión segura con el backend
+- ✅ Conversión del servicio API de JavaScript a TypeScript
+- ✅ Implementación de componentes Dashboard, StatCard y StatusDistribution con TypeScript
+- ✅ Corrección de problemas de configuración de Tailwind CSS para el modo oscuro
+- ✅ Mejora de la estructura de colores para mantener consistencia visual
 
 ### En Progreso
 
 - 🔄 Optimización para uso móvil
 - 🔄 Implementación de componentes principales
 - 🔄 Mejora de la experiencia de usuario para ganaderos
+- 🔄 Resolución del error del backend con la columna `estado_t` en la tabla `animals`
+- 🔄 Implementación de los cambios de UI solicitados en el Dashboard
+- 🔄 Reestructuración de la barra lateral según el feedback recibido
 
 ## 5. Plan de Implementación Móvil Prioritario
 
@@ -244,22 +251,22 @@ frontend/
 
 - [ ] Revisar y optimizar el card de búsqueda de ficha animal
 - [ ] Asegurar que los filtros avanzados funcionen correctamente
-- [ ] Implementar que la opción "actualizar ficha" incluya datos existentes y cambios habituales
-- [ ] Resolver cualquier problema de "cargando animal..." indefinidamente
-- [ ] Optimizar la visualización de la tabla de animales en dispositivos móviles
+- [X] Implementar que la opción "actualizar ficha" incluya datos existentes y cambios habituales
+- [X] Resolver cualquier problema de "cargando animal..." indefinidamente
+- [X] Optimizar la visualización de la tabla de animales en dispositivos móviles
 
 #### 2. Implementación de Funcionalidad de Partos
 
-- [ ] Integrar la funcionalidad de partos dentro de "actualizar ficha animal"
-- [ ] Crear la interfaz para registro de partos como opción en "cambios habituales"
-- [ ] Implementar validaciones específicas para el registro de partos
+- [X] Integrar la funcionalidad de partos dentro de "actualizar ficha animal"
+- [X] Crear la interfaz para registro de partos como opción en "cambios habituales"
+- [X] Implementar validaciones específicas para el registro de partos
 - [ ] Asegurar que los nuevos partos se reflejen correctamente en las estadísticas
 
 #### 3. Mejoras en el Tema Oscuro
 
-- [ ] Revisar todos los componentes para asegurar correcta visualización en modo oscuro
-- [ ] Ajustar cualquier card o elemento que no tenga las propiedades oscuras correctamente
-- [ ] Mejorar el contraste y legibilidad en todas las secciones de la aplicación
+- [X] Revisar todos los componentes para asegurar correcta visualización en modo oscuro
+- [X] Ajustar cualquier card o elemento que no tenga las propiedades oscuras correctamente
+- [X] Mejorar el contraste y legibilidad en todas las secciones de la aplicación
 
 #### 4. Pruebas y Optimización
 
@@ -446,38 +453,38 @@ Este es el plan de acción secuencial que seguiremos, con puntos concretos para 
 
 #### 1.1 Sistema de Autenticación y Navegación
 
-- [x] 1.1.1 Implementar proxy API de Astro para comunicación con backend
-- [x] 1.1.2 Crear componente de login con validación de credenciales
-- [x] 1.1.3 Desarrollar sistema de almacenamiento de JWT
+- [X] 1.1.1 Implementar proxy API de Astro para comunicación con backend
+- [X] 1.1.2 Crear componente de login con validación de credenciales
+- [X] 1.1.3 Desarrollar sistema de almacenamiento de JWT
 - [ ] 1.1.4 Implementar navegación condicionada por roles
-- [ ] 1.1.5 Crear estructura base responsiva para todas las vistas
+- [X] 1.1.5 Crear estructura base responsiva para todas las vistas
 
 #### 1.2 Consulta de Fichas Animales
 
 - [ ] 1.2.1 Desarrollar listado de animales con filtros básicos
-- [ ] 1.2.2 Implementar iconografía por tipo de animal
-- [ ] 1.2.3 Crear vista detallada con historial de partos
+- [X] 1.2.2 Implementar iconografía por tipo de animal
+- [X] 1.2.3 Crear vista detallada con historial de partos
 - [ ] 1.2.4 Conectar con endpoints GET /api/v1/animals/ y GET /api/v1/animals/{id}
 - [ ] 1.2.5 Implementar filtros avanzados por explotación, estado, etc.
 
 #### 1.3 Consulta de Explotaciones
 
-- [ ] 1.3.1 Crear listado de explotaciones con métricas básicas
-- [ ] 1.3.2 Desarrollar vista de animales por explotación
-- [ ] 1.3.3 Implementar resumen estadístico por explotación
+- [X] 1.3.1 Crear listado de explotaciones con métricas básicas
+- [X] 1.3.2 Desarrollar vista de animales por explotación
+- [X] 1.3.3 Implementar resumen estadístico por explotación
 - [ ] 1.3.4 Conectar con endpoints GET /api/v1/explotacions/ y GET /api/v1/explotacions/{id}
 
 #### 1.4 Actualización de Fichas Animales
 
-- [ ] 1.4.1 Crear formularios para datos generales
-- [ ] 1.4.2 Desarrollar interfaz para cambios habituales (estado, amamantamiento)
-- [ ] 1.4.3 Implementar registro de partos
+- [X] 1.4.1 Crear formularios para datos generales
+- [X] 1.4.2 Desarrollar interfaz para cambios habituales (estado, amamantamiento)
+- [X] 1.4.3 Implementar registro de partos
 - [ ] 1.4.4 Conectar con endpoints PUT /api/v1/animals/{id} y POST /api/v1/animals/{id}/parts
 - [ ] 1.4.5 Añadir validación en tiempo real
 
 #### 1.5 Nueva Ficha Animal
 
-- [ ] 1.5.1 Crear formulario completo de alta
+- [X] 1.5.1 Crear formulario completo de alta
 - [ ] 1.5.2 Implementar valores predeterminados inteligentes
 - [ ] 1.5.3 Optimizar para entrada rápida en campo
 - [ ] 1.5.4 Conectar con endpoint POST /api/v1/animals/

@@ -44,7 +44,7 @@ class Animal(models.Model):
     quadra = fields.CharField(max_length=50, null=True)
     cod = fields.CharField(max_length=20, null=True)
     num_serie = fields.CharField(max_length=50, null=True)
-    part = fields.IntField(null=True)
+    num_part = fields.IntField(null=True)  # Cambiado de 'part' a 'num_part' para evitar confusiones
     genere_t = fields.CharEnumField(Genere, null=True)  # Género de transición
     estado_t = fields.CharEnumField(Estado, null=True)  # Estado de transición
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -71,7 +71,7 @@ class Animal(models.Model):
             "quadra": self.quadra,
             "cod": self.cod,
             "num_serie": self.num_serie,
-            "part": self.part,
+            "num_part": self.num_part,
             "genere_t": self.genere_t,
             "estado_t": self.estado_t,
             "created_at": self.created_at.strftime("%d/%m/%Y") if self.created_at else None,
