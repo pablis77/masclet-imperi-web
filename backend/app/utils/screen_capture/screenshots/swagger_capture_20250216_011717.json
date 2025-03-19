@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-02-16T01:17:17.422640",
+  "type": "swagger_ui_capture",
+  "sections": [
+    {
+      "section": 1,
+      "text_content": "Masclet Imperi © =\n\nJapilv openapijson\n\ndashboard\n\nSI) /apiyva/ Read Dashboard\n\nIe)\n\n=) | /api/vi/dashboard/resumen Obtener Resumen\n\n=) | /api/v1/dashboard/stats Get Dashboard Stats\n\n=) | /api/v1/dashboard/recientes Get Recent Activity\n\nIe)\n\n=) | /api/v1/stats Get Dashboard Stats\n\n»\nES\n3\n=\n®\n\nGSN) /api/animals/animals Create Animal\n\nIe)\n\nJ | /api/animals/animals Get Animals\n\n(5) ) /api/animals/animals/{animal_id} Get Animal\n\n/api/animals/animals/{animal_id} Update Animal\n\n[203139 /api/animals/animals/{animal_id} Delete Animal\n\n(5) | /api/animals/animals/{animal_id}/history Get Animal History\n\nIe)\n\n=) | /api/animals/animals/search Search Animals\n\n=\\) | /api/animals/animals/{animal_id}/ful1 Get Animal Details\n\n=) | /api/animals/animals/{nom} Get Animal Details\n\nS| /api/animals/explotacions/{explotacio} Get Explotacion Details\n\nIe)\n\n| /api/animals/explotacions/{explotacio}/pdf Generate Explotacion Pdf\n\n",
+      "image_name": "swagger_part1.png"
+    },
+    {
+      "section": 2,
+      "text_content": "GET\n\n/api/animals/animals/{id} Get Animal\n\nGET\n\n/api/animals/animals/by-name/{nom} Get Animal By Name\n\nGET\n\n/api/animals/stats/explotacio Get Explotacio Stats\n\nGET\n\n/api/animals/ Get Animals\n\nPOST\n\n/api/animals/ Create Animal\n\nPOST\n\n/api/animals/imports/ Import Csv\n\nGET\n\n/api/animals/explotacio Get Explotacions\n\nimports\n\nPOST\n\n/imports/preview Preview Import\n\nPOST\n\n/imports/import Import Csv\n\ndefault\n\nGET\n\n7 Root\n\nGET\n\nJhealth Health Check\n\n",
+      "image_name": "swagger_part2.png"
+    },
+    {
+      "section": 3,
+      "text_content": "Schemas\n\nAnimalCreate > Expandall object\n\nAnimatDetail > Expand ali object\n\nAnimalListitem > ©\n\nall object\n\nAnimalResponse > Exandal object\n\nAnimalUpdate >\n\nidall object\n\nBody_import_csv_api_animals_imports__post > c:p2nd all object\n\nBody_import_csv_imports_import_post > Expand al object\n\nBody_preview_import_imports_preview_post > c:pandall object\n\nEstat > Expandall string\n\nExplotacioResponse > Eypandall object\n\nExplotacioStats » E:pandal object\n\nGenere > Expandall string\n\nHTTPValidationError >\n\nall object\n\nMessageResponse > E:andal object\n\nMessageType >\n\nstring\n\nPartoStats > 5\n\nobject\n\nValidationError > = all object\n",
+      "image_name": "swagger_part3.png"
+    }
+  ]
+}

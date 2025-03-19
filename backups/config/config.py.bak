@@ -1,0 +1,162 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Dict, List, ClassVar, Any, Optional
+from typing_extensions import TypedDict
+from enum import Enum
+from pathlib import Path
+from functools import lru_cache
+import os
+
+POSTGRES_DB = os.getenv("POSTGRES_DB", "masclet_imperi")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "1234")
+DB_PORT = os.getenv("DB_PORT", "5432")
+
+DATABASE_URL = f"postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:{DB_PORT}/{POSTGRES_DB}"
+
+class UserRole(str, Enum):
+    ADMIN = "administrador"
+    GERENTE = "gerente"
+    EDITOR = "editor"
+    USER = "usuario"
+
+class Action(str, Enum):
+    CONSULTAR = "consultar"
+    ACTUALIZAR = "actualizar"
+    CREAR = "crear"
+    GESTIONAR_USUARIOS = "gestionar_usuarios"
+    GESTIONAR_EXPLOTACIONES = "gestionar_explotaciones"
+    IMPORTAR_DATOS = "importar_datos"
+    VER_ESTADISTICAS = "ver_estadisticas"
+    EXPORTAR_DATOS = "exportar_datos"
+
+class UIStyle(TypedDict):
+    color: str
+    duration: int
+
+class UIStyles(TypedDict):
+    success: UIStyle
+    error: UIStyle
+    info: UIStyle
+
+class Settings(BaseSettings):
+    # App settings
+    APP_NAME: str = "Masclet Imperi"
+    VERSION: str = "2.0.0"
+    
+    # DB Settings (from 2_database_context.md)
+    DB_USER: str = "postgres"
+    DB_PASSWORD: str = "1234"
+    DB_HOST: str = "localhost"
+    DB_PORT: str = "5432"
+    DB_NAME: str = "masclet_imperi"
+    TEST_DB_NAME: str = "masclet_imperi_test"
+
+    # Configuración adicional necesaria
+    BACKUP_DIR: str = "./backups"
+    IMPORT_BATCH_SIZE: int = 100
+
+    # Auth settings (from 4_auth_context.md)
+    SECRET_KEY: str = "tu_clave_secreta_aqui"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow"
+    )
+
+    @property
+    def database_url(self) -> str:
+        if os.getenv('DOCKER_ENV'):
+            # Cambiar 'db' por 'masclet-db' para coincidir con el container_name
+            return f"postgres://{self.DB_USER}:{self.DB_PASSWORD}@masclet-db:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgres://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+settings = get_settings()
+
+# Tortoise ORM Configuration (from 2_database_context.md)
+TORTOISE_ORM = {
+    "connections": {
+        "default": settings.database_url
+    },
+    "apps": {
+        "models": {
+            "models": [
+                "app.models.animal",
+                "app.models.parto",  # Asegurarse que está aquí
+                "aerich.models"
+            ],
+            "default_connection": "default",
+        }
+    },
+    "use_tz": False,
+    "timezone": "Europe/Madrid"
+}
+
+# UI Styles (from 5_ui_context.md)
+UI_STYLES = {
+    'success': {'color': '#48BB78', 'duration': 3000},
+    'error': {'color': '#E53E3E', 'duration': 5000},
+    'info': {'color': '#4299E1', 'duration': 3000}
+}
+
+# Roles y permisos (from 4_auth_context.md)
+ROLES = {
+    UserRole.ADMIN: [
+        Action.CONSULTAR,
+        Action.ACTUALIZAR,
+        Action.CREAR,
+        Action.GESTIONAR_USUARIOS,
+        Action.GESTIONAR_EXPLOTACIONES,
+        Action.IMPORTAR_DATOS,
+        Action.VER_ESTADISTICAS,
+        Action.EXPORTAR_DATOS
+    ],
+    UserRole.GERENTE: [
+        Action.CONSULTAR,
+        Action.ACTUALIZAR,
+        Action.CREAR,
+        Action.GESTIONAR_EXPLOTACIONES,
+        Action.VER_ESTADISTICAS,
+        Action.EXPORTAR_DATOS
+    ],
+    UserRole.EDITOR: [
+        Action.CONSULTAR,
+        Action.ACTUALIZAR,
+        Action.VER_ESTADISTICAS
+    ],
+    UserRole.USER: [
+        Action.CONSULTAR
+    ]
+}
+
+# Constantes para validación (de 1_contexto_proyecto_base.md)
+VALID_EXPLOTACIONES = ["Gurans", "Guadalajara", "Madrid"]
+DATE_FORMAT = "%d/%m/%Y"
+NUM_SERIE_PATTERN = r"^ES\d+$"
+
+# Configuración de importación (de 2_database_context.md)
+IMPORT_CONFIG = {
+    "batch_size": 100,
+    "allowed_nulls": {
+        "alletar": 12,
+        "pare": 28,
+        "mare": 28,
+        "quadra": 36,
+        "cod": 22,
+        "num_serie": 27,
+        "dob": 25
+    }
+}
+
+# Índices recomendados (de 2_database_context.md)
+DB_INDICES = [
+    ("animals", "explotacio_nom", ["explotacio", "nom"]),
+    ("animals", "cod", ["cod"], True),
+    ("parts", "animal_data", ["animal_id", "data"])
+]

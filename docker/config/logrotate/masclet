@@ -1,0 +1,121 @@
+# Configuración de rotación de logs para Masclet Imperi
+# Ubicación: /etc/logrotate.d/masclet
+
+/var/log/masclet/*.log {
+    daily                   # Rotar diariamente
+    rotate 7               # Mantener 7 días
+    compress               # Comprimir logs rotados
+    delaycompress         # No comprimir el más reciente
+    missingok             # No error si log no existe
+    notifempty            # No rotar si está vacío
+    create 0640 root adm  # Permisos para nuevos logs
+    dateext              # Añadir fecha a archivo rotado
+    dateformat -%Y%m%d   # Formato de fecha para rotación
+    sharedscripts        # Ejecutar scripts una vez por rotación
+    
+    # Acciones post-rotación
+    postrotate
+        # Recargar servicios de logging si es necesario
+        if [ -d /run/systemd/system ]; then
+            systemctl restart rsyslog >/dev/null 2>&1 || true
+        fi
+    endscript
+}
+
+# Logs de aplicación
+/var/log/masclet/app/*.log {
+    daily
+    rotate 14             # Mantener 2 semanas
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d
+}
+
+# Logs de acceso
+/var/log/masclet/access/*.log {
+    daily
+    rotate 30             # Mantener 1 mes
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d
+}
+
+# Logs de error
+/var/log/masclet/error/*.log {
+    daily
+    rotate 60             # Mantener 2 meses
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d
+}
+
+# Logs de backup
+/var/log/masclet/backup/*.log {
+    weekly               # Rotar semanalmente
+    rotate 52            # Mantener 1 año
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d_%H%M
+}
+
+# Logs de auditoría
+/var/log/masclet/audit/*.log {
+    weekly
+    rotate 52            # Mantener 1 año
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 masclet adm
+    dateext
+    dateformat -%Y%m%d
+    # No borrar logs de auditoría comprimidos
+    nosharedscripts
+    nodelaycompress
+}
+
+# Logs de rendimiento
+/var/log/masclet/performance/*.log {
+    daily
+    rotate 7             # Mantener 1 semana
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d_%H
+    # Tamaño máximo antes de rotar
+    size 100M
+}
+
+# Logs de debug (desarrollo)
+/var/log/masclet/debug/*.log {
+    daily
+    rotate 3             # Mantener solo 3 días
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 masclet masclet
+    dateext
+    dateformat -%Y%m%d_%H
+    # Tamaño máximo
+    size 50M
+}

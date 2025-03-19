@@ -1,0 +1,91 @@
+---
+// Importar el layout y componentes necesarios
+import DefaultLayout from '../layouts/DefaultLayout.astro';
+import { DashboardStats } from '../components/dashboard/DashboardStats';
+import { RecentAnimals } from '../components/animals/RecentAnimals';
+import { SystemStatus } from '../components/dashboard/SystemStatus';
+
+// No verificamos autenticación en desarrollo - siempre permitir acceso
+const userRole = 'administrador';
+
+// Título para la página
+const title = 'Panel de Control';
+---
+
+<DefaultLayout title={title} userRole={userRole}>
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+    <p class="text-gray-600 dark:text-gray-400">Bienvenido al sistema de gestión ganadera Masclet Imperi</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Tarjetas de estadísticas (placeholders) -->
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Animales</h3>
+      <p class="text-3xl font-bold text-primary">120</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Todas las explotaciones</p>
+    </div>
+    
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Machos</h3>
+      <p class="text-3xl font-bold text-blue-500">45</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">37.5% del total</p>
+    </div>
+    
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Hembras</h3>
+      <p class="text-3xl font-bold text-pink-500">75</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">62.5% del total</p>
+    </div>
+    
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Amamantando</h3>
+      <p class="text-3xl font-bold text-alletar">35</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">46.6% de hembras</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Gráfico placeholder -->
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Distribución por estado</h3>
+      <div class="h-64 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
+        <p class="text-gray-500 dark:text-gray-400">Gráfico de estados (placeholder)</p>
+      </div>
+    </div>
+    
+    <!-- Actividad reciente placeholder -->
+    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Actividad reciente</h3>
+      <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+        <li class="py-3">
+          <div class="flex items-start">
+            <span class="text-xl mr-3">🐄</span>
+            <div>
+              <p class="text-sm font-medium dark:text-gray-200">Nuevo animal: <span class="text-primary dark:text-primary-light">VACA-123</span></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 2 horas</p>
+            </div>
+          </div>
+        </li>
+        <li class="py-3">
+          <div class="flex items-start">
+            <span class="text-xl mr-3">🔄</span>
+            <div>
+              <p class="text-sm font-medium dark:text-gray-200">Actualización: <span class="text-primary dark:text-primary-light">TORO-45</span></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 5 horas</p>
+            </div>
+          </div>
+        </li>
+        <li class="py-3">
+          <div class="flex items-start">
+            <span class="text-xl mr-3">🐣</span>
+            <div>
+              <p class="text-sm font-medium dark:text-gray-200">Nuevo parto: <span class="text-primary dark:text-primary-light">PARTO-78</span></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 1 día</p>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</DefaultLayout>

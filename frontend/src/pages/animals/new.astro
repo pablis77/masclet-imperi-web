@@ -1,0 +1,72 @@
+---
+// Importar el layout y componentes necesarios
+import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import AnimalForm from '../../components/animals/AnimalForm';
+import { getAllExplotaciones } from '../../services/explotacionService';
+
+// EN DESARROLLO: No realizamos verificaciones de permisos
+// Simulamos siempre estar autenticados como administrador
+const userRole = 'administrador';
+const canCreateAnimals = true;
+
+// Obtener datos necesarios para el formulario
+let explotaciones = [];
+let error = null;
+
+try {
+  // Obtener listado de explotaciones para el selector
+  explotaciones = await getAllExplotaciones();
+} catch (err) {
+  console.error('Error al obtener explotaciones:', err);
+  error = 'No se pudieron cargar las explotaciones necesarias para crear un animal';
+}
+
+// Título de la página
+const title = 'Registrar Nuevo Animal';
+---
+
+<DefaultLayout title={title} userRole={userRole}>
+  <!-- Encabezado con botón de volver -->
+  <div class="flex items-center mb-6">
+    <a href="/animals" class="btn btn-outline-secondary mr-4 flex items-center">
+      <span class="mr-1">←</span> Volver al listado
+    </a>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">
+      {title}
+    </h1>
+  </div>
+
+  <!-- Mensaje de error -->
+  {error && (
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+      <p>{error}</p>
+      <p>Vuelve al <a href="/animals" class="underline">listado de animales</a></p>
+    </div>
+  )}
+
+  <!-- Formulario de creación -->
+  {!error && (
+    <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+      <AnimalForm 
+        client:load 
+        explotaciones={explotaciones}
+        isEditMode={false}
+        onSuccess={() => {
+          // Redireccionar al listado después de crear
+          window.location.href = '/animals';
+        }}
+        onCancel={() => {
+          // Volver al listado
+          window.location.href = '/animals';
+        }}
+      />
+    </div>
+  )}
+</DefaultLayout>
+
+<script>
+  // Script para manejar otras interacciones, si son necesarias
+  document.addEventListener('DOMContentLoaded', () => {
+    // Futuras funcionalidades
+  });
+</script>

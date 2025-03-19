@@ -1,0 +1,278 @@
+---
+// Props que pueden ser pasados al componente
+interface Props {
+  userRole?: string;
+  currentPath?: string;
+  title?: string;
+}
+
+// Valores por defecto
+const { 
+  userRole = "administrador",
+  currentPath = "/",
+  title = "Masclet Imperi"
+} = Astro.props;
+
+// Importar componente de cierre de sesión
+import { LogoutButton } from '../auth/LogoutButton';
+
+// Menú de navegación según rol
+const menuItems = [
+  { name: "Dashboard", url: "/", icon: "/images/toro 2.png", iconClass: "w-6 h-6", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Explotaciones", url: "/explotacions", icon: "/images/vaca blanca.png", iconClass: "w-6 h-6", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Animales", url: "/animals", icon: "/images/vaca blanca.png", iconClass: "w-6 h-6", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Usuarios", url: "/users", icon: "👥", iconClass: "", roles: ["administrador", "gerente"] },
+  { name: "Importación", url: "/imports", icon: "📥", iconClass: "", roles: ["administrador"] },
+  { name: "Backup", url: "/backup", icon: "💾", iconClass: "", roles: ["administrador"] },
+];
+
+// Filtrar menú por rol
+const filteredMenu = menuItems.filter(item => item.roles.includes(userRole));
+
+// Función para determinar si un elemento está activo
+const isActive = (itemUrl: string) => {
+  if (itemUrl === '/' && currentPath === '/') return true;
+  if (itemUrl !== '/' && currentPath.startsWith(itemUrl)) return true;
+  return false;
+};
+---
+
+<header class="bg-primary text-white shadow-md relative z-30">
+  <div class="container mx-auto px-3 py-3 flex justify-between items-center">
+    <!-- Logo y título -->
+    <div class="flex items-center space-x-2">
+      <a href="/" class="font-bold text-xl flex items-center truncate">
+        <img src="/images/logo_masclet.png" alt="Masclet Imperi" class="h-8 w-auto mr-2" />
+        <span class="hidden xs:inline">MASCLET IMPERI</span>
+      </a>
+    </div>
+
+    <!-- Título de la página actual (solo visible en móvil) -->
+    <div class="md:hidden text-center font-medium truncate max-w-[140px]">
+      {title}
+    </div>
+
+    <!-- Menú de navegación (visible solo en escritorio) -->
+    <nav class="hidden md:flex space-x-4 lg:space-x-6">
+      {filteredMenu.map(item => (
+        <a 
+          href={item.url} 
+          class:list={[
+            "flex items-center transition-colors duration-150 px-3 py-2 rounded-md",
+            {
+              "bg-primary-dark text-white font-medium": isActive(item.url),
+              "hover:bg-primary-dark/30": !isActive(item.url)
+            }
+          ]}
+        >
+          {item.iconClass ? 
+            <img src={item.icon} alt={item.name} class={`${item.iconClass} mr-1`} /> : 
+            <span class="mr-1">{item.icon}</span>
+          }
+          {item.name}
+        </a>
+      ))}
+    </nav>
+
+    <!-- Controles de la derecha -->
+    <div class="flex items-center">
+      <!-- Botón de menú móvil -->
+      <button id="mobile-menu-button" class="md:hidden text-white text-2xl p-2">
+        ☰
+      </button>
+      
+      <!-- Controles de escritorio -->
+      <div class="hidden md:flex items-center space-x-4">
+        <!-- Toggle de tema -->
+        <button id="theme-toggle" class="text-white hover:text-alletar transition-colors p-2">
+          <span id="theme-toggle-light-icon" class="hidden">🌞</span>
+          <span id="theme-toggle-dark-icon">🌙</span>
+        </button>
+        
+        <!-- Toggle de alto contraste (solo visible en móvil) -->
+        <button id="contrast-toggle" class="text-white hover:text-alletar transition-colors p-2 hidden xs:block">
+          <span>👁️</span>
+        </button>
+        
+        <!-- Indicador de rol -->
+        <span class="text-sm capitalize bg-primary-dark/30 px-3 py-1 rounded-full">
+          {userRole}
+        </span>
+        
+        <!-- Botón de cierre de sesión -->
+        <LogoutButton client:load />
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú móvil (oculto por defecto) -->
+  <div id="mobile-menu" class="md:hidden hidden bg-primary-dark absolute top-full left-0 right-0 shadow-md z-40">
+    <div class="container mx-auto px-4 py-2">
+      <nav class="flex flex-col">
+        {filteredMenu.map(item => (
+          <a 
+            href={item.url} 
+            class:list={[
+              "flex items-center py-3 px-4 border-b border-white/10 transition-colors",
+              {
+                "bg-white/10 font-medium": isActive(item.url),
+                "hover:bg-white/5": !isActive(item.url)
+              }
+            ]}
+          >
+            {item.iconClass ? 
+              <img src={item.icon} alt={item.name} class={`${item.iconClass} mr-3`} /> : 
+              <span class="mr-3 text-xl">{item.icon}</span>
+            }
+            <span class="text-base">{item.name}</span>
+          </a>
+        ))}
+        
+        <div class="flex justify-between items-center mt-3 pt-2 px-4">
+          <!-- Toggle de tema en menú móvil -->
+          <button id="mobile-theme-toggle" class="flex items-center py-2">
+            <span id="mobile-theme-icon">🌙</span>
+            <span class="ml-3">Modo oscuro</span>
+          </button>
+          
+          <!-- Toggle de contraste en menú móvil -->
+          <button id="mobile-contrast-toggle" class="flex items-center py-2">
+            <span>👁️</span>
+            <span class="ml-3">Alto contraste</span>
+          </button>
+        </div>
+        
+        <div class="border-t border-white/20 mt-2 pt-2 px-4 flex justify-between items-center">
+          <span class="text-sm capitalize bg-white/10 px-3 py-1 rounded-full">
+            {userRole}
+          </span>
+          <LogoutButton client:load />
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Toggle para el menú móvil
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      
+      // Cambiar ícono del botón
+      if (mobileMenuButton.textContent.trim() === '☰') {
+        mobileMenuButton.textContent = '✕';
+      } else {
+        mobileMenuButton.textContent = '☰';
+      }
+    });
+    
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!mobileMenuButton.contains(e.target) && 
+          !mobileMenu.contains(e.target) && 
+          !mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.add('hidden');
+        mobileMenuButton.textContent = '☰';
+      }
+    });
+  }
+
+  // Manejo del tema claro/oscuro
+  const setupThemeToggle = (toggleId, lightIconId, darkIconId, textEl = null) => {
+    const toggle = document.getElementById(toggleId);
+    const lightIcon = document.getElementById(lightIconId);
+    const darkIcon = document.getElementById(darkIconId);
+    
+    if (!toggle) return;
+    
+    // Actualizar UI según el tema actual
+    const updateThemeUI = (isDark) => {
+      if (lightIcon && darkIcon) {
+        if (isDark) {
+          lightIcon.classList.remove('hidden');
+          darkIcon.classList.add('hidden');
+        } else {
+          lightIcon.classList.add('hidden');
+          darkIcon.classList.remove('hidden');
+        }
+      }
+      
+      // Actualizar texto si existe
+      if (textEl) {
+        textEl.textContent = isDark ? 'Modo claro' : 'Modo oscuro';
+      }
+    };
+    
+    // Verificar tema actual
+    const isDarkMode = localStorage.getItem('theme') === 'dark' || 
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    updateThemeUI(isDarkMode);
+    
+    // Cambiar tema al hacer clic
+    toggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeUI(isDark);
+    });
+  };
+  
+  // Configurar toggles de tema
+  setupThemeToggle('theme-toggle', 'theme-toggle-light-icon', 'theme-toggle-dark-icon');
+  
+  // Toggle móvil con texto
+  const mobileToggle = document.getElementById('mobile-theme-toggle');
+  const mobileIcon = document.getElementById('mobile-theme-icon');
+  if (mobileToggle && mobileIcon) {
+    setupThemeToggle('mobile-theme-toggle', null, null, mobileToggle.querySelector('span:last-child'));
+  }
+  
+  // Manejo del modo de alto contraste
+  const setupContrastToggle = (toggleId) => {
+    const toggle = document.getElementById(toggleId);
+    if (!toggle) return;
+    
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('high-contrast-mode');
+      
+      // Guardar preferencia
+      const isHighContrast = document.documentElement.classList.contains('high-contrast-mode');
+      localStorage.setItem('highContrast', isHighContrast ? 'true' : 'false');
+    });
+  };
+  
+  // Configurar toggles de contraste
+  setupContrastToggle('contrast-toggle');
+  setupContrastToggle('mobile-contrast-toggle');
+  
+  // Aplicar contraste guardado
+  if (localStorage.getItem('highContrast') === 'true') {
+    document.documentElement.classList.add('high-contrast-mode');
+  }
+</script>
+
+<style>
+  /* Breakpoint personalizado para dispositivos muy pequeños */
+  @media (min-width: 400px) {
+    .xs\:inline {
+      display: inline;
+    }
+    .xs\:block {
+      display: block;
+    }
+  }
+  
+  /* Mejoras táctiles para móviles */
+  @media (max-width: 640px) {
+    #mobile-menu a, 
+    #mobile-menu button {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+    }
+  }
+</style>

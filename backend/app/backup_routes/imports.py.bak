@@ -1,0 +1,209 @@
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import JSONResponse
+import pandas as pd
+import numpy as np
+from io import StringIO
+import logging
+from datetime import datetime
+from tortoise.transactions import in_transaction
+from typing import List, Dict, Any, Optional
+
+from app.models.animal import Animal
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+@router.post("/preview")
+async def preview_import(file: UploadFile = File(...)):
+    """Vista previa de importación CSV"""
+    try:
+        # Debug
+        print(f"Processing file: {file.filename}")
+        
+        # Leer contenido
+        content = await file.read()
+        
+        # Intentar decodificar con diferentes encodings
+        text_content = None
+        for encoding in ['utf-8', 'latin-1']:
+            try:
+                text_content = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+                
+        if text_content is None:
+            return JSONResponse(
+                status_code=400, 
+                content={
+                    "message": "No se pudo decodificar el archivo CSV",
+                    "type": "error",
+                    "data": None
+                }
+            )
+        
+        # Procesar CSV
+        df = pd.read_csv(
+            StringIO(text_content),
+            sep=';',
+            dtype=str,
+            na_values=['', 'NaN', 'nan', '#N/A', 'NA', 'NULL'],
+            keep_default_na=True
+        )
+        
+        # Reemplazar NaN con None/null para compatibilidad con JSON
+        df = df.replace({np.nan: None})
+        
+        # Preparar respuesta
+        preview_data = {
+            "rows": len(df),
+            "columns": len(df.columns),
+            "column_names": df.columns.tolist(),
+            "preview_rows": df.head(5).to_dict(orient="records")
+        }
+        
+        return JSONResponse(
+            content={
+                "message": "Vista previa del CSV generada correctamente",
+                "type": "success",
+                "data": preview_data
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error procesando archivo: {str(e)}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "message": f"Error procesando archivo: {str(e)}",
+                "type": "error",
+                "data": None
+            }
+        )
+
+@router.post("/import/csv")
+async def import_csv(file: UploadFile = File(...)):
+    """Importa datos desde un archivo CSV a la base de datos"""
+    try:
+        # Leer contenido
+        content = await file.read()
+        
+        # Intentar decodificar con diferentes encodings
+        text_content = None
+        for encoding in ['utf-8', 'latin-1']:
+            try:
+                text_content = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+                
+        if text_content is None:
+            return JSONResponse(
+                status_code=400, 
+                content={
+                    "message": "No se pudo decodificar el archivo CSV",
+                    "type": "error",
+                    "data": None
+                }
+            )
+        
+        # Procesar CSV
+        df = pd.read_csv(
+            StringIO(text_content),
+            sep=';',
+            dtype=str,
+            na_values=['', 'NaN', 'nan', '#N/A', 'NA', 'NULL'],
+            keep_default_na=True
+        )
+        
+        # Reemplazar NaN con None/null
+        df = df.replace({np.nan: None})
+        
+        # Resultados de la importación
+        results = {
+            "total": len(df),
+            "imported": 0,
+            "updated": 0,
+            "errors": 0,
+            "error_details": []
+        }
+        
+        async with in_transaction() as conn:
+            for index, row in df.iterrows():
+                try:
+                    row_dict = row.to_dict()
+                    
+                    # Verificar animal existente
+                    existing_animal = await Animal.filter(Q(cod=row_dict.get('COD')) | 
+                                                         Q(num_serie=row_dict.get('Nº Serie'))).first()
+                    
+                    # Preparar datos básicos SIN incluir fecha
+                    animal_data = {
+                        'explotacio': row_dict.get('explotació'),
+                        'nom': row_dict.get('NOM'),
+                        'genere': row_dict.get('Genere'),
+                        'estado': row_dict.get('Estado', 'OK'),
+                        'alletar': row_dict.get('Alletar') == 'si',
+                        'pare': row_dict.get('Pare'),
+                        'mare': row_dict.get('Mare'),
+                        'quadra': row_dict.get('Quadra'),
+                        'cod': row_dict.get('COD'),
+                        'num_serie': row_dict.get('Nº Serie')
+                        # NO incluir dob aquí
+                    }
+                    
+                    # Crear/actualizar animal sin incluir la fecha
+                    if existing_animal:
+                        await Animal.filter(id=existing_animal.id).update(**animal_data)
+                        animal_id = existing_animal.id
+                        results['updated'] += 1
+                    else:
+                        new_animal = await Animal.create(**animal_data)
+                        animal_id = new_animal.id
+                        results['imported'] += 1
+                    
+                    # Procesar fecha por separado con SQL directo
+                    if row_dict.get('DOB'):
+                        for date_format in ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']:
+                            try:
+                                date_obj = datetime.strptime(row_dict['DOB'], date_format)
+                                iso_date = date_obj.strftime('%Y-%m-%d')
+                                
+                                # SQL directo para actualizar la fecha
+                                await conn.execute_query(
+                                    "UPDATE animals SET dob = $1 WHERE id = $2",
+                                    [iso_date, animal_id]
+                                )
+                                logger.debug(f"Fecha actualizada correctamente: {iso_date} para ID: {animal_id}")
+                                break
+                            except ValueError:
+                                continue
+                
+                except Exception as e:
+                    results['errors'] += 1
+                    error_detail = {
+                        "row": index + 2,  # +2 para incluir encabezado y 1-based indexing
+                        "data": row.to_dict(),
+                        "error": str(e)
+                    }
+                    results['error_details'].append(error_detail)
+                    logger.error(f"Error en fila {index + 2}: {str(e)}")
+        
+        return JSONResponse(
+            content={
+                "message": "Importación CSV completada",
+                "type": "success",
+                "data": results
+            }
+        )
+    
+    except Exception as e:
+        logger.error(f"Error en importación CSV: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error en importación CSV: {str(e)}",
+                "type": "error",
+                "data": None
+            }
+        )

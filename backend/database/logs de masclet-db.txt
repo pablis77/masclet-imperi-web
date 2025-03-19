@@ -1,0 +1,207 @@
+(masclet-imperi) PS C:\Proyectos\claude\masclet-imperi-web\backend> docker logs masclet-db
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.utf8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/data ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ... 100
+selecting default "shared_buffers" ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+waiting for server to start....2025-02-19 15:28:43.630 UTC [48] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-19 15:28:43.633 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-19 15:28:43.643 UTC [51] LOG:  database system was shut down at 2025-02-19 15:28:43 UTC
+2025-02-19 15:28:43.647 UTC [48] LOG:  database system is ready to accept connections
+ done
+server started
+CREATE DATABASE
+
+
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/01_init.sql
+SET
+SET
+CREATE EXTENSION
+CREATE EXTENSION
+                     status
+------------------------------------------------
+ Database initialization completed successfully
+(1 row)
+
+
+
+waiting for server to shut down....2025-02-19 15:28:43.810 UTC [48] LOG:  received fast shutdown request
+2025-02-19 15:28:43.813 UTC [48] LOG:  aborting any active transactions
+2025-02-19 15:28:43.814 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+2025-02-19 15:28:43.814 UTC [49] LOG:  shutting down
+2025-02-19 15:28:43.817 UTC [49] LOG:  checkpoint starting: shutdown immediate
+2025-02-19 15:28:44.022 UTC [49] LOG:  checkpoint complete: wrote 930 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.011 s, sync=0.183 s, total=0.208 s; sync files=301, longest=0.012 s, average=0.001 s; distance=4343 kB, estimate=4343 kB; lsn=0/1922BA8, redo lsn=0/1922BA8
+2025-02-19 15:28:44.025 UTC [48] LOG:  database system is shut down
+ done
+server stopped
+
+PostgreSQL init process complete; ready for start up.
+
+2025-02-19 15:28:44.132 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-19 15:28:44.132 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-19 15:28:44.132 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-19 15:28:44.138 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-19 15:28:44.146 UTC [66] LOG:  database system was shut down at 2025-02-19 15:28:44 UTC
+2025-02-19 15:28:44.151 UTC [1] LOG:  database system is ready to accept connections
+2025-02-19 15:33:44.237 UTC [64] LOG:  checkpoint starting: time
+2025-02-19 15:33:56.630 UTC [64] LOG:  checkpoint complete: wrote 126 buffers (0.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=12.327 s, sync=0.052 s, total=12.394 s; sync files=73, longest=0.010 s, average=0.001 s; distance=561 kB, estimate=561 kB; lsn=0/19AF188, redo lsn=0/19AF0F8
+2025-02-19 21:18:41.682 UTC [1] LOG:  received fast shutdown request
+2025-02-19 21:18:41.686 UTC [1] LOG:  aborting any active transactions
+2025-02-19 21:18:41.687 UTC [1] LOG:  background worker "logical replication launcher" (PID 69) exited with exit code 1
+2025-02-19 21:18:41.687 UTC [64] LOG:  shutting down
+2025-02-19 21:18:41.690 UTC [64] LOG:  checkpoint starting: shutdown immediate
+2025-02-19 21:18:41.706 UTC [64] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.019 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=505 kB; lsn=0/19AF238, redo lsn=0/19AF238
+2025-02-19 21:18:41.709 UTC [1] LOG:  database system is shut down
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-21 08:08:12.302 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-21 08:08:12.303 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-21 08:08:12.303 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-21 08:08:12.308 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-21 08:08:12.315 UTC [29] LOG:  database system was shut down at 2025-02-19 21:18:41 UTC
+2025-02-21 08:08:12.323 UTC [1] LOG:  database system is ready to accept connections
+2025-02-21 08:13:12.406 UTC [27] LOG:  checkpoint starting: time
+2025-02-21 08:13:12.935 UTC [27] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.511 s, sync=0.007 s, total=0.529 s; sync files=4, longest=0.004 s, average=0.002 s; distance=8 kB, estimate=8 kB; lsn=0/19B1310, redo lsn=0/19B12B8
+2025-02-21 12:33:17.633 UTC [27] LOG:  checkpoint starting: time
+2025-02-21 12:33:18.262 UTC [27] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.605 s, sync=0.007 s, total=0.629 s; sync files=6, longest=0.004 s, average=0.002 s; distance=20 kB, estimate=20 kB; lsn=0/19B6540, redo lsn=0/19B64E8
+2025-02-21 12:46:03.042 UTC [1] LOG:  received fast shutdown request
+2025-02-21 12:46:03.046 UTC [1] LOG:  aborting any active transactions
+2025-02-21 12:46:03.047 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+2025-02-21 12:46:03.047 UTC [27] LOG:  shutting down
+2025-02-21 12:46:03.050 UTC [27] LOG:  checkpoint starting: shutdown immediate
+2025-02-21 12:46:03.091 UTC [27] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.024 s, sync=0.001 s, total=0.044 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=18 kB; lsn=0/19B65F0, redo lsn=0/19B65F0
+2025-02-21 12:46:03.094 UTC [1] LOG:  database system is shut down
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-22 15:38:00.873 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-22 15:38:00.873 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-22 15:38:00.873 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-22 15:38:00.881 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-22 15:38:00.890 UTC [29] LOG:  database system was shut down at 2025-02-21 12:46:03 UTC
+2025-02-22 15:38:00.902 UTC [1] LOG:  database system is ready to accept connections
+2025-02-22 15:43:00.935 UTC [27] LOG:  checkpoint starting: time
+2025-02-22 15:43:00.955 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.004 s, total=0.021 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B66F8, redo lsn=0/19B66A0
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-25 07:27:04.139 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-25 07:27:04.140 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-25 07:27:04.140 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-25 07:27:04.150 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-25 07:27:04.173 UTC [28] LOG:  database system was interrupted; last known up at 2025-02-22 15:43:00 UTC
+2025-02-25 07:27:05.016 UTC [28] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-02-25 07:27:05.020 UTC [28] LOG:  redo starts at 0/19B66A0
+2025-02-25 07:27:05.020 UTC [28] LOG:  invalid record length at 0/19B67A8: expected at least 24, got 0
+2025-02-25 07:27:05.020 UTC [28] LOG:  redo done at 0/19B6770 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-02-25 07:27:05.026 UTC [26] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-02-25 07:27:05.050 UTC [26] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.004 s, total=0.026 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B67A8, redo lsn=0/19B67A8
+2025-02-25 07:27:05.055 UTC [1] LOG:  database system is ready to accept connections
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-26 09:52:58.210 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-26 09:52:58.211 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-26 09:52:58.211 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-26 09:52:58.217 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-26 09:52:58.224 UTC [29] LOG:  database system was interrupted; last known up at 2025-02-25 07:27:05 UTC
+2025-02-26 09:52:59.013 UTC [29] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-02-26 09:52:59.017 UTC [29] LOG:  redo starts at 0/19B6820
+2025-02-26 09:52:59.017 UTC [29] LOG:  invalid record length at 0/19B6858: expected at least 24, got 0
+2025-02-26 09:52:59.017 UTC [29] LOG:  redo done at 0/19B6820 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-02-26 09:52:59.027 UTC [27] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-02-26 09:52:59.051 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.004 s, total=0.027 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B6858, redo lsn=0/19B6858
+2025-02-26 09:52:59.056 UTC [1] LOG:  database system is ready to accept connections
+2025-02-26 13:04:08.967 UTC [1] LOG:  received fast shutdown request
+2025-02-26 13:04:08.971 UTC [1] LOG:  aborting any active transactions
+2025-02-26 13:04:08.972 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+2025-02-26 13:04:08.972 UTC [27] LOG:  shutting down
+2025-02-26 13:04:08.976 UTC [27] LOG:  checkpoint starting: shutdown immediate
+2025-02-26 13:04:09.004 UTC [27] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.032 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=0 kB; lsn=0/19B6908, redo lsn=0/19B6908
+2025-02-26 13:04:09.007 UTC [1] LOG:  database system is shut down
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-27 08:12:35.430 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-27 08:12:35.430 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-27 08:12:35.430 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-27 08:12:35.437 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-27 08:12:35.446 UTC [29] LOG:  database system was shut down at 2025-02-26 13:04:08 UTC
+2025-02-27 08:12:35.459 UTC [1] LOG:  database system is ready to accept connections
+2025-02-27 08:17:35.440 UTC [27] LOG:  checkpoint starting: time
+2025-02-27 08:17:35.460 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.004 s, total=0.021 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B6A10, redo lsn=0/19B69B8
+2025-02-27 12:56:23.767 UTC [1] LOG:  received fast shutdown request
+2025-02-27 12:56:23.772 UTC [1] LOG:  aborting any active transactions
+2025-02-27 12:56:23.773 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+2025-02-27 12:56:23.773 UTC [27] LOG:  shutting down
+2025-02-27 12:56:23.776 UTC [27] LOG:  checkpoint starting: shutdown immediate
+2025-02-27 12:56:23.811 UTC [27] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.001 s, total=0.039 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=0 kB; lsn=0/19B6AC0, redo lsn=0/19B6AC0
+2025-02-27 12:56:23.813 UTC [1] LOG:  database system is shut down
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-27 13:05:43.682 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-27 13:05:43.682 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-27 13:05:43.682 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-27 13:05:43.688 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-27 13:05:43.695 UTC [29] LOG:  database system was shut down at 2025-02-27 12:56:23 UTC
+2025-02-27 13:05:43.703 UTC [1] LOG:  database system is ready to accept connections
+2025-02-27 13:10:43.738 UTC [27] LOG:  checkpoint starting: time
+2025-02-27 13:10:43.768 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.011 s, sync=0.006 s, total=0.031 s; sync files=2, longest=0.003 s, average=0.003 s; distance=0 kB, estimate=0 kB; lsn=0/19B6BC8, redo lsn=0/19B6B70
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-28 08:22:55.702 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-28 08:22:55.702 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-28 08:22:55.702 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-28 08:22:55.709 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-28 08:22:55.716 UTC [29] LOG:  database system was interrupted; last known up at 2025-02-27 13:10:43 UTC
+2025-02-28 08:22:56.628 UTC [29] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-02-28 08:22:56.632 UTC [29] LOG:  redo starts at 0/19B6B70
+2025-02-28 08:22:56.632 UTC [29] LOG:  invalid record length at 0/19B6C78: expected at least 24, got 0
+2025-02-28 08:22:56.632 UTC [29] LOG:  redo done at 0/19B6C40 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-02-28 08:22:56.637 UTC [27] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-02-28 08:22:56.661 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.004 s, total=0.026 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B6C78, redo lsn=0/19B6C78
+2025-02-28 08:22:56.667 UTC [1] LOG:  database system is ready to accept connections
+2025-02-28 09:08:53.789 UTC [1] LOG:  received fast shutdown request
+2025-02-28 09:08:53.792 UTC [1] LOG:  aborting any active transactions
+2025-02-28 09:08:53.793 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+2025-02-28 09:08:53.793 UTC [27] LOG:  shutting down
+2025-02-28 09:08:53.796 UTC [27] LOG:  checkpoint starting: shutdown immediate
+2025-02-28 09:08:53.810 UTC [27] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.018 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=0 kB; lsn=0/19B6D28, redo lsn=0/19B6D28
+2025-02-28 09:08:53.813 UTC [1] LOG:  database system is shut down
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-02-28 09:08:54.561 UTC [1] LOG:  starting PostgreSQL 17.3 (Debian 17.3-3.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-02-28 09:08:54.562 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-02-28 09:08:54.562 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-02-28 09:08:54.568 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-02-28 09:08:54.575 UTC [29] LOG:  database system was shut down at 2025-02-28 09:08:53 UTC
+2025-02-28 09:08:54.580 UTC [1] LOG:  database system is ready to accept connections
+2025-02-28 09:13:54.574 UTC [27] LOG:  checkpoint starting: time
+2025-02-28 09:13:54.594 UTC [27] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.004 s, total=0.021 s; sync files=2, longest=0.003 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19B6E30, redo lsn=0/19B6DD8
+(masclet-imperi) PS C:\Proyectos\claude\masclet-imperi-web\backend>

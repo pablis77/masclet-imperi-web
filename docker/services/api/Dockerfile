@@ -1,0 +1,66 @@
+# Dockerfile para el contenedor de backend con sistema de backups
+FROM python:3.11-slim
+
+# Variables de entorno
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=Europe/Madrid
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client \
+    cron \
+    postfix \
+    mailutils \
+    tzdata \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Crear usuario app
+RUN useradd -m -s /bin/bash app
+
+# Crear directorios necesarios
+RUN mkdir -p /app /backups /logs \
+    && chown -R app:app /app /backups /logs
+
+# Copiar archivos de configuración
+COPY ./docker/config/backup/.env /app/.env
+COPY ./docker/config/postfix/main.cf /etc/postfix/main.cf
+COPY ./docker/scripts/backup.sh /usr/local/bin/backup.sh
+COPY ./docker/scripts/notify.sh /usr/local/bin/notify.sh
+COPY ./docker/scripts/install-backup.sh /usr/local/bin/install-backup.sh
+COPY ./docker/scripts/test-backup.sh /usr/local/bin/test-backup.sh
+
+# Establecer permisos
+RUN chmod +x /usr/local/bin/*.sh \
+    && chown -R app:app /usr/local/bin/*.sh
+
+# Configurar postfix
+RUN postconf -e "inet_interfaces = loopback-only" \
+    && postconf -e "mydestination = localhost"
+
+# Configurar cron
+RUN echo "0 2 * * * app /usr/local/bin/backup.sh > /logs/backup.log 2>&1" > /etc/cron.d/masclet-backup \
+    && chmod 0644 /etc/cron.d/masclet-backup
+
+# Cambiar al usuario app
+USER app
+WORKDIR /app
+
+# Copiar requirements y código
+COPY --chown=app:app requirements.txt .
+COPY --chown=app:app . .
+
+# Instalar dependencias Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Script de inicio
+COPY ./docker/scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

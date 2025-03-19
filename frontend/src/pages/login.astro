@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/AuthLayout.astro';
+import { LoginForm } from '../components/auth/LoginForm';
+
+// Script para verificar si el usuario ya está autenticado
+---
+
+<Layout title="Iniciar Sesión | Masclet Imperi">
+  <div class="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <img class="mx-auto h-24 w-auto" src="/images/logo_masclet.png" alt="Masclet Imperi" />
+      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        Iniciar Sesión
+      </h2>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <LoginForm client:load />
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Verificar si el usuario ya está autenticado
+  document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Si ya hay un token, redirigir al dashboard
+      console.log('Usuario ya autenticado, redirigiendo al dashboard');
+      window.location.href = '/';
+    } else {
+      console.log('Usuario no autenticado, mostrando formulario de login');
+    }
+  });
+</script>

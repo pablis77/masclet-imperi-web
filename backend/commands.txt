@@ -1,0 +1,12 @@
+# Terminal 1 - Servidor
+# Ejecutar estos comandos en orden:
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 2 - Pruebas
+# Ejecutar estos comandos después de que el servidor esté corriendo:
+cd backend
+python -m pytest test_endpoints.py -v
+
+# Si necesitas detener el servidor: Ctrl+C
+# Si necesitas limpiar la terminal: cls (Windows) o clear (Linux/Mac)

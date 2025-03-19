@@ -1,0 +1,61 @@
+graph TB
+    subgraph Interfaz_Usuario
+        UI[GUI Principal]
+        Login[Sistema Login]
+        MenuP[Menú Principal]
+    end
+
+    subgraph Modulos_Funcionales
+        CF[Consulta Ficha]
+        AF[Actualizar Ficha]
+        NF[Nueva Ficha]
+        GU[Gestión Usuarios]
+        IM[Importar Datos]
+    end
+
+    subgraph Servicios_Core
+        AUTH[Auth Service]
+        DM[Data Manager]
+        UIM[UI Manager]
+        MS[Message System]
+    end
+
+    subgraph Almacenamiento
+        JSON[users.json]
+        CSV[matriz_master.csv]
+        CRED[credentials.dat]
+    end
+
+    %% Conexiones UI
+    UI --> Login
+    Login --> MenuP
+    MenuP --> CF
+    MenuP --> AF
+    MenuP --> NF
+    MenuP --> GU
+    MenuP --> IM
+
+    %% Conexiones Servicios
+    Login --> AUTH
+    CF --> DM
+    AF --> DM
+    NF --> DM
+    GU --> DM
+    IM --> DM
+
+    %% Conexiones Almacenamiento
+    AUTH --> JSON
+    AUTH --> CRED
+    DM --> CSV
+
+    %% Conexiones Transversales
+    UI --> MS
+    UI --> UIM
+    
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px
+    classDef secondary fill:#bbf,stroke:#333,stroke-width:2px
+    classDef storage fill:#ffa,stroke:#333,stroke-width:2px
+    
+    class UI,Login,MenuP primary
+    class CF,AF,NF,GU,IM secondary
+    class JSON,CSV,CRED storage

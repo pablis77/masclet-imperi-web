@@ -1,0 +1,84 @@
+---
+// Props que pueden ser pasados al componente
+interface Props {
+  showVersion?: boolean;
+  version?: string;
+}
+
+// Valores por defecto
+const { 
+  showVersion = true,
+  version = "1.0.0"
+} = Astro.props;
+
+// Obtener el año actual
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 relative z-30">
+  <div class="container mx-auto px-4 py-3 md:py-4">
+    <div class="flex flex-col xs:flex-row justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+      <div class="text-center xs:text-left mb-2 xs:mb-0">
+        &copy; {currentYear} Masclet Imperi - Todos los derechos reservados
+      </div>
+      
+      {showVersion && (
+        <div class="flex space-x-3 items-center">
+          <span>
+            Versión {version}
+          </span>
+          
+          <!-- Toggle de alto contraste para móvil (visible solo en móvil) -->
+          <button id="footer-contrast-toggle" class="xs:hidden p-1.5 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600">
+            <span class="text-xs">👁️</span>
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Setup del botón de contraste en el footer
+  const footerContrastToggle = document.getElementById('footer-contrast-toggle');
+  
+  if (footerContrastToggle) {
+    footerContrastToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('high-contrast-mode');
+      
+      // Guardar preferencia
+      const isHighContrast = document.documentElement.classList.contains('high-contrast-mode');
+      localStorage.setItem('highContrast', isHighContrast ? 'true' : 'false');
+    });
+    
+    // Aplicar contraste guardado al iniciar
+    if (localStorage.getItem('highContrast') === 'true') {
+      document.documentElement.classList.add('high-contrast-mode');
+    }
+  }
+</script>
+
+<style>
+  /* Breakpoint personalizado para dispositivos muy pequeños */
+  @media (min-width: 400px) {
+    .xs\:flex-row {
+      flex-direction: row;
+    }
+    .xs\:text-left {
+      text-align: left;
+    }
+    .xs\:mb-0 {
+      margin-bottom: 0;
+    }
+    .xs\:hidden {
+      display: none;
+    }
+  }
+  
+  /* Footer sobre botón flotante en móvil */
+  @media (max-width: 768px) {
+    footer {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+    }
+  }
+</style>

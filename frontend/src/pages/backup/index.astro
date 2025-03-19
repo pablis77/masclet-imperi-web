@@ -1,0 +1,112 @@
+---
+// Importar el layout
+import DefaultLayout from '../../layouts/DefaultLayout.astro';
+
+// Definir título y rol de usuario
+const title = "Backup del Sistema";
+const userRole = "administrador"; // Simulación de rol
+---
+
+<DefaultLayout title={title} userRole={userRole}>
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">{title}</h1>
+    <p class="text-gray-600">Gestiona y restaura copias de seguridad del sistema</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Crear backup -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Crear copia de seguridad</h2>
+      <p class="text-gray-600 mb-4">
+        Crea una copia de seguridad completa de la base de datos, incluyendo todos los animales, 
+        partos y configuraciones del sistema.
+      </p>
+      <div class="space-y-4">
+        <div>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="form-checkbox" />
+            <span>Incluir datos de animales</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="form-checkbox" />
+            <span>Incluir datos de partos</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="form-checkbox" />
+            <span>Incluir configuración de usuarios</span>
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary w-full mt-4">Crear backup ahora</button>
+    </div>
+
+    <!-- Restaurar backup -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Restaurar copia de seguridad</h2>
+      <p class="text-gray-600 mb-4">
+        Restaura el sistema a partir de una copia de seguridad previamente creada.
+        <span class="font-semibold text-amber-600">¡Precaución! Esta acción reemplazará todos los datos actuales.</span>
+      </p>
+      <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 text-center">
+        <div class="text-gray-500">
+          <p class="mb-2">Selecciona un archivo de backup</p>
+          <p class="text-sm">o</p>
+          <button class="btn btn-secondary mt-2">Seleccionar archivo</button>
+        </div>
+      </div>
+      <button class="btn btn-danger w-full" disabled>Restaurar sistema</button>
+    </div>
+  </div>
+
+  <!-- Historial de backups -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <h3 class="px-6 py-4 bg-gray-50 text-lg font-semibold">Historial de copias de seguridad</h3>
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tamaño</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado por</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contenido</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">13/03/2025 10:30</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15.2 MB</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">admin@mascletimperi.com</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completo</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex space-x-2">
+              <button class="text-indigo-600 hover:text-indigo-900">Descargar</button>
+              <button class="text-amber-600 hover:text-amber-900">Restaurar</button>
+              <button class="text-red-600 hover:text-red-900">Eliminar</button>
+            </div>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10/03/2025 16:45</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">14.8 MB</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">admin@mascletimperi.com</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completo</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex space-x-2">
+              <button class="text-indigo-600 hover:text-indigo-900">Descargar</button>
+              <button class="text-amber-600 hover:text-amber-900">Restaurar</button>
+              <button class="text-red-600 hover:text-red-900">Eliminar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DefaultLayout>

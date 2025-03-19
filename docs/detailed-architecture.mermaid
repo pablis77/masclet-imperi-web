@@ -1,0 +1,117 @@
+graph TB
+    subgraph GUI
+        UI[Ventana Principal]
+        StyleManager[TTK Style Manager]
+        
+        subgraph Frames
+            MainFrame[Main Frame]
+            HeaderFrame[Header Frame]
+            ContentFrame[Content Frame]
+            StatusFrame[Status Frame]
+        end
+        
+        subgraph Components
+            LoginForm[Login Form]
+            UserInfo[User Info]
+            DateTime[Date Time Display]
+            LogoutBtn[Logout Button]
+            CustomBtns[Custom Buttons]
+        end
+    end
+
+    subgraph Core_Services
+        subgraph AuthService
+            CredManager[Credential Manager]
+            TokenGen[Token Generator]
+            PassHash[Password Hasher]
+            UserVal[User Validator]
+        end
+
+        subgraph DataManager
+            CSVHandler[CSV Handler]
+            DataValidator[Data Validator]
+            BackupSystem[Backup System]
+            ImportExport[Import/Export]
+        end
+
+        subgraph UIManager
+            ButtonCreator[Button Creator]
+            StyleConfig[Style Configuration]
+            LayoutManager[Layout Manager]
+        end
+
+        subgraph MessageSystem
+            MsgQueue[Message Queue]
+            MsgDisplay[Message Display]
+            AlertSystem[Alert System]
+        end
+    end
+
+    subgraph Storage_Layer
+        subgraph Files
+            UserDB[users.json]
+            CredStore[credentials.dat]
+            MasterData[matriz_master.csv]
+            Backups[backup/*.csv]
+        end
+
+        subgraph Encryption
+            Fernet[Fernet Encryption]
+            Hash[SHA256 Hash]
+        end
+    end
+
+    subgraph Functional_Modules
+        subgraph ConsultaFicha
+            SearchSystem[Search System]
+            DataDisplay[Data Display]
+            FilterSystem[Filter System]
+        end
+
+        subgraph ActualizarFicha
+            UpdateForm[Update Form]
+            ValidationSystem[Validation System]
+            ChangeTracker[Change Tracker]
+        end
+
+        subgraph NuevaFicha
+            NewForm[New Form]
+            DataGenerator[Data Generator]
+            Validator[Field Validator]
+        end
+
+        subgraph ImportarDatos
+            CSVReader[CSV Reader]
+            DataMerger[Data Merger]
+            BackupManager[Backup Manager]
+            PreviewSystem[Preview System]
+        end
+    end
+
+    %% Conexiones principales
+    UI --> MainFrame
+    MainFrame --> HeaderFrame
+    MainFrame --> ContentFrame
+    MainFrame --> StatusFrame
+
+    %% Conexiones de servicios
+    AuthService --> Storage_Layer
+    DataManager --> Storage_Layer
+    UIManager --> GUI
+    MessageSystem --> GUI
+
+    %% Conexiones funcionales
+    ConsultaFicha --> DataManager
+    ActualizarFicha --> DataManager
+    NuevaFicha --> DataManager
+    ImportarDatos --> DataManager
+
+    classDef gui fill:#f9f,stroke:#333,stroke-width:2px
+    classDef service fill:#bbf,stroke:#333,stroke-width:2px
+    classDef storage fill:#ffa,stroke:#333,stroke-width:2px
+    classDef module fill:#aff,stroke:#333,stroke-width:2px
+
+    class GUI gui
+    class Core_Services service
+    class Storage_Layer storage
+    class Functional_Modules module

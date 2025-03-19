@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-02-16T01:12:56.601797",
+  "type": "swagger_ui_capture",
+  "sections": [
+    {
+      "section": 1,
+      "error": "[Errno 2] No such file or directory: 'screenshots/swagger_part1.png'",
+      "image_name": "swagger_part1.png"
+    },
+    {
+      "section": 2,
+      "error": "[Errno 2] No such file or directory: 'screenshots/swagger_part2.png'",
+      "image_name": "swagger_part2.png"
+    }
+  ]
+}

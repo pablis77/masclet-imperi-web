@@ -1,0 +1,210 @@
+/* Importar estilos Lemon Squeezy */
+@import "./lemon-squeezy.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables personalizadas para la aplicación - Estilo Lemon Squeezy */
+:root {
+    --primary: #88c425;    /* Verde lima (color corporativo) */
+    --secondary: #262626;  /* Negro suave */
+    --tertiary: #f7f7f7;   /* Gris muy claro para fondos */
+    
+    --success: #88c425;    /* Verde lima (mismo que primary) */
+    --warning: #f59e0b;    /* Ámbar suave */
+    --danger: #ef4444;     /* Rojo suave */
+    --info: #3b82f6;       /* Azul informativo */
+    
+    --alletar: #88c425;    /* Verde lima para amamantando */
+    
+    --text-primary: #262626;    /* Texto principal (casi negro) */
+    --text-secondary: #6b7280;  /* Texto secundario (gris) */
+    --text-muted: #9ca3af;      /* Texto atenuado */
+}
+
+/* Variables para modo oscuro */
+.dark {
+    --primary: #88c425;    /* Mantener color corporativo */
+    --secondary: #f1f5f9;  /* Invertir para modo oscuro */
+    --tertiary: #1e293b;   /* Fondo oscuro */
+    
+    --success: #88c425;    /* Mantener */
+    --warning: #f59e0b;    /* Mantener */
+    --danger: #ef4444;     /* Mantener */
+    --info: #3b82f6;       /* Mantener */
+    
+    --alletar: #88c425;    /* Mantener */
+    
+    --text-primary: #f1f5f9;    /* Texto principal (claro) */
+    --text-secondary: #cbd5e1;  /* Texto secundario (gris claro) */
+    --text-muted: #94a3b8;      /* Texto atenuado */
+}
+
+/* Estilos base personalizados */
+body {
+    background-color: var(--tertiary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modo oscuro para el body */
+.dark body {
+    background-color: var(--tertiary);
+    color: var(--text-primary);
+}
+
+/* Transiciones suaves */
+*, *::before, *::after {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Mejoras de accesibilidad para enfoque */
+*:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(136, 196, 37, 0.3);
+}
+
+/* Estilos específicos para Masclet Imperi */
+.masclet-header {
+    background-image: linear-gradient(to bottom, white, var(--tertiary));
+    border-bottom-width: 1px;
+    border-color: #e5e7eb;
+}
+
+.dark .masclet-header {
+    background-image: linear-gradient(to bottom, #334155, #1e293b);
+    border-color: #475569;
+}
+
+.masclet-sidebar {
+    background-color: white;
+    border-right-width: 1px;
+    border-color: #e5e7eb;
+}
+
+.dark .masclet-sidebar {
+    background-color: #334155;
+    border-color: #475569;
+}
+
+/* Estilos para el modo oscuro */
+.dark .masclet-content {
+    background-color: #1e293b;
+}
+
+/* Animaciones */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Estilos para tablas */
+.table-container {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .table-container {
+    background-color: #334155;
+    border-color: #475569;
+}
+
+/* Estilos para formularios */
+.input-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.input-icon-left {
+    left: 0.75rem;
+}
+
+.input-icon-right {
+    right: 0.75rem;
+}
+
+.input-with-icon-left {
+    padding-left: 2.5rem;
+}
+
+.input-with-icon-right {
+    padding-right: 2.5rem;
+}
+
+/* Estilos para estados de animales */
+.animal-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.animal-status-ok {
+    background-color: rgba(136, 196, 37, 0.1);
+    color: var(--success);
+}
+
+.animal-status-def {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+/* Estilos para género de animales */
+.animal-gender {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.animal-gender-m {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+}
+
+.animal-gender-f {
+    background-color: rgba(236, 72, 153, 0.1);
+    color: #9d174d;
+}
+
+.dark .animal-gender-f {
+    background-color: #831843;
+    color: #fbcfe8;
+}
+
+/* Estilos para amamantando */
+.animal-alletar {
+    background-color: rgba(136, 196, 37, 0.1);
+    color: var(--success);
+}
+
+/* Animaciones suaves para cargas */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

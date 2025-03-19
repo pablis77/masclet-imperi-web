@@ -1,0 +1,4 @@
+Alletar,explotació,NOM,Genere,Pare,Mare,Quadra,COD,Nº Serie,DOB,Estado,part,GenereT,EstadoT
+si,Gurans,Test Vaca 1,F,Toro 123,Vaca 456,Q1,V001,ES123456789,24/02/2024,OK,,,
+si,Gurans,Test Vaca 2,F,Toro 123,Vaca 457,Q1,V002,ES123456790,25/02/2024,OK,,,
+no,Madrid,Test Toro 1,M,Toro 124,Vaca 458,Q2,T001,ES123456791,26/02/2024,OK,,,

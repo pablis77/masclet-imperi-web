@@ -1,0 +1,42 @@
+"""
+Aplicación principal FastAPI
+"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from tortoise.contrib.fastapi import register_tortoise
+
+from app.api.router import api_router
+from app.core.config import DATABASE_URL
+
+app = FastAPI(
+    title="Masclet Imperi API",
+    description="API para la gestión de animales del Masclet Imperi",
+    version="1.0.0"
+)
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Configurar rutas API
+app.include_router(api_router, prefix="/api/v1")
+
+# Ruta raíz
+@app.get("/")
+async def root():
+    """Endpoint raíz para verificar que la API está funcionando"""
+    return {"message": "Masclet Imperi API v1.0.0"}
+
+# Configurar Tortoise ORM
+register_tortoise(
+    app,
+    db_url=DATABASE_URL,
+    modules={"models": ["app.models.animal", "aerich.models"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)

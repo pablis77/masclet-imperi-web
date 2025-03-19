@@ -1,0 +1,52 @@
+---
+// Importar el layout
+import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import ImportForm from '../../components/imports/ImportForm';
+import ImportHistory from '../../components/imports/ImportHistory';
+
+// Definir título y rol de usuario
+const title = "Importación de Datos";
+const userRole = "administrador"; // Simulación de rol
+---
+
+<DefaultLayout title={title} userRole={userRole}>
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">{title}</h1>
+    <p class="text-gray-600 dark:text-dark-text-secondary">Importa datos masivos desde archivos CSV</p>
+  </div>
+
+  <div class="mb-8">
+    <!-- Importación de Animales -->
+    <ImportForm client:load />
+  </div>
+
+  <!-- Historial de Importaciones -->
+  <div class="mt-8">
+    <ImportHistory client:load refreshTrigger={0} />
+  </div>
+
+  <script>
+    // Script para manejar la actualización del historial después de una importación
+    document.addEventListener('DOMContentLoaded', () => {
+      const importForm = document.querySelector('import-form');
+      const importHistory = document.querySelector('import-history');
+      
+      // Función para actualizar el historial
+      const refreshHistory = () => {
+        if (importHistory) {
+          // Disparar un evento para actualizar el historial
+          const event = new CustomEvent('refresh-history');
+          importHistory.dispatchEvent(event);
+        }
+      };
+      
+      // Escuchar eventos de importación completada
+      if (importForm) {
+        importForm.addEventListener('import-complete', () => {
+          // Esperar un momento para que el backend procese la importación
+          setTimeout(refreshHistory, 1000);
+        });
+      }
+    });
+  </script>
+</DefaultLayout>

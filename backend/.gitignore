@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# VS Code
+.vscode/
+
+# No ignorar la carpeta database
+!database/
+
+# DVC
+/data
+*.csv
+
+# PostgreSQL
+*.sql
+*.dump
+
+# Logs
+*.log
+
+echo "backend/docker/backups/**" >> .gitignore
+echo "backend/docker/postgres/data/**" >> .gitignore
+echo "*.tar" >> .gitignore

@@ -1,0 +1,209 @@
+Análisis Detallado del Plan de Desarrollo Frontend
+Vamos a examinar cada fase del plan de desarrollo para asegurarnos que cubre todas las necesidades del proyecto Masclet Imperi y se alinea con la visión que tienes. Analizaré las ventajas, desafíos y consideraciones específicas de cada etapa.
+Fase 1: Configuración y Estructura Base (1 semana)
+Actividades detalladas:
+1. Inicialización del proyecto Astro:
+* Crear un nuevo proyecto usando npm create astro@latest
+* Configurar TypeScript desde el inicio
+* Estructurar carpetas según el plan definido
+2. Integración de Tailwind CSS 4.0:
+* Instalar como dependencia de desarrollo
+* Configurar el archivo tailwind.config.mjs con:
+* Colores personalizados para el sector ganadero
+* Extensiones de tema para estados específicos (OK, DEF)
+* Configuración de fuentes y tamaños
+3. Desarrollo del layout principal:
+* Navbar.astro con detección de rol de usuario
+* Sidebar.astro configurable según permisos
+* Footer.astro con información de versión y contacto
+* LayoutDefault.astro como plantilla principal
+4. Configuración de servicios API:
+* Crear cliente Axios con interceptores para:
+* Manejo de tokens JWT
+* Manejo centralizado de errores
+* Transformación de datos
+Desafíos potenciales:
+* Curva de aprendizaje inicial de Astro (diferente a React puro)
+* Configuración correcta para permitir componentes React dentro de Astro
+* Asegurar la reutilización de componentes entre ambos frameworks
+Resultados esperados:
+* Estructura sólida del proyecto lista para crecer
+* Sistema de diseño con Tailwind establecido
+* Comunicación con la API configurada
+* Esquema de navegación principal funcional
+Fase 2: Dashboard (2 semanas)
+Actividades detalladas:
+1. Implementación de la página principal:
+* Diseño responsive con grid de Tailwind
+* Secciones claramente definidas por tipo de contenido
+2. Desarrollo de componentes estadísticos:
+* StatsCard.tsx para KPIs principales:
+* Total animales por explotación
+* Distribución por género (M/F)
+* Estados de amamantamiento (alletar)
+3. Gráficos interactivos:
+* GenderChart.tsx: Distribución por género
+* StatusChart.tsx: Estados OK/DEF
+* AlletarChart.tsx: Estados de amamantamiento
+* PartosTimeline.tsx: Evolución temporal de partos
+4. Integración con backend:
+* dashboardService.ts para consumir /api/dashboard/stats
+* Gestión de filtros por explotación, fecha, etc.
+* Cacheo inteligente para mejorar rendimiento
+Desafíos potenciales:
+* Optimización del rendimiento con múltiples gráficos en pantalla
+* Visualización apropiada en dispositivos móviles
+* Manejo adecuado de estados de carga y error
+Resultados esperados:
+* Dashboard completamente funcional
+* Datos actualizados en tiempo real
+* Capacidad de filtrado por explotaciones
+* Vista adaptable a cualquier dispositivo
+Fase 3: Gestión de Animales (2 semanas)
+Actividades detalladas:
+1. Listado de animales:
+* Tabla interactiva con:
+* Paginación eficiente
+* Ordenamiento por columnas
+* Filtros avanzados (explotación, género, estado)
+* Vista en modo tarjeta para móviles
+2. Vista detallada de animal:
+* Información completa con tabs para:
+* Datos básicos
+* Historial de partos
+* Relaciones (padre/madre)
+* Cuadra/ubicación
+3. Formularios:
+* Creación con validaciones en tiempo real
+* Edición con carga previa de datos
+* Manejo de campos obligatorios según reglas de negocio
+* Validaciones específicas (num_serie formato ES+números)
+4. Funcionalidades especiales:
+* Gestión de estado "alletar"
+* Cambio de estado (OK/DEF)
+* Asignación de cuadra
+Desafíos potenciales:
+* Validaciones complejas según reglas de negocio
+* UX para la introducción de datos específicos (fechas, códigos)
+* Rendimiento con grandes listas de animales
+Resultados esperados:
+* CRUD completo de animales
+* Sistema de filtrado avanzado
+* Validaciones robustas
+* Interfaz intuitiva para ganaderos
+Fase 4: Gestión de Partos (2 semanas)
+Actividades detalladas:
+1. Registro de partos:
+* Formulario especializado para:
+* Selección de madre (solo hembras)
+* Fecha del parto (validación de formato DD/MM/YYYY)
+* Género de la cría (M/F/esforrada)
+* Estado de la cría (OK/DEF)
+2. Historial por animal:
+* Vista cronológica de partos
+* Filtrado por fecha
+* Estadísticas de éxito/fracaso
+3. Integración con módulo de animales:
+* Actualización automática del estado "alletar"
+* Vínculo directo a creación de nuevo animal por parto
+* Relación madre-cría automática
+4. Validaciones de negocio:
+* Solo hembras pueden tener partos
+* Control de plazos entre partos
+* Validación de estados coherentes
+Desafíos potenciales:
+* Complejidad de la lógica de negocio
+* Mantener la integridad referencial
+* Experiencia de usuario para flujos complejos
+Resultados esperados:
+* Sistema completo de gestión de partos
+* Automatización de relaciones entre registros
+* Visualización clara del historial
+* Validaciones que garanticen datos correctos
+Fase 5: Sistema de Importación (1 semana)
+Actividades detalladas:
+1. Interfaz de carga:
+* Drag & drop para archivos CSV
+* Validación de formato antes de envío
+* Progreso visual durante la carga
+2. Previsualización de datos:
+* Tabla con primeras 10-20 filas
+* Identificación visual de posibles errores
+* Mapeo de columnas configurable
+3. Proceso de importación:
+* Envío por chunks para archivos grandes
+* Barra de progreso detallada
+* Cancelación segura
+4. Reporte de resultados:
+* Resumen de registros procesados
+* Detalle de errores encontrados
+* Opciones de corrección o reintento
+Desafíos potenciales:
+* Manejo de archivos grandes
+* Interfaz intuitiva para no técnicos
+* Feedback claro sobre errores en datos
+Resultados esperados:
+* Sistema robusto de importación
+* Validación previa para evitar errores
+* Experiencia de usuario simple
+* Reportes detallados del proceso
+Fase 6: Autenticación y Permisos (1 semana)
+Actividades detalladas:
+1. Sistema de login:
+* Formulario seguro con validaciones
+* Manejo de tokens JWT
+* Persistencia de sesión configurable
+* Recuperación de contraseña
+2. Gestión de permisos:
+* Implementación de guard routes basado en roles
+* Mostrar/ocultar funcionalidades según permisos
+* Feedback visual para acciones no permitidas
+3. Panel de administración:
+* Gestión de usuarios (solo ADMIN)
+* Asignación de roles y explotaciones
+* Auditoría de acciones
+4. Seguridad:
+* Protección contra CSRF
+* Expiración y renovación de tokens
+* Logout automático por inactividad
+Desafíos potenciales:
+* Seguridad robusta sin complicar la UX
+* Gestión correcta de permisos en UI
+* Mantener rendimiento con validaciones constantes
+Resultados esperados:
+* Sistema de autenticación seguro
+* Control de acceso granular
+* Gestión de usuarios para administradores
+* Protección de rutas y funcionalidades sensibles
+Fase 7: Refinamiento y Optimización (1 semana)
+Actividades detalladas:
+1. Pruebas de usabilidad:
+* Sesiones con usuarios finales
+* Ajustes basados en feedback
+* Mejora de flujos complejos
+2. Optimización de rendimiento:
+* Code splitting para reducir bundles
+* Lazy loading de componentes pesados
+* Optimización de assets (imágenes, iconos)
+* Auditoría con Lighthouse
+3. Responsive design:
+* Verificación en múltiples dispositivos
+* Mejora de interacciones táctiles
+* Refinamiento de layouts móviles
+4. Accesibilidad:
+* Revisión de contraste
+* Navegación por teclado
+* Etiquetas ARIA apropiadas
+* Compatibilidad con lectores de pantalla
+Desafíos potenciales:
+* Balancear optimizaciones técnicas con experiencia de usuario
+* Mantener coherencia visual en todos los dispositivos
+* Implementar accesibilidad sin comprometer diseño
+Resultados esperados:
+* Aplicación pulida y profesional
+* Rendimiento optimizado
+* Experiencia consistente en todos los dispositivos
+* Niveles adecuados de accesibilidad
+Visión General y Próximos Pasos
+Este análisis detallado muestra que el plan cubre todos los aspectos críticos del desarrollo frontend para Masclet Imperi. Las 7 fases están diseñadas para construir progresivamente la aplicación, empezando por los cimientos y avanzando hacia funcionalidades más complejas.
+

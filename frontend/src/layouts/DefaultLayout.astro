@@ -1,0 +1,221 @@
+---
+// Importar componentes de layout
+import Navbar from '../components/layout/Navbar.astro';
+import Sidebar from '../components/layout/Sidebar.astro';
+import Footer from '../components/layout/Footer.astro';
+import AuthMiddleware from '../middlewares/AuthMiddleware';
+
+// Importar estilos globales
+import '../styles/global.css';
+import '../styles/lemon-squeezy.css';
+
+// Props que pueden ser pasados al layout
+interface Props {
+  title?: string;
+  userRole?: string;
+}
+
+// Valores por defecto
+const { 
+  title = "Masclet Imperi",
+  userRole = "usuario"
+} = Astro.props;
+
+// Path actual
+const currentPath = Astro.url.pathname;
+
+// Obtener el rol del usuario (a futuro desde el token almacenado)
+const role = Astro.cookies.get('userRole')?.value || userRole;
+---
+
+<!DOCTYPE html>
+<html lang="es" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Masclet Imperi - Sistema de Gestión Ganadera" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Masclet Imperi</title>
+  </head>
+  <body class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
+    <AuthMiddleware client:load currentPath={currentPath}>
+      <Navbar title={title} userRole={role} currentPath={currentPath} />
+      
+      <div class="flex flex-1 relative overflow-hidden">
+        <!-- Marca de agua con el logo -->
+        <div class="absolute inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.02] dark:opacity-[0.01]">
+          <img src="/images/logo_masclet.jpg" alt="Marca de agua Masclet Imperi" class="w-full max-w-4xl object-contain" />
+        </div>
+        
+        <Sidebar userRole={role} currentPath={currentPath} />
+        
+        <!-- Contenido principal con padding adaptativo -->
+        <main class="flex-1 p-3 sm:p-4 md:p-6 relative z-10 overflow-auto">
+          <!-- Contenedor con ancho máximo para mejorar legibilidad en pantallas grandes -->
+          <div class="max-w-7xl mx-auto">
+            <slot />
+          </div>
+        </main>
+      </div>
+      
+      <Footer />
+    </AuthMiddleware>
+
+    <!-- Botón flotante para mostrar el sidebar en móvil -->
+    <button id="mobile-sidebar-toggle" class="md:hidden fixed bottom-6 right-6 bg-primary text-white p-3 rounded-full shadow-lg z-30">
+      <span class="text-xl">☰</span>
+    </button>
+
+    <script is:inline>
+      // Script para el tema oscuro/claro
+      const theme = (() => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          return 'dark';
+        }
+        return 'light';
+      })();
+          
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // Script para el sidebar móvil
+      document.addEventListener('DOMContentLoaded', () => {
+        const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
+        const sidebar = document.querySelector('.masclet-sidebar');
+        
+        if (sidebarToggle && sidebar) {
+          sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('mobile-sidebar-active');
+            
+            // Cambiar el ícono según el estado
+            const toggleIcon = sidebarToggle.querySelector('span');
+            if (toggleIcon) {
+              toggleIcon.textContent = sidebar.classList.contains('mobile-sidebar-active') ? '✕' : '☰';
+            }
+          });
+          
+          // Cerrar sidebar al hacer clic fuera de él
+          document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('mobile-sidebar-active') && 
+                !sidebar.contains(e.target) && 
+                e.target !== sidebarToggle) {
+              sidebar.classList.remove('mobile-sidebar-active');
+              
+              // Restaurar ícono
+              const toggleIcon = sidebarToggle.querySelector('span');
+              if (toggleIcon) toggleIcon.textContent = '☰';
+            }
+          });
+        }
+      });
+    </script>
+
+    <script>
+      // Script para manejar la autenticación del lado del cliente
+      import { isAuthenticated, getCurrentUser } from '../services/authService';
+      
+      document.addEventListener('DOMContentLoaded', () => {
+        // Si estamos en una página protegida (no login) y no hay autenticación
+        if (window.location.pathname !== '/login' && !isAuthenticated()) {
+          // Redirigir al login con la URL actual como parámetro redirect
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  /* Estilos globales para la aplicación */
+  
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Clases de utilidad */
+  .text-shadow {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  /* Estilos para sidebar móvil */
+  .masclet-sidebar {
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  @media (max-width: 768px) {
+    .masclet-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      transform: translateX(-100%);
+      z-index: 50;
+    }
+    
+    .mobile-sidebar-active {
+      transform: translateX(0);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+  }
+  
+  /* Estilo para optimizar uso en campo con guantes */
+  @media (max-width: 640px) {
+    button, 
+    a, 
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-height: 44px; /* Tamaño mínimo recomendado para controles táctiles */
+    }
+    
+    select, 
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"] {
+      font-size: 16px; /* Evita zoom automático en iOS */
+      min-height: 44px;
+    }
+  }
+  
+  /* Modo de alto contraste para uso en exteriores */
+  @media (max-width: 640px) {
+    .high-contrast-mode {
+      --contrast-bg: #000000;
+      --contrast-text: #ffffff;
+      --contrast-primary: #ffcc00;
+    }
+    
+    .high-contrast-mode body {
+      background-color: var(--contrast-bg);
+      color: var(--contrast-text);
+    }
+    
+    .high-contrast-mode a,
+    .high-contrast-mode button {
+      color: var(--contrast-primary);
+    }
+  }
+</style>
