@@ -36,8 +36,7 @@ async def get_imports(
 @router.post("/csv", response_model=ImportResponse)
 async def import_csv(
     file: UploadFile = File(...),
-    description: Optional[str] = Form(None),
-    current_user: Optional[User] = None
+    description: Optional[str] = Form(None)
 ):
     """
     Importa datos desde un archivo CSV.
@@ -51,11 +50,10 @@ async def import_csv(
     #         detail="Solo los administradores pueden importar datos"
     #     )
     
-    # Para desarrollo, si no hay usuario autenticado, usamos un usuario por defecto
-    if current_user is None:
-        logger.warning("No hay usuario autenticado. Usando usuario por defecto para la importación.")
-        # Crear un usuario ficticio para desarrollo
-        current_user = User(username="admin", role=UserRole.ADMIN)
+    # Para desarrollo, usamos un usuario por defecto
+    logger.warning("Usando usuario por defecto para la importación en modo desarrollo.")
+    # Crear un usuario ficticio para desarrollo
+    current_user = User(username="admin", role=UserRole.ADMIN)
     
     logger.info(f"Iniciando importación CSV: {file.filename}, usuario: {current_user.username}")
         
