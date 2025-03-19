@@ -11,6 +11,7 @@
         "astro": "astro"
     },
     "dependencies": {
+        "@iconify-json/mdi": "^1.2.3",
         "axios": "^1.4.0",
         "bootstrap": "^5.3.3",
         "chart.js": "^4.3.0",

@@ -9,7 +9,7 @@ export interface Animal {
   explotacio_id: number;
   nom: string;
   genere: 'M' | 'F';
-  estado: 'OK' | 'DEF';
+  estat: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
   alletar: 'NO' | '1' | '2';  // NO, 1 ternero, 2 terneros (solo para vacas)
   pare_id?: number | null;
   pare_nom?: string | null;
@@ -27,7 +27,7 @@ export interface AnimalCreateDto {
   explotacio_id: number;
   nom: string;
   genere: 'M' | 'F';
-  estado: 'OK' | 'DEF';
+  estat: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
   alletar: 'NO' | '1' | '2';
   pare_id?: number | null;
   mare_id?: number | null;
@@ -42,7 +42,7 @@ export interface AnimalUpdateDto extends Partial<AnimalCreateDto> {}
 export interface AnimalFilters {
   explotacio_id?: number;
   genere?: 'M' | 'F';
-  estado?: 'OK' | 'DEF';
+  estat?: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
   alletar?: boolean | 'NO' | '1' | '2';
   quadra?: string;
   search?: string;
@@ -71,8 +71,8 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
     filteredAnimals = filteredAnimals.filter(a => a.genere === filters.genere);
   }
   
-  if (filters.estado !== undefined) {
-    filteredAnimals = filteredAnimals.filter(a => a.estado === filters.estado);
+  if (filters.estat !== undefined) {
+    filteredAnimals = filteredAnimals.filter(a => a.estat === filters.estat);
   }
   
   if (filters.alletar !== undefined) {
@@ -103,205 +103,244 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
 const animalService = {
   // Obtiene una lista paginada de animales con filtros opcionales
   async getAnimals(filters: AnimalFilters = {}): Promise<PaginatedResponse<Animal>> {
-    const page = filters.page || 1;
-    const limit = filters.limit || 10;
-    
-    // Preparar query params
-    const queryParams = new URLSearchParams();
-    if (filters.explotacio_id !== undefined) queryParams.append('explotacio_id', filters.explotacio_id.toString());
-    if (filters.genere !== undefined) queryParams.append('genere', filters.genere);
-    if (filters.estado !== undefined) queryParams.append('estado', filters.estado);
-    if (filters.alletar !== undefined) {
-      // Convertir boolean a valor esperado por la API
-      if (typeof filters.alletar === 'boolean') {
-        if (filters.alletar) {
-          // Si es true, no filtramos por alletar específico, solo que no sea NO
-          queryParams.append('alletar_not', 'NO');
-        }
-      } else {
-        // Si es un valor específico, lo pasamos tal cual
-        queryParams.append('alletar', filters.alletar);
-      }
-    }
-    if (filters.quadra !== undefined) queryParams.append('quadra', filters.quadra);
-    if (filters.search !== undefined) queryParams.append('search', filters.search);
-    queryParams.append('page', page.toString());
-    queryParams.append('limit', limit.toString());
-    
-    const queryString = queryParams.toString();
-    const endpoint = `${API_PATH}/animals${queryString ? `?${queryString}` : ''}`;
-    
     try {
-      // Intentar obtener datos reales
-      return await get<PaginatedResponse<Animal>>(endpoint);
-    } catch (error) {
-      console.warn('Error al obtener datos de animales del API, usando datos simulados:', error);
+      // Construir la URL con los parámetros de filtro
+      const queryParams = new URLSearchParams();
       
-      // Fallback a datos simulados
-      const filteredAnimals = getFilteredAnimals(filters);
-      const start = (page - 1) * limit;
-      const end = page * limit;
-      const paginatedItems = filteredAnimals.slice(start, end);
-      const totalPages = Math.ceil(filteredAnimals.length / limit);
+      if (filters.explotacio_id) {
+        queryParams.append('explotacio_id', filters.explotacio_id.toString());
+      }
       
-      return {
-        items: paginatedItems,
-        total: filteredAnimals.length,
-        page,
-        limit,
-        pages: totalPages
-      };
+      if (filters.genere) {
+        queryParams.append('genere', filters.genere);
+      }
+      
+      if (filters.estat) {
+        queryParams.append('estat', filters.estat);
+      }
+      
+      if (filters.alletar && filters.alletar !== 'NO') {
+        queryParams.append('alletar', filters.alletar.toString());
+      }
+      
+      if (filters.quadra) {
+        queryParams.append('quadra', filters.quadra);
+      }
+      
+      if (filters.search) {
+        queryParams.append('search', filters.search);
+      }
+      
+      if (filters.page) {
+        queryParams.append('page', filters.page.toString());
+      }
+      
+      if (filters.limit) {
+        queryParams.append('limit', filters.limit.toString());
+      }
+      
+      const endpoint = `${API_PATH}/animals?${queryParams.toString()}`;
+      
+      // Intentar obtener datos de la API
+      try {
+        return await get<PaginatedResponse<Animal>>(endpoint);
+      } catch (error) {
+        console.error('Error al obtener animales de la API:', error);
+        
+        // Devolver datos simulados para desarrollo
+        const filteredAnimals = getFilteredAnimals(filters);
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        
+        return {
+          items: filteredAnimals.slice(startIndex, endIndex),
+          total: filteredAnimals.length,
+          page: page,
+          limit: limit,
+          pages: Math.ceil(filteredAnimals.length / limit)
+        };
+      }
+    } catch (err) {
+      console.error('Error en getAnimals:', err);
+      throw err;
     }
   },
   
   // Obtiene un animal por su ID
   async getAnimalById(id: number): Promise<Animal> {
-    const endpoint = `${API_PATH}/animals/${id}`;
-    
     try {
-      // Intentar obtener datos reales
-      return await get<Animal>(endpoint);
-    } catch (error) {
-      console.warn(`Error al obtener animal con ID ${id} del API, usando datos simulados:`, error);
+      const endpoint = `${API_PATH}/animals/${id}`;
+      const animal = await get<Animal>(endpoint);
       
-      // Fallback a datos simulados
+      // Asegurarse de que los campos estén correctamente formateados
+      return {
+        ...animal,
+        estat: animal.estat || 'ACT',  // Asegurar que estat esté definido
+        alletar: animal.alletar || 'NO'  // Asegurar que alletar esté definido
+      };
+    } catch (error) {
+      console.error(`Error al obtener animal con ID ${id}:`, error);
+      
+      // Devolver datos simulados para desarrollo
       const mockAnimal = mockAnimals.find(a => a.id === id);
-      if (!mockAnimal) {
-        throw new Error(`Animal con ID ${id} no encontrado`);
+      if (mockAnimal) {
+        return {
+          ...mockAnimal,
+          estat: mockAnimal.estat || 'ACT',  // Asegurar que estat esté definido
+          alletar: mockAnimal.alletar || 'NO'  // Asegurar que alletar esté definido
+        };
       }
       
-      return mockAnimal;
+      throw new Error(`No se encontró el animal con ID ${id}`);
     }
   },
   
   // Crea un nuevo animal
   async createAnimal(animalData: AnimalCreateDto): Promise<Animal> {
-    const endpoint = `${API_PATH}/animals`;
-    
     try {
-      // Intentar crear en API real
+      const endpoint = `${API_PATH}/animals`;
       return await post<Animal>(endpoint, animalData);
     } catch (error) {
-      console.warn('Error al crear animal en API, usando simulación:', error);
+      console.error('Error al crear animal:', error);
       
-      // Crear respuesta simulada
-      const newId = Math.max(...mockAnimals.map(a => a.id)) + 1;
-      const now = new Date().toISOString();
-      
-      const mockResponse: Animal = {
-        id: newId,
+      // Simular creación para desarrollo
+      const newAnimal: Animal = {
+        id: Math.max(...mockAnimals.map(a => a.id)) + 1,
         ...animalData,
-        created_at: now,
-        updated_at: now
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
-      return mockResponse;
+      mockAnimals.push(newAnimal);
+      return newAnimal;
     }
   },
   
   // Actualiza un animal existente
   async updateAnimal(id: number, animalData: AnimalUpdateDto): Promise<Animal> {
-    const endpoint = `${API_PATH}/animals/${id}`;
-    
     try {
-      // Intentar actualizar en API real
+      const endpoint = `${API_PATH}/animals/${id}`;
       return await put<Animal>(endpoint, animalData);
     } catch (error) {
-      console.warn(`Error al actualizar animal con ID ${id} en API, usando simulación:`, error);
+      console.error(`Error al actualizar animal con ID ${id}:`, error);
       
-      // Buscar en datos simulados
-      const mockAnimal = mockAnimals.find(a => a.id === id);
-      if (!mockAnimal) {
-        throw new Error(`Animal con ID ${id} no encontrado`);
+      // Simular actualización para desarrollo
+      const animalIndex = mockAnimals.findIndex(a => a.id === id);
+      if (animalIndex === -1) {
+        throw new Error(`No se encontró el animal con ID ${id}`);
       }
       
-      // Crear respuesta simulada con datos actualizados
-      const mockResponse: Animal = {
-        ...mockAnimal,
+      mockAnimals[animalIndex] = {
+        ...mockAnimals[animalIndex],
         ...animalData,
         updated_at: new Date().toISOString()
       };
       
-      return mockResponse;
+      return mockAnimals[animalIndex];
     }
   },
   
   // Elimina un animal (marcado como DEF)
   async deleteAnimal(id: number): Promise<void> {
-    const endpoint = `${API_PATH}/animals/${id}`;
-    
     try {
-      // Intentar eliminar en API real
-      return await del(endpoint);
+      const endpoint = `${API_PATH}/animals/${id}`;
+      await del(endpoint);
     } catch (error) {
-      console.warn(`Mock: Eliminando animal con ID ${id}`);
-      return Promise.resolve();
+      console.error(`Error al eliminar animal con ID ${id}:`, error);
+      
+      // Simular eliminación para desarrollo
+      const animalIndex = mockAnimals.findIndex(a => a.id === id);
+      if (animalIndex !== -1) {
+        mockAnimals.splice(animalIndex, 1);
+      }
     }
   },
   
   // Da de baja a un animal (cambia estado a DEF)
   async deactivateAnimal(id: number): Promise<Animal> {
-    return this.updateAnimal(id, { estado: 'DEF' });
+    return this.updateAnimal(id, { estat: 'DEF' });
   },
   
   // Obtiene los posibles padres (machos) para selección en formularios
   async getPotentialFathers(explotacioId: number): Promise<Animal[]> {
-    // Filtrar machos activos de la misma explotación
-    const response = await this.getAnimals({
-      explotacio_id: explotacioId,
-      genere: 'M',
-      estado: 'OK',
-      limit: 100 // Obtener más resultados para tener buena selección
-    });
-    
-    return response.items;
+    try {
+      const endpoint = `${API_PATH}/animals/potential-fathers?explotacio_id=${explotacioId}`;
+      return await get<Animal[]>(endpoint);
+    } catch (error) {
+      console.error('Error al obtener potenciales padres:', error);
+      
+      // Devolver datos simulados para desarrollo
+      return mockAnimals.filter(a => a.genere === 'M' && a.estat === 'ACT' && a.explotacio_id === explotacioId);
+    }
   },
   
   // Obtiene las posibles madres (hembras) para selección en formularios
   async getPotentialMothers(explotacioId: number): Promise<Animal[]> {
-    // Filtrar hembras activas de la misma explotación
-    const response = await this.getAnimals({
-      explotacio_id: explotacioId,
-      genere: 'F',
-      estado: 'OK',
-      limit: 100 // Obtener más resultados para tener buena selección
-    });
-    
-    return response.items;
+    try {
+      const endpoint = `${API_PATH}/animals/potential-mothers?explotacio_id=${explotacioId}`;
+      return await get<Animal[]>(endpoint);
+    } catch (error) {
+      console.error('Error al obtener potenciales madres:', error);
+      
+      // Devolver datos simulados para desarrollo
+      return mockAnimals.filter(a => a.genere === 'F' && a.estat === 'ACT' && a.explotacio_id === explotacioId);
+    }
   },
   
   // Utilidades para iconos y visualización
   getAnimalIcon(animal: Animal): string {
-    if (!animal) return '🐄';
+    if (!animal) return '🐂';
     
-    // Determinar el icono según género, estado y si está amamantando
-    if (animal.estado === 'DEF') return '⚰️';
+    if (animal.estat === 'DEF') return '⚰️';
     
-    if (animal.genere === 'M') {
-      return '🐂'; // Toro
-    } else {
-      // Vacas
-      if (animal.alletar === '1') return '🍼'; // Amamantando 1
-      if (animal.alletar === '2') return '🥛'; // Amamantando 2
-      return '🐄'; // Vaca normal
-    }
+    if (animal.genere === 'M') return '🐂';
+    
+    // Para hembras, depende de si está amamantando
+    if (animal.alletar === 'NO') return '🐄';
+    if (animal.alletar === '1') return '🐄👶';
+    if (animal.alletar === '2') return '🐄👶👶';
+    
+    return '🐄';
   },
   
-  getAnimalStatusClass(estado: string): string {
-    return estado === 'OK' 
-      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+  getAnimalStatusClass(estat: string): string {
+    switch (estat) {
+      case 'ACT': return 'bg-green-100 text-green-800';
+      case 'DEF': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   },
   
   // Obtiene texto para alletar
   getAlletarText(alletar: string): string {
-    switch(alletar) {
+    switch (alletar) {
       case 'NO': return 'No amamantando';
-      case '1': return 'Amamantando 1 cría';
-      case '2': return 'Amamantando 2 crías';
-      default: return 'No especificado';
+      case '1': return 'Amamantando 1 ternero';
+      case '2': return 'Amamantando 2 terneros';
+      default: return 'Desconocido';
+    }
+  },
+
+  // Obtiene todas las explotaciones para selectores
+  async getAllExplotaciones() {
+    try {
+      const endpoint = `${API_PATH}/explotacions?limit=100`;
+      const response = await get<any>(endpoint);
+      return response.items || [];
+    } catch (error) {
+      console.error('Error al obtener todas las explotaciones:', error);
+      
+      // Devolver datos simulados para desarrollo
+      return [
+        { id: 1, nombre: 'Explotación 1', codigo: 'EXP001' },
+        { id: 2, nombre: 'Explotación 2', codigo: 'EXP002' },
+        { id: 3, nombre: 'Explotación 3', codigo: 'EXP003' }
+      ];
     }
   }
 };
 
 export default animalService;
+export { getFilteredAnimals };

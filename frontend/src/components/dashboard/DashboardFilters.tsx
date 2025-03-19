@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Row, Col, Button } from 'react-bootstrap';
+import { Button, Input, Card } from '../ui';
 
 interface DashboardFiltersProps {
   onApplyFilters: (filters: {
@@ -54,57 +54,68 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   return (
-    <div className="mb-4 p-3 border rounded bg-light">
-      <h5 className="mb-3">Filtros</h5>
-      <Form>
-        <Row className="mb-3">
-          <Col md={4}>
-            <Form.Group>
-              <Form.Label>Explotación</Form.Label>
-              <Form.Select
-                value={explotacionId || ''}
-                onChange={(e) => setExplotacionId(e.target.value ? Number(e.target.value) : undefined)}
-              >
-                <option value="">Todas las explotaciones</option>
-                {explotaciones.map((explotacion) => (
-                  <option key={explotacion.id} value={explotacion.id}>
-                    {explotacion.nombre}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-          <Col md={4}>
-            <Form.Group>
-              <Form.Label>Fecha de inicio</Form.Label>
-              <Form.Control
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </Form.Group>
-          </Col>
-          <Col md={4}>
-            <Form.Group>
-              <Form.Label>Fecha de fin</Form.Label>
-              <Form.Control
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <div className="d-flex justify-content-end">
-          <Button variant="outline-secondary" className="me-2" onClick={handleReset}>
+    <Card className="mb-6">
+      <div className="p-4">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Filtros</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Explotación
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              value={explotacionId || ''}
+              onChange={(e) => setExplotacionId(e.target.value ? Number(e.target.value) : undefined)}
+            >
+              <option value="">Todas las explotaciones</option>
+              {explotaciones.map((explotacion) => (
+                <option key={explotacion.id} value={explotacion.id}>
+                  {explotacion.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Fecha de inicio
+            </label>
+            <Input
+              name="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Fecha de fin
+            </label>
+            <Input
+              name="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-3">
+          <Button 
+            variant="secondary" 
+            onClick={handleReset}
+          >
             Restablecer
           </Button>
-          <Button variant="primary" onClick={handleApplyFilters}>
+          <Button 
+            variant="primary" 
+            onClick={handleApplyFilters}
+          >
             Aplicar filtros
           </Button>
         </div>
-      </Form>
-    </div>
+      </div>
+    </Card>
   );
 };
 

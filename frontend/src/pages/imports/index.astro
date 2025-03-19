@@ -1,6 +1,6 @@
 ---
 // Importar el layout
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 import ImportForm from '../../components/imports/ImportForm';
 import ImportHistory from '../../components/imports/ImportHistory';
 
@@ -9,44 +9,166 @@ const title = "Importación de Datos";
 const userRole = "administrador"; // Simulación de rol
 ---
 
-<DefaultLayout title={title} userRole={userRole}>
+<MainLayout title={title} userRole={userRole} currentPath="/imports">
   <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">{title}</h1>
-    <p class="text-gray-600 dark:text-dark-text-secondary">Importa datos masivos desde archivos CSV</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
+    <p class="text-sm md:text-base text-gray-600 dark:text-gray-300">Importa datos masivos desde archivos CSV</p>
   </div>
 
-  <div class="mb-8">
+  <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
     <!-- Importación de Animales -->
-    <ImportForm client:load />
+    <div class="import-container">
+      <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Importar Animales</h2>
+      <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4">Selecciona un archivo CSV con el formato correcto para importar animales al sistema.</p>
+      
+      <!-- Botones de acción para importación - Reorganizados según la imagen -->
+      <div class="flex flex-wrap justify-between mb-6">
+        <!-- Grupo de botones izquierda -->
+        <div class="flex flex-wrap gap-3 mb-3 sm:mb-0">
+          <a href="/templates/plantilla_animales.csv" download class="import-btn download-btn">
+            <span class="icon">📥</span>
+            <span class="text">Descargar Plantilla</span>
+          </a>
+          
+          <button id="reset-import" class="import-btn reset-btn">
+            <span class="icon">🔄</span>
+            <span class="text">Reiniciar</span>
+          </button>
+        </div>
+        
+        <!-- Grupo de botones derecha -->
+        <div class="flex flex-wrap gap-3">
+          <button id="direct-import" class="import-btn direct-btn">
+            <span class="icon">📤</span>
+            <span class="text">Importación Directa</span>
+          </button>
+          
+          <button id="import-btn" class="import-btn import-action-btn">
+            <span class="icon">✅</span>
+            <span class="text">Importar</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Componente React para el formulario de importación -->
+      <ImportForm client:load />
+    </div>
   </div>
 
   <!-- Historial de Importaciones -->
-  <div class="mt-8">
+  <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+    <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Historial de Importaciones</h2>
     <ImportHistory client:load refreshTrigger={0} />
   </div>
+</MainLayout>
 
-  <script>
-    // Script para manejar la actualización del historial después de una importación
-    document.addEventListener('DOMContentLoaded', () => {
-      const importForm = document.querySelector('import-form');
-      const importHistory = document.querySelector('import-history');
-      
-      // Función para actualizar el historial
-      const refreshHistory = () => {
-        if (importHistory) {
-          // Disparar un evento para actualizar el historial
-          const event = new CustomEvent('refresh-history');
-          importHistory.dispatchEvent(event);
-        }
-      };
-      
-      // Escuchar eventos de importación completada
-      if (importForm) {
-        importForm.addEventListener('import-complete', () => {
-          // Esperar un momento para que el backend procese la importación
-          setTimeout(refreshHistory, 1000);
-        });
+<style>
+  /* Estilos mejorados para los botones de importación */
+  .import-btn {
+    @apply px-4 py-2.5 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+    @apply flex items-center justify-center min-w-[140px] border-2 shadow-sm;
+    @apply md:min-w-[160px] md:text-base;
+  }
+  
+  .import-btn .icon {
+    @apply mr-2 text-lg;
+  }
+  
+  .import-btn .text {
+    @apply font-medium;
+  }
+  
+  /* Botón de descarga */
+  .download-btn {
+    @apply bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100;
+    @apply dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800/50;
+  }
+  
+  /* Botón de reinicio */
+  .reset-btn {
+    @apply bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100;
+    @apply dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700;
+  }
+  
+  /* Botón de importación directa */
+  .direct-btn {
+    @apply bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100;
+    @apply dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 dark:hover:bg-purple-800/50;
+  }
+  
+  /* Botón de importar */
+  .import-action-btn {
+    @apply bg-green-50 text-green-700 border-green-300 hover:bg-green-100;
+    @apply dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800/50;
+  }
+  
+  /* Estilos antiguos mantenidos por compatibilidad */
+  .btn {
+    @apply px-3 py-2 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/80 focus:ring-primary;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+  
+  .btn-info {
+    @apply bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500;
+  }
+  
+  .btn-outline {
+    @apply bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700;
+  }
+</style>
+
+<script>
+  // Script para manejar la actualización del historial después de una importación
+  document.addEventListener('DOMContentLoaded', () => {
+    const importForm = document.querySelector('import-form');
+    const importHistory = document.querySelector('import-history');
+    
+    // Botones de acción
+    const resetBtn = document.getElementById('reset-import');
+    const directImportBtn = document.getElementById('direct-import');
+    const importBtn = document.getElementById('import-btn');
+    
+    // Función para actualizar el historial
+    const refreshHistory = () => {
+      if (importHistory) {
+        // Disparar un evento para actualizar el historial
+        const event = new CustomEvent('refresh-history');
+        importHistory.dispatchEvent(event);
       }
-    });
-  </script>
-</DefaultLayout>
+    };
+    
+    // Escuchar eventos de importación completada
+    if (importForm) {
+      importForm.addEventListener('import-complete', () => {
+        // Esperar un momento para que el backend procese la importación
+        setTimeout(refreshHistory, 1000);
+      });
+    }
+    
+    // Conectar botones con el componente React
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('reset-import-form'));
+      });
+    }
+    
+    if (directImportBtn) {
+      directImportBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('direct-import'));
+      });
+    }
+    
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('import-animals'));
+      });
+    }
+  });
+</script>

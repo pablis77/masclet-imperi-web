@@ -1,13 +1,33 @@
 import React from 'react';
 import Modal from './Modal';
+import { BaseProps } from './types';
 
-const PasswordErrorModal = ({ isOpen, onClose, attempts = 1 }) => {
+interface PasswordErrorModalProps extends BaseProps {
+  isOpen: boolean;
+  onClose: () => void;
+  attempts?: number;
+}
+
+/**
+ * Modal para mostrar errores de contraseña
+ * 
+ * @param isOpen - Estado que controla si el modal está abierto
+ * @param onClose - Función para cerrar el modal
+ * @param attempts - Número de intentos fallidos (por defecto: 1)
+ */
+const PasswordErrorModal: React.FC<PasswordErrorModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  attempts = 1,
+  className = '' 
+}) => {
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Contraseña incorrecta"
       size="md"
+      className={className}
     >
       <div className="text-center">
         <div className="mb-4">

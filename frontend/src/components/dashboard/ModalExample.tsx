@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import PasswordErrorModal from '../common/PasswordErrorModal';
+import { PasswordErrorModal } from '../ui';
 
-const ModalExample = () => {
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordAttempts, setPasswordAttempts] = useState(1);
+/**
+ * Componente de ejemplo que muestra los diferentes tipos de modales disponibles
+ */
+const ModalExample: React.FC = () => {
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
+  const [passwordAttempts, setPasswordAttempts] = useState<number>(1);
 
   const handleShowPasswordError = () => {
     setIsPasswordModalOpen(true);

@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
+import icon from 'astro-icon';
 
 export default defineConfig({
     // Directorio base donde se servirá la aplicación (si es en subpath)
@@ -28,6 +29,12 @@ export default defineConfig({
         tailwind({
             // Configurar con archivo personalizado
             config: { path: './tailwind.config.mjs' },
+        }),
+        // Integración con astro-icon
+        icon({
+            include: {
+                mdi: ['*']
+            }
         }),
     ],
 

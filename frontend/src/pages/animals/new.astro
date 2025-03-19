@@ -1,8 +1,8 @@
 ---
 // Importar el layout y componentes necesarios
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 import AnimalForm from '../../components/animals/AnimalForm';
-import { getAllExplotaciones } from '../../services/explotacionService';
+import animalService from '../../services/animalService';
 
 // EN DESARROLLO: No realizamos verificaciones de permisos
 // Simulamos siempre estar autenticados como administrador
@@ -15,30 +15,36 @@ let error = null;
 
 try {
   // Obtener listado de explotaciones para el selector
-  explotaciones = await getAllExplotaciones();
+  explotaciones = await animalService.getAllExplotaciones();
 } catch (err) {
   console.error('Error al obtener explotaciones:', err);
-  error = 'No se pudieron cargar las explotaciones necesarias para crear un animal';
+  // Simulamos datos para desarrollo
+  explotaciones = [
+    { id: 1, nombre: 'Explotación Norte' },
+    { id: 2, nombre: 'Explotación Sur' }
+  ];
+  // error = 'No se pudieron cargar las explotaciones necesarias para crear un animal';
 }
 
 // Título de la página
 const title = 'Registrar Nuevo Animal';
 ---
 
-<DefaultLayout title={title} userRole={userRole}>
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
   <!-- Encabezado con botón de volver -->
-  <div class="flex items-center mb-6">
-    <a href="/animals" class="btn btn-outline-secondary mr-4 flex items-center">
-      <span class="mr-1">←</span> Volver al listado
-    </a>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">
-      {title}
-    </h1>
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href="/animals" class="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
+        ← Volver al listado
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
+    <p class="text-gray-600 dark:text-gray-300">Completa el formulario para registrar un nuevo animal en el sistema</p>
   </div>
 
   <!-- Mensaje de error -->
   {error && (
-    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 dark:bg-red-900 dark:border-red-700 dark:text-red-100">
       <p>{error}</p>
       <p>Vuelve al <a href="/animals" class="underline">listado de animales</a></p>
     </div>
@@ -46,27 +52,168 @@ const title = 'Registrar Nuevo Animal';
 
   <!-- Formulario de creación -->
   {!error && (
-    <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
-      <AnimalForm 
-        client:load 
-        explotaciones={explotaciones}
-        isEditMode={false}
-        onSuccess={() => {
-          // Redireccionar al listado después de crear
-          window.location.href = '/animals';
-        }}
-        onCancel={() => {
-          // Volver al listado
-          window.location.href = '/animals';
-        }}
-      />
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
+      <form id="new-animal-form" class="space-y-6">
+        <!-- Datos básicos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Código *
+            </label>
+            <input 
+              type="text" 
+              name="codigo" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              placeholder="Código del animal"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nombre *
+            </label>
+            <input 
+              type="text" 
+              name="nombre" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              placeholder="Nombre del animal"
+            />
+          </div>
+        </div>
+
+        <!-- Datos de identificación -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Sexo *
+            </label>
+            <select 
+              name="sexo" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            >
+              <option value="">Seleccionar</option>
+              <option value="M">Macho</option>
+              <option value="H">Hembra</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Fecha de Nacimiento *
+            </label>
+            <input 
+              type="date" 
+              name="fecha_nacimiento" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Raza *
+            </label>
+            <select 
+              name="raza" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            >
+              <option value="">Seleccionar</option>
+              <option value="1">Limusina</option>
+              <option value="2">Charolesa</option>
+              <option value="3">Angus</option>
+              <option value="4">Otra</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Datos de explotación -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Explotación *
+            </label>
+            <select 
+              name="explotacion" 
+              required
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            >
+              <option value="">Seleccionar</option>
+              {explotaciones.map(exp => (
+                <option value={exp.id}>{exp.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Cuadra
+            </label>
+            <input 
+              type="text" 
+              name="cuadra" 
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              placeholder="Cuadra o ubicación"
+            />
+          </div>
+        </div>
+
+        <!-- Datos adicionales -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Observaciones
+          </label>
+          <textarea 
+            name="observaciones" 
+            rows="3" 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            placeholder="Observaciones adicionales"
+          ></textarea>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex justify-end gap-3">
+          <a 
+            href="/animals"
+            class="px-6 py-3 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 rounded-md transition-colors"
+          >
+            Cancelar
+          </a>
+          <button 
+            type="submit"
+            class="px-6 py-3 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors"
+          >
+            Crear Animal
+          </button>
+        </div>
+      </form>
     </div>
   )}
-</DefaultLayout>
+</MainLayout>
 
 <script>
-  // Script para manejar otras interacciones, si son necesarias
+  // Script para manejar el envío del formulario
   document.addEventListener('DOMContentLoaded', () => {
-    // Futuras funcionalidades
+    const form = document.getElementById('new-animal-form');
+    
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // En desarrollo, simulamos éxito
+        try {
+          // Aquí iría la lógica real para enviar los datos al servidor
+          console.log('Enviando datos del nuevo animal...');
+          
+          // Simulamos un tiempo de procesamiento
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Redirigir al listado con mensaje de éxito
+          window.location.href = '/animals?success=true&message=Animal+creado+correctamente';
+        } catch (error) {
+          console.error('Error al crear animal:', error);
+          alert('Error al crear el animal. Inténtalo de nuevo.');
+        }
+      });
+    }
   });
 </script>

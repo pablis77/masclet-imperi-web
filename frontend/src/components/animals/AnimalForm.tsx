@@ -22,7 +22,7 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
     explotacio_id: 0,
     nom: '',
     genere: 'M',
-    estado: 'OK',
+    estat: 'ACT',
     alletar: 'NO',
   });
   
@@ -44,7 +44,7 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
             explotacio_id: animalData.explotacio_id,
             nom: animalData.nom,
             genere: animalData.genere,
-            estado: animalData.estado,
+            estat: animalData.estat,
             alletar: animalData.alletar,
             pare_id: animalData.pare_id,
             mare_id: animalData.mare_id,
@@ -259,13 +259,13 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Estado *
             </label>
             <select
-              name="estado"
-              value={formData.estado}
+              name="estat"
+              value={formData.estat}
               onChange={handleInputChange}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
             >
-              <option value="OK">Activo</option>
+              <option value="ACT">Activo</option>
               <option value="DEF">Baja</option>
             </select>
           </div>
@@ -398,7 +398,7 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             {submitting ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear'}
           </button>

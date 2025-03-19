@@ -1,56 +1,217 @@
 ---
 // Importar el layout
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 
 // Definir título y rol de usuario
 const title = "Explotaciones";
 const userRole = "administrador"; // Simulación de rol
 ---
 
-<DefaultLayout title={title} userRole={userRole}>
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">{title}</h1>
-    <p class="text-gray-600 dark:text-dark-text-secondary">Gestión de explotaciones ganaderas</p>
-  </div>
+<MainLayout title={title} userRole={userRole} currentPath="/explotacions">
+  <div class="container mx-auto px-4 py-4 sm:py-6">
+    <div class="mb-4 sm:mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Gestión de explotaciones ganaderas</p>
+    </div>
 
-  <div class="mb-6 flex justify-between items-center">
-    <div class="flex space-x-2">
-      <button class="btn btn-primary flex items-center">
-        <span class="mr-1">➕</span> Nueva Explotación
-      </button>
-    </div>
-    <div>
-      <span class="text-sm text-gray-500 dark:text-dark-text-secondary">Total: <span class="font-semibold">0</span> explotaciones</span>
-    </div>
-  </div>
-
-  <!-- Listado de explotaciones (cards) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <!-- Placeholder para cuando no hay explotaciones -->
-    <div class="col-span-full py-10 text-center text-gray-500 dark:text-dark-text-secondary bg-white dark:bg-dark-card rounded-lg shadow border border-gray-100 dark:border-dark-border">
-      No hay explotaciones registradas. Agrega una para comenzar.
-    </div>
-    
-    <!-- Template para cuando haya explotaciones -->
-    <!--
-    <div class="bg-white dark:bg-dark-card rounded-lg shadow overflow-hidden border border-gray-100 dark:border-dark-border">
-      <div class="p-5">
-        <h3 class="text-lg font-semibold mb-2 dark:text-dark-text">Nombre Explotación</h3>
-        <div class="flex items-center space-x-4 text-sm mb-4 dark:text-dark-text-secondary">
-          <div class="flex items-center">
-            <span class="mr-2">🐄</span>
-            <span>15 animales</span>
-          </div>
-          <div class="flex items-center">
-            <span class="mr-2">🐣</span>
-            <span>7 partos</span>
+    <!-- Buscador y filtros -->
+    <div class="mb-4 sm:mb-6 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        <div class="flex-grow">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+              🔍
+            </span>
+            <input 
+              id="search-explotacion"
+              type="text" 
+              placeholder="Buscar explotación..." 
+              class="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
         </div>
-        <div class="flex justify-end">
-          <button class="btn btn-primary text-sm">Ver detalles</button>
+        <div class="flex flex-wrap items-center gap-2 mt-3 sm:mt-0">
+          <select 
+            id="region-filter"
+            class="text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Todas las regiones</option>
+            <option value="norte">Norte</option>
+            <option value="sur">Sur</option>
+            <option value="este">Este</option>
+            <option value="oeste">Oeste</option>
+          </select>
+          <button 
+            id="filter-button"
+            class="bg-primary text-white px-3 py-2 text-sm rounded-md hover:bg-primary/80 transition-colors"
+          >
+            Filtrar
+          </button>
         </div>
       </div>
     </div>
-    -->
+
+    <!-- Información y estadísticas -->
+    <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+      <div>
+        <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total: <span id="total-count" class="font-semibold">0</span> explotaciones</span>
+      </div>
+      <div class="flex space-x-2">
+        <button class="flex items-center text-xs sm:text-sm text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
+          <span class="mr-1">↓</span> Exportar datos
+        </button>
+      </div>
+    </div>
+
+    <!-- Listado de explotaciones (cards) -->
+    <div id="explotacions-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <!-- Placeholder para cuando no hay explotaciones -->
+      <div id="no-results" class="col-span-full py-8 sm:py-10 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+        <div class="flex flex-col items-center justify-center">
+          <div class="text-3xl sm:text-4xl mb-3 sm:mb-4">🏡</div>
+          <p class="mb-2 text-sm sm:text-base">No hay explotaciones registradas.</p>
+          <p class="text-xs sm:text-sm">Las explotaciones se crearán al registrar un animal o al importar datos.</p>
+        </div>
+      </div>
+      
+      <!-- Template para cuando haya explotaciones (se llenará con JavaScript) -->
+    </div>
   </div>
-</DefaultLayout>
+</MainLayout>
+
+<script>
+  // Datos simulados para desarrollo
+  const explotacionesMock = [
+    {
+      id: 1,
+      nombre: "Explotación Norte",
+      codigo: "EXP-001",
+      region: "norte",
+      animales: 15,
+      partos: 7
+    },
+    {
+      id: 2,
+      nombre: "Explotación Sur",
+      codigo: "EXP-002",
+      region: "sur",
+      animales: 23,
+      partos: 12
+    },
+    {
+      id: 3,
+      nombre: "Explotación Este",
+      codigo: "EXP-003",
+      region: "este",
+      animales: 18,
+      partos: 9
+    },
+    {
+      id: 4,
+      nombre: "Explotación Oeste",
+      codigo: "EXP-004",
+      region: "oeste",
+      animales: 10,
+      partos: 4
+    },
+    {
+      id: 5,
+      nombre: "Explotación Central",
+      codigo: "EXP-005",
+      region: "norte",
+      animales: 30,
+      partos: 15
+    }
+  ];
+
+  // Función para cargar explotaciones
+  document.addEventListener('DOMContentLoaded', () => {
+    // Referencias a elementos DOM
+    const searchInput = document.getElementById('search-explotacion');
+    const regionFilter = document.getElementById('region-filter');
+    const filterButton = document.getElementById('filter-button');
+    const explotacionsContainer = document.getElementById('explotacions-container');
+    const noResults = document.getElementById('no-results');
+    const totalCount = document.getElementById('total-count');
+    
+    // Función para renderizar explotaciones
+    const renderExplotaciones = (explotaciones) => {
+      // Actualizar contador
+      totalCount.textContent = explotaciones.length;
+      
+      // Limpiar contenedor
+      explotacionsContainer.innerHTML = '';
+      
+      // Mostrar mensaje de no resultados si no hay explotaciones
+      if (explotaciones.length === 0) {
+        explotacionsContainer.appendChild(noResults);
+        return;
+      }
+      
+      // Renderizar cada explotación
+      explotaciones.forEach(explotacion => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow';
+        card.innerHTML = `
+          <div class="p-4">
+            <h3 class="text-base sm:text-lg font-semibold mb-2 text-gray-900 dark:text-white">${explotacion.nombre}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">Código: ${explotacion.codigo} • Región: ${explotacion.region.charAt(0).toUpperCase() + explotacion.region.slice(1)}</p>
+            <div class="flex items-center space-x-4 text-xs sm:text-sm mb-4 text-gray-700 dark:text-gray-300">
+              <div class="flex items-center">
+                <span class="mr-2">🐄</span>
+                <span>${explotacion.animales} animales</span>
+              </div>
+              <div class="flex items-center">
+                <span class="mr-2">🐣</span>
+                <span>${explotacion.partos} partos</span>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <a href="/explotacions/${explotacion.id}" class="bg-primary text-white px-3 py-2 rounded-md text-xs sm:text-sm hover:bg-primary/80 transition-colors">
+                Ver detalles
+              </a>
+            </div>
+          </div>
+        `;
+        explotacionsContainer.appendChild(card);
+      });
+    };
+    
+    // Función para filtrar explotaciones
+    const filtrarExplotaciones = () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const regionSelected = regionFilter.value.toLowerCase();
+      
+      const filteredExplotaciones = explotacionesMock.filter(explotacion => {
+        // Filtrar por término de búsqueda
+        const matchesSearch = 
+          explotacion.nombre.toLowerCase().includes(searchTerm) || 
+          explotacion.codigo.toLowerCase().includes(searchTerm) ||
+          explotacion.region.toLowerCase().includes(searchTerm);
+        
+        // Filtrar por región
+        const matchesRegion = regionSelected === '' || explotacion.region === regionSelected;
+        
+        return matchesSearch && matchesRegion;
+      });
+      
+      renderExplotaciones(filteredExplotaciones);
+    };
+    
+    // Event listeners
+    if (searchInput) {
+      searchInput.addEventListener('input', filtrarExplotaciones);
+    }
+    
+    if (filterButton) {
+      filterButton.addEventListener('click', filtrarExplotaciones);
+    }
+    
+    if (regionFilter) {
+      regionFilter.addEventListener('change', filtrarExplotaciones);
+    }
+    
+    // Cargar explotaciones iniciales
+    renderExplotaciones(explotacionesMock);
+  });
+</script>

@@ -9,7 +9,7 @@ export interface Animal {
   explotacio_id: number;
   nom: string;
   genere: 'M' | 'F';
-  estado: 'OK' | 'DEF';
+  estat: 'ACT' | 'DEF';
   alletar: 'NO' | '1' | '2';
   pare_id?: number | null;
   pare_nom?: string | null;
@@ -89,7 +89,7 @@ export const mockAnimals: Animal[] = [
     nom: 'Lucero',
     explotacio_id: 1,
     genere: 'M',
-    estado: 'OK',
+    estat: 'ACT',
     alletar: 'NO',
     pare_id: null,
     mare_id: null,
@@ -105,7 +105,7 @@ export const mockAnimals: Animal[] = [
     nom: 'Estrella',
     explotacio_id: 1,
     genere: 'F',
-    estado: 'OK',
+    estat: 'ACT',
     alletar: '1',
     pare_id: 1,
     pare_nom: 'Lucero',
@@ -122,7 +122,7 @@ export const mockAnimals: Animal[] = [
     nom: 'Luna',
     explotacio_id: 2,
     genere: 'F',
-    estado: 'OK',
+    estat: 'ACT',
     alletar: '2',
     pare_id: null,
     mare_id: null,
@@ -138,7 +138,7 @@ export const mockAnimals: Animal[] = [
     nom: 'Tornado',
     explotacio_id: 2,
     genere: 'M',
-    estado: 'DEF',
+    estat: 'DEF',
     alletar: 'NO',
     pare_id: 1,
     pare_nom: 'Lucero',
@@ -156,7 +156,7 @@ export const mockAnimals: Animal[] = [
     nom: 'Trueno',
     explotacio_id: 1,
     genere: 'M',
-    estado: 'OK',
+    estat: 'ACT',
     alletar: 'NO',
     pare_id: null,
     mare_id: null,
@@ -383,8 +383,8 @@ export const mockDashboardData = {
   totalAnimals: mockAnimals.length,
   maleAnimals: mockAnimals.filter(a => a.genere === 'M').length,
   femaleAnimals: mockAnimals.filter(a => a.genere === 'F').length,
-  okAnimals: mockAnimals.filter(a => a.estado === 'OK').length,
-  defAnimals: mockAnimals.filter(a => a.estado === 'DEF').length,
+  okAnimals: mockAnimals.filter(a => a.estat === 'ACT').length,
+  defAnimals: mockAnimals.filter(a => a.estat === 'DEF').length,
   allettingAnimals: mockAnimals.filter(a => a.alletar !== 'NO').length,
   explotacionsCount: mockExplotacions.length,
   recentParts: mockParts.slice(0, 3).map(p => ({

@@ -1,420 +1,377 @@
 ---
-// Importar el layout y componentes necesarios
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
-import animalService, { getAnimalById } from '../../services/animalService';
-import { getAllExplotaciones } from '../../services/explotacionService';
-import { getPartsByAnimalId } from '../../services/partService';
-import { getCurrentUserRole } from '../../services/authService';
+// Importar el layout y componentes
+import MainLayout from '../../components/layout/MainLayout.astro';
+import animalService from '../../services/animalService';
 
-// Obtener el ID del animal desde los parámetros de la URL
+// Obtener el ID del animal de los parámetros de la URL
 const { id } = Astro.params;
-let animal: any = null;
-let explotacion: any = null;
-let parts: any[] = [];
-let error: string | null = null;
+
+// Definir título y rol de usuario
+const title = "Ficha de Animal";
+const userRole = "administrador"; // Simulación de rol
+
+// Variables para almacenar datos y estado
+let animal = null;
+let error = null;
+let loading = true;
 
 try {
-  if (id) {
-    // Obtener los datos del animal
-    animal = await getAnimalById(parseInt(id));
-    
-    // Obtener datos de su explotación
-    const explotaciones = await getAllExplotaciones();
-    explotacion = explotaciones.find(exp => exp.id === animal.explotacio_id);
-    
-    // Obtener historial de partos si es hembra
-    if (animal.genere === 'F') {
-      parts = await getPartsByAnimalId(parseInt(id));
-    }
+  if (!id || isNaN(parseInt(id))) {
+    throw new Error('ID de animal no válido');
   }
-} catch (err) {
-  console.error('Error al obtener datos del animal:', err);
-  error = 'No se pudo cargar la información del animal';
+
+  // Intentar cargar los datos del animal
+  console.log(`Intentando cargar animal con ID: ${id}`);
+  animal = await animalService.getAnimalById(parseInt(id));
+  console.log('Animal cargado:', animal);
+  
+  if (!animal) {
+    throw new Error('No se pudo encontrar el animal');
+  }
+  
+  loading = false;
+} catch (e) {
+  console.error('Error al cargar datos del animal:', e);
+  error = e.message || 'Error al cargar los datos del animal';
+  loading = false;
 }
 
-// Preparar el título de la página
-const title = animal ? `Animal: ${animal.nom}` : 'Detalle de Animal';
+// Variables para controlar pestañas
+const showPartosTab = animal && animal.genere === 'F'; // Solo mostrar pestaña de partos para hembras
 
-// EN DESARROLLO: Siempre simulamos estar autenticados como administrador
-// No hacemos comprobaciones de permisos
-const userRole = 'administrador';
-const isLoggedIn = true; 
-const canViewAnimals = true;
-const canEditAnimals = true;
-const canDeleteAnimals = true;
+// Obtener el icono del animal
+const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
 
-// Función para formatear fecha
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return 'No registrada';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-};
+// Obtener la clase CSS para el estado del animal
+const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 'bg-gray-100 text-gray-800';
 
-// Obtener icono según tipo de animal
-const getAnimalIcon = (animal: any) => {
-  if (!animal) return '🐄';
-  return animalService.getAnimalIcon(animal);
-};
-
-// Función para obtener clase de estado
-const getEstadoClass = (estado: string) => {
-  return animalService.getAnimalStatusClass(estado);
-};
-
-// Función para obtener el texto de alletar
-const getAlletarText = (alletar: string) => {
-  return animalService.getAlletarText(alletar);
-};
 ---
 
-<DefaultLayout title={title} userRole={userRole}>
-  <!-- Encabezado con botón de volver -->
-  <div class="flex items-center mb-6">
-    <a href="/animals" class="btn btn-outline-secondary mr-4 flex items-center">
-      <span class="mr-1">←</span> Volver al listado
-    </a>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text flex items-center">
-      {animal && (
-        <>
-          <span class="mr-2 text-3xl">{getAnimalIcon(animal)}</span>
-          {animal.nom}
-          <span class={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoClass(animal.estado)}`}>
-            {animal.estado === 'OK' ? 'Activo' : 'Baja'}
-          </span>
-        </>
-      )}
-    </h1>
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href="/animals" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+        <span class="mr-1">←</span> Volver al listado
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
+    <p class="text-gray-600 dark:text-gray-300">ID Animal: {id}</p>
   </div>
 
-  <!-- Mensaje de error -->
+  {loading && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center">
+      <div class="flex items-center space-x-2">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        <p>Cargando datos del animal...</p>
+      </div>
+    </div>
+  )}
+
   {error && (
-    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-      <p>{error}</p>
-      <p>Vuelve al <a href="/animals" class="underline">listado de animales</a></p>
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          ⚠️
+        </div>
+        <div class="ml-3">
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error</h3>
+          <div class="mt-2 text-red-700 dark:text-red-200">
+            <p>{error}</p>
+          </div>
+          <div class="mt-4">
+            <button 
+              id="retry-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              ↻ Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )}
 
-  <!-- Contenido principal -->
   {animal && (
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-      <!-- Tarjeta principal de información -->
-      <div class="col-span-1 md:col-span-8 bg-white dark:bg-dark-card rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-dark-text border-b pb-2">Información General</h2>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Explotación</p>
-            <p class="font-medium">{explotacion ? explotacion.nom : 'No especificada'}</p>
+    <>
+      <!-- Resumen del animal -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-6">
+          <!-- Icono y estado -->
+          <div class="flex flex-col items-center md:items-start">
+            <div class="text-6xl mb-3">{icon}</div>
+            <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
+              {animal.estat === 'ACT' ? 'Activo' : 'Baja'}
+            </span>
           </div>
           
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Género</p>
-            <p class="font-medium flex items-center">
-              <span class="mr-2">{animal.genere === 'M' ? '♂️' : '♀️'}</span>
-              {animal.genere === 'M' ? 'Macho' : 'Hembra'}
-            </p>
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Estado</p>
-            <p class="font-medium flex items-center">
-              <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getEstadoClass(animal.estado)} mr-2`}>
-                {animal.estado === 'OK' ? 'Activo' : 'Baja'}
-              </span>
-              {animal.estado === 'DEF' && (
-                <span class="text-lg">⚰️</span>
+          <!-- Información básica -->
+          <div class="flex-grow">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
+                <p class="font-medium">{animal.cod || 'No disponible'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+                <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+                <p class="font-medium">{animal.dob ? new Date(animal.dob).toLocaleDateString() : 'No disponible'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
+                <p class="font-medium">Explotación ID: {animal.explotacio_id}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
+                <p class="font-medium">{animal.quadra || 'No asignada'}</p>
+              </div>
+              {animal.genere === 'F' && (
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Amamantando</p>
+                  <p class="font-medium">{animalService.getAlletarText(animal.alletar)}</p>
+                </div>
               )}
-            </p>
+            </div>
           </div>
           
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Amamantando</p>
-            <p class="font-medium flex items-center">
-              {getAlletarText(animal.alletar)}
-              {animal.alletar !== 'NO' && (
-                <span class="ml-2 text-lg">{animal.alletar === '1' ? '🍼' : '🥛'}</span>
-              )}
-            </p>
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Código</p>
-            <p class="font-medium">{animal.cod || 'No asignado'}</p>
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Número de Serie</p>
-            <p class="font-medium">{animal.num_serie || 'No asignado'}</p>
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Cuadra</p>
-            <p class="font-medium">{animal.quadra || 'No asignada'}</p>
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Fecha de Nacimiento</p>
-            <p class="font-medium">{formatDate(animal.dob)}</p>
-          </div>
-        </div>
-        
-        <h3 class="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-dark-text border-b pb-2">Parentesco</h3>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Padre</p>
-            {animal.pare_id ? (
-              <a href={`/animals/${animal.pare_id}`} class="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center">
-                <span class="mr-2 text-lg">🐂</span>
-                {animal.pare_nom || `ID: ${animal.pare_id}`}
-              </a>
-            ) : (
-              <p class="font-medium">No registrado</p>
-            )}
-          </div>
-          
-          <div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Madre</p>
-            {animal.mare_id ? (
-              <a href={`/animals/${animal.mare_id}`} class="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center">
-                <span class="mr-2 text-lg">🐄</span>
-                {animal.mare_nom || `ID: ${animal.mare_id}`}
-              </a>
-            ) : (
-              <p class="font-medium">No registrada</p>
-            )}
-          </div>
-        </div>
-        
-        <div class="mt-6 pt-4 border-t">
-          <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Datos de registro</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <p>Creado: {formatDate(animal.created_at)}</p>
-            <p>Actualizado: {formatDate(animal.updated_at)}</p>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Acciones y tarjetas secundarias -->
-      <div class="col-span-1 md:col-span-4 space-y-6">
-        <!-- Tarjeta de acciones -->
-        <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-dark-text">Acciones</h2>
-          
-          <div class="space-y-3">
-            <a href={`/animals/edit/${animal.id}`} class="btn btn-primary block w-full text-center">
-              Editar Animal
+          <!-- Acciones -->
+          <div class="flex flex-col gap-2">
+            <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+              ↻ Actualizar
             </a>
-            {animal.genere === 'F' && animal.estado === 'OK' && (
-              <a href={`/animals/${animal.id}/registrar-parto`} class="btn btn-secondary block w-full text-center">
-                Registrar Parto
-              </a>
-            )}
-            {animal.estado === 'OK' ? (
-              <button id="changeEstadoBtn" data-animal-id={animal.id} class="btn btn-outline-warning block w-full text-center">
-                Dar de Baja
-              </button>
-            ) : (
-              <button id="reactivateBtn" data-animal-id={animal.id} class="btn btn-outline-success block w-full text-center">
-                Reactivar
-              </button>
-            )}
-          </div>
-        </div>
-        
-        <!-- Historial de partos (solo para hembras) -->
-        {animal.genere === 'F' && (
-          <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold text-gray-800 dark:text-dark-text">
-                Historial de Partos
-              </h2>
-              {animal.estado === 'OK' && (
-                <a href={`/animals/${animal.id}/registrar-parto`} class="text-sm text-primary hover:text-primary-dark">
-                  + Nuevo parto
-                </a>
-              )}
-            </div>
-            
-            {parts.length === 0 ? (
-              <div class="text-center py-8 border rounded-lg border-dashed border-gray-300 dark:border-dark-border">
-                <span class="text-3xl block mb-2">🐣</span>
-                <p class="text-gray-500 dark:text-dark-text-secondary text-sm">No hay partos registrados</p>
-                {animal.estado === 'OK' && (
-                  <a href={`/animals/${animal.id}/registrar-parto`} class="mt-3 inline-block text-sm text-primary hover:text-primary-dark">
-                    Registrar primer parto
-                  </a>
-                )}
-              </div>
-            ) : (
-              <div class="space-y-4">
-                {parts.map((part) => (
-                  <div class="border-b pb-3 last:border-b-0">
-                    <div class="flex justify-between items-center">
-                      <span class="font-medium">{formatDate(part.data)}</span>
-                      <span class="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-200">
-                        {part.cries.length} {part.cries.length === 1 ? 'cría' : 'crías'}
-                      </span>
-                    </div>
-                    {part.cries.length > 0 && (
-                      <div class="mt-2">
-                        <p class="text-sm text-gray-600 dark:text-dark-text-secondary">Crías:</p>
-                        <ul class="mt-1 space-y-1 divide-y divide-gray-100 dark:divide-dark-border">
-                          {part.cries.map((cria) => (
-                            <li class="pt-1 first:pt-0">
-                              <a href="/animals/${cria.id}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center">
-                                <span class="mr-2 text-lg">{cria.genere === 'M' ? '🐂' : '🐄'}</span>
-                                <span>{cria.nom}</span>
-                                <span class="ml-1 text-xs text-gray-500">({cria.genere === 'M' ? 'M' : 'H'})</span>
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        
-        <!-- Tarjeta de descendencia (para todos) -->
-        <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-dark-text">
-            Descendencia
-          </h2>
-          
-          <div id="descendenciaContainer" class="text-center py-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
-            <p class="text-sm text-gray-500 dark:text-dark-text-secondary mt-2">Cargando descendencia...</p>
           </div>
         </div>
       </div>
-    </div>
-  )}
-</DefaultLayout>
 
-<script define:vars={{ animalId: id }}>
-  document.addEventListener('DOMContentLoaded', () => {
-    const changeEstadoBtn = document.getElementById('changeEstadoBtn');
-    const reactivateBtn = document.getElementById('reactivateBtn');
-    const descendenciaContainer = document.getElementById('descendenciaContainer');
-    
-    // Función para cargar descendencia
-    const loadDescendencia = async () => {
-      if (!descendenciaContainer) return;
-      
-      try {
-        // Intentar obtener descendencia
-        const response = await fetch(`/api/v1/animals/${animalId}/descendants`);
-        
-        if (!response.ok) {
-          throw new Error('Error al cargar la descendencia');
-        }
-        
-        const data = await response.json();
-        
-        if (data.length === 0) {
-          descendenciaContainer.innerHTML = `
-            <div class="text-center py-4 border rounded-lg border-dashed border-gray-300 dark:border-dark-border">
-              <p class="text-gray-500 dark:text-dark-text-secondary text-sm">No hay descendencia registrada</p>
+      <!-- Pestañas de información detallada -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <!-- Pestañas de navegación -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700">
+          <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
+            Información Completa
+          </button>
+          {showPartosTab && (
+            <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+              Historial de Partos
+            </button>
+          )}
+          <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            Historial de Cambios
+          </button>
+        </div>
+
+        <!-- Contenido de pestañas -->
+        <div class="p-6">
+          <!-- Pestaña 1: Información Completa -->
+          <div id="content-info">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos de Identificación</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
+                    <p class="font-medium">{animal.cod || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Nombre</p>
+                    <p class="font-medium">{animal.nom}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Serie</p>
+                    <p class="font-medium">{animal.num_serie || 'No disponible'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos Generales</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+                    <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+                    <p class="font-medium">{animal.dob ? new Date(animal.dob).toLocaleDateString() : 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
+                    <p class="font-medium">{animal.estat === 'ACT' ? 'Activo' : 'Baja'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Ubicación</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
+                    <p class="font-medium">Explotación ID: {animal.explotacio_id}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
+                    <p class="font-medium">{animal.quadra || 'No asignada'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Parentesco</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Padre</p>
+                    <p class="font-medium">{animal.pare_nom || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Madre</p>
+                    <p class="font-medium">{animal.mare_nom || 'No disponible'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          `;
-          return;
-        }
-        
-        // Mostrar descendencia
-        let html = '<ul class="space-y-1 divide-y divide-gray-100 dark:divide-dark-border">';
-        
-        data.forEach(animal => {
-          const icon = animal.genere === 'M' ? '🐂' : '🐄';
-          const gender = animal.genere === 'M' ? 'M' : 'H';
-          
-          html += `
-            <li class="pt-1 first:pt-0">
-              <a href="/animals/${animal.id}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center">
-                <span class="mr-2 text-lg">${icon}</span>
-                <span>${animal.nom}</span>
-                <span class="ml-1 text-xs text-gray-500">(${gender})</span>
-              </a>
-            </li>
-          `;
-        });
-        
-        html += '</ul>';
-        descendenciaContainer.innerHTML = html;
-      } catch (error) {
-        console.error('Error cargando descendencia:', error);
-        descendenciaContainer.innerHTML = `
-          <div class="bg-red-50 p-3 rounded-lg text-center">
-            <p class="text-red-600 text-sm">Error al cargar la descendencia</p>
           </div>
-        `;
-      }
-    };
-    
-    // Cargar descendencia al iniciar
-    loadDescendencia();
-    
-    // Dar de baja al animal
-    if (changeEstadoBtn) {
-      changeEstadoBtn.addEventListener('click', async () => {
-        if (confirm('¿Estás seguro de que deseas dar de baja a este animal?')) {
-          try {
-            const animalId = changeEstadoBtn.getAttribute('data-animal-id');
-            const response = await fetch(`/api/v1/animals/${animalId}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ estado: 'DEF' }),
-            });
+
+          <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
+          {showPartosTab && (
+            <div id="content-partos" class="hidden">
+              <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos</h3>
+                <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Género</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ficha Ternero</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">10/01/2023</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">Macho</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Vivo</span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                        <a href="/animals/123" class="hover:underline">Ver ficha</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">05/03/2022</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">Hembra</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Vivo</span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                        <a href="/animals/124" class="hover:underline">Ver ficha</a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
+          <div id="content-changes" class="hidden">
+            <div class="mb-4">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Cambios</h3>
+              <p class="text-gray-500 dark:text-gray-400">Registro de todas las modificaciones realizadas en la ficha del animal</p>
+            </div>
             
-            if (!response.ok) {
-              throw new Error('Error al dar de baja al animal');
-            }
-            
-            // Recargar la página para mostrar los cambios
-            window.location.reload();
-          } catch (error) {
-            console.error('Error:', error);
-            alert('No se pudo dar de baja al animal. Por favor, inténtalo de nuevo.');
-          }
-        }
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Usuario</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cambio</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">15/02/2023</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">Admin</td>
+                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">Actualización de estado: Activo → Baja</td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">10/01/2023</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">Editor</td>
+                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">Cambio de cuadra: Q1 → Q2</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+</MainLayout>
+
+<script>
+  // Script para manejar interacciones de la página
+  document.addEventListener('DOMContentLoaded', () => {
+    // Botón de reintentar carga
+    const retryButton = document.getElementById('retry-button');
+    if (retryButton) {
+      retryButton.addEventListener('click', () => {
+        window.location.reload();
       });
     }
     
-    // Reactivar animal
-    if (reactivateBtn) {
-      reactivateBtn.addEventListener('click', async () => {
-        if (confirm('¿Estás seguro de que deseas reactivar este animal?')) {
-          try {
-            const animalId = reactivateBtn.getAttribute('data-animal-id');
-            const response = await fetch(`/api/v1/animals/${animalId}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ estado: 'OK' }),
-            });
-            
-            if (!response.ok) {
-              throw new Error('Error al reactivar el animal');
-            }
-            
-            // Recargar la página para mostrar los cambios
-            window.location.reload();
-          } catch (error) {
-            console.error('Error:', error);
-            alert('No se pudo reactivar el animal. Por favor, inténtalo de nuevo.');
-          }
+    // Elementos de pestañas
+    const tabInfo = document.getElementById('tab-info');
+    const tabPartos = document.getElementById('tab-partos');
+    const tabChanges = document.getElementById('tab-changes');
+    
+    const contentInfo = document.getElementById('content-info');
+    const contentPartos = document.getElementById('content-partos');
+    const contentChanges = document.getElementById('content-changes');
+    
+    // Función para cambiar entre pestañas
+    function switchTab(activeTab, activeContent) {
+      // Desactivar todas las pestañas
+      [tabInfo, tabPartos, tabChanges].forEach(tab => {
+        if (tab) {
+          tab.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
         }
       });
+      
+      // Ocultar todos los contenidos
+      [contentInfo, contentPartos, contentChanges].forEach(content => {
+        if (content) {
+          content.classList.add('hidden');
+        }
+      });
+      
+      // Activar la pestaña seleccionada
+      activeTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+      activeTab.classList.add('text-primary', 'border-b-2', 'border-primary');
+      
+      // Mostrar el contenido seleccionado
+      activeContent.classList.remove('hidden');
+    }
+    
+    // Configurar eventos de clic para las pestañas
+    if (tabInfo) {
+      tabInfo.addEventListener('click', () => switchTab(tabInfo, contentInfo));
+    }
+    
+    if (tabPartos) {
+      tabPartos.addEventListener('click', () => switchTab(tabPartos, contentPartos));
+    }
+    
+    if (tabChanges) {
+      tabChanges.addEventListener('click', () => switchTab(tabChanges, contentChanges));
     }
   });
 </script>

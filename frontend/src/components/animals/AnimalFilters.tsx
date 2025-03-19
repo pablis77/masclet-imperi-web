@@ -16,7 +16,6 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
 }) => {
   const [filters, setFilters] = useState<AnimalFiltersType>(initialFilters);
   const [explotaciones, setExplotaciones] = useState<Explotacion[]>([]);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Cargar explotaciones al montar el componente
@@ -35,10 +34,6 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
     
     loadExplotaciones();
   }, []);
-
-  const handleOpen = () => {
-    setIsOpen(!isOpen);
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -98,129 +93,122 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
   };
 
   return (
-    <div className="relative" id={id}>
-      <button 
-        onClick={handleOpen}
-        className="btn btn-secondary flex items-center"
-      >
-        <span className="mr-1">🔍</span> Filtros
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full mt-2 right-0 w-72 bg-white dark:bg-dark-card rounded-lg shadow-lg border border-gray-200 dark:border-dark-border p-4 z-10">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-3">Filtros</h3>
-          
-          {loading ? (
-            <div className="text-center py-2">
-              <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary"></div>
-              <p className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">Cargando...</p>
-            </div>
-          ) : (
-            <form>
-              {/* Explotación */}
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Explotación
-                </label>
-                <select
-                  name="explotacio_id"
-                  value={filters.explotacio_id || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
-                >
-                  <option value="">Todas</option>
-                  {explotaciones.map(explotacion => (
-                    <option key={explotacion.id} value={explotacion.id}>
-                      {explotacion.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Género */}
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Género
-                </label>
-                <select
-                  name="genere"
-                  value={filters.genere || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
-                >
-                  <option value="">Todos</option>
-                  <option value="M">Macho</option>
-                  <option value="F">Hembra</option>
-                </select>
-              </div>
-
-              {/* Estado */}
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Estado
-                </label>
-                <select
-                  name="estado"
-                  value={filters.estado || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
-                >
-                  <option value="">Todos</option>
-                  <option value="OK">Activo</option>
-                  <option value="DEF">Baja</option>
-                </select>
-              </div>
-
-              {/* Amamantando */}
-              <div className="mb-3">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="alletar"
-                    checked={!!filters.alletar}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-dark-text-secondary">
-                    Solo amamantando
-                  </span>
-                </label>
-              </div>
-
-              {/* Búsqueda */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Buscar
-                </label>
-                <input
-                  type="text"
-                  name="search"
-                  value={filters.search || ''}
-                  onChange={handleInputChange}
-                  placeholder="Nombre, código..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
-                />
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="px-3 py-2 text-sm text-gray-700 dark:text-dark-text-secondary hover:text-gray-500"
-                >
-                  Limpiar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyFilters}
-                  className="px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-primary-dark"
-                >
-                  Aplicar
-                </button>
-              </div>
-            </form>
-          )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id={id}>
+      {loading ? (
+        <div className="col-span-full flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Cargando opciones...</span>
         </div>
+      ) : (
+        <>
+          {/* Explotación */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Explotación
+            </label>
+            <select
+              name="explotacio_id"
+              value={filters.explotacio_id || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Todas</option>
+              {explotaciones.map(explotacion => (
+                <option key={explotacion.id} value={explotacion.id}>
+                  {explotacion.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Género */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Género
+            </label>
+            <select
+              name="genere"
+              value={filters.genere || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Todos</option>
+              <option value="M">Macho</option>
+              <option value="F">Hembra</option>
+            </select>
+          </div>
+
+          {/* Estado */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
+            </label>
+            <select
+              name="estat"
+              value={filters.estat || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Todos</option>
+              <option value="ACT">Activo</option>
+              <option value="DEF">Baja</option>
+            </select>
+          </div>
+
+          {/* Amamantando */}
+          <div className="mb-3">
+            <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                name="alletar"
+                checked={!!filters.alletar}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <span className="ml-2">
+                Solo amamantando
+              </span>
+            </label>
+          </div>
+
+          {/* Búsqueda */}
+          <div className="mb-3 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Buscar
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                name="search"
+                value={filters.search || ''}
+                onChange={handleInputChange}
+                placeholder="Nombre, código..."
+                className="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 dark:text-gray-400">🔍</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="col-span-full flex justify-end space-x-2 mt-2">
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              Limpiar
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyFilters}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              Aplicar filtros
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

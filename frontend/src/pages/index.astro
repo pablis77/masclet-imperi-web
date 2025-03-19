@@ -1,91 +1,189 @@
 ---
 // Importar el layout y componentes necesarios
-import DefaultLayout from '../layouts/DefaultLayout.astro';
-import { DashboardStats } from '../components/dashboard/DashboardStats';
-import { RecentAnimals } from '../components/animals/RecentAnimals';
-import { SystemStatus } from '../components/dashboard/SystemStatus';
+import MainLayout from '../components/layout/MainLayout.astro';
+import Dashboard from '../components/dashboard/Dashboard';
+import AnimalIcon from '../components/animals/AnimalIcon';
 
 // No verificamos autenticación en desarrollo - siempre permitir acceso
 const userRole = 'administrador';
 
 // Título para la página
-const title = 'Panel de Control';
+const title = 'Dashboard';
 ---
 
-<DefaultLayout title={title} userRole={userRole}>
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-400">Bienvenido al sistema de gestión ganadera Masclet Imperi</p>
-  </div>
+<MainLayout title={title} userRole={userRole} currentPath="/">
+  <!-- Componente React del Dashboard -->
+  <Dashboard client:load />
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <!-- Tarjetas de estadísticas (placeholders) -->
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Animales</h3>
-      <p class="text-3xl font-bold text-primary">120</p>
-      <p class="text-sm text-gray-500 dark:text-gray-400">Todas las explotaciones</p>
+  <!-- Fallback para cuando el componente React no carga o está en desarrollo -->
+  <div class="dashboard-fallback">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <!-- Tarjetas de estadísticas con iconos actualizados -->
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-3">
+          <AnimalIcon type="all" className="h-10 w-10 mr-3 text-primary" />
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Animales</h3>
+        </div>
+        <p class="text-3xl font-bold text-primary">120</p>
+        <div class="mt-2 flex items-center text-sm">
+          <span class="text-green-500 font-medium">+5.2%</span>
+          <span class="text-gray-500 dark:text-gray-400 ml-2">desde el mes pasado</span>
+        </div>
+      </div>
+      
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-3">
+          <AnimalIcon type="macho" className="h-10 w-10 mr-3 text-blue-500" />
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Machos</h3>
+        </div>
+        <p class="text-3xl font-bold text-blue-500">45</p>
+        <div class="mt-2 flex items-center text-sm">
+          <span class="text-gray-500 dark:text-gray-400">37.5% del total</span>
+        </div>
+      </div>
+      
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-3">
+          <AnimalIcon type="hembra" className="h-10 w-10 mr-3 text-pink-500" />
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Hembras</h3>
+        </div>
+        <p class="text-3xl font-bold text-pink-500">75</p>
+        <div class="mt-2 flex items-center text-sm">
+          <span class="text-gray-500 dark:text-gray-400">62.5% del total</span>
+        </div>
+      </div>
+      
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-3">
+          <AnimalIcon type="hembra" status="alletar" className="h-10 w-10 mr-3 text-purple-500" />
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Amamantando</h3>
+        </div>
+        <p class="text-3xl font-bold text-purple-500">28</p>
+        <div class="mt-2 flex items-center text-sm">
+          <span class="text-gray-500 dark:text-gray-400">37.3% de hembras</span>
+        </div>
+      </div>
     </div>
-    
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Machos</h3>
-      <p class="text-3xl font-bold text-blue-500">45</p>
-      <p class="text-sm text-gray-500 dark:text-gray-400">37.5% del total</p>
-    </div>
-    
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Hembras</h3>
-      <p class="text-3xl font-bold text-pink-500">75</p>
-      <p class="text-sm text-gray-500 dark:text-gray-400">62.5% del total</p>
-    </div>
-    
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Amamantando</h3>
-      <p class="text-3xl font-bold text-alletar">35</p>
-      <p class="text-sm text-gray-500 dark:text-gray-400">46.6% de hembras</p>
-    </div>
-  </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Gráfico placeholder -->
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Distribución por estado</h3>
-      <div class="h-64 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
-        <p class="text-gray-500 dark:text-gray-400">Gráfico de estados (placeholder)</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Gráfico de distribución por estado -->
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 border border-gray-100 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Distribución por estado</h3>
+        <div class="h-64 bg-gray-50 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center p-4">
+          <div class="w-full h-full flex items-end justify-around">
+            <div class="flex flex-col items-center">
+              <div class="h-[30%] w-16 bg-blue-500 rounded-t-lg"></div>
+              <span class="mt-2 text-sm text-gray-600 dark:text-gray-300">Activos</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">30%</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="h-[45%] w-16 bg-green-500 rounded-t-lg"></div>
+              <span class="mt-2 text-sm text-gray-600 dark:text-gray-300">Productivos</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">45%</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="h-[15%] w-16 bg-yellow-500 rounded-t-lg"></div>
+              <span class="mt-2 text-sm text-gray-600 dark:text-gray-300">En reposo</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">15%</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="h-[10%] w-16 bg-red-500 rounded-t-lg"></div>
+              <span class="mt-2 text-sm text-gray-600 dark:text-gray-300">Fallecidos</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">10%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Actividad reciente -->
+      <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 border border-gray-100 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Actividad reciente</h3>
+        <div class="space-y-4">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
+              <AnimalIcon type="hembra" className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Nuevo animal registrado</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Vaca ID: 2023-H-042 añadida a Explotación Norte</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 2 horas</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start">
+            <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+              <AnimalIcon type="hembra" status="alletar" className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Actualización de estado</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Vaca ID: 2022-H-018 ahora en estado de amamantamiento</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 5 horas</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start">
+            <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+              <span class="h-5 w-5 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs">🐣</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Nuevo parto registrado</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Vaca ID: 2021-H-007 - Cría: 2023-M-043</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 1 día</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start">
+            <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
+              <AnimalIcon type="all" status="DEF" className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Baja registrada</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Toro ID: 2018-M-012 - Causa: Vejez</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 3 días</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <a href="/activity" class="text-sm text-primary dark:text-primary-light hover:underline flex items-center">
+            Ver todo el historial
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
       </div>
     </div>
     
-    <!-- Actividad reciente placeholder -->
-    <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Actividad reciente</h3>
-      <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-        <li class="py-3">
-          <div class="flex items-start">
-            <span class="text-xl mr-3">🐄</span>
-            <div>
-              <p class="text-sm font-medium dark:text-gray-200">Nuevo animal: <span class="text-primary dark:text-primary-light">VACA-123</span></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 2 horas</p>
-            </div>
-          </div>
-        </li>
-        <li class="py-3">
-          <div class="flex items-start">
-            <span class="text-xl mr-3">🔄</span>
-            <div>
-              <p class="text-sm font-medium dark:text-gray-200">Actualización: <span class="text-primary dark:text-primary-light">TORO-45</span></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 5 horas</p>
-            </div>
-          </div>
-        </li>
-        <li class="py-3">
-          <div class="flex items-start">
-            <span class="text-xl mr-3">🐣</span>
-            <div>
-              <p class="text-sm font-medium dark:text-gray-200">Nuevo parto: <span class="text-primary dark:text-primary-light">PARTO-78</span></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Hace 1 día</p>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
+    <!-- Eliminada la sección de explotaciones del dashboard según el feedback -->
   </div>
-</DefaultLayout>
+</MainLayout>
+
+<style>
+  /* Estilos para cuando el componente React está cargado */
+  .dashboard-fallback {
+    display: block;
+  }
+  
+  :global([data-react-loaded="true"]) .dashboard-fallback {
+    display: none;
+  }
+</style>
+
+<script>
+  // Script para detectar cuando el componente React ha cargado
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkReactLoaded = setInterval(() => {
+      const reactRoot = document.querySelector('[data-reactroot]');
+      if (reactRoot) {
+        document.documentElement.setAttribute('data-react-loaded', 'true');
+        clearInterval(checkReactLoaded);
+      }
+    }, 100);
+    
+    // Limpiar el intervalo después de 5 segundos si React no carga
+    setTimeout(() => {
+      clearInterval(checkReactLoaded);
+    }, 5000);
+  });
+</script>

@@ -1,6 +1,6 @@
 ---
 // Importar el layout y componentes
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 import AnimalTable from '../../components/animals/AnimalTable';
 import AnimalFilters from '../../components/animals/AnimalFilters';
 import { isAuthenticated, getCurrentUserRole } from '../../services/authService';
@@ -19,147 +19,91 @@ const canCreateAnimals = true;
 //   return Astro.redirect('/login');
 // }
 
-// Definir título
+// Definir título y rol de usuario
 const title = "Gestión de Animales";
+const userRole = getCurrentUserRole(); // Obtener rol de usuario actual
+
 ---
 
-<DefaultLayout title={title} userRole={getCurrentUserRole()}>
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-dark-text">{title}</h1>
-    <p class="text-gray-600 dark:text-dark-text-secondary">Consulta y administra el registro de animales de las explotaciones</p>
-  </div>
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <div class="container mx-auto px-4 py-4 sm:py-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+        {title}
+      </h1>
+      <div class="flex flex-wrap gap-2">
+        <a href="/animals/new" class="btn btn-primary flex items-center">
+          <span class="mr-1">+</span>
+          Nuevo Animal
+        </a>
+        <button id="refreshBtn" class="btn btn-secondary flex items-center">
+          <span class="mr-1">↻</span>
+          Actualizar
+        </button>
+      </div>
+    </div>
 
-  <!-- Buscador principal prominente -->
-  <div class="mb-6 bg-white dark:bg-dark-card p-6 rounded-lg shadow border border-gray-100 dark:border-dark-border">
-    <div class="max-w-2xl mx-auto">
-      <label for="quickSearch" class="block text-lg font-medium text-gray-700 dark:text-dark-text mb-2">
-        Buscar ficha de animal
-      </label>
-      <div class="mt-1 relative rounded-md shadow-sm">
-        <input
-          type="text"
-          name="quickSearch"
-          id="quickSearch"
-          class="focus:ring-primary focus:border-primary block w-full pl-4 pr-12 py-3 sm:text-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md"
-          placeholder="Buscar por nombre, código, número..."
-        />
-        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-          <button type="button" id="searchButton" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <span class="text-2xl">🔍</span>
-          </button>
+    <!-- Card de búsqueda y filtros -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
+      <div class="mb-3 sm:mb-4">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
+          Búsqueda y Filtros
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
+          Utiliza los filtros para encontrar animales específicos. Puedes filtrar por explotación, género, estado y más.
+        </p>
+      </div>
+      
+      <!-- Componente de filtros -->
+      <AnimalFilters id="animal-filters" client:load />
+    </div>
+
+    <!-- Tabla de animales -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
+      <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-0">
+          Listado de Animales
+        </h2>
+        <div id="totalAnimalsContainer" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          Cargando animales...
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Opciones y filtros -->
-  <div class="mb-6 flex justify-between items-center">
-    <div class="flex space-x-2">
-      <button id="toggleFiltersBtn" class="btn btn-outline-secondary flex items-center">
-        <span class="mr-1">⚙️</span> Filtros avanzados
-      </button>
-      <button id="refreshBtn" class="btn btn-outline-secondary flex items-center">
-        <span class="mr-1">🔄</span> Actualizar
-      </button>
-    </div>
-    <div class="flex space-x-2">
-      <a href="/animals/new" class="btn btn-outline-primary flex items-center">
-        <span class="mr-1">➕</span> Nuevo Animal
-      </a>
-      <div id="totalAnimalsContainer">
-        <span class="text-sm text-gray-500 dark:text-dark-text-secondary">Cargando animales...</span>
+      <div class="overflow-x-auto">
+        <AnimalTable 
+          client:load 
+          canEdit={canEditAnimals}
+          canCreate={canCreateAnimals}
+        />
       </div>
     </div>
   </div>
+</MainLayout>
 
-  <!-- Panel de filtros avanzados (oculto por defecto) -->
-  <div id="filtersContainer" class="mb-6 bg-white dark:bg-dark-card p-4 rounded-lg shadow border border-gray-100 dark:border-dark-border">
-    <h2 class="text-lg font-semibold mb-4">Filtros avanzados</h2>
-    <AnimalFilters client:load />
-  </div>
+<style>
+  .btn {
+    @apply px-3 py-2 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+  }
   
-  <!-- Leyenda de iconos -->
-  <div class="mb-4 flex flex-wrap gap-4 text-sm">
-    <div class="flex items-center">
-      <span class="inline-block w-6 h-6 mr-2 text-center">🐂</span>
-      <span>Toro</span>
-    </div>
-    <div class="flex items-center">
-      <span class="inline-block w-6 h-6 mr-2 text-center">🐄</span>
-      <span>Vaca</span>
-    </div>
-    <div class="flex items-center">
-      <span class="inline-block w-6 h-6 mr-2 text-center">🍼</span>
-      <span>Amamantando 1</span>
-    </div>
-    <div class="flex items-center">
-      <span class="inline-block w-6 h-6 mr-2 text-center">🥛</span>
-      <span>Amamantando 2</span>
-    </div>
-    <div class="flex items-center">
-      <span class="inline-block w-6 h-6 mr-2 text-center">⚰️</span>
-      <span>Fallecido</span>
-    </div>
-  </div>
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/80 focus:ring-primary;
+  }
   
-  <!-- Tabla de animales -->
-  <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 border border-gray-100 dark:border-dark-border">
-    <AnimalTable 
-      client:load 
-      canEdit={canEditAnimals}
-      canCreate={canCreateAnimals}
-    />
-  </div>
-</DefaultLayout>
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+</style>
 
 <script>
   // Script para manejar interacciones de la página
   document.addEventListener('DOMContentLoaded', () => {
     // Elementos del DOM
-    const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
-    const filtersContainer = document.getElementById('filtersContainer');
     const refreshBtn = document.getElementById('refreshBtn');
-    const quickSearch = document.getElementById('quickSearch');
-    const searchButton = document.getElementById('searchButton');
-    
-    // Inicializar estado de filtros (oculto por defecto)
-    if (filtersContainer) {
-      filtersContainer.classList.add('hidden');
-    }
-    
-    // Toggle de filtros
-    if (toggleFiltersBtn && filtersContainer) {
-      toggleFiltersBtn.addEventListener('click', () => {
-        filtersContainer.classList.toggle('hidden');
-      });
-    }
     
     // Botón de actualizar
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         // Disparar evento para refrescar la tabla
         document.dispatchEvent(new CustomEvent('refresh-animals'));
-      });
-    }
-    
-    // Búsqueda rápida
-    if (quickSearch && searchButton) {
-      // Buscar al presionar Enter
-      quickSearch.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') {
-          const searchTerm = quickSearch.value.trim();
-          document.dispatchEvent(new CustomEvent('filters-applied', {
-            detail: { search: searchTerm || undefined }
-          }));
-        }
-      });
-      
-      // Buscar al hacer clic en el botón
-      searchButton.addEventListener('click', () => {
-        const searchTerm = quickSearch.value.trim();
-        document.dispatchEvent(new CustomEvent('filters-applied', {
-          detail: { search: searchTerm || undefined }
-        }));
       });
     }
   });
@@ -171,14 +115,6 @@ const title = "Gestión de Animales";
     document.dispatchEvent(new CustomEvent('apply-filters', {
       detail: event.detail
     }));
-    
-    // Cerrar panel de filtros automáticamente en móviles
-    if (window.innerWidth < 768) {
-      const filtersContainer = document.getElementById('filtersContainer');
-      if (filtersContainer) {
-        filtersContainer.classList.add('hidden');
-      }
-    }
   });
   
   // Actualizar contador de animales
@@ -187,9 +123,9 @@ const title = "Gestión de Animales";
     if (totalAnimalsContainer && event.detail) {
       const { total, filtered } = event.detail;
       if (total === filtered) {
-        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-dark-text-secondary">Total: ${total} animales</span>`;
+        totalAnimalsContainer.innerHTML = `<span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total: ${total} animales</span>`;
       } else {
-        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-dark-text-secondary">Mostrando ${filtered} de ${total} animales</span>`;
+        totalAnimalsContainer.innerHTML = `<span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Mostrando ${filtered} de ${total} animales</span>`;
       }
     }
   });

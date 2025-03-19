@@ -1,5 +1,4 @@
-import React, { useState, useRef } from 'react';
-import { Button, Form, Alert, Spinner, Card } from 'react-bootstrap';
+import React, { useState, useRef, useEffect } from 'react';
 import { downloadAnimalTemplate, importAnimals } from '../../services/importService';
 import type { ImportResult } from '../../services/importService';
 
@@ -100,36 +99,37 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
         setDebugInfo(prev => prev + `\n\nToken de autenticación encontrado: ${token.substring(0, 10)}...`);
       }
 
-      // Importar los datos usando el servicio
-      const importResult = await importAnimals(file);
+      // Crear FormData para la solicitud
+      const formData = new FormData();
+      formData.append('file', file);
       
-      console.log('Resultado de la importación:', JSON.stringify(importResult, null, 2));
+      // Opciones adicionales (simuladas para desarrollo)
+      formData.append('validate_only', 'false');
+      formData.append('skip_errors', 'false');
       
-      // Almacenar resultado
+      // Llamar al servicio de importación
+      const importResult = await importAnimals(formData);
+      
       setResult(importResult);
       
-      // Actualizar debug info
-      setDebugInfo(prev => prev + `\n\nResultado de importación: ${JSON.stringify(importResult, null, 2)}`);
-      
-      // Callback si hay
+      // Notificar al componente padre si hay callback
       if (onImportComplete) {
         onImportComplete(importResult);
       }
+      
+      // Disparar evento personalizado para notificar a otros componentes
+      const event = new CustomEvent('import-complete', { detail: importResult });
+      document.dispatchEvent(event);
+      
     } catch (err: any) {
-      console.error('Error al importar animales:', err);
-      
-      setError(`Error al importar archivo: ${err.message || "Error desconocido"}`);
-      setDebugInfo(prev => prev + `\n\nERROR CAPTURADO: ${err.message || "Error sin mensaje"}`);
-      
-      if (err.stack) {
-        setDebugInfo(prev => prev + `\n\nStack trace: ${err.stack}`);
-      }
+      console.error('Error al importar datos:', err);
+      setError(`Error al importar datos: ${err.message || 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Manejador directo para importar sin autenticación
+  // Manejador para importación directa (sin validación)
   const handleDirectImport = async () => {
     if (!file) {
       setError("Debes seleccionar un archivo CSV para importar");
@@ -140,248 +140,200 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
       setLoading(true);
       setError(null);
       setResult(null);
-
-      // Verificar si hay token de autenticación en localStorage
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        // Para propósitos de desarrollo, almacenar un token de prueba
-        localStorage.setItem('auth_token', 'test_token_for_development');
-        setDebugInfo("No se encontró token de autenticación. Se ha creado un token de prueba para desarrollo.");
-      } else {
-        setDebugInfo(`Token de autenticación encontrado: ${token.substring(0, 10)}...`);
-      }
-
-      // Crear FormData
+      
+      // Crear FormData para la solicitud
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('description', 'Importación de animales');
-
-      // URL del endpoint (usando el proxy de Astro)
-      const endpoint = `/api/v1/imports/csv`;
-
-      // Debug info
-      setDebugInfo(`Enviando petición a: ${endpoint}\nArchivo: ${file.name} (${file.size} bytes)\nTipo: ${file.type}`);
-      console.log('Iniciando importación directa...');
-      console.log('Enviando petición a:', endpoint);
-      console.log('Archivo:', file.name, '- Tamaño:', file.size, 'bytes', '- Tipo:', file.type);
-
-      // Obtener token actualizado (por si cambió)
-      const currentToken = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = {};
       
-      if (currentToken) {
-        headers['Authorization'] = `Bearer ${currentToken}`;
-        setDebugInfo(prev => prev + `\nSe añade header de autorización: Bearer ${currentToken.substring(0, 10)}...`);
-      }
-
-      // Realizar petición directamente
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-        headers,
-      });
-
-      // Procesar respuesta
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error en respuesta HTTP:', response.status, response.statusText, errorText);
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}. Detalle: ${errorText}`);
-      }
-
-      const responseData = await response.json();
-      console.log('Respuesta completa del servidor:', JSON.stringify(responseData, null, 2));
-
-      // Actualizar estado
-      setResult({
-        success: responseData.status === 'COMPLETED' && responseData.result?.errors === 0,
-        message: responseData.result?.errors === 0 
-          ? `Importación completada con éxito. Se importaron ${responseData.result?.success} animales.` 
-          : `Importación completada con advertencias. Se importaron ${responseData.result?.success} animales, pero hubo ${responseData.result?.errors} errores.`,
-        total_processed: responseData.result?.total || 0,
-        total_imported: responseData.result?.success || 0,
-        total_errors: responseData.result?.errors || 0,
-        errors: responseData.result?.error_details?.map((detail: any) => 
-          `Fila ${detail.row}: ${detail.error}`
-        ) || [],
-      });
-
-      setDebugInfo(prev => prev + `\n\nRespuesta: ${JSON.stringify(responseData, null, 2)}`);
-    } catch (error: any) {
-      console.error('Error en importación directa:', error);
+      // Opciones para importación directa
+      formData.append('validate_only', 'false');
+      formData.append('skip_errors', 'true');
+      formData.append('direct_import', 'true');
       
-      let errorMessage = 'Error desconocido';
-      let errorDetails: string[] = [];
+      // Llamar al servicio de importación
+      const importResult = await importAnimals(formData);
       
-      if (error instanceof Error) {
-        errorMessage = error.message || 'Error sin mensaje';
-        errorDetails = [error.stack || error.toString()];
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-        errorDetails = [error];
-      } else if (error && typeof error === 'object') {
-        try {
-          errorMessage = JSON.stringify(error);
-          errorDetails = Object.entries(error).map(([key, value]) => `${key}: ${value}`);
-        } catch (e) {
-          errorMessage = 'Error al serializar el objeto de error';
-          errorDetails = ['No se pudieron obtener detalles del error'];
-        }
+      setResult(importResult);
+      
+      // Notificar al componente padre si hay callback
+      if (onImportComplete) {
+        onImportComplete(importResult);
       }
       
-      setError(`Error al importar: ${errorMessage}`);
-      setResult({
-        success: false,
-        message: `Error al importar: ${errorMessage}`,
-        total_processed: 0,
-        total_imported: 0,
-        total_errors: 1,
-        errors: errorDetails,
-      });
+      // Disparar evento personalizado para notificar a otros componentes
+      const event = new CustomEvent('import-complete', { detail: importResult });
+      document.dispatchEvent(event);
       
-      setDebugInfo(prev => prev + `\n\nError: ${errorMessage}\nDetalles: ${JSON.stringify(errorDetails, null, 2)}`);
+    } catch (err: any) {
+      console.error('Error en importación directa:', err);
+      setError(`Error en importación directa: ${err.message || 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // Escuchar eventos del documento
+  useEffect(() => {
+    // Evento para resetear el formulario
+    const handleResetEvent = () => {
+      handleReset();
+    };
+    
+    // Evento para importación directa
+    const handleDirectImportEvent = () => {
+      handleDirectImport();
+    };
+    
+    // Evento para importación normal
+    const handleImportEvent = () => {
+      handleImport();
+    };
+    
+    // Registrar listeners
+    document.addEventListener('reset-import-form', handleResetEvent);
+    document.addEventListener('direct-import', handleDirectImportEvent);
+    document.addEventListener('import-animals', handleImportEvent);
+    
+    // Limpiar listeners al desmontar
+    return () => {
+      document.removeEventListener('reset-import-form', handleResetEvent);
+      document.removeEventListener('direct-import', handleDirectImportEvent);
+      document.removeEventListener('import-animals', handleImportEvent);
+    };
+  }, [file]); // Dependencia en file para que los handlers tengan acceso al archivo actual
+
   return (
-    <div className="p-4 max-w-full">
-      <Card className="border rounded shadow-sm">
-        <Card.Body>
-          <Card.Title as="h2" className="mb-3">Importar Animales</Card.Title>
-          
-          <Card.Text className="text-gray-600 mb-4">
-            Importa animales desde un archivo CSV. El archivo debe tener el formato correcto.
-          </Card.Text>
-          
-          <hr className="my-4" />
-          
-          {/* Mensaje de error */}
-          {error && (
-            <Alert variant="danger" className="mb-4">
-              <Alert.Heading>Error</Alert.Heading>
-              <p>{error}</p>
-            </Alert>
-          )}
-          
-          {/* Información de depuración */}
-          {debugInfo && (
-            <Alert variant="info" className="mb-4">
-              <Alert.Heading>Información de depuración</Alert.Heading>
-              <p className="overflow-auto" style={{ maxHeight: '200px' }}>{debugInfo}</p>
-            </Alert>
-          )}
-          
-          {/* Resultado de importación */}
-          {result && (
-            <Alert variant={result.success ? "success" : "warning"} className="mb-4">
-              <Alert.Heading>{result.success ? "Importación Exitosa" : "Importación con Advertencias"}</Alert.Heading>
-              <p>{result.message}</p>
-              
-              {result.total_processed !== undefined && (
-                <div className="mt-3">
-                  <div className="d-flex flex-wrap gap-2">
-                    <span className="badge bg-primary p-2 me-2">
-                      Procesados: {result.total_processed}
-                    </span>
-                    <span className="badge bg-success p-2 me-2">
-                      Importados: {result.total_imported || 0}
-                    </span>
-                    <span className="badge bg-danger p-2">
-                      Errores: {result.total_errors || 0}
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Mostrar errores si hay */}
-              {result.errors && result.errors.length > 0 && (
-                <div className="mt-3">
-                  <h6>Errores encontrados:</h6>
-                  <ul className="list-group list-group-flush">
-                    {result.errors.map((error, index) => (
-                      <li key={index} className="list-group-item list-group-item-danger">
-                        {error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Alert>
-          )}
-          
-          {/* Selector de archivo */}
-          <Form.Group className="mb-4 mt-3">
-            <Form.Label htmlFor="import-file-input">Seleccionar archivo CSV</Form.Label>
-            <Form.Control
-              ref={fileInputRef}
-              type="file"
-              accept={acceptedFormat}
-              onChange={handleFileChange}
-              id="import-file-input"
-              disabled={loading}
-            />
-            
-            {file && (
-              <p className="text-secondary mt-2 small">
-                Archivo seleccionado: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-              </p>
-            )}
-          </Form.Group>
-        </Card.Body>
+    <div className="import-form">
+      {/* Selector de archivo */}
+      <div className="mb-6">
+        <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Seleccionar archivo CSV
+        </label>
         
-        <Card.Footer className="bg-light d-flex justify-content-between">
-          <div>
-            <Button
-              variant="secondary"
-              onClick={handleDownloadTemplate}
-              disabled={loading}
-              className="d-flex align-items-center gap-2 me-2"
-            >
-              {loading && <Spinner animation="border" size="sm" />}
-              <span>Descargar Plantilla</span>
-            </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-grow">
+            <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+              <input
+                id="file-upload"
+                type="file"
+                accept={acceptedFormat}
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={loading}
+              />
+              
+              <div className="text-center">
+                <div className="text-2xl mb-2">📁</div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {file ? file.name : `Arrastra un archivo CSV o haz clic para seleccionar`}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  {file 
+                    ? `${(file.size / 1024).toFixed(2)} KB - ${file.type || 'text/csv'}` 
+                    : `Solo se permiten archivos CSV`}
+                </p>
+              </div>
+            </div>
           </div>
-          
-          <div>
-            <Button 
-              variant="outline-secondary"
-              onClick={handleReset} 
-              disabled={loading || (!file && !result)}
-              className="me-2"
-            >
-              Reiniciar
-            </Button>
-            
-            <Button
-              variant="info"
-              onClick={handleDirectImport}
-              disabled={loading || !file}
-              className="me-2"
-            >
-              {loading ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Importación...
-                </>
-              ) : 'Importación Directa'}
-            </Button>
-            
-            <Button
-              variant="primary"
-              onClick={handleImport}
-              disabled={loading || !file}
-            >
-              {loading ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Importando...
-                </>
-              ) : 'Importar'}
-            </Button>
+        </div>
+      </div>
+      
+      {/* Información de depuración (solo en desarrollo) */}
+      {debugInfo && process.env.NODE_ENV === 'development' && (
+        <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Información de depuración:</h4>
+          <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{debugInfo}</pre>
+        </div>
+      )}
+      
+      {/* Mensaje de error */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-500 dark:text-red-400 text-lg">🚨</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Error</h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-200">
+                <p>{error}</p>
+              </div>
+            </div>
           </div>
-        </Card.Footer>
-      </Card>
+        </div>
+      )}
+      
+      {/* Resultado de importación */}
+      {result && (
+        <div className={`mb-6 p-4 rounded-lg border ${
+          result.success 
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-lg">
+                {result.success ? '✅' : '⚠️'}
+              </span>
+            </div>
+            <div className="ml-3">
+              <h3 className={`text-sm font-medium ${
+                result.success 
+                  ? 'text-green-800 dark:text-green-300' 
+                  : 'text-yellow-800 dark:text-yellow-300'
+              }`}>
+                {result.success ? 'Importación completada' : 'Importación con advertencias'}
+              </h3>
+              <div className={`mt-2 text-sm ${
+                result.success 
+                  ? 'text-green-700 dark:text-green-200' 
+                  : 'text-yellow-700 dark:text-yellow-200'
+              }`}>
+                <p>Registros procesados: {result.total_records}</p>
+                <p>Registros importados: {result.successful_records}</p>
+                {result.failed_records > 0 && (
+                  <p>Registros con errores: {result.failed_records}</p>
+                )}
+                {result.message && (
+                  <p className="mt-2 font-medium">{result.message}</p>
+                )}
+              </div>
+              
+              {/* Acciones adicionales */}
+              {result.failed_records > 0 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => {
+                      // Lógica para descargar errores
+                      console.log('Descargar errores de importación');
+                    }}
+                    className="inline-flex items-center px-3 py-1.5 border border-red-300 dark:border-red-700 text-xs font-medium rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <span className="mr-1">📥</span>
+                    Descargar errores
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Indicador de carga */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 dark:bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Procesando importación</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                Esto puede tardar unos momentos dependiendo del tamaño del archivo.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
