@@ -8,7 +8,7 @@ from typing import Optional
 class ExplotacioBase(BaseModel):
     """Schema base para explotaciones."""
     nom: str
-    ubicacio: Optional[str] = None
+    explotaci: Optional[str] = None
     activa: bool = True
 
 class ExplotacioCreate(ExplotacioBase):
@@ -18,7 +18,7 @@ class ExplotacioCreate(ExplotacioBase):
 class ExplotacioUpdate(BaseModel):
     """Schema para actualizar explotaciones."""
     nom: Optional[str] = None
-    ubicacio: Optional[str] = None
+    explotaci: Optional[str] = None
     activa: Optional[bool] = None
 
 class ExplotacioResponse(ExplotacioBase):

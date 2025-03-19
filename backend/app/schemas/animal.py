@@ -48,7 +48,7 @@ class AnimalBase(BaseModel):
     quadra: Optional[str] = None
     cod: Optional[str] = None
     num_serie: Optional[str] = None
-    part: Optional[int] = None
+    part: Optional[str] = None
     genere_t: Optional[str] = None  # Validado como enum en el endpoint
     estado_t: Optional[str] = None  # Validado como enum en el endpoint
 
@@ -113,7 +113,7 @@ class AnimalUpdate(BaseModel):
     quadra: Optional[str] = None
     cod: Optional[str] = None
     num_serie: Optional[str] = None
-    part: Optional[int] = None
+    part: Optional[str] = None
     genere_t: Optional[str] = None  # Validado como enum en el endpoint
     estado_t: Optional[str] = None  # Validado como enum en el endpoint
     dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)

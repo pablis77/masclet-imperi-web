@@ -65,9 +65,64 @@ export const setupApiToken = (token: string): void => {
 if (isBrowser) {
   const storedToken = localStorage.getItem('token');
   if (storedToken) {
-    setupApiToken(storedToken);
+    try {
+      // Verificar si el token es válido antes de usarlo
+      const tokenData = JSON.parse(atob(storedToken.split('.')[1]));
+      const expiry = tokenData.exp * 1000; // Convertir a milisegundos
+      
+      if (expiry > Date.now()) {
+        // Token válido, configurarlo
+        setupApiToken(storedToken);
+        logMessage('log', 'Token de autenticación configurado desde localStorage');
+      } else {
+        // Token expirado, eliminarlo
+        localStorage.removeItem('token');
+        logMessage('warn', 'Token de autenticación expirado, eliminado de localStorage');
+      }
+    } catch (error) {
+      // Token inválido, eliminarlo
+      localStorage.removeItem('token');
+      logMessage('error', 'Token de autenticación inválido, eliminado de localStorage', error);
+    }
+  } else {
+    logMessage('log', 'No hay token de autenticación en localStorage');
   }
 }
+
+// Interceptor para añadir el token a todas las peticiones
+api.interceptors.request.use(
+  (config) => {
+    // Verificar si hay token en localStorage en cada petición
+    if (isBrowser) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para manejar errores de autenticación
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Token inválido o expirado
+      if (isBrowser) {
+        localStorage.removeItem('token');
+        // Redirigir a login si es necesario
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Configurar interceptor para manejar errores
 api.interceptors.response.use(

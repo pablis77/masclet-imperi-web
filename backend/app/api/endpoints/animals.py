@@ -228,9 +228,7 @@ async def list_animals(
 
         # Ordenación
         query = query.order_by('nom', '-created_at')
-        if num_serie:
-            query = query.filter(num_serie=num_serie)
-
+        
         total = await query.count()
         animals = await query.offset(offset).limit(limit)
         
