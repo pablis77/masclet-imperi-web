@@ -16,10 +16,11 @@ from tortoise import Tortoise
 async def init_db():
     """Inicializar la base de datos para pruebas"""
     settings = get_settings()
-    print(f"Intentando conectar a la base de datos: {settings.DATABASE_URL}")
+    db_url = settings.database_url.replace("localhost", "host.docker.internal")
+    print(f"Intentando conectar a la base de datos: {db_url}")
     
     await Tortoise.init(
-        db_url=settings.DATABASE_URL,
+        db_url=db_url,
         modules={"models": ["app.models.animal", "app.models.user", "app.models.explotacio", "aerich.models"]}
     )
     print("Conexión a la base de datos establecida")

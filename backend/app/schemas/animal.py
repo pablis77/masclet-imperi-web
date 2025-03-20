@@ -39,9 +39,9 @@ class AnimalBase(BaseModel):
     """Esquema base para animales"""
     nom: str
     genere: str  # Validado como enum en el endpoint
-    explotacio: int  # ID de la explotación
+    explotacio: str  # ID o nombre de la explotación
     estado: str = "OK"  # Validado como enum en el endpoint (OK/DEF)
-    alletar: int = 0  # Validado como enum en el endpoint
+    alletar: str = "NO"  # Validado como enum en el endpoint
     dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)
     mare: Optional[str] = None
     pare: Optional[str] = None
@@ -107,7 +107,7 @@ class AnimalUpdate(BaseModel):
     """Esquema para actualizar animales"""
     nom: Optional[str] = None
     estado: Optional[str] = None  # Validado como enum en el endpoint
-    alletar: Optional[int] = None  # Validado como enum en el endpoint
+    alletar: Optional[str] = None  # Validado como enum en el endpoint
     mare: Optional[str] = None
     pare: Optional[str] = None
     quadra: Optional[str] = None
@@ -125,7 +125,7 @@ class AnimalUpdate(BaseModel):
             "example": {
                 "nom": "Nombre Animal",
                 "estado": "OK",
-                "alletar": 0,
+                "alletar": "NO",
                 "dob": "01/01/2020"
             }
         }

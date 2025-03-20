@@ -83,7 +83,14 @@ async def import_csv(
         response["file_size"] = len(contents)
         
         # Decodificar contenido y procesar CSV
-        text = contents.decode('utf-8')
+        try:
+            # Intentar primero con UTF-8
+            text = contents.decode('utf-8')
+        except UnicodeDecodeError:
+            # Si falla, intentar con ISO-8859-1 (Latin-1)
+            logger.warning("Decodificación UTF-8 falló, intentando con ISO-8859-1")
+            text = contents.decode('iso-8859-1')
+        
         csv_reader = csv.DictReader(io.StringIO(text), delimiter=';')
         
         # Contadores para resultados
@@ -96,21 +103,22 @@ async def import_csv(
         
         # Mapeo de campos CSV a campos del modelo
         field_mapping = {
-            'nom': ['NOM', 'nom', 'nombre'],
-            'genere': ['Genere', 'genere', 'género', 'genero'],
-            'estado': ['Estado', 'estado', 'estat'],
-            'alletar': ['Alletar', 'alletar'],
-            'mare': ['Mare', 'mare', 'madre'],
-            'pare': ['Pare', 'pare', 'padre'],
-            'quadra': ['Quadra', 'quadra'],
-            'cod': ['COD', 'cod', 'código', 'codigo'],
-            'num_serie': ['N° Serie', 'num_serie', 'número de serie', 'numero de serie'],
-            'data_naixement': ['DOB', 'data_naixement', 'fecha de nacimiento'],
-            'part': ['part', 'parto', 'fecha de parto'],
-            'genere_t': ['GenereT', 'genere_t', 'género ternero', 'genero ternero'],
-            'estado_t': ['EstadoT', 'estado_t', 'estado ternero']
+            'nom': ['NOM', 'nom', 'nombre', 'Nombre', 'NOMBRE', 'Nom'],
+            'genere': ['Genere', 'genere', 'género', 'genero', 'Género', 'Genero', 'GENERE', 'GENERO', 'GÉNERO'],
+            'estado': ['Estado', 'estado', 'estat', 'Estat', 'ESTADO', 'ESTAT'],
+            'alletar': ['Alletar', 'alletar', 'Alletar', 'ALLETAR', 'amamantar', 'Amamantar', 'AMAMANTAR'],
+            'mare': ['Mare', 'mare', 'madre', 'Madre', 'MARE', 'MADRE'],
+            'pare': ['Pare', 'pare', 'padre', 'Padre', 'PARE', 'PADRE'],
+            'quadra': ['Quadra', 'quadra', 'Quadra', 'QUADRA', 'cuadra', 'Cuadra', 'CUADRA'],
+            'cod': ['COD', 'cod', 'código', 'codigo', 'Código', 'Codigo', 'CODIGO', 'CÓDIGO'],
+            'num_serie': ['Num Serie', 'num_serie', 'número de serie', 'numero de serie', 'Nº Serie', 'Número de Serie', 'Numero de Serie', 'NUM_SERIE', 'NUMERO DE SERIE', 'NÚMERO DE SERIE'],
+            'data_naixement': ['DOB', 'data_naixement', 'fecha de nacimiento', 'Data Naixement', 'Fecha de Nacimiento', 'FECHA DE NACIMIENTO', 'DATA_NAIXEMENT'],
+            'part': ['part', 'parto', 'fecha de parto', 'Part', 'Parto', 'Fecha de Parto', 'PART', 'PARTO', 'FECHA DE PARTO'],
+            'genere_fill': ['GenereT', 'genere_t', 'género ternero', 'genero ternero', 'Género Ternero', 'Genero Ternero', 'GÉNERO TERNERO', 'GENERO TERNERO', 'genere_fill', 'Genere Fill', 'GENERE_FILL', 'genere_cria', 'Genere Cria', 'GENERE_CRIA', 'género cría', 'genero cria', 'Género Cría', 'Genero Cria', 'GÉNERO CRÍA', 'GENERO CRIA', 'generef', 'GenereF', 'GENEREF'],
+            'estat_fill': ['EstadoT', 'estado_t', 'estado ternero', 'estat_t', 'EstatT', 'Estado Ternero', 'ESTADO TERNERO', 'estat_fill', 'Estat Fill', 'ESTAT_FILL', 'estado_fill', 'Estado Fill', 'ESTADO_FILL', 'estado cría', 'Estado Cría', 'ESTADO CRÍA', 'estat cria', 'Estat Cria', 'ESTAT CRIA', 'estado_cria', 'Estado Cria', 'ESTADO_CRIA'],
+            'explotacio': ['explotació', 'explotacion', 'explotación', 'Explotació', 'Explotacion', 'Explotación', 'EXPLOTACIÓ', 'EXPLOTACION', 'EXPLOTACIÓN', 'Explo', 'explo', 'EXPLO']
         }
-
+        
         # Procesar cada fila
         for row in csv_reader:
             result["total"] += 1
@@ -144,8 +152,11 @@ async def import_csv(
                             break  # Tomar solo el primer campo que coincida
                 
                 # Asegurarse de que existe el campo de explotación
-                if 'explotacio' not in cleaned_data and 'explotacio' in row and row['explotacio']:
-                    cleaned_data['explotacio'] = row['explotacio'].strip()
+                if 'explotacio' not in cleaned_data:
+                    for field in ['explotacio', 'explotacion', 'explotación']:
+                        if field in row and row[field]:
+                            cleaned_data['explotacio'] = row[field].strip()
+                            break
 
                 # Renombrar los campos especiales si es necesario
                 if 'dob' in cleaned_data:

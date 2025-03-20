@@ -47,7 +47,14 @@ async def create_animal(
             raise HTTPException(status_code=400, detail=str(e))
         
         # Validar explotación
-        explotacio = await Explotacio.get_or_none(id=animal.explotacio)
+        explotacio = None
+        if animal.explotacio.isdigit():
+            explotacio = await Explotacio.get_or_none(id=animal.explotacio)
+        
+        # Si no se encuentra por ID o no es numérico, buscar por nombre
+        if not explotacio:
+            explotacio = await Explotacio.get_or_none(nom=animal.explotacio)
+            
         if not explotacio:
             raise HTTPException(
                 status_code=404,
@@ -67,7 +74,7 @@ async def create_animal(
 
         # Crear el animal
         new_animal = await Animal.create(
-            explotacio=explotacio,
+            explotacio=explotacio.nom,  # Usar el nombre de la explotación
             nom=animal.nom,
             genere=animal.genere,
             estado=animal.estado,

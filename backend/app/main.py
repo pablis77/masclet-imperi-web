@@ -94,7 +94,7 @@ async def redirect_to_docs():
 
 # Conectar a la base de datos
 TORTOISE_ORM = {
-    "connections": {"default": "postgres://postgres:1234@localhost:5432/masclet_imperi"},
+    "connections": {"default": settings.database_url},
     "apps": {
         "models": {
             "models": settings.MODELS,
@@ -106,7 +106,7 @@ TORTOISE_ORM = {
 }
 
 # Imprimir información de conexión para depuración
-print(f"Intentando conectar a la base de datos: postgres://postgres:1234@localhost:5432/masclet_imperi")
+print(f"Intentando conectar a la base de datos: {settings.database_url}")
 
 register_tortoise(
     app,

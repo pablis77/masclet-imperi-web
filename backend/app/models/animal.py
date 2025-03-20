@@ -28,16 +28,13 @@ class EstadoAlletar(str, Enum):
 class Animal(models.Model):
     """Modelo de Animal"""
     id = fields.IntField(pk=True)
-    explotacio = fields.ForeignKeyField(
-        "models.Explotacio", related_name="animals"
-    )
+    # Cambiamos la definición de explotacio para que coincida con la estructura de la base de datos
+    # En lugar de ForeignKeyField, usamos CharField ya que en la base de datos es character varying
+    explotacio = fields.CharField(max_length=100)
     nom = fields.CharField(max_length=100)
     genere = fields.CharEnumField(Genere)
     estado = fields.CharEnumField(Estado, default=Estado.OK)
-    alletar = fields.CharEnumField(
-        EstadoAlletar,
-        default=EstadoAlletar.NO_ALLETAR
-    )
+    alletar = fields.CharEnumField(EstadoAlletar, default=EstadoAlletar.NO_ALLETAR)  # Cambiado a CharEnumField para soportar 3 estados
     dob = fields.DateField(null=True)  # Date of birth
     mare = fields.CharField(max_length=100, null=True)
     pare = fields.CharField(max_length=100, null=True)
@@ -45,8 +42,6 @@ class Animal(models.Model):
     cod = fields.CharField(max_length=20, null=True)
     num_serie = fields.CharField(max_length=50, null=True)
     part = fields.CharField(max_length=50, null=True)  # Cambiado de 'num_part' a 'part' para coincidir con el CSV
-    genere_t = fields.CharEnumField(Genere, null=True)  # Género de transición
-    estado_t = fields.CharEnumField(Estado, null=True)  # Estado de transición
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
@@ -60,11 +55,11 @@ class Animal(models.Model):
         """Convierte el modelo a diccionario"""
         data = {
             "id": self.id,
-            "explotacio": str(self.explotacio_id),
+            "explotacio": self.explotacio,
             "nom": self.nom,
             "genere": self.genere,
             "estado": self.estado,
-            "alletar": self.alletar.value if self.alletar else EstadoAlletar.NO_ALLETAR.value,
+            "alletar": self.alletar,
             "dob": self.dob.strftime("%d/%m/%Y") if self.dob else None,
             "mare": self.mare,
             "pare": self.pare,
@@ -72,8 +67,6 @@ class Animal(models.Model):
             "cod": self.cod,
             "num_serie": self.num_serie,
             "part": self.part,
-            "genere_t": self.genere_t,
-            "estado_t": self.estado_t,
             "created_at": self.created_at.strftime("%d/%m/%Y") if self.created_at else None,
             "updated_at": self.updated_at.strftime("%d/%m/%Y") if self.updated_at else None
         }
@@ -119,7 +112,7 @@ class Animal(models.Model):
         return data
 
     async def save(self, *args, **kwargs):
-        """Sobreescribe el método save para aplicar validaciones de negocio."""
+        """Sobreescribes el método save para aplicar validaciones de negocio."""
         # Validar que solo las hembras pueden amamantar
         if self.genere == Genere.MASCLE and self.alletar != EstadoAlletar.NO_ALLETAR:
             raise ValueError("Solo las hembras pueden tener estado de amamantamiento")
@@ -136,8 +129,8 @@ class Part(models.Model):
         "models.Animal", related_name="partos"
     )
     data = fields.DateField()
-    genere_fill = fields.CharEnumField(Genere)
-    estat_fill = fields.CharEnumField(Estado, default=Estado.OK)  # Por defecto el ternero está vivo
+    genere_fill = fields.CharEnumField(Genere)  # Corregido para coincidir con la base de datos
+    estat_fill = fields.CharEnumField(Estado, default=Estado.OK)  # Corregido para coincidir con la base de datos
     numero_part = fields.IntField()
     observacions = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -149,8 +142,8 @@ class Part(models.Model):
             "id": self.id,
             "animal_id": self.animal_id,
             "data": self.data.strftime("%d/%m/%Y"),
-            "genere_fill": self.genere_fill,
-            "estat_fill": self.estat_fill,
+            "genere_fill": self.genere_fill,  # Corregido para coincidir con la base de datos
+            "estat_fill": self.estat_fill,  # Corregido para coincidir con la base de datos
             "numero_part": self.numero_part,
             "observacions": self.observacions,
             "created_at": self.created_at.isoformat() if self.created_at else None,

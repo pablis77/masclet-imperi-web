@@ -1,0 +1,65 @@
+Alletar;explotació;NOM;Genere;Pare;Mare;Quadra;COD;Nº Serie;DOB;Estado;part;GenereT;EstadoT
+;Gurans;1;M;;;Riera;7892.0;ES07090513;31/01/2020;OK;;;
+no;Gurans;20-36;F;Xero;11-may;n/a;6350.0;ES02090513;02/03/2020;OK;19/12/2022;esforrada;DEF
+no;Gurans;20-36;F;Xero;11-may;;6350.0;ES02090513;02/03/2020;OK;17/11/2023;Mascle;OK
+no;Gurans;20-50;F;Xero;83;;8461.0;ES04090513;24/01/2020;OK;28/02/2023;Femella;OK
+no;Gurans;20-50;F;Xero;83;;8461.0;ES04090513;24/01/2020;OK;23/02/2024;Mascle;OK
+no;Gurans;20-50;F;Xero;83;;8461.0;ES04090513;24/01/2020;OK;23/02/2024;Mascle;OK
+no;Gurans;20-51;F;Xero;236;;5039.0;ES02090513;29/06/2020;OK;13/05/2023;Femella;OK
+no;Gurans;20-51;F;Xero;236;;5039.0;ES02090513;29/06/2020;OK;02/05/2024;Femella;OK
+no;Gurans;20-64;F;Xero;K-12;;7039.0;ES00090537;28/10/2020;OK;27/04/2023;Mascle;OK
+no;Gurans;20-64;F;Xero;K-12;;7039.0;ES00090537;28/10/2020;OK;12/06/2024;Mascle;OK
+no;Gurans;R-32;F;;;;6144.0;;(Feb 17);OK;(28.11.19)F;Femella;OK
+no;Gurans;R-32;F;;;;6144.0;;(Feb 17);OK;(05.02.21)F;Femella;OK
+no;Gurans;R-32;F;;;;6144.0;;(Feb 17);OK;(28.02.22)F;Femella;OK
+no;Gurans;R-32;F;;;;6144.0;;(Feb 17);OK;(10.02.23)M;Mascle;OK
+no;Gurans;R-32;F;;;;6144.0;;(Feb 17);OK;(06.02.24)F;Femella;OK
+no;Gurans;E6;F;;;;;;;OK;;;
+no;Gurans;G-16;F;;;;;;;OK;;;
+no;Gurans;K-75;F;;;;;;;OK;;;
+no;Gurans;I-2;F;;;;;;;OK;;;
+no;Gurans;H-71;F;;;;;;;OK;;;
+no;Gurans;46;F;;;;;;;OK;;;
+no;Gurans;51;F;;;;;;;OK;;;
+no;Gurans;K-41;F;;;;;;;OK;;;
+no;Gurans;47;F;;;;;;;OK;;;
+no;Gurans;21-17;F;;;;;;;OK;;;
+no;Gurans;21-19;F;;;;;;;OK;;;
+no;Gurans;21-sep;F;;;;;;;OK;;;
+no;Gurans;21-31;F;;;;;;;OK;;;
+no;Gurans;21-28;F;;;;;;;OK;;;
+no;Gurans;21-29;F;;;;;;;OK;;;
+no;Gurans;23-sep;F;;;;;;;OK;;;
+no;Gurans;23-abr;F;;;;;;;OK;;;
+si;Gurans;50;F;;;;;;;OK;;;
+si;Gurans;52;F;;;;;;;OK;;;
+si;Gurans;E5;F;;;;;;;OK;;;
+si;Gurans;E8;F;;;;;;;OK;;;
+si;Gurans;K-73;F;;;;;;;OK;;;
+;Guadalajara;Pablo;M;alfonso;Emma;Martinez;4785.0;es1123456987;09/03/1977;DEF;;;
+;Prueba 2;Mario;M;Mario;Elisa;Martinez;9875.0;Es1452365489662;14/08/1976;OK;;;
+no;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4569.0;Es4587963211456;30/06/1977;OK;18/02/2012;F;OK
+no;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4569.0;Es4587963211456;30/06/1977;OK;;;
+no;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4569.0;Es4587963211456;30/06/1977;OK;08/01/2010;M;OK
+;Guadalajara;Felipe;M;Alfredo;marialuis;VIejo;45876.0;es123654789;01/05/1978;OK;;;
+no;Gaudalajara;Emma;F;Constantino;Pilar;Gallegos;1245.0;es456321;29/11/1950;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414.0;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352.0;es463573457;28/07/1981;OK;;;
+;Guadalajara;Marcos;M;PAblo;MArta;Martinez de Andres;12314.0;es7798465123312;08/01/2010;OK;;;
+no;Guadalajara;Elena;F;Pablo;Marta;Martienz de andres;12314.0;es124148134598;18/02/2012;OK;;;
+no;Guadalajara;Afri;F;Pere;Maria Luisa;Pereira;12253246.0;es794133;15/06/1977;OK;;;
+no;Guadalajara;Lola;F;Gonzalo;Africa;Ruiz pereira;324535.0;es213498243785298;14/06/2008;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414.0;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352.0;es463573457;28/07/1981;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414.0;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352.0;es463573457;28/07/1981;OK;;;
+;Guadalajara;paBLIS;M;aLFON;ELMA;MARTINES;123414.0;ES35838294;12/10/2025;OK;;;
+no;asdafasf;asdasd;F;asd;asd;asd;asda;asda;;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352;es463573457;28/07/1981;OK;;;
+no;asdasf;fdsdf;F;asdad;asdasd;asdasd;123;12312314124;;OK;;;
+no;asdasd;asfasdf;F;asd;asd;asdfafaf;asdasdf;asdafasf;;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352;es463573457;28/07/1981;OK;;;
+;Madrid;Nico;M;Javi;Esther;Dorado;123414;es12341351;23/01/1981;OK;;;
+no;Madrid;Clara;F;Alfonso;Emma;Martinez;4352352;es463573457;28/07/1981;OK;;;

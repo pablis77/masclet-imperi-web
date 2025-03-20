@@ -81,7 +81,18 @@ class Settings(BaseSettings):
     postgres_password: str = "1234"
     db_port: str = "5432"
     db_host: str = "localhost"
-    database_url: str = os.getenv("DATABASE_URL", f"postgres://{postgres_user}:{postgres_password}@{db_host}:{db_port}/{postgres_db}")
+    
+    @property
+    def database_url(self) -> str:
+        """
+        Construir URL de conexión a la base de datos
+        """
+        # Asegurarse de que el esquema sea postgres:// (no postgresql://)
+        url = f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.db_host}:{self.db_port}/{self.postgres_db}"
+        # Reemplazar postgresql:// por postgres:// para compatibilidad con Tortoise ORM
+        url = url.replace("postgresql://", "postgres://")
+        return url
+    
     api_key: str = "masclet_api_2024_secure"
     
     # Autenticación
