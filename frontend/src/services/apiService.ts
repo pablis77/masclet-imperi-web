@@ -9,7 +9,7 @@ const isBrowser = typeof window !== 'undefined';
 // API URL desde variables de entorno o valor por defecto
 const API_URL = isBrowser && import.meta.env.VITE_API_URL ? 
   import.meta.env.VITE_API_URL : 
-  'http://127.0.0.1:8000';
+  'http://localhost:8000';
 
 // Prefijo API 
 const API_PREFIX = '/api/v1';
@@ -186,6 +186,47 @@ api.interceptors.response.use(
 );
 
 /**
+ * Normaliza un endpoint para asegurar que tenga el formato correcto
+ * @param endpoint Endpoint a normalizar
+ * @returns Endpoint normalizado
+ */
+function normalizeEndpoint(endpoint: string): string {
+  // Eliminar el prefijo API si existe
+  let normalizedEndpoint = endpoint.replace(API_PREFIX, '');
+  
+  // Asegurarse de que comience con /
+  if (!normalizedEndpoint.startsWith('/')) {
+    normalizedEndpoint = `/${normalizedEndpoint}`;
+  }
+  
+  // Asegurarse de que termine con / para endpoints específicos
+  // Lista de patrones de endpoints que deben terminar con /
+  const shouldEndWithSlash = [
+    '/dashboard/stats',
+    '/animals',
+    '/explotacions',
+    '/parts',
+    '/users'
+  ];
+  
+  // Verificar si el endpoint coincide con alguno de los patrones
+  const needsTrailingSlash = shouldEndWithSlash.some(pattern => 
+    normalizedEndpoint === pattern || 
+    normalizedEndpoint.startsWith(`${pattern}/`) ||
+    // Regex para detectar patrones como /animals/123 (sin barra final)
+    new RegExp(`^${pattern.replace('/', '\\/')}\/\\d+$`).test(normalizedEndpoint)
+  );
+  
+  // Añadir / al final si es necesario y no la tiene ya
+  if (needsTrailingSlash && !normalizedEndpoint.endsWith('/')) {
+    normalizedEndpoint = `${normalizedEndpoint}/`;
+    console.log(`🔄 [API] Endpoint normalizado con barra final: ${normalizedEndpoint}`);
+  }
+  
+  return normalizedEndpoint;
+}
+
+/**
  * Añade el prefijo API a una ruta
  * @param endpoint Ruta de API sin prefijo
  * @returns Ruta completa con prefijo
@@ -196,8 +237,8 @@ function addApiPrefix(endpoint: string): string {
     return endpoint;
   }
   
-  // Asegurarse de que el endpoint comience con /
-  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  // Normalizar el endpoint
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
   
   // Devolver la ruta completa
   return `${API_PREFIX}${normalizedEndpoint}`;
@@ -274,52 +315,60 @@ function getMockDataForEndpoint<T>(endpoint: string): T | null {
  */
 export async function fetchData(endpoint: string, params: Record<string, any> = {}): Promise<any> {
   try {
-    // Construir la URL con los parámetros
-    const queryParams = new URLSearchParams();
-    
     // Asegurarse de que el endpoint tenga el prefijo correcto
-    const fullEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
-    queryParams.append('endpoint', fullEndpoint);
+    let normalizedEndpoint = endpoint;
+    if (!normalizedEndpoint.startsWith('/')) {
+      normalizedEndpoint = `/${normalizedEndpoint}`;
+    }
     
-    // Añadir parámetros adicionales a la URL
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        queryParams.append(key, String(value));
-      }
-    });
-
-    const url = `/api/proxy?${queryParams.toString()}`;
-    console.log(`Intentando conectar con: ${url}`);
-    console.log(`Endpoint completo: ${fullEndpoint}`);
-    console.log(`Parámetros:`, params);
-    console.log(`API URL completa: ${API_URL}${fullEndpoint}`);
-
+    // Construir la URL completa
+    // Usar directamente la URL del backend sin proxy
+    let url = `${API_URL}${API_PREFIX}${normalizedEndpoint}`;
+    
+    // Añadir parámetros de consulta si existen
+    if (Object.keys(params).length > 0) {
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+      url = `${url}?${queryParams.toString()}`;
+    }
+    
+    console.log(`🔍 [API] Iniciando solicitud DIRECTA a: ${url}`);
+    
     // Obtener el token de autenticación
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      // Añadir CORS headers para permitir peticiones cross-origin
+      'Access-Control-Allow-Origin': '*',
     };
-
+    
     // Añadir el token de autenticación si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('Token de autenticación añadido a la petición');
+      console.log('🔐 [API] Token de autenticación añadido a la petición');
     } else {
-      console.warn('No hay token de autenticación disponible. La petición podría fallar si requiere autenticación.');
+      console.warn('⚠️ [API] No hay token de autenticación disponible.');
     }
-
+    
     // Realizar la petición con un timeout de 10 segundos
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-
+    
     try {
       const response = await fetch(url, {
         headers,
-        signal: controller.signal
+        signal: controller.signal,
+        // Añadir modo CORS para permitir peticiones cross-origin
+        mode: 'cors',
+        credentials: 'include'
       });
       
       clearTimeout(timeoutId);
-      console.log(`Respuesta recibida con estado: ${response.status} ${response.statusText}`);
+      console.log(`📦 [API] Respuesta recibida con estado: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         let errorMessage = `Error ${response.status}: ${response.statusText}`;
@@ -328,39 +377,38 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
         try {
           errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
-          console.error(`Datos de error:`, errorData);
+          console.error(`🚨 [API] Datos de error:`, errorData);
         } catch (e) {
           // Si no podemos parsear el JSON, usamos el mensaje de error por defecto
-          console.error(`No se pudo parsear la respuesta de error como JSON`);
+          console.error(`🚨 [API] No se pudo parsear la respuesta de error como JSON`);
         }
         
-        console.error(`Error en la petición: ${errorMessage}`);
+        console.error(`🚨 [API] Error en la petición: ${errorMessage}`);
         
         // Si es un 404, probablemente el endpoint no existe
         if (response.status === 404) {
           const error = {
-            message: `El endpoint ${fullEndpoint} no existe o no está disponible`,
+            message: `El endpoint ${normalizedEndpoint} no existe o no está disponible`,
             status: 404,
             code: 'ENDPOINT_NOT_FOUND',
-            endpoint: fullEndpoint,
-            url: `${API_URL}${fullEndpoint}`
+            endpoint: normalizedEndpoint,
+            url: url
           };
-          console.error('Error 404:', error);
+          console.error('🚨 [API] Error 404:', error);
           throw error;
         }
         
         // Si es un 401, el usuario no está autenticado
         if (response.status === 401) {
-          // Intentar renovar el token (esto debería implementarse en un servicio de autenticación)
-          console.warn('Error de autenticación. Intentando renovar token...');
+          console.warn('⚠️ [API] Error de autenticación.');
           
           const error = {
             message: 'No estás autenticado. Por favor, inicia sesión.',
             status: 401,
             code: 'UNAUTHORIZED',
-            endpoint: fullEndpoint
+            endpoint: normalizedEndpoint
           };
-          console.error('Error 401:', error);
+          console.error('🚨 [API] Error 401:', error);
           throw error;
         }
         
@@ -368,11 +416,11 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
       }
       
       const data = await response.json();
-      console.log(`Datos recibidos de ${endpoint}:`, data);
+      console.log(`📦 [API] Datos recibidos de ${endpoint}:`, data);
       return data;
     } catch (fetchError: any) {
       if (fetchError.name === 'AbortError') {
-        console.error(`La petición a ${endpoint} ha excedido el tiempo de espera.`);
+        console.error(`🚨 [API] La petición a ${endpoint} ha excedido el tiempo de espera.`);
         throw {
           message: 'La petición ha excedido el tiempo de espera.',
           status: 0,
@@ -383,18 +431,18 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
       throw fetchError;
     }
   } catch (error: any) {
-    console.error(`Error en fetchData para ${endpoint}:`, error);
+    console.error(`🚨 [API] Error en fetchData para ${endpoint}:`, error);
     
     // Verificar si es un error de red
     if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
-      console.warn(`Error de red al conectar con ${endpoint}. Utilizando datos simulados.`);
+      console.warn(`⚠️ [API] Error de red al conectar con ${endpoint}. Utilizando datos simulados.`);
       
       // Intentar obtener datos simulados
       const mockEndpoint = endpoint.replace(API_PREFIX, '').replace(/^\//, '');
-      const mockResponse = (mockData as any)[mockEndpoint];
+      const mockResponse = getMockDataForEndpoint(mockEndpoint);
       
       if (mockResponse) {
-        console.warn(`Usando datos simulados como fallback para ${endpoint}`);
+        console.warn(`⚠️ [API] Usando datos simulados como fallback para ${endpoint}`);
         return mockResponse;
       }
     }
@@ -427,34 +475,38 @@ export async function get<T = any>(endpoint: string, options: { params?: Record<
 export async function post<T = any>(endpoint: string, data: any): Promise<T> {
   try {
     // Asegurarse de que el endpoint tenga el prefijo correcto
-    const fullEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
+    let normalizedEndpoint = endpoint;
+    if (!normalizedEndpoint.startsWith('/')) {
+      normalizedEndpoint = `/${normalizedEndpoint}`;
+    }
     
-    console.log(`Realizando POST a ${fullEndpoint} con datos:`, data);
+    // Construir la URL completa
+    const url = `${API_URL}${API_PREFIX}${normalizedEndpoint}`;
+    
+    console.log(`📨 [API] Iniciando POST a: ${url}`);
+    console.log(`📨 [API] Datos a enviar:`, data);
     
     // Obtener el token de autenticación
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-
+    
     // Añadir el token de autenticación si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔐 [API] Token de autenticación añadido a la petición');
     } else {
-      console.warn('No hay token de autenticación disponible. La petición podría fallar si requiere autenticación.');
+      console.warn('⚠️ [API] No hay token de autenticación disponible.');
     }
     
-    const response = await fetch('/api/proxy', {
+    const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        endpoint: fullEndpoint,
-        data,
-        method: 'POST'
-      }),
+      body: JSON.stringify(data),
     });
     
-    console.log(`Respuesta POST recibida con estado: ${response.status} ${response.statusText}`);
+    console.log(`📨 [API] Respuesta POST recibida con estado: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       let errorMessage = `Error ${response.status}: ${response.statusText}`;
@@ -463,34 +515,33 @@ export async function post<T = any>(endpoint: string, data: any): Promise<T> {
       try {
         errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
-        console.error(`Datos de error POST:`, errorData);
+        console.error(`🚨 [API] Datos de error en POST:`, errorData);
       } catch (e) {
-        console.error(`No se pudo parsear la respuesta de error POST como JSON`);
+        // Si no podemos parsear el JSON, usamos el mensaje de error por defecto
+        console.error(`🚨 [API] No se pudo parsear la respuesta de error como JSON`);
       }
       
-      console.error(`Error en la petición POST: ${errorMessage}`);
-      
-      // Si es un 401, el usuario no está autenticado
-      if (response.status === 401) {
-        const error = {
-          message: 'No estás autenticado. Por favor, inicia sesión.',
-          status: 401,
-          code: 'UNAUTHORIZED',
-          endpoint: fullEndpoint
-        };
-        console.error('Error 401:', error);
-        throw error;
-      }
-      
+      console.error(`🚨 [API] Error en la petición POST: ${errorMessage}`);
       throw new Error(errorMessage);
     }
     
     const responseData = await response.json();
-    console.log(`Datos POST recibidos de ${endpoint}:`, responseData);
+    console.log(`📦 [API] Datos recibidos de POST ${endpoint}:`, responseData);
     return responseData;
   } catch (error: any) {
-    console.error(`Error en post para ${endpoint}:`, error);
-    throw error;
+    console.error(`🚨 [API] Error en post para ${endpoint}:`, error);
+    
+    // Verificar si es un error de red
+    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
+      console.warn(`⚠️ [API] Error de red al conectar con ${endpoint} (POST).`);
+    }
+    
+    throw {
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
+      status: error.status || 0,
+      code: error.code || 'NETWORK_ERROR',
+      endpoint
+    };
   }
 }
 
@@ -503,34 +554,38 @@ export async function post<T = any>(endpoint: string, data: any): Promise<T> {
 export async function put<T = any>(endpoint: string, data: any): Promise<T> {
   try {
     // Asegurarse de que el endpoint tenga el prefijo correcto
-    const fullEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
+    let normalizedEndpoint = endpoint;
+    if (!normalizedEndpoint.startsWith('/')) {
+      normalizedEndpoint = `/${normalizedEndpoint}`;
+    }
     
-    console.log(`Realizando PUT a ${fullEndpoint} con datos:`, data);
+    // Construir la URL completa
+    const url = `${API_URL}${API_PREFIX}${normalizedEndpoint}`;
+    
+    console.log(`🔄 [API] Iniciando PUT a: ${url}`);
+    console.log(`🔄 [API] Datos a enviar:`, data);
     
     // Obtener el token de autenticación
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-
+    
     // Añadir el token de autenticación si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔐 [API] Token de autenticación añadido a la petición');
     } else {
-      console.warn('No hay token de autenticación disponible. La petición podría fallar si requiere autenticación.');
+      console.warn('⚠️ [API] No hay token de autenticación disponible.');
     }
     
-    const response = await fetch('/api/proxy', {
-      method: 'POST',
+    const response = await fetch(url, {
+      method: 'PUT',
       headers,
-      body: JSON.stringify({
-        endpoint: fullEndpoint,
-        data,
-        method: 'PUT'
-      }),
+      body: JSON.stringify(data),
     });
     
-    console.log(`Respuesta PUT recibida con estado: ${response.status} ${response.statusText}`);
+    console.log(`🔄 [API] Respuesta PUT recibida con estado: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       let errorMessage = `Error ${response.status}: ${response.statusText}`;
@@ -539,34 +594,33 @@ export async function put<T = any>(endpoint: string, data: any): Promise<T> {
       try {
         errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
-        console.error(`Datos de error PUT:`, errorData);
+        console.error(`🚨 [API] Datos de error en PUT:`, errorData);
       } catch (e) {
-        console.error(`No se pudo parsear la respuesta de error PUT como JSON`);
+        // Si no podemos parsear el JSON, usamos el mensaje de error por defecto
+        console.error(`🚨 [API] No se pudo parsear la respuesta de error como JSON`);
       }
       
-      console.error(`Error en la petición PUT: ${errorMessage}`);
-      
-      // Si es un 401, el usuario no está autenticado
-      if (response.status === 401) {
-        const error = {
-          message: 'No estás autenticado. Por favor, inicia sesión.',
-          status: 401,
-          code: 'UNAUTHORIZED',
-          endpoint: fullEndpoint
-        };
-        console.error('Error 401:', error);
-        throw error;
-      }
-      
+      console.error(`🚨 [API] Error en la petición PUT: ${errorMessage}`);
       throw new Error(errorMessage);
     }
     
     const responseData = await response.json();
-    console.log(`Datos PUT recibidos de ${endpoint}:`, responseData);
+    console.log(`📦 [API] Datos recibidos de PUT ${endpoint}:`, responseData);
     return responseData;
   } catch (error: any) {
-    console.error(`Error en put para ${endpoint}:`, error);
-    throw error;
+    console.error(`🚨 [API] Error en put para ${endpoint}:`, error);
+    
+    // Verificar si es un error de red
+    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
+      console.warn(`⚠️ [API] Error de red al conectar con ${endpoint} (PUT).`);
+    }
+    
+    throw {
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
+      status: error.status || 0,
+      code: error.code || 'NETWORK_ERROR',
+      endpoint
+    };
   }
 }
 
@@ -578,34 +632,36 @@ export async function put<T = any>(endpoint: string, data: any): Promise<T> {
 export async function del<T = any>(endpoint: string): Promise<T> {
   try {
     // Asegurarse de que el endpoint tenga el prefijo correcto
-    const fullEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
+    let normalizedEndpoint = endpoint;
+    if (!normalizedEndpoint.startsWith('/')) {
+      normalizedEndpoint = `/${normalizedEndpoint}`;
+    }
     
-    console.log(`Realizando DELETE a ${fullEndpoint}`);
+    // Construir la URL completa
+    const url = `${API_URL}${API_PREFIX}${normalizedEndpoint}`;
+    
+    console.log(`🗑️ [API] Iniciando DELETE a: ${url}`);
     
     // Obtener el token de autenticación
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-
+    
     // Añadir el token de autenticación si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔐 [API] Token de autenticación añadido a la petición');
     } else {
-      console.warn('No hay token de autenticación disponible. La petición podría fallar si requiere autenticación.');
+      console.warn('⚠️ [API] No hay token de autenticación disponible.');
     }
     
-    const response = await fetch('/api/proxy', {
-      method: 'POST',
+    const response = await fetch(url, {
+      method: 'DELETE',
       headers,
-      body: JSON.stringify({
-        endpoint: fullEndpoint,
-        data: {},
-        method: 'DELETE'
-      }),
     });
     
-    console.log(`Respuesta DELETE recibida con estado: ${response.status} ${response.statusText}`);
+    console.log(`🗑️ [API] Respuesta DELETE recibida con estado: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       let errorMessage = `Error ${response.status}: ${response.statusText}`;
@@ -614,34 +670,33 @@ export async function del<T = any>(endpoint: string): Promise<T> {
       try {
         errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
-        console.error(`Datos de error DELETE:`, errorData);
+        console.error(`🚨 [API] Datos de error en DELETE:`, errorData);
       } catch (e) {
-        console.error(`No se pudo parsear la respuesta de error DELETE como JSON`);
+        // Si no podemos parsear el JSON, usamos el mensaje de error por defecto
+        console.error(`🚨 [API] No se pudo parsear la respuesta de error como JSON`);
       }
       
-      console.error(`Error en la petición DELETE: ${errorMessage}`);
-      
-      // Si es un 401, el usuario no está autenticado
-      if (response.status === 401) {
-        const error = {
-          message: 'No estás autenticado. Por favor, inicia sesión.',
-          status: 401,
-          code: 'UNAUTHORIZED',
-          endpoint: fullEndpoint
-        };
-        console.error('Error 401:', error);
-        throw error;
-      }
-      
+      console.error(`🚨 [API] Error en la petición DELETE: ${errorMessage}`);
       throw new Error(errorMessage);
     }
     
     const responseData = await response.json();
-    console.log(`Datos DELETE recibidos de ${endpoint}:`, responseData);
+    console.log(`📦 [API] Datos recibidos de DELETE ${endpoint}:`, responseData);
     return responseData;
   } catch (error: any) {
-    console.error(`Error en del para ${endpoint}:`, error);
-    throw error;
+    console.error(`🚨 [API] Error en del para ${endpoint}:`, error);
+    
+    // Verificar si es un error de red
+    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
+      console.warn(`⚠️ [API] Error de red al conectar con ${endpoint} (DELETE).`);
+    }
+    
+    throw {
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
+      status: error.status || 0,
+      code: error.code || 'NETWORK_ERROR',
+      endpoint
+    };
   }
 }
 
@@ -678,3 +733,116 @@ function handleApiError(error: AxiosError) {
       logMessage('error', `Error del servidor (${error.response.status}):`, error.response.data);
   }
 }
+
+// Función para iniciar sesión
+export const login = async (username: string, password: string): Promise<any> => {
+  try {
+    console.log('🔑 [apiService] Intentando iniciar sesión...');
+    
+    // Crear formData para OAuth2
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('grant_type', 'password');
+    formData.append('scope', '');
+    formData.append('client_id', '');
+    formData.append('client_secret', '');
+    
+    // Hacer petición directa al backend
+    const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ [apiService] Error al iniciar sesión:', errorData);
+      throw new Error(errorData.detail || 'Error al iniciar sesión');
+    }
+    
+    const data = await response.json();
+    console.log('✅ [apiService] Inicio de sesión exitoso');
+    
+    // Guardar token en localStorage
+    if (data.access_token) {
+      localStorage.setItem('token', data.access_token);
+      
+      // Decodificar token para obtener información del usuario
+      try {
+        const tokenParts = data.access_token.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          
+          // Guardar información del usuario
+          const user = {
+            username: payload.sub || username,
+            role: payload.role || 'usuario',
+            id: payload.user_id || 0,
+            is_active: true
+          };
+          
+          localStorage.setItem('user', JSON.stringify(user));
+          console.log(`✅ [apiService] Información de usuario guardada: ${user.username} (${user.role})`);
+        }
+      } catch (error) {
+        console.error('❌ [apiService] Error al decodificar token:', error);
+      }
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('❌ [apiService] Error en login:', error);
+    throw error;
+  }
+};
+
+// Función para cerrar sesión
+export const logout = (): void => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  console.log('🔒 [apiService] Sesión cerrada');
+};
+
+// Función para verificar si el usuario está autenticado
+export const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  
+  try {
+    // Verificar si el token ha expirado
+    const tokenData = JSON.parse(atob(token.split('.')[1]));
+    const expirationTime = tokenData.exp * 1000; // Convertir a milisegundos
+    
+    if (Date.now() >= expirationTime) {
+      console.log('⚠️ [apiService] Token expirado');
+      localStorage.removeItem('token');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ [apiService] Error al verificar token:', error);
+    return false;
+  }
+};
+
+// Función para obtener el token
+export const getToken = (): string | null => {
+  return localStorage.getItem('token');
+};
+
+// Función para obtener información del usuario
+export const getUserInfo = (): any => {
+  const userStr = localStorage.getItem('user');
+  if (!userStr) return null;
+  
+  try {
+    return JSON.parse(userStr);
+  } catch (error) {
+    console.error('❌ [apiService] Error al obtener información del usuario:', error);
+    return null;
+  }
+};

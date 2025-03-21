@@ -1,10 +1,9 @@
 ---
-// Importar el layout
 import MainLayout from '../../components/layout/MainLayout.astro';
 
-// Definir título y rol de usuario
-const title = "Explotaciones";
-const userRole = "administrador"; // Simulación de rol
+// Obtener datos de la sesión del usuario
+const userRole = Astro.cookies.get('userRole')?.value || 'admin';
+const title = 'Explotaciones';
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/explotacions">
@@ -36,10 +35,7 @@ const userRole = "administrador"; // Simulación de rol
             class="text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Todas las regiones</option>
-            <option value="norte">Norte</option>
-            <option value="sur">Sur</option>
-            <option value="este">Este</option>
-            <option value="oeste">Oeste</option>
+            <!-- Las regiones se cargarán dinámicamente desde el backend -->
           </select>
           <button 
             id="filter-button"
@@ -57,7 +53,7 @@ const userRole = "administrador"; // Simulación de rol
         <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total: <span id="total-count" class="font-semibold">0</span> explotaciones</span>
       </div>
       <div class="flex space-x-2">
-        <button class="flex items-center text-xs sm:text-sm text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
+        <button id="export-button" class="flex items-center text-xs sm:text-sm text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
           <span class="mr-1">↓</span> Exportar datos
         </button>
       </div>
@@ -76,224 +72,242 @@ const userRole = "administrador"; // Simulación de rol
       
       <!-- Template para cuando haya explotaciones (se llenará con JavaScript) -->
     </div>
+
+    <div id="loading-explotacions" style="display: none;">Cargando...</div>
   </div>
 </MainLayout>
 
+
 <script>
   import { getExplotacions } from '../../services/explotacioService';
-
-  // Datos simulados para desarrollo (solo se usarán si falla la conexión con el backend)
-  const explotacionesMock = [
-    {
-      id: 1,
-      nombre: "Explotación Norte",
-      codigo: "EXP-001",
-      region: "norte",
-      animales: 15,
-      partos: 7
-    },
-    {
-      id: 2,
-      nombre: "Explotación Sur",
-      codigo: "EXP-002",
-      region: "sur",
-      animales: 23,
-      partos: 12
-    },
-    {
-      id: 3,
-      nombre: "Explotación Este",
-      codigo: "EXP-003",
-      region: "este",
-      animales: 18,
-      partos: 9
-    },
-    {
-      id: 4,
-      nombre: "Explotación Oeste",
-      codigo: "EXP-004",
-      region: "oeste",
-      animales: 10,
-      partos: 4
-    },
-    {
-      id: 5,
-      nombre: "Explotación Central",
-      codigo: "EXP-005",
-      region: "norte",
-      animales: 30,
-      partos: 15
-    }
-  ];
-
-  // Función para cargar explotaciones
+  import { getAnimalsByExplotacion } from '../../services/animalService';
+  
+  // Función para renderizar una explotación
+  const renderExplotacion = (explotacion, animalesCount = 0) => {
+    console.log('Renderizando explotación:', explotacion);
+    
+    // Crear elemento contenedor
+    const card = document.createElement('div');
+    card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow';
+    
+    // Determinar estado y clase CSS
+    const estadoText = explotacion.activa ? 'Activa' : 'Inactiva';
+    const estadoClass = explotacion.activa 
+      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    
+    // Crear contenido HTML
+    card.innerHTML = `
+      <div class="p-4">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${explotacion.nom || explotacion.nombre || 'Sin nombre'}</h3>
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoClass}">
+            ${estadoText}
+          </span>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <span class="font-medium">Código:</span> ${explotacion.explotaci || explotacion.codigo || '-'}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <span class="font-medium">Responsable:</span> ${explotacion.responsable || '-'}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <span class="font-medium">Región:</span> ${explotacion.region ? explotacion.region.charAt(0).toUpperCase() + explotacion.region.slice(1) : '-'}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <span class="font-medium">Animales:</span> <span class="font-semibold text-primary dark:text-primary-light">${animalesCount}</span>
+        </p>
+        <div class="flex justify-end">
+          <a href="/explotacions/${explotacion.id}" class="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded hover:bg-primary-dark transition-colors text-sm">
+            Ver detalles
+          </a>
+        </div>
+      </div>
+    `;
+    
+    return card;
+  };
+  
+  // Cargar explotaciones al cargar la página
   document.addEventListener('DOMContentLoaded', async () => {
-    // Referencias a elementos DOM
+    const container = document.getElementById('explotacions-container');
+    const loadingEl = document.getElementById('loading-explotacions');
+    const noResultsEl = document.getElementById('no-results');
+    const totalCountEl = document.getElementById('total-count');
     const searchInput = document.getElementById('search-explotacion');
-    const regionFilter = document.getElementById('region-filter');
-    const filterButton = document.getElementById('filter-button');
-    const explotacionsContainer = document.getElementById('explotacions-container');
-    const noResults = document.getElementById('no-results');
-    const totalCount = document.getElementById('total-count');
+    const exportButton = document.getElementById('export-button');
     
-    // Variable para controlar si se usan datos simulados
-    let usandoDatosSimulados = false;
-    let errorMessage = null;
+    if (!container) {
+      console.error('No se encontró el contenedor de explotaciones');
+      return;
+    }
+    
     let explotaciones = [];
+    let animalesPorExplotacion = {};
     
-    // Cargar datos desde la API
-    try {
-      console.log('Cargando explotaciones desde la API...');
-      const response = await getExplotacions();
-      explotaciones = response.results || [];
-      console.log('Explotaciones cargadas:', explotaciones);
-    } catch (error) {
-      console.error('Error al cargar explotaciones:', error);
-      errorMessage = error.message || 'Error al cargar las explotaciones';
-      usandoDatosSimulados = true;
-      explotaciones = explotacionesMock;
-    }
-    
-    // Mostrar mensaje de datos simulados si es necesario
-    if (usandoDatosSimulados) {
-      const alertContainer = document.createElement('div');
-      alertContainer.className = 'mb-4 sm:mb-6 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4';
-      alertContainer.innerHTML = `
-        <div class="flex items-start">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-yellow-700 dark:text-yellow-200">
-              Mostrando datos simulados. No se pudo conectar con el servidor. Las explotaciones mostradas son de ejemplo y no reflejan datos reales.
-            </p>
-          </div>
-        </div>
-      `;
-      
-      // Insertar el mensaje después del título
-      const titleContainer = document.querySelector('.mb-4.sm\\:mb-6:first-of-type');
-      if (titleContainer && titleContainer.nextElementSibling) {
-        titleContainer.parentNode.insertBefore(alertContainer, titleContainer.nextElementSibling);
-      }
-    }
-    
-    // Mostrar mensaje de error si es necesario
-    if (errorMessage) {
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 p-4';
-      errorContainer.innerHTML = `
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-red-700 dark:text-red-200">${errorMessage}</p>
-          </div>
-        </div>
-      `;
-      
-      // Insertar el mensaje después del título o del mensaje de datos simulados
-      const alertContainer = document.querySelector('.mb-4.sm\\:mb-6.bg-yellow-50');
-      const titleContainer = document.querySelector('.mb-4.sm\\:mb-6:first-of-type');
-      
-      if (alertContainer) {
-        alertContainer.parentNode.insertBefore(errorContainer, alertContainer.nextElementSibling);
-      } else if (titleContainer && titleContainer.nextElementSibling) {
-        titleContainer.parentNode.insertBefore(errorContainer, titleContainer.nextElementSibling);
-      }
-    }
-    
-    // Función para renderizar explotaciones
-    const renderExplotaciones = (explotaciones) => {
-      // Actualizar contador
-      totalCount.textContent = explotaciones.length;
-      
-      // Limpiar contenedor
-      explotacionsContainer.innerHTML = '';
-      
-      // Mostrar mensaje de no resultados si no hay explotaciones
-      if (explotaciones.length === 0) {
-        explotacionsContainer.appendChild(noResults);
-        return;
-      }
-      
-      // Renderizar cada explotación
-      explotaciones.forEach(explotacion => {
-        const card = document.createElement('div');
-        card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow';
+    // Función para cargar explotaciones
+    const loadExplotaciones = async (search = '') => {
+      try {
+        // Mostrar loading
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (noResultsEl) noResultsEl.style.display = 'none';
         
-        // Adaptar los nombres de propiedades según la API real
-        const nombre = explotacion.nombre || explotacion.name || 'Sin nombre';
-        const codigo = explotacion.codigo || explotacion.code || 'Sin código';
-        const region = explotacion.region || explotacion.zona || 'Sin región';
-        const animales = explotacion.animales || explotacion.animals_count || 0;
-        const partos = explotacion.partos || explotacion.births_count || 0;
+        // Limpiar contenedor excepto elementos fijos
+        const childrenToRemove = Array.from(container.children).filter(
+          child => child.id !== 'loading-explotacions' && child.id !== 'no-results'
+        );
+        childrenToRemove.forEach(child => container.removeChild(child));
         
-        card.innerHTML = `
-          <div class="p-4">
-            <h3 class="text-base sm:text-lg font-semibold mb-2 text-gray-900 dark:text-white">${nombre}</h3>
-            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">Código: ${codigo} • Región: ${typeof region === 'string' ? region.charAt(0).toUpperCase() + region.slice(1) : region}</p>
-            <div class="flex items-center space-x-4 text-xs sm:text-sm mb-4 text-gray-700 dark:text-gray-300">
-              <div class="flex items-center">
-                <span class="mr-2">🐄</span>
-                <span>${animales} animales</span>
-              </div>
-              <div class="flex items-center">
-                <span class="mr-2">🐣</span>
-                <span>${partos} partos</span>
-              </div>
-            </div>
-            <div class="flex justify-end">
-              <a href="/explotacions/${explotacion.id}" class="bg-primary text-white px-3 py-2 rounded-md text-xs sm:text-sm hover:bg-primary/80 transition-colors">
-                Ver detalles
-              </a>
-            </div>
-          </div>
-        `;
-        explotacionsContainer.appendChild(card);
-      });
+        // Obtener explotaciones
+        const filters = search ? { search } : {};
+        console.log('Solicitando explotaciones con filtros:', filters);
+        const response = await getExplotacions(filters);
+        console.log('Respuesta de explotaciones:', response);
+        
+        // Determinar si la respuesta es un array o un objeto paginado
+        if (Array.isArray(response)) {
+          explotaciones = response;
+          console.log(`Recibidas ${explotaciones.length} explotaciones como array`);
+        } else if (response && response.items) {
+          explotaciones = response.items;
+          console.log(`Recibidas ${explotaciones.length} explotaciones paginadas (${response.total} total)`);
+        } else if (response && typeof response === 'object') {
+          // Intentar extraer datos si es un objeto con estructura desconocida
+          if ('data' in response && Array.isArray(response.data)) {
+            explotaciones = response.data;
+            console.log(`Recibidas ${explotaciones.length} explotaciones desde response.data`);
+          } else {
+            // Si es un objeto único, convertirlo a array
+            explotaciones = [response];
+            console.log('Recibida una única explotación como objeto');
+          }
+        } else {
+          console.error('Formato de respuesta desconocido:', response);
+          explotaciones = [];
+        }
+        
+        // Actualizar contador total
+        if (totalCountEl) {
+          totalCountEl.textContent = explotaciones.length.toString();
+        }
+        
+        if (!explotaciones || explotaciones.length === 0) {
+          if (noResultsEl) noResultsEl.style.display = 'block';
+          console.log('No se encontraron explotaciones');
+        } else {
+          // Cargar conteo de animales para cada explotación
+          await Promise.all(explotaciones.map(async (explotacion) => {
+            try {
+              if (!explotacion || !explotacion.id) {
+                console.error('Explotación sin ID:', explotacion);
+                animalesPorExplotacion[explotacion?.id || 'unknown'] = 0;
+                return;
+              }
+              
+              console.log(`Solicitando animales para explotación ${explotacion.id}`);
+              const animales = await getAnimalsByExplotacion(explotacion.id);
+              
+              if (Array.isArray(animales)) {
+                animalesPorExplotacion[explotacion.id] = animales.length;
+                console.log(`Explotación ${explotacion.id}: ${animales.length} animales`);
+              } else if (animales && typeof animales === 'object' && 'items' in animales) {
+                animalesPorExplotacion[explotacion.id] = animales.items.length;
+                console.log(`Explotación ${explotacion.id}: ${animales.items.length} animales (paginados)`);
+              } else {
+                console.warn(`Formato de respuesta desconocido para animales de explotación ${explotacion.id}:`, animales);
+                animalesPorExplotacion[explotacion.id] = 0;
+              }
+            } catch (error) {
+              console.error(`Error al cargar animales para explotación ${explotacion.id}:`, error);
+              animalesPorExplotacion[explotacion.id] = 0;
+            }
+          }));
+          
+          // Renderizar cada explotación
+          explotaciones.forEach(explotacion => {
+            if (!explotacion || !explotacion.id) {
+              console.error('Intentando renderizar explotación inválida:', explotacion);
+              return;
+            }
+            
+            const animalesCount = animalesPorExplotacion[explotacion.id] || 0;
+            const card = renderExplotacion(explotacion, animalesCount);
+            container.appendChild(card);
+          });
+          
+          console.log('Explotaciones renderizadas correctamente');
+        }
+      } catch (error) {
+        console.error('Error al cargar explotaciones:', error);
+        if (noResultsEl) {
+          noResultsEl.style.display = 'block';
+          const firstP = noResultsEl.querySelector('p:first-of-type');
+          const lastP = noResultsEl.querySelector('p:last-of-type');
+          if (firstP) firstP.textContent = 'Error al cargar explotaciones.';
+          if (lastP) lastP.textContent = 'Intente nuevamente más tarde.';
+        }
+      } finally {
+        // Ocultar loading
+        if (loadingEl) loadingEl.style.display = 'none';
+      }
     };
     
-    // Función para filtrar explotaciones
-    const filtrarExplotaciones = () => {
-      const searchTerm = searchInput.value.toLowerCase();
-      const regionSelected = regionFilter.value.toLowerCase();
-      
-      const filteredExplotaciones = explotaciones.filter(explotacion => {
-        // Filtrar por término de búsqueda
-        const matchesSearch = 
-          explotacion.nombre.toLowerCase().includes(searchTerm) || 
-          explotacion.codigo.toLowerCase().includes(searchTerm) ||
-          explotacion.region.toLowerCase().includes(searchTerm);
-        
-        // Filtrar por región
-        const matchesRegion = regionSelected === '' || explotacion.region === regionSelected;
-        
-        return matchesSearch && matchesRegion;
-      });
-      
-      renderExplotaciones(filteredExplotaciones);
-    };
+    // Cargar explotaciones inicialmente
+    await loadExplotaciones();
     
-    // Event listeners
+    // Configurar búsqueda
     if (searchInput) {
-      searchInput.addEventListener('input', filtrarExplotaciones);
+      searchInput.addEventListener('input', debounce((e) => {
+        loadExplotaciones(e.target.value);
+      }, 500));
     }
     
-    if (filterButton) {
-      filterButton.addEventListener('click', filtrarExplotaciones);
+    // Configurar exportación
+    if (exportButton) {
+      exportButton.addEventListener('click', () => {
+        if (explotaciones.length === 0) {
+          alert('No hay datos para exportar');
+          return;
+        }
+        
+        // Crear CSV
+        const headers = ['ID', 'Nombre', 'Código', 'Responsable', 'Región', 'Activa', 'Animales'];
+        const csvRows = [
+          headers.join(','),
+          ...explotaciones.map(e => [
+            e.id,
+            `"${e.nom || e.nombre || ''}"`,
+            `"${e.explotaci || e.codigo || ''}"`,
+            `"${e.responsable || ''}"`,
+            `"${e.region || ''}"`,
+            e.activa ? 'Sí' : 'No',
+            animalesPorExplotacion[e.id] || 0
+          ].join(','))
+        ];
+        
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `explotaciones_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
     }
-    
-    if (regionFilter) {
-      regionFilter.addEventListener('change', filtrarExplotaciones);
-    }
-    
-    // Cargar explotaciones iniciales
-    renderExplotaciones(explotaciones);
   });
+  
+  // Función para limitar la frecuencia de ejecución (debounce)
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+  }
 </script>

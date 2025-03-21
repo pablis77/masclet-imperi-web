@@ -40,3 +40,18 @@ async def update_explotacio(
     await explotacio.update_from_dict(update_data)
     await explotacio.save()
     return explotacio
+
+@router.delete("/{explotacio_id}", response_model=ExplotacioResponse)
+async def delete_explotacio(explotacio_id: int) -> ExplotacioResponse:
+    """Elimina una explotación."""
+    explotacio = await Explotacio.get_or_none(id=explotacio_id)
+    if not explotacio:
+        raise HTTPException(status_code=404, detail="Explotación no encontrada")
+    
+    # Guardar una copia de la explotación para devolver en la respuesta
+    explotacio_copy = ExplotacioResponse.model_validate(explotacio)
+    
+    # Eliminar la explotación
+    await explotacio.delete()
+    
+    return explotacio_copy

@@ -272,11 +272,28 @@ export function getCurrentUser(): LoginResponse['user'] | null {
   try {
     if (!isBrowser) return null;
     
-    const userDataStr = localStorage.getItem('userData');
-    if (!userDataStr) return null;
+    // Primero intentar obtener de 'user' (donde se guarda en login)
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (e) {
+        console.error('Error al parsear datos de usuario:', e);
+      }
+    }
     
-    const userData = JSON.parse(userDataStr);
-    return userData?.user || null;
+    // Intentar con 'userData' como fallback (compatibilidad)
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        return userData?.user || null;
+      } catch (e) {
+        console.error('Error al parsear userData:', e);
+      }
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error al obtener el usuario actual:', error);
     return null;
@@ -291,11 +308,28 @@ export function getStoredUser(): User | null {
   try {
     if (!isBrowser) return null;
     
-    const userDataStr = localStorage.getItem('userData');
-    if (!userDataStr) return null;
+    // Primero intentar obtener de 'user' (donde se guarda en login)
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (e) {
+        console.error('Error al parsear datos de usuario:', e);
+      }
+    }
     
-    const userData = JSON.parse(userDataStr);
-    return userData?.user || null;
+    // Intentar con 'userData' como fallback (compatibilidad)
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        return userData?.user || null;
+      } catch (e) {
+        console.error('Error al parsear userData:', e);
+      }
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error al obtener el usuario almacenado:', error);
     return null;
@@ -400,7 +434,14 @@ export const updatePassword = async (oldPassword: string, newPassword: string): 
  * Obtiene el perfil del usuario actual
  */
 export const getCurrentUserProfile = async (): Promise<User> => {
-  return get<User>('/auth/me');
+  try {
+    // Primero intenta con la nueva ruta
+    return await get<User>('/users/me');
+  } catch (error) {
+    console.log('Error al obtener perfil desde /users/me, intentando con /auth/me');
+    // Si falla, intenta con la ruta anterior
+    return await get<User>('/auth/me');
+  }
 };
 
 /**

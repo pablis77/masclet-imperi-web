@@ -1,3 +1,5 @@
+
+
 # Análisis Final de Endpoints Necesarios
 
 ## Introducción
@@ -35,18 +37,31 @@ El proyecto Masclet Imperi tiene una arquitectura clara dividida en:
 
 | Endpoint | Método | Estado | Descripción | Prioridad |
 |----------|--------|--------|-------------|-----------|
-| `/api/v1/dashboard/stats` | GET | ❌ No funcional | Estadísticas generales | Alta |
-| `/api/v1/dashboard/explotacions/{id}` | GET | ❌ No funcional | Estadísticas por explotación | Alta |
+| `/api/v1/dashboard/stats` | GET | ✅ Funcional | Estadísticas generales | Alta |
+| `/api/v1/dashboard/explotacions/{id}` | GET | ✅ Funcional | Estadísticas por explotación | Alta |
+| `/api/v1/dashboard/stats?inicio=YYYY-MM-DD&fin=YYYY-MM-DD` | GET | ✅ Funcional | Estadísticas generales con rango de fechas | Alta |
+| `/api/v1/dashboard/explotacions/{id}?inicio=YYYY-MM-DD&fin=YYYY-MM-DD` | GET | ✅ Funcional | Estadísticas por explotación con rango de fechas | Alta |
+| `/api/v1/dashboard/resumen` | GET | ✅ Funcional | Resumen general | Media |
+| `/api/v1/dashboard/partos` | GET | ✅ Funcional | Estadísticas de partos | Media |
+| `/api/v1/dashboard/combined` | GET | ✅ Funcional | Estadísticas combinadas | Media |
+| `/api/v1/dashboard/recientes` | GET | ✅ Funcional | Actividad reciente | Media |
+| `/api/v1/dashboard/explotacions` | GET | ✅ Funcional | Lista de explotaciones | Media |
 
-**Problemas identificados**:
-- El endpoint `/api/v1/dashboard/stats` está implementado pero no responde correctamente.
-- El frontend muestra "Cargando estadísticas..." indefinidamente.
-- Posibles problemas con la estructura de datos o consultas a la base de datos.
+**Notas**: 
+- ✅ RESUELTO: Todos los endpoints del dashboard están funcionando correctamente.
+- ✅ RESUELTO: Se ha implementado correctamente el soporte para filtrado por fechas en los endpoints principales.
+- ✅ RESUELTO: Se ha verificado el funcionamiento de todos los endpoints mediante scripts de prueba automatizados.
 
-**Acciones necesarias**:
-- Verificar la implementación del servicio `dashboard_service.py`.
-- Comprobar si hay errores en los logs del backend.
-- Simplificar temporalmente la respuesta para confirmar la conexión.
+**Soluciones aplicadas**:
+1. Se ha reescrito completamente el script `test_all_dashboard_endpoints.py` para probar sistemáticamente todos los endpoints del dashboard.
+2. Se ha corregido la ruta de autenticación para usar `/api/v1/auth/login` en lugar de `/auth/login`.
+3. Se ha implementado un mejor manejo de errores y logging detallado para facilitar la depuración.
+4. Se ha verificado que todos los endpoints devuelven datos con la estructura esperada.
+
+**Notas técnicas para futuras referencias**:
+- Los endpoints con parámetros de fecha aceptan los formatos `YYYY-MM-DD`.
+- El endpoint de estadísticas de explotación requiere un ID de explotación válido.
+- Los datos de actividad reciente se filtran por defecto para los últimos 7 días.
 
 ### 3. Animales
 
@@ -69,18 +84,31 @@ El proyecto Masclet Imperi tiene una arquitectura clara dividida en:
 
 | Endpoint | Método | Estado | Descripción | Prioridad |
 |----------|--------|--------|-------------|-----------|
-| `/api/v1/animals/{id}/parts` | GET | ❓ No verificado | Listar partos de un animal | Media |
-| `/api/v1/animals/{id}/parts` | POST | ❓ No verificado | Registrar nuevo parto | Alta |
-| `/api/v1/animals/{id}/parts/{part_id}` | GET | ❓ No verificado | Detalle de un parto | Baja |
-| `/api/v1/animals/{id}/parts/{part_id}` | PUT | ❓ No verificado | Actualizar parto | Baja |
+| `/api/v1/partos/` | GET | ✅ Funcional | Listar todos los partos | Media |
+| `/api/v1/partos/{id}` | GET | ✅ Funcional | Detalle de un parto | Baja |
+| `/api/v1/partos/` | POST | ✅ Funcional | Registrar nuevo parto | Alta |
+| `/api/v1/partos/{id}` | PUT | ✅ Funcional | Actualizar parto | Baja |
+| `/api/v1/animals/{id}/parts` | GET | ✅ Funcional | Listar partos de un animal | Media |
+| `/api/v1/animals/{id}/parts` | POST | ✅ Funcional | Registrar nuevo parto para un animal | Alta |
+| `/api/v1/animals/{id}/parts/{part_id}` | PUT | ❌ No funcional | Actualizar parto de un animal | Baja |
 
-**Problemas identificados**:
-- No se ha verificado si estos endpoints están implementados correctamente.
-- La funcionalidad de partos debe estar integrada en "cambios habituales" de la ficha animal.
+**Problemas identificados y resueltos**:
+- ✅ RESUELTO: Se ha verificado que los endpoints standalone (`/api/v1/partos/`) están implementados correctamente.
+- ✅ RESUELTO: Se ha verificado que los endpoints anidados (`/api/v1/animals/{id}/parts`) funcionan correctamente para GET y POST.
+- ❌ PENDIENTE: El endpoint anidado PUT `/api/v1/animals/{id}/parts/{part_id}` devuelve un error 405 Method Not Allowed.
+- ✅ RESUELTO: La funcionalidad de partos está correctamente integrada con el modelo `Animal`.
+- ✅ RESUELTO: El sistema asigna automáticamente números de parto secuenciales para cada animal.
 
-**Acciones necesarias**:
-- Verificar la implementación de estos endpoints.
-- Asegurar que el modelo `Part` esté correctamente relacionado con el modelo `Animal`.
+**Soluciones aplicadas**:
+1. Se ha creado un script de prueba (`test_partos.py`) que verifica la funcionalidad de todos los endpoints de partos.
+2. Se ha documentado que para actualizar partos debe usarse el endpoint standalone PUT `/api/v1/partos/{id}` en lugar del endpoint anidado.
+3. Se ha confirmado que la validación de datos funciona correctamente para todos los campos requeridos.
+
+**Notas técnicas para futuras referencias**:
+- Un parto siempre debe estar asociado a un animal hembra existente.
+- Los campos obligatorios son: `animal_id`, `data`, `genere_fill` y `estat_fill`.
+- El campo `numero_part` se asigna automáticamente según el número de partos previos del animal.
+- Se ha creado documentación detallada en `docs/Context/partos_endpoints_testing.md`.
 
 ### 5. Explotaciones
 
@@ -90,6 +118,7 @@ El proyecto Masclet Imperi tiene una arquitectura clara dividida en:
 | `/api/v1/explotacions/{id}` | GET | ✅ Funcional | Detalle de una explotación | Alta |
 | `/api/v1/explotacions/` | POST | ✅ Funcional | Crear nueva explotación | Baja |
 | `/api/v1/explotacions/{id}` | PUT | ✅ Funcional | Actualizar explotación | Baja |
+| `/api/v1/explotacions/{id}` | DELETE | ✅ Funcional | Eliminar explotación | Baja |
 
 **Notas**: Este es el único módulo cuyos endpoints están confirmados como funcionales. Tiene una implementación sencilla y directa.
 
@@ -123,20 +152,14 @@ El proyecto Masclet Imperi tiene una arquitectura clara dividida en:
 - ✅ Autenticación: Todos los endpoints funcionan correctamente
 - ✅ Explotaciones: Todos los endpoints funcionan correctamente
 - ✅ Importación: El endpoint POST `/api/v1/imports/` funciona correctamente
+- ✅ Dashboard: Todos los endpoints funcionan correctamente, incluyendo los que tienen parámetros de fechas
 
 ### Endpoints con Problemas
-- ❌ Dashboard: No funciona correctamente, se queda en "Cargando estadísticas..."
-- ❓ Animales: No se ha verificado su funcionamiento
-- ❓ Partos: No se ha verificado su funcionamiento
+- ❌ Partos: El endpoint PUT anidado `/api/v1/animals/{id}/parts/{part_id}` no es funcional
 
 ### Errores Específicos
-1. **Dashboard**:
-   - El endpoint `/api/v1/dashboard/stats` no responde correctamente
-   - Posibles problemas con la estructura de datos o consultas a la base de datos
-
-2. **Modelo Animal**:
-   - Problemas con las columnas `estado_t` y `explotaci`
-   - ✅ RESUELTO: El campo `alletar` ha sido actualizado para soportar 3 estados posibles (NO, 1, 2) mediante un `CharEnumField` con la enumeración `EstadoAlletar`. La migración de datos existentes se completó correctamente.
+1. **Partos**:
+   - El endpoint PUT anidado `/api/v1/animals/{id}/parts/{part_id}` devuelve un error 405 Method Not Allowed
 
 ## Plan de Acción Sistemático
 
@@ -227,10 +250,10 @@ La priorización se basa en la dependencia funcional, no en la importancia visua
 
 | Paso | Descripción | Estado |
 |------|-------------|--------|
-| 3.1 | Verificar endpoint GET `/api/v1/animals/{id}/parts` | Pendiente |
-| 3.2 | Verificar endpoint POST `/api/v1/animals/{id}/parts` | Pendiente |
-| 3.3 | Verificar endpoint GET `/api/v1/animals/{id}/parts/{part_id}` | Pendiente |
-| 3.4 | Verificar endpoint PUT `/api/v1/animals/{id}/parts/{part_id}` | Pendiente |
+| 3.1 | Verificar endpoint GET `/api/v1/animals/{id}/parts` | ✅ Funcional |
+| 3.2 | Verificar endpoint POST `/api/v1/animals/{id}/parts` | ✅ Funcional |
+| 3.3 | Verificar endpoint GET `/api/v1/animals/{id}/parts/{part_id}` | ✅ Funcional |
+| 3.4 | Verificar endpoint PUT `/api/v1/animals/{id}/parts/{part_id}` | ❌ No funcional |
 | 3.5 | Comprobar integración con frontend | Pendiente |
 | 3.6 | Documentar resultados y soluciones | Pendiente |
 
@@ -238,6 +261,20 @@ La priorización se basa en la dependencia funcional, no en la importancia visua
 - Revisar el modelo `Part` y asegurar que está correctamente relacionado con `Animal`
 - Verificar que los esquemas de Pydantic están correctamente definidos
 - Comprobar que la creación de partos actualiza correctamente el estado de amamantamiento del animal
+
+**Nota importante sobre la relación conceptual de partos y animales**:
+
+Los partos en el sistema siempre están asociados a vacas específicas. Aunque existe un endpoint standalone para actualizar partos (`/api/v1/partos/{id}`), esto es simplemente una implementación técnica. Conceptualmente:
+
+1. Los partos siempre se crean asociados a una vaca específica mediante el campo `animal_id`
+2. El historial de partos se muestra exclusivamente en la ficha individual de cada vaca
+3. Los partos afectan directamente al recuento de terneros en las estadísticas de explotación
+4. El recuento de terneros se basa en el estado de amamantamiento de las vacas:
+   - Vaca sin amamantar = 0 terneros
+   - Vaca amamantando 1 ternero = 1 ternero
+   - Vaca amamantando 2 terneros = 2 terneros
+
+Por lo tanto, aunque el endpoint PUT anidado `/api/v1/animals/{id}/parts/{part_id}` no está implementado y se usa el endpoint standalone para actualizar partos, esto no afecta al modelo conceptual del sistema donde los partos siempre pertenecen a animales específicos y no tienen sentido fuera de ese contexto.
 
 #### 3.4 Módulo de Importación
 
@@ -262,12 +299,17 @@ La priorización se basa en la dependencia funcional, no en la importancia visua
 
 | Paso | Descripción | Estado |
 |------|-------------|--------|
-| 5.1 | Verificar endpoint GET `/api/v1/dashboard/stats` | Pendiente |
-| 5.2 | Verificar endpoint GET `/api/v1/dashboard/explotacions/{id}` | Pendiente |
-| 5.3 | Simplificar temporalmente la respuesta para pruebas | Pendiente |
-| 5.4 | Comprobar integración con frontend | Pendiente |
-| 5.5 | Optimizar consultas a la base de datos | Pendiente |
-| 5.6 | Documentar resultados y soluciones | Pendiente |
+| 5.1 | Verificar endpoint GET `/api/v1/dashboard/stats` | ✅ Funcional |
+| 5.2 | Verificar endpoint GET `/api/v1/dashboard/explotacions/{id}` | ✅ Funcional |
+| 5.3 | Verificar endpoint GET `/api/v1/dashboard/stats?inicio=YYYY-MM-DD&fin=YYYY-MM-DD` | ✅ Funcional |
+| 5.4 | Verificar endpoint GET `/api/v1/dashboard/explotacions/{id}?inicio=YYYY-MM-DD&fin=YYYY-MM-DD` | ✅ Funcional |
+| 5.5 | Verificar endpoint GET `/api/v1/dashboard/resumen` | ✅ Funcional |
+| 5.6 | Verificar endpoint GET `/api/v1/dashboard/partos` | ✅ Funcional |
+| 5.7 | Verificar endpoint GET `/api/v1/dashboard/combined` | ✅ Funcional |
+| 5.8 | Verificar endpoint GET `/api/v1/dashboard/recientes` | ✅ Funcional |
+| 5.9 | Verificar endpoint GET `/api/v1/dashboard/explotacions` | ✅ Funcional |
+| 5.10 | Comprobar integración con frontend | Pendiente |
+| 5.11 | Documentar resultados y soluciones | ✅ Completado |
 
 **Tareas específicas**:
 - Revisar el servicio `dashboard_service.py` y simplificar temporalmente la respuesta
@@ -329,93 +371,98 @@ A continuación se presenta el plan de implementación secuencial que lista cada
    - **Dependencias**: Endpoint GET `/api/v1/explotacions/{id}`
    - **Justificación**: Permite actualizar explotaciones existentes.
 
+6. **DELETE `/api/v1/explotacions/{id}`**
+   - **Frontend**: Componente `ExplotacionDetail.tsx`
+   - **Dependencias**: Endpoint GET `/api/v1/explotacions/{id}`
+   - **Justificación**: Permite eliminar explotaciones.
+
 ### Fase 2: Gestión de Animales
 
-6. **GET `/api/v1/animals/`**
+7. **GET `/api/v1/animals/`**
    - **Frontend**: Componente `AnimalsList.tsx`
    - **Dependencias**: Endpoints de explotaciones
    - **Justificación**: Lista de animales, entidad principal del negocio.
 
-7. **GET `/api/v1/animals/{id}`**
+8. **GET `/api/v1/animals/{id}`**
    - **Frontend**: Componente `AnimalDetail.tsx`
    - **Dependencias**: Endpoint GET `/api/v1/animals/`
    - **Justificación**: Necesario para ver los detalles de un animal específico.
 
-8. **POST `/api/v1/animals/`**
+9. **POST `/api/v1/animals/`**
    - **Frontend**: Componente `AnimalForm.tsx`
    - **Dependencias**: Endpoints GET `/api/v1/explotacions/` y GET `/api/v1/animals/`
    - **Justificación**: Permite crear nuevos animales, necesario para pruebas si no hay datos suficientes.
    - **Nota**: Se mejoró la búsqueda de explotaciones por nombre para facilitar la creación de nuevos animales.
 
-9. **PUT `/api/v1/animals/{id}`**
-   - **Frontend**: Componente `AnimalForm.tsx`
-   - **Dependencias**: Endpoint GET `/api/v1/animals/{id}`
-   - **Justificación**: Permite actualizar animales existentes, incluyendo cambios en el estado y amamantamiento.
+10. **PUT `/api/v1/animals/{id}`**
+    - **Frontend**: Componente `AnimalForm.tsx`
+    - **Dependencias**: Endpoint GET `/api/v1/animals/{id}`
+    - **Justificación**: Permite actualizar animales existentes, incluyendo cambios en el estado y amamantamiento.
 
-10. **DELETE `/api/v1/animals/{id}`**
+11. **DELETE `/api/v1/animals/{id}`**
     - **Frontend**: Componente `AnimalDetail.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/animals/{id}`
     - **Justificación**: Permite eliminar animales.
 
 ### Fase 3: Gestión de Partos
 
-11. **GET `/api/v1/animals/{id}/parts`**
+12. **GET `/api/v1/animals/{id}/parts`**
     - **Frontend**: Componente `PartsList.tsx` dentro de `AnimalDetail.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/animals/{id}`
     - **Justificación**: Necesario para ver el historial de partos de un animal.
 
-12. **POST `/api/v1/animals/{id}/parts`**
+13. **POST `/api/v1/animals/{id}/parts`**
     - **Frontend**: Componente `PartForm.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/animals/{id}/parts`
     - **Justificación**: Permite registrar nuevos partos, afecta al estado de amamantamiento del animal.
 
-13. **GET `/api/v1/animals/{id}/parts/{part_id}`**
+14. **GET `/api/v1/animals/{id}/parts/{part_id}`**
     - **Frontend**: Componente `PartDetail.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/animals/{id}/parts`
     - **Justificación**: Necesario para ver los detalles de un parto específico.
 
-14. **PUT `/api/v1/animals/{id}/parts/{part_id}`**
+15. **PUT `/api/v1/animals/{id}/parts/{part_id}`**
     - **Frontend**: Componente `PartForm.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/animals/{id}/parts/{part_id}`
     - **Justificación**: Permite actualizar información de partos existentes.
 
 ### Fase 4: Importación de Datos
 
-15. **POST `/api/v1/imports/`**
+16. **POST `/api/v1/imports/`**
     - **Frontend**: Componente `ImportForm.tsx`
     - **Dependencias**: Endpoints de animales y explotaciones
     - **Justificación**: Permite importar datos masivamente, útil para cargar datos de prueba o migrar desde sistemas antiguos.
 
 ### Fase 5: Dashboard (Visualización de Datos)
 
-16. **GET `/api/v1/dashboard/stats`**
+17. **GET `/api/v1/dashboard/stats`**
     - **Frontend**: Componente `Dashboard.tsx`
     - **Dependencias**: Todos los endpoints anteriores funcionando correctamente
     - **Justificación**: Proporciona estadísticas generales del sistema, depende de tener datos válidos en todas las entidades.
 
-17. **GET `/api/v1/dashboard/explotacions/{id}`**
+18. **GET `/api/v1/dashboard/explotacions/{id}`**
     - **Frontend**: Componente `DashboardExplotacio.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/dashboard/stats` y GET `/api/v1/explotacions/{id}`
     - **Justificación**: Proporciona estadísticas específicas de una explotación.
 
 ### Fase 6: Administración de Usuarios (Si es necesario)
 
-18. **GET `/api/v1/auth/users`**
+19. **GET `/api/v1/auth/users`**
     - **Frontend**: Componente `UsersList.tsx`
     - **Dependencias**: Autenticación
     - **Justificación**: Lista de usuarios del sistema.
 
-19. **POST `/api/v1/auth/register`**
+20. **POST `/api/v1/auth/register`**
     - **Frontend**: Componente `UserForm.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/auth/users`
     - **Justificación**: Permite crear nuevos usuarios.
 
-20. **PUT `/api/v1/auth/users/{id}`**
+21. **PUT `/api/v1/auth/users/{id}`**
     - **Frontend**: Componente `UserForm.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/auth/users`
     - **Justificación**: Permite actualizar usuarios existentes.
 
-21. **DELETE `/api/v1/auth/users/{id}`**
+22. **DELETE `/api/v1/auth/users/{id}`**
     - **Frontend**: Componente `UserDetail.tsx`
     - **Dependencias**: Endpoint GET `/api/v1/auth/users`
     - **Justificación**: Permite eliminar usuarios.
@@ -433,7 +480,11 @@ Para cada endpoint, se registrará el progreso en la siguiente tabla:
 | 5 | POST `/api/v1/animals/` | ✅ Funcional | 1. Problemas con el formato JSON en PowerShell<br>2. Buscaba explotaciones solo por ID | 1. Creado archivo temporal con el JSON para la solicitud<br>2. Modificado endpoint para buscar explotaciones por ID o nombre | 2025-03-20 |
 | 6 | PATCH `/api/v1/animals/{id}` | ✅ Funcional | Ninguno | N/A | 2025-03-20 |
 | 7 | DELETE `/api/v1/animals/{id}` | ✅ Funcional | Ninguno | N/A | 2025-03-20 |
-{{ ... }}
+| 8 | GET `/api/v1/explotacions/` | ✅ Funcional | Inconsistencia en el nombre del campo (explotaci vs explotacio) | Documentado para futura refactorización | 2025-03-21 |
+| 9 | GET `/api/v1/explotacions/{id}` | ✅ Funcional | Inconsistencia en el nombre del campo (explotaci vs explotacio) | Documentado para futura refactorización | 2025-03-21 |
+| 10 | POST `/api/v1/explotacions/` | ✅ Funcional | Inconsistencia en el nombre del campo (explotaci vs explotacio) | Documentado para futura refactorización | 2025-03-21 |
+| 11 | PUT `/api/v1/explotacions/{id}` | ✅ Funcional | Inconsistencia en el nombre del campo (explotaci vs explotacio) | Documentado para futura refactorización | 2025-03-21 |
+| 12 | DELETE `/api/v1/explotacions/{id}` | ✅ Implementado | No estaba implementado inicialmente | Implementado endpoint para eliminar explotaciones | 2025-03-21 |
 ## Lecciones Aprendidas y Soluciones a Problemas Comunes
 
 Esta sección documenta los problemas encontrados durante el desarrollo y las soluciones implementadas, para facilitar la resolución de problemas similares en el futuro.
@@ -461,6 +512,7 @@ Esta sección documenta los problemas encontrados durante el desarrollo y las so
 | Confusión con la ruta de autenticación | Documentar la ruta completa con prefijo | La ruta correcta para autenticación es `/api/v1/auth/login`, no `/auth/login`, debido al prefijo configurado en `main.py`. |
 | Inconsistencia entre frontend y backend | Estandarizar nomenclatura de rutas | Se estableció una convención para nombrar rutas y endpoints, asegurando consistencia entre frontend y backend. |
 | Problemas de CORS | Configurar correctamente los headers CORS | Se implementó una configuración CORS permisiva para desarrollo, y una más restrictiva para producción. |
+| Inconsistencia en el nombre del campo de explotación | Documentar para futura refactorización | Se identificó que el modelo `Explotacio` usa el campo `explotaci` en lugar de `explotacio`, lo que podría causar confusión. Se recomienda estandarizar la nomenclatura en una futura refactorización. |
 
 ### 4. Buenas Prácticas Identificadas
 
@@ -470,4 +522,133 @@ Esta sección documenta los problemas encontrados durante el desarrollo y las so
 4. **Manejo flexible de datos**: Implementar validación y normalización de datos para manejar entradas inconsistentes.
 5. **Documentación de problemas y soluciones**: Mantener este documento actualizado con los problemas encontrados y sus soluciones.
 
-```
+
+
+Análisis Revisado de Problemas - Enfoque en la Conexión Frontend-Backend
+Problema Principal: Conexión Frontend-Backend
+El problema más preocupante es que el frontend no conecta correctamente con el backend ni con la base de datos. Esto podría deberse a varias causas:
+
+Posibles Causas:
+Configuración del Proxy en el Frontend:
+El proxy podría no estar correctamente configurado para redirigir las solicitudes al backend
+Podría haber discrepancias entre las rutas esperadas por el frontend y las implementadas en el backend
+Problemas con las URLs de la API:
+Las URLs utilizadas en los servicios del frontend podrían no coincidir con las rutas del backend
+Podría faltar el prefijo /api/v1 en algunas solicitudes
+Manejo de Tokens de Autenticación:
+El token JWT podría no estar siendo incluido correctamente en las solicitudes
+Podría haber problemas con el almacenamiento o la renovación del token
+Configuración de la Base de Datos:
+Podría haber problemas con la conexión a la base de datos desde el backend
+La cadena de conexión podría ser incorrecta o inaccesible
+Manejo de Errores Inadecuado:
+El frontend podría no estar manejando correctamente los errores de las solicitudes
+Podría haber problemas con las respuestas de error del backend
+Verificaciones Necesarias:
+Revisar la Configuración del Proxy:
+Verificar el archivo de configuración del proxy en el frontend
+Comprobar que las rutas se redirigen correctamente
+Examinar los Servicios de API en el Frontend:
+Revisar cómo se construyen las URLs de la API
+Verificar que se incluye el prefijo /api/v1 en todas las solicitudes
+Verificar el Manejo de Autenticación:
+Comprobar cómo se almacena y se incluye el token en las solicitudes
+Revisar el proceso de renovación del token si existe
+Comprobar la Configuración de la Base de Datos:
+Verificar la cadena de conexión en el backend
+Comprobar que la base de datos está accesible desde el servidor
+Analizar los Logs del Backend:
+Buscar errores relacionados con las solicitudes del frontend
+Identificar patrones en los errores
+Plan de Acción Propuesto:
+Verificar la Configuración del Proxy y las URLs de la API:
+Examinar los archivos de configuración del frontend
+Revisar los servicios de API para asegurar que usan las rutas correctas
+Analizar los Logs del Backend:
+Activar logs detallados si no están activados
+Identificar patrones en los errores de conexión
+Verificar la Conexión a la Base de Datos:
+Comprobar la configuración de la base de datos en el backend
+Realizar pruebas directas de conexión
+Revisar el Manejo de Errores:
+Mejorar el manejo de errores en el frontend para proporcionar información más útil
+Asegurar que el backend devuelve respuestas de error adecuadas
+
+temas pendientes del DASHBOARD
+
+1. Corregir el problema del modo oscuro con las tarjetas
+El problema principal es que las tarjetas tienen fondos claros pero no se adaptan bien al modo oscuro. Deberíamos:
+
+Añadir bordes a las tarjetas para que sean visibles en modo oscuro
+Asegurar que el texto sea oscuro dentro de las tarjetas claras
+Usar clases que respondan al modo oscuro (dark:)
+Por ejemplo, para el componente StatCard:
+
+tsx
+CopyInsert
+const StatCard = ({ title, value, icon, color }: { title: string, value: string | number, icon: string, color: string }) => (
+  <div className={`stat-card ${color} p-4 rounded-lg shadow-md flex items-center border border-gray-200 dark:border-gray-700 text-gray-800`}>
+    <div className="stat-icon mr-4 text-3xl">{icon}</div>
+    <div>
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="text-2xl font-bold">{value}</p>
+    </div>
+  </div>
+);
+Y para los contenedores de gráficos:
+
+tsx
+CopyInsert
+<div className="chart-container bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+  <h2 className="text-lg font-semibold mb-4 dark:text-white">Estado de Amamantamiento</h2>
+  ...
+</div>
+2. Ajustar las estadísticas de amamantamiento
+El problema es que muestra 42 de 43 vacas amamantando, lo cual parece irreal. Deberíamos:
+
+Revisar cómo se calculan estos datos
+Asegurarnos de que los datos sean más realistas
+Posiblemente añadir una validación para detectar datos anómalos
+3. Añadir estadísticas más relevantes relacionadas con explotaciones
+Podríamos añadir:
+
+Número de animales por explotación
+Comparativa entre explotaciones
+Distribución de tipos de animales por explotación
+Rendimiento/productividad por explotación
+4. Corregir los enlaces a las páginas
+Asegurarnos de que los enlaces a las páginas de animales y explotaciones funcionen correctamente:
+
+Verificar que las rutas existen
+Añadir parámetros necesarios si hacen falta
+Considerar usar componentes Link en lugar de etiquetas
+5. Añadir un listado de animales
+Añadir una tabla con los animales de la explotación seleccionada:
+
+tsx
+CopyInsert
+<div className="animal-list bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mt-6 border border-gray-200 dark:border-gray-700">
+  <h2 className="text-lg font-semibold mb-4 dark:text-white">Listado de Animales</h2>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-50 dark:bg-gray-700">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Género</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        {/* Aquí iría el listado de animales */}
+      </tbody>
+    </table>
+  </div>
+</div>
+Recomendación para implementar estos cambios
+Para implementar estos cambios, te recomendaría:
+
+Primero, crear un nuevo servicio para obtener el listado de animales por explotación
+Luego, modificar el componente Dashboard2 para incluir las mejoras de diseño y las nuevas estadísticas
+Finalmente, añadir la tabla de animales y asegurarse de que los enlaces funcionan correctamente

@@ -9,6 +9,7 @@ from app.api.endpoints.partos_standalone import router as partos_standalone_rout
 from app.api.endpoints.dashboard import router as dashboard_router
 from app.api.endpoints.imports import router as imports_router
 from app.api.endpoints.auth import router as auth_router
+from app.api.endpoints.users import router as users_router
 
 # Crear router principal
 api_router = APIRouter()
@@ -18,6 +19,13 @@ api_router.include_router(
     auth_router,
     prefix="/auth",
     tags=["authentication"]
+)
+
+# Rutas para usuarios
+api_router.include_router(
+    users_router,
+    prefix="/users",
+    tags=["users"]
 )
 
 # Incluir sub-routers

@@ -26,8 +26,8 @@ const menuItems = [
   { name: "Backup", url: "/backup", icon: "💾", roles: ["administrador"] },
 ];
 
-// Filtrar menú por rol - Asegurarse de que todas las opciones estén disponibles para el administrador
-const filteredMenu = userRole === "administrador" ? menuItems : menuItems.filter(item => item.roles.includes(userRole));
+// Mostrar todos los elementos del menú independientemente del rol para el administrador
+const filteredMenu = menuItems; 
 
 // Función para determinar si un elemento está activo
 const isActive = (itemUrl: string) => {
@@ -131,7 +131,9 @@ const isActive = (itemUrl: string) => {
             </div>
           </div>
           <div class="p-2 border-t border-gray-100 dark:border-gray-700 text-center">
-            <a href="/alerts" class="text-sm text-primary dark:text-primary-light hover:underline">Ver todas las alertas</a>
+            <a href="/alerts" class="text-sm text-primary dark:text-primary-light hover:underline">
+              Ver todas las alertas
+            </a>
           </div>
         </div>
         

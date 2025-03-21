@@ -10,6 +10,6 @@ const userRole = "administrador"; // Simulación de rol
 ---
 
 <MainLayout title="Dashboard" userRole={userRole} currentPath="/dashboard">
-  <!-- Componente Dashboard -->
-  <Dashboard client:load />
+  <!-- Componente Dashboard - Renderizado solo en el cliente para evitar errores de hidratación -->
+  <Dashboard client:only="react" />
 </MainLayout>

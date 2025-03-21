@@ -8,6 +8,8 @@ interface StatCardProps {
   color?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
   icon?: React.ReactNode;
   className?: string;
+  trend?: number;
+  description?: string;
 }
 
 /**
@@ -20,6 +22,8 @@ const StatCard: React.FC<StatCardProps> = ({
   color = 'primary',
   icon,
   className = '',
+  trend = 0,
+  description,
 }) => {
   // Mapeo de colores a clases de Tailwind
   const colorClasses = {
@@ -49,13 +53,17 @@ const StatCard: React.FC<StatCardProps> = ({
           </div>
         )}
         <div>
-          <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 dark:text-white">{title}</h3>
-          <div className={`text-xl sm:text-2xl md:text-3xl font-bold mt-1 ${valueColorClasses[color]}`}>
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className={`text-2xl font-bold ${valueColorClasses[color]}`}>
             {value}
-          </div>
-          {subtitle && (
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
-          )}
+            {trend !== 0 && (
+              <span className={`ml-2 text-sm font-medium ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {trend > 0 ? `+${trend}%` : `${trend}%`}
+              </span>
+            )}
+          </p>
+          {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+          {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{description}</p>}
         </div>
       </div>
     </Card>

@@ -23,6 +23,8 @@
 - ✅ Sistema de autenticación JWT
 - 🚧 Tests en proceso
 - ✅ Documentación OpenAPI
+- ✅ Endpoints de partos verificados y funcionales
+- ❌ Endpoints de dashboard no funcionales (problemas de conexión a la base de datos)
 
 ### Base de Datos (PostgreSQL)
 - ✅ Modelos principales implementados

@@ -25,13 +25,15 @@ export interface Animal {
 
 export interface Explotacio {
   id: number;
-  nombre: string;
+  nom: string;  // Cambiado de nombre a nom para coincidir con el backend
   direccion?: string;
-  codigo?: string;
+  explotaci?: string;  // Cambiado de codigo a explotaci
   responsable?: string;
   telefono?: string;
   email?: string;
   animal_count?: number; // Cantidad de animales en la explotación
+  region?: string; // Añadido para filtrado por región
+  activa?: boolean; // Añadido para coincidir con el backend
   created_at: string;
   updated_at: string;
 }
@@ -172,39 +174,73 @@ export const mockAnimals: Animal[] = [
 export const mockExplotacions: Explotacio[] = [
   {
     id: 1,
-    nombre: 'Explotación Norte',
+    nom: 'Explotación Norte',
     direccion: 'Camino de los Molinos, 23',
-    codigo: 'EXP001',
+    explotaci: 'EXP001',
     responsable: 'Juan Martínez',
     telefono: '654123987',
     email: 'juan@explotacionnorte.com',
     animal_count: 3,
+    region: 'norte',
+    activa: true,
     created_at: '2023-01-01T09:00:00Z',
     updated_at: '2023-01-01T09:00:00Z'
   },
   {
     id: 2,
-    nombre: 'Explotación Sur',
+    nom: 'Explotación Sur',
     direccion: 'Carretera de Valencia, km 12',
-    codigo: 'EXP002',
+    explotaci: 'EXP002',
     responsable: 'María Gómez',
     telefono: '678456321',
     email: 'maria@explotacionsur.com',
     animal_count: 2,
+    region: 'sur',
+    activa: true,
     created_at: '2023-01-02T10:30:00Z',
     updated_at: '2023-01-02T10:30:00Z'
   },
   {
     id: 3,
-    nombre: 'Granja El Amanecer',
+    nom: 'Granja El Amanecer',
     direccion: 'Partida La Vall, s/n',
-    codigo: 'EXP003',
+    explotaci: 'EXP003',
     responsable: 'Pedro Sánchez',
     telefono: '612345678',
     email: 'pedro@elamanecer.com',
     animal_count: 0,
-    created_at: '2023-01-15T11:45:00Z',
-    updated_at: '2023-01-15T11:45:00Z'
+    region: 'este',
+    activa: true,
+    created_at: '2023-01-03T11:15:00Z',
+    updated_at: '2023-01-03T11:15:00Z'
+  },
+  {
+    id: 4,
+    nom: 'Ganadería Occidental',
+    direccion: 'Calle Mayor, 45',
+    explotaci: 'EXP004',
+    responsable: 'Ana López',
+    telefono: '698765432',
+    email: 'ana@ganaderiaoccidental.com',
+    animal_count: 0,
+    region: 'oeste',
+    activa: true,
+    created_at: '2023-01-04T14:00:00Z',
+    updated_at: '2023-01-04T14:00:00Z'
+  },
+  {
+    id: 5,
+    nom: 'Gurans',
+    direccion: 'Carretera del Norte, km 5',
+    explotaci: 'EXP005',
+    responsable: 'Carlos Rodríguez',
+    telefono: '634567890',
+    email: 'carlos@gurans.com',
+    animal_count: 0,
+    region: 'norte',
+    activa: true,
+    created_at: '2023-01-05T16:45:00Z',
+    updated_at: '2023-01-05T16:45:00Z'
   }
 ];
 

@@ -31,15 +31,8 @@ const menuSections = [
   }
 ];
 
-// Filtrar secciones y elementos según rol
-const filteredSections = userRole === "administrador" 
-  ? menuSections // Si es administrador, mostrar todas las secciones sin filtrar
-  : menuSections.map(section => {
-      return {
-        ...section,
-        items: section.items.filter(item => item.roles.includes(userRole))
-      };
-    }).filter(section => section.items.length > 0);
+// Mostrar todas las secciones y elementos sin filtrar por rol
+const filteredSections = menuSections;
 
 // Función para determinar si un elemento está activo
 const isActive = (itemUrl: string) => {

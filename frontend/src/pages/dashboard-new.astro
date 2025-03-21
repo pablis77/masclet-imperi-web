@@ -1,0 +1,38 @@
+---
+// Importar el layout y componentes necesarios
+import MainLayout from '../components/layout/MainLayout.astro';
+import Dashboard2 from '../components/dashboard/Dashboard2';
+
+// No verificamos autenticación en desarrollo - siempre permitir acceso
+const userRole = 'administrador';
+
+// Título para la página
+const title = 'Dashboard (Nueva Versión)';
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/dashboard-new">
+  <div class="bg-blue-100 p-4 mb-6 rounded-lg border border-blue-300">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">⚠️ Versión Nueva del Dashboard</h2>
+    <p class="text-blue-700">
+      Esta es la nueva implementación del dashboard que soluciona los problemas de hidratación y mejora el rendimiento.
+    </p>
+  </div>
+
+  <!-- Componente React del Dashboard - Renderizado solo en el cliente para evitar errores de hidratación -->
+  <Dashboard2 client:only="react" />
+</MainLayout>
+
+<script>
+  // Script para verificar que el componente se está cargando correctamente
+  console.log('🔍 Página dashboard-new.astro cargada');
+  
+  // Verificar después de 2 segundos si el componente React se ha montado
+  setTimeout(() => {
+    const dashboardElement = document.querySelector('div[data-reactroot]');
+    if (dashboardElement) {
+      console.log('✅ Componente Dashboard2 montado correctamente');
+    } else {
+      console.log('❌ Componente Dashboard2 no se ha montado');
+    }
+  }, 2000);
+</script>

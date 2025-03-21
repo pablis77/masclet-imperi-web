@@ -1,0 +1,359 @@
+---
+import MainLayout from '../../components/layout/MainLayout.astro';
+---
+
+<MainLayout title="Detalles de Explotación">
+  <div class="container mx-auto px-4 py-4 sm:py-6">
+    <div class="mb-4 sm:mb-6">
+      <div class="flex items-center gap-2 mb-2">
+        <a href="/explotacions" class="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
+          ← Volver a explotaciones
+        </a>
+      </div>
+      <h1 id="explotacion-title" class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        Cargando explotación...
+      </h1>
+      <p id="explotacion-codigo" class="text-sm text-gray-600 dark:text-gray-300"></p>
+    </div>
+
+    <!-- Información general -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      <!-- Detalles de la explotación -->
+      <div class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Información General</h2>
+        
+        <!-- Skeleton loader -->
+        <div id="explotacion-skeleton" class="animate-pulse">
+          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-3"></div>
+          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/5 mb-3"></div>
+          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5 mb-3"></div>
+        </div>
+        
+        <!-- Datos reales (ocultos inicialmente) -->
+        <div id="explotacion-details" class="hidden">
+          <div class="grid grid-cols-1 gap-4">
+            <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Responsable</div>
+              <div id="explotacion-responsable" class="text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Teléfono</div>
+              <div id="explotacion-telefono" class="text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Email</div>
+              <div id="explotacion-email" class="text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Dirección</div>
+              <div id="explotacion-direccion" class="text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">Región</div>
+              <div id="explotacion-region" class="text-gray-900 dark:text-white">-</div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 dark:text-gray-400">Estado</div>
+              <div id="explotacion-estado" class="text-gray-900 dark:text-white">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Estadísticas -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Estadísticas</h2>
+        
+        <!-- Skeleton loader -->
+        <div id="stats-skeleton" class="animate-pulse">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </div>
+        
+        <!-- Datos reales (ocultos inicialmente) -->
+        <div id="stats-content" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+              <div class="text-sm text-blue-600 dark:text-blue-300">Total Animales</div>
+              <div id="stat-total-animales" class="text-2xl font-bold text-blue-700 dark:text-blue-200">0</div>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-100 dark:border-green-800">
+              <div class="text-sm text-green-600 dark:text-green-300">Machos / Hembras</div>
+              <div id="stat-genero" class="text-2xl font-bold text-green-700 dark:text-green-200">0 / 0</div>
+            </div>
+            <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-800">
+              <div class="text-sm text-purple-600 dark:text-purple-300">Partos Registrados</div>
+              <div id="stat-partos" class="text-2xl font-bold text-purple-700 dark:text-purple-200">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Lista de animales -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Animales</h2>
+        <a href="#" id="add-animal-button" class="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded hover:bg-primary-dark transition-colors text-sm">
+          <span class="mr-1">+</span> Añadir Animal
+        </a>
+      </div>
+      
+      <!-- Buscador de animales -->
+      <div class="mb-4">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+            🔍
+          </span>
+          <input id="search-animal" type="text" placeholder="Buscar animal por nombre o código" class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary dark:focus:ring-primary-light focus:border-transparent">
+        </div>
+      </div>
+      
+      <!-- Tabla de animales -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Nombre
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Código
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Género
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Estado
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Fecha Nacimiento
+              </th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody id="animals-container" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- Skeleton loader -->
+            <tr id="animals-skeleton" class="animate-pulse">
+              <td colspan="6" class="px-4 py-4">
+                <div class="grid grid-cols-6 gap-4">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded col-span-1"></div>
+                </div>
+              </td>
+            </tr>
+            <!-- Mensaje de no resultados (oculto inicialmente) -->
+            <tr id="no-animals" class="hidden">
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                No hay animales registrados en esta explotación.
+              </td>
+            </tr>
+            <!-- Los animales se cargarán aquí con JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { getExplotacioById } from '../../services/explotacioService';
+  import { getAnimalsByExplotacion } from '../../services/animalService';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Obtener ID de la explotación de la URL
+    const explotacionId = parseInt(window.location.pathname.split('/').pop());
+    
+    if (isNaN(explotacionId)) {
+      window.location.href = '/explotacions';
+      return;
+    }
+    
+    try {
+      // Cargar datos de la explotación
+      const explotacion = await getExplotacioById(explotacionId);
+      
+      // Actualizar título y código
+      document.getElementById('explotacion-title').textContent = explotacion.nom || 'Sin nombre';
+      document.getElementById('explotacion-codigo').textContent = explotacion.explotaci ? `Código: ${explotacion.explotaci}` : '';
+      
+      // Actualizar detalles
+      document.getElementById('explotacion-responsable').textContent = explotacion.responsable || '-';
+      document.getElementById('explotacion-telefono').textContent = explotacion.telefono || '-';
+      document.getElementById('explotacion-email').textContent = explotacion.email || '-';
+      document.getElementById('explotacion-direccion').textContent = explotacion.direccion || '-';
+      document.getElementById('explotacion-region').textContent = explotacion.region ? explotacion.region.charAt(0).toUpperCase() + explotacion.region.slice(1) : '-';
+      document.getElementById('explotacion-estado').textContent = explotacion.activa ? 'Activa' : 'Inactiva';
+      
+      // Ocultar skeleton y mostrar detalles
+      document.getElementById('explotacion-skeleton').classList.add('hidden');
+      document.getElementById('explotacion-details').classList.remove('hidden');
+      
+      // Cargar estadísticas
+      try {
+        // Intentar cargar estadísticas desde el endpoint dashboard/stats
+        const statsResponse = await fetch(`/api/proxy?url=/api/v1/dashboard/explotacions/${explotacionId}`);
+        
+        if (statsResponse.ok) {
+          const stats = await statsResponse.json();
+          
+          // Actualizar estadísticas
+          document.getElementById('stat-total-animales').textContent = stats.total_animales || '0';
+          document.getElementById('stat-genero').textContent = `${stats.total_machos || '0'} / ${stats.total_hembras || '0'}`;
+          document.getElementById('stat-partos').textContent = stats.total_partos || '0';
+        } else {
+          console.error('Error al cargar estadísticas:', await statsResponse.text());
+        }
+      } catch (statsError) {
+        console.error('Error al cargar estadísticas:', statsError);
+      }
+      
+      // Ocultar skeleton y mostrar estadísticas
+      document.getElementById('stats-skeleton').classList.add('hidden');
+      document.getElementById('stats-content').classList.remove('hidden');
+      
+      // Cargar animales
+      try {
+        const animales = await getAnimalsByExplotacion(explotacionId);
+        
+        // Ocultar skeleton
+        document.getElementById('animals-skeleton').classList.add('hidden');
+        
+        // Mostrar mensaje de no resultados o renderizar animales
+        if (!animales || animales.length === 0) {
+          document.getElementById('no-animals').classList.remove('hidden');
+        } else {
+          // Renderizar cada animal
+          const animalsContainer = document.getElementById('animals-container');
+          
+          animales.forEach(animal => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700/50';
+            
+            // Formatear fecha de nacimiento
+            const fechaNacimiento = animal.dob ? new Date(animal.dob).toLocaleDateString() : '-';
+            
+            // Determinar clases para el estado
+            let estadoClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+            if (animal.estat === 'ACT') {
+              estadoClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+            } else if (animal.estat === 'DEF') {
+              estadoClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+            }
+            
+            // Determinar texto del estado
+            let estadoTexto = 'Desconocido';
+            if (animal.estat === 'ACT') {
+              estadoTexto = 'Activo';
+            } else if (animal.estat === 'DEF') {
+              estadoTexto = 'Baja';
+            }
+            
+            // Determinar icono de género
+            const generoIcono = animal.genere === 'M' ? '♂️' : '♀️';
+            const generoTexto = animal.genere === 'M' ? 'Macho' : 'Hembra';
+            const generoClass = animal.genere === 'M' ? 'text-blue-600 dark:text-blue-400' : 'text-pink-600 dark:text-pink-400';
+            
+            row.innerHTML = `
+              <td class="px-4 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900 dark:text-white">${animal.nom || '-'}</div>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500 dark:text-gray-400">${animal.cod || '-'}</div>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap">
+                <div class="text-sm ${generoClass}">${generoIcono} ${generoTexto}</div>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoClass}">
+                  ${estadoTexto}
+                </span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                ${fechaNacimiento}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <a href="/animales/${animal.id}" class="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors">
+                  Ver detalles
+                </a>
+              </td>
+            `;
+            
+            animalsContainer.appendChild(row);
+          });
+        }
+      } catch (animalesError) {
+        console.error('Error al cargar animales:', animalesError);
+        document.getElementById('animals-skeleton').classList.add('hidden');
+        document.getElementById('no-animals').classList.remove('hidden');
+      }
+      
+    } catch (error) {
+      console.error('Error al cargar explotación:', error);
+      
+      // Mostrar mensaje de error
+      document.getElementById('explotacion-title').textContent = 'Error al cargar explotación';
+      document.getElementById('explotacion-codigo').textContent = 'Intente nuevamente más tarde';
+      
+      // Ocultar skeletons
+      document.getElementById('explotacion-skeleton').classList.add('hidden');
+      document.getElementById('stats-skeleton').classList.add('hidden');
+      document.getElementById('animals-skeleton').classList.add('hidden');
+      
+      // Mostrar mensaje de no resultados en animales
+      document.getElementById('no-animals').classList.remove('hidden');
+    }
+    
+    // Configurar buscador de animales
+    const searchInput = document.getElementById('search-animal');
+    searchInput.addEventListener('input', () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const rows = document.querySelectorAll('#animals-container tr:not(#animals-skeleton):not(#no-animals)');
+      
+      let hasVisibleRows = false;
+      
+      rows.forEach(row => {
+        const nombre = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+        const codigo = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        
+        if (nombre.includes(searchTerm) || codigo.includes(searchTerm)) {
+          row.classList.remove('hidden');
+          hasVisibleRows = true;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+      
+      // Mostrar mensaje de no resultados si no hay filas visibles
+      const noAnimals = document.getElementById('no-animals');
+      if (!hasVisibleRows && rows.length > 0) {
+        noAnimals.textContent = 'No se encontraron animales con ese criterio de búsqueda.';
+        noAnimals.classList.remove('hidden');
+      } else if (rows.length === 0) {
+        noAnimals.textContent = 'No hay animales registrados en esta explotación.';
+        noAnimals.classList.remove('hidden');
+      } else {
+        noAnimals.classList.add('hidden');
+      }
+    });
+    
+    // Configurar botón de añadir animal
+    const addAnimalButton = document.getElementById('add-animal-button');
+    addAnimalButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Redirigir a la página de creación de animal con el ID de explotación preseleccionado
+      window.location.href = `/animales/nuevo?explotacion=${explotacionId}`;
+    });
+  });
+</script>

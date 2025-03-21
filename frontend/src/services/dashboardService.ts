@@ -1,8 +1,18 @@
+/**
+ * Servicio para obtener datos del dashboard
+ */
+
 import { get } from './apiService';
-import { mockDashboardData, mockParts } from './mockData';
 
-const API_PATH = '/api/v1';
+// Interfaces para los parámetros de las peticiones
+export interface DashboardParams {
+  explotacioId?: number;
+  startDate?: string;
+  endDate?: string;
+  _cache?: string; // Parámetro para evitar caché
+}
 
+// Interfaces para las respuestas
 export interface AnimalStats {
   total: number;
   machos: number;
@@ -23,7 +33,7 @@ export interface PartoStats {
     tendencia: number;
     promedio: number;
     valores: Record<string, number>;
-  };
+  }
 }
 
 export interface DashboardResponse {
@@ -34,124 +44,310 @@ export interface DashboardResponse {
   partos: PartoStats;
 }
 
-export interface DashboardParams {
-  explotacioId?: number;
-  startDate?: string;
-  endDate?: string;
+export interface ExplotacionResponse {
+  id: number;
+  nombre: string;
 }
 
-// Función auxiliar para generar datos de partos por mes
-const generatePartsByMonth = () => {
-  const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  const partsByMonth: Record<string, number> = {};
-  
-  // Inicializar todos los meses en 0
-  months.forEach(month => {
-    partsByMonth[month] = 0;
-  });
-  
-  // Contar partos por mes
-  mockParts.forEach(part => {
-    const date = new Date(part.data);
-    const monthIndex = date.getMonth();
-    const monthKey = months[monthIndex];
-    partsByMonth[monthKey] = (partsByMonth[monthKey] || 0) + 1;
-  });
-  
-  return partsByMonth;
-};
+export interface ExplotacionDetailResponse {
+  id: number;
+  nombre: string;
+  total_animales: number;
+  total_partos: number;
+  // Otros campos específicos de la explotación
+}
 
-// Crear datos simulados con el formato que espera la API
-const createMockDashboardResponse = (): DashboardResponse => {
-  const today = new Date();
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(today.getMonth() - 3);
-  
-  // Preparar objeto de meses para partos
-  const partsByMonth = generatePartsByMonth();
-  
-  return {
-    fecha_inicio: threeMonthsAgo.toISOString().split('T')[0],
-    fecha_fin: today.toISOString().split('T')[0],
-    animales: {
-      total: mockDashboardData.totalAnimals,
-      machos: mockDashboardData.maleAnimals,
-      hembras: mockDashboardData.femaleAnimals,
-      ratio_machos_hembras: mockDashboardData.maleAnimals / Math.max(1, mockDashboardData.femaleAnimals),
-      por_estado: {
-        OK: mockDashboardData.okAnimals,
-        DEF: mockDashboardData.defAnimals
-      },
-      por_alletar: {
-        NO: mockDashboardData.totalAnimals - mockDashboardData.allettingAnimals,
-        SI: mockDashboardData.allettingAnimals
-      },
-      por_quadra: {
-        Q1: 2,
-        Q2: 1,
-        Q3: 1,
-        OTRO: 1
-      }
-    },
-    partos: {
-      total: mockParts.length,
-      ultimo_mes: 1,
-      ultimo_año: mockParts.length,
-      promedio_mensual: mockParts.length / 12,
-      por_mes: partsByMonth,
-      tendencia_partos: {
-        tendencia: 0.1,
-        promedio: mockParts.length / 12,
-        valores: partsByMonth
-      }
-    }
-  };
-};
+export interface PartosResponse {
+  total: number;
+  por_mes: Record<string, number>;
+  por_genero: Record<string, number>;
+  tasas: Record<string, number>;
+  // Otros campos específicos de partos
+}
+
+export interface CombinedDashboardResponse {
+  resumen: DashboardResponse;
+  explotaciones: ExplotacionDetailResponse[];
+  partos: PartosResponse;
+  // Otros datos combinados
+}
+
+// Definición de tipos para actividades
+export type ActivityType = 'animal_created' | 'animal_updated' | 'parto_registered' | 'user_login' | 'system_event' | 'explotacion_updated' | string;
+
+export interface Activity {
+  id: string;
+  type: string; // Mantenemos string en la respuesta de la API
+  title: string;
+  description: string;
+  timestamp: string;
+  entity_id?: number;
+  entity_type?: string;
+}
+
+export interface RecentActivityResponse {
+  activities: Activity[];
+}
 
 /**
  * Obtiene las estadísticas generales del dashboard
  */
 export const getDashboardStats = async (params: DashboardParams = {}): Promise<DashboardResponse> => {
+  console.log(' [dashboardService] Solicitando estadísticas del dashboard con parámetros:', params);
+  
   try {
-    // Construir los parámetros para la petición
-    const apiParams: Record<string, any> = {};
-    if (params.explotacioId) apiParams.explotacio_id = params.explotacioId;
-    if (params.startDate) apiParams.start_date = params.startDate;
-    if (params.endDate) apiParams.end_date = params.endDate;
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
     
-    console.log('Obteniendo estadísticas del dashboard con parámetros:', apiParams);
+    // Añadir parámetros si existen
+    if (params.startDate) queryParams.append('inicio', params.startDate);
+    if (params.endDate) queryParams.append('fin', params.endDate);
+    if (params.explotacioId) queryParams.append('explotacio_id', params.explotacioId.toString());
     
-    // Usar el nuevo servicio API con la ruta correcta
-    return await get<DashboardResponse>(`${API_PATH}/dashboard/stats`, { params: apiParams });
-  } catch (error) {
-    console.error('Error al obtener estadísticas del dashboard:', error);
-    // Devolver datos simulados en caso de error
-    return createMockDashboardResponse();
+    // Añadir timestamp para evitar caché
+    const cacheParam = params._cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(` [dashboardService] Parámetros de consulta: ${Object.fromEntries(queryParams.entries())}`);
+    
+    // Usar el endpoint correcto según la documentación
+    const endpoint = '/api/v1/dashboard/stats';
+    console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
+    
+    const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [dashboardService] Estadísticas recibidas:', response);
+    return response;
+  } catch (error: any) {
+    console.error(' [dashboardService] Error al obtener estadísticas del dashboard:', error);
+    console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
+    throw error;
   }
 };
 
 /**
- * Obtiene las estadísticas de una explotación específica
+ * Obtiene estadísticas detalladas de una explotación específica
  */
-export const getExplotacionStats = async (
-  explotacionId: number, 
-  params: Omit<DashboardParams, 'explotacioId'> = {}
-): Promise<DashboardResponse> => {
+export const getExplotacionStats = async (explotacionId: number, params: DashboardParams = {}): Promise<ExplotacionDetailResponse> => {
   try {
-    // Construir los parámetros para la petición
-    const apiParams: Record<string, any> = {};
-    if (params.startDate) apiParams.start_date = params.startDate;
-    if (params.endDate) apiParams.end_date = params.endDate;
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
     
-    console.log(`Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, apiParams);
+    // Añadir parámetros si existen
+    if (params.startDate) queryParams.append('inicio', params.startDate);
+    if (params.endDate) queryParams.append('fin', params.endDate);
     
-    // Usar el nuevo servicio API
-    return await get<DashboardResponse>(`/dashboard/explotacions/${explotacionId}`, { params: apiParams });
-  } catch (error) {
-    console.error(`Error al obtener estadísticas de la explotación ${explotacionId}:`, error);
-    // Crear una respuesta simulada específica para esta explotación
-    const mockResponse = createMockDashboardResponse();
-    mockResponse.explotacio_name = `Explotación #${explotacionId}`;
-    return mockResponse;
+    // Añadir timestamp para evitar caché
+    const cacheParam = params._cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(` [Dashboard] Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, Object.fromEntries(queryParams.entries()));
+    
+    const endpoint = `/api/v1/dashboard/explotacions/${explotacionId}`;
+    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    
+    const response = await get<ExplotacionDetailResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [Dashboard] Respuesta de explotación recibida correctamente:', response);
+    
+    return response;
+  } catch (error: any) {
+    console.error(` [Dashboard] Error al obtener estadísticas de la explotación ${explotacionId}:`, error);
+    
+    // Registrar información detallada del error para depuración
+    if (error.status) {
+      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+    }
+    if (error.message) {
+      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Obtiene la lista de explotaciones disponibles
+ */
+export const getExplotaciones = async (_cache?: string): Promise<ExplotacionResponse[]> => {
+  console.log(' [dashboardService] Solicitando lista de explotaciones');
+  
+  try {
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    // Añadir timestamp para evitar caché
+    const cacheParam = _cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    // Usar el endpoint correcto según la documentación
+    const endpoint = '/api/v1/dashboard/explotacions';
+    console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
+    
+    const response = await get<ExplotacionResponse[]>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [dashboardService] Explotaciones recibidas:', response);
+    return response;
+  } catch (error: any) {
+    console.error(' [dashboardService] Error al obtener explotaciones:', error);
+    console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene un resumen general del dashboard
+ */
+export const getDashboardResumen = async (_cache?: string): Promise<DashboardResponse> => {
+  try {
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    // Añadir timestamp para evitar caché
+    const cacheParam = _cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(' [Dashboard] Iniciando solicitud de resumen');
+    
+    const endpoint = '/api/v1/dashboard/resumen';
+    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    
+    const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [Dashboard] Resumen recibido correctamente:', response);
+    
+    return response;
+  } catch (error: any) {
+    console.error(' [Dashboard] Error al obtener resumen del dashboard:', error);
+    
+    // Registrar información detallada del error para depuración
+    if (error.status) {
+      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+    }
+    if (error.message) {
+      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Obtiene estadísticas de partos
+ */
+export const getPartosStats = async (params: DashboardParams = {}): Promise<PartosResponse> => {
+  try {
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    // Añadir parámetros si existen
+    if (params.startDate) queryParams.append('inicio', params.startDate);
+    if (params.endDate) queryParams.append('fin', params.endDate);
+    if (params.explotacioId) queryParams.append('explotacio_id', params.explotacioId.toString());
+    
+    // Añadir timestamp para evitar caché
+    const cacheParam = params._cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(' [Dashboard] Iniciando solicitud de estadísticas de partos');
+    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    
+    const endpoint = '/api/v1/dashboard/partos';
+    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    
+    const response = await get<PartosResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [Dashboard] Estadísticas de partos recibidas correctamente:', response);
+    
+    return response;
+  } catch (error: any) {
+    console.error(' [Dashboard] Error al obtener estadísticas de partos:', error);
+    
+    // Registrar información detallada del error para depuración
+    if (error.status) {
+      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+    }
+    if (error.message) {
+      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Obtiene datos combinados del dashboard
+ */
+export const getCombinedDashboard = async (params: DashboardParams = {}): Promise<CombinedDashboardResponse> => {
+  try {
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    // Añadir parámetros si existen
+    if (params.startDate) queryParams.append('inicio', params.startDate);
+    if (params.endDate) queryParams.append('fin', params.endDate);
+    if (params.explotacioId) queryParams.append('explotacio_id', params.explotacioId.toString());
+    
+    // Añadir timestamp para evitar caché
+    const cacheParam = params._cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(' [Dashboard] Iniciando solicitud de dashboard combinado');
+    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    
+    const endpoint = '/api/v1/dashboard/combined';
+    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    
+    const response = await get<CombinedDashboardResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [Dashboard] Dashboard combinado recibido correctamente:', response);
+    
+    return response;
+  } catch (error: any) {
+    console.error(' [Dashboard] Error al obtener dashboard combinado:', error);
+    
+    // Registrar información detallada del error para depuración
+    if (error.status) {
+      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+    }
+    if (error.message) {
+      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Obtiene actividades recientes
+ */
+export const getRecentActivities = async (_cache?: string, limit: number = 5): Promise<RecentActivityResponse> => {
+  try {
+    // Construir parámetros de consulta
+    const queryParams = new URLSearchParams();
+    
+    // Añadir parámetros
+    queryParams.append('limit', limit.toString());
+    
+    // Añadir timestamp para evitar caché
+    const cacheParam = _cache || Date.now().toString();
+    queryParams.append('_cache', cacheParam);
+    
+    console.log(' [Dashboard] Iniciando solicitud de actividades recientes');
+    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    
+    const endpoint = '/api/v1/dashboard/recientes';
+    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    
+    const response = await get<RecentActivityResponse>(`${endpoint}?${queryParams.toString()}`);
+    console.log(' [Dashboard] Actividades recientes recibidas correctamente:', response);
+    
+    return response;
+  } catch (error: any) {
+    console.error(' [Dashboard] Error al obtener actividades recientes:', error);
+    
+    // Registrar información detallada del error para depuración
+    if (error.status) {
+      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+    }
+    if (error.message) {
+      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+    }
+    
+    throw error;
   }
 };

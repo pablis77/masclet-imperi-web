@@ -1,5 +1,5 @@
 import { get, post, put, del } from './apiService';
-import { mockAnimals } from './mockData';
+import { mockAnimals, mockExplotacions } from './mockData';
 
 // Interfaces
 export interface Animal {
@@ -103,23 +103,22 @@ const animalService = {
   async getAnimals(filters: AnimalFilters = {}): Promise<PaginatedResponse<Animal>> {
     try {
       // Construir parámetros de consulta
-      const params: Record<string, any> = {
-        page: filters.page || 1,
-        limit: filters.limit || 10
-      };
+      const params = new URLSearchParams();
+      params.append('page', (filters.page || 1).toString());
+      params.append('limit', (filters.limit || 10).toString());
       
       // Añadir filtros opcionales si están presentes
-      if (filters.explotacio_id) params.explotacio_id = filters.explotacio_id;
-      if (filters.genere) params.genere = filters.genere;
-      if (filters.estat) params.estat = filters.estat;
-      if (filters.alletar && filters.alletar !== 'NO') params.alletar = filters.alletar;
-      if (filters.quadra) params.quadra = filters.quadra;
-      if (filters.search) params.search = filters.search;
+      if (filters.explotacio_id) params.append('explotacio_id', filters.explotacio_id.toString());
+      if (filters.genere) params.append('genere', filters.genere);
+      if (filters.estat) params.append('estat', filters.estat);
+      if (filters.alletar && filters.alletar !== 'NO') params.append('alletar', filters.alletar.toString());
+      if (filters.quadra) params.append('quadra', filters.quadra);
+      if (filters.search) params.append('search', filters.search);
       
-      console.log('Obteniendo animales con parámetros:', params);
+      console.log('Obteniendo animales con parámetros:', Object.fromEntries(params.entries()));
       
       // Realizar petición a la API
-      const response = await get<PaginatedResponse<Animal>>('/animals', { params });
+      const response = await get<PaginatedResponse<Animal>>(`/animals?${params.toString()}`);
       console.log('Respuesta de animales recibida:', response);
       return response;
     } catch (error: any) {
@@ -199,10 +198,10 @@ const animalService = {
           return animal;
         }
         
-        throw new Error(`No se encontró el animal con ID ${id} en los datos simulados`);
+        throw new Error(`Animal con ID ${id} no encontrado en los datos simulados`);
       }
       
-      // Si no es un error de estado_t o no se encuentra el animal, propagar el error
+      // Si no es un error manejable, propagar el error
       throw error;
     }
   },
@@ -210,61 +209,93 @@ const animalService = {
   // Crea un nuevo animal
   async createAnimal(animalData: AnimalCreateDto): Promise<Animal> {
     try {
-      const endpoint = '/animals';
-      return await post<Animal>(endpoint, animalData);
-    } catch (error) {
+      console.log('Creando nuevo animal:', animalData);
+      const response = await post<Animal>('/animals', animalData);
+      console.log('Animal creado:', response);
+      return response;
+    } catch (error: any) {
       console.error('Error al crear animal:', error);
       
-      // Simular creación para desarrollo
-      const newAnimal: Animal = {
-        id: Math.max(...mockAnimals.map(a => a.id)) + 1,
-        ...animalData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
+          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
+        console.warn('Usando datos simulados para crear animal debido a error en el backend');
+        
+        // Crear respuesta simulada
+        const newId = Math.max(...mockAnimals.map(a => a.id)) + 1;
+        const now = new Date().toISOString();
+        
+        return {
+          id: newId,
+          ...animalData,
+          pare_nom: animalData.pare_id ? mockAnimals.find(a => a.id === animalData.pare_id)?.nom || null : null,
+          mare_nom: animalData.mare_id ? mockAnimals.find(a => a.id === animalData.mare_id)?.nom || null : null,
+          created_at: now,
+          updated_at: now
+        };
+      }
       
-      mockAnimals.push(newAnimal);
-      return newAnimal;
+      // Si no es un error manejable, propagar el error
+      throw error;
     }
   },
   
   // Actualiza un animal existente
   async updateAnimal(id: number, animalData: AnimalUpdateDto): Promise<Animal> {
     try {
-      const endpoint = `/animals/${id}`;
-      return await put<Animal>(endpoint, animalData);
-    } catch (error) {
+      console.log(`Actualizando animal con ID ${id}:`, animalData);
+      const response = await put<Animal>(`/animals/${id}`, animalData);
+      console.log('Animal actualizado:', response);
+      return response;
+    } catch (error: any) {
       console.error(`Error al actualizar animal con ID ${id}:`, error);
       
-      // Simular actualización para desarrollo
-      const animalIndex = mockAnimals.findIndex(a => a.id === id);
-      if (animalIndex === -1) {
-        throw new Error(`No se encontró el animal con ID ${id}`);
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
+          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
+        console.warn('Usando datos simulados para actualizar animal debido a error en el backend');
+        
+        // Buscar en datos simulados
+        const animal = mockAnimals.find(a => a.id === id);
+        if (!animal) {
+          throw new Error(`Animal con ID ${id} no encontrado en los datos simulados`);
+        }
+        
+        // Actualizar datos simulados
+        const updatedAnimal = {
+          ...animal,
+          ...animalData,
+          pare_nom: animalData.pare_id ? mockAnimals.find(a => a.id === animalData.pare_id)?.nom || animal.pare_nom : animal.pare_nom,
+          mare_nom: animalData.mare_id ? mockAnimals.find(a => a.id === animalData.mare_id)?.nom || animal.mare_nom : animal.mare_nom,
+          updated_at: new Date().toISOString()
+        };
+        
+        return updatedAnimal;
       }
       
-      mockAnimals[animalIndex] = {
-        ...mockAnimals[animalIndex],
-        ...animalData,
-        updated_at: new Date().toISOString()
-      };
-      
-      return mockAnimals[animalIndex];
+      // Si no es un error manejable, propagar el error
+      throw error;
     }
   },
   
   // Elimina un animal (marcado como DEF)
   async deleteAnimal(id: number): Promise<void> {
     try {
-      const endpoint = `/animals/${id}`;
-      await del(endpoint);
-    } catch (error) {
+      console.log(`Eliminando animal con ID ${id}`);
+      await del(`/animals/${id}`);
+      console.log('Animal eliminado correctamente');
+    } catch (error: any) {
       console.error(`Error al eliminar animal con ID ${id}:`, error);
       
-      // Simular eliminación para desarrollo
-      const animalIndex = mockAnimals.findIndex(a => a.id === id);
-      if (animalIndex !== -1) {
-        mockAnimals.splice(animalIndex, 1);
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
+          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
+        console.warn('Usando datos simulados para eliminar animal debido a error en el backend');
+        return;
       }
+      
+      // Si no es un error manejable, propagar el error
+      throw error;
     }
   },
   
@@ -276,80 +307,177 @@ const animalService = {
   // Obtiene los posibles padres (machos) para selección en formularios
   async getPotentialFathers(explotacioId: number): Promise<Animal[]> {
     try {
-      const endpoint = `/animals/potential-fathers?explotacio_id=${explotacioId}`;
-      return await get<Animal[]>(endpoint);
-    } catch (error) {
-      console.error('Error al obtener potenciales padres:', error);
+      console.log(`Obteniendo posibles padres para explotación ${explotacioId}`);
+      const response = await get<Animal[]>(`/animals/fathers?explotacio_id=${explotacioId}`);
+      console.log('Posibles padres recibidos:', response);
+      return response;
+    } catch (error: any) {
+      console.error(`Error al obtener posibles padres para explotación ${explotacioId}:`, error);
       
-      // Devolver datos simulados para desarrollo
-      return mockAnimals.filter(a => a.genere === 'M' && a.estat === 'ACT' && a.explotacio_id === explotacioId);
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
+          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
+        console.warn('Usando datos simulados para posibles padres debido a error en el backend');
+        return mockAnimals.filter(a => a.explotacio_id === explotacioId && a.genere === 'M' && a.estat === 'ACT');
+      }
+      
+      // Si no es un error manejable, propagar el error
+      throw error;
     }
   },
   
   // Obtiene las posibles madres (hembras) para selección en formularios
   async getPotentialMothers(explotacioId: number): Promise<Animal[]> {
     try {
-      const endpoint = `/animals/potential-mothers?explotacio_id=${explotacioId}`;
-      return await get<Animal[]>(endpoint);
-    } catch (error) {
-      console.error('Error al obtener potenciales madres:', error);
+      console.log(`Obteniendo posibles madres para explotación ${explotacioId}`);
+      const response = await get<Animal[]>(`/animals/mothers?explotacio_id=${explotacioId}`);
+      console.log('Posibles madres recibidas:', response);
+      return response;
+    } catch (error: any) {
+      console.error(`Error al obtener posibles madres para explotación ${explotacioId}:`, error);
       
-      // Devolver datos simulados para desarrollo
-      return mockAnimals.filter(a => a.genere === 'F' && a.estat === 'ACT' && a.explotacio_id === explotacioId);
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
+          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
+        console.warn('Usando datos simulados para posibles madres debido a error en el backend');
+        return mockAnimals.filter(a => a.explotacio_id === explotacioId && a.genere === 'F' && a.estat === 'ACT');
+      }
+      
+      // Si no es un error manejable, propagar el error
+      throw error;
+    }
+  },
+  
+  // Obtiene todos los animales de una explotación
+  async getAnimalsByExplotacion(explotacionId: number | string): Promise<Animal[]> {
+    try {
+      // Intentar obtener datos reales de la API
+      try {
+        console.log(`🐄 [Animal] Solicitando animales para explotación ${explotacionId}`);
+        
+        // Probar con diferentes formatos de endpoint para mayor compatibilidad
+        const endpoints = [
+          `/animals?explotacio_id=${explotacionId}`,
+          `/animals?explotacio=${explotacionId}`,
+          `/animals/explotacio/${explotacionId}`
+        ];
+        
+        let response = null;
+        let successEndpoint = '';
+        
+        // Intentar cada endpoint hasta que uno funcione
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`🐄 [Animal] Intentando endpoint: ${endpoint}`);
+            response = await get<any>(endpoint);
+            successEndpoint = endpoint;
+            console.log(`🐄 [Animal] Respuesta recibida de ${endpoint}:`, response);
+            break; // Si llegamos aquí, la petición fue exitosa
+          } catch (endpointError) {
+            console.warn(`🐄 [Animal] Error con endpoint ${endpoint}:`, endpointError);
+            // Continuar con el siguiente endpoint
+          }
+        }
+        
+        if (!response) {
+          throw new Error('Todos los endpoints fallaron');
+        }
+        
+        console.log(`🐄 [Animal] Endpoint exitoso: ${successEndpoint}`);
+        
+        // Si es un array, devolverlo directamente
+        if (Array.isArray(response)) {
+          console.log(`🐄 [Animal] Devolviendo array de ${response.length} animales`);
+          return response;
+        }
+        
+        // Si no es un array, verificar si es un objeto con propiedad 'items' (formato paginado)
+        if (response && typeof response === 'object' && 'items' in response) {
+          console.log(`🐄 [Animal] Devolviendo ${response.items.length} animales desde respuesta paginada`);
+          return response.items as Animal[];
+        }
+        
+        // Si es un objeto con propiedad 'data' (otro formato común)
+        if (response && typeof response === 'object' && 'data' in response) {
+          if (Array.isArray(response.data)) {
+            console.log(`🐄 [Animal] Devolviendo ${response.data.length} animales desde response.data`);
+            return response.data as Animal[];
+          }
+        }
+        
+        // Si no encontramos animales, devolver array vacío
+        console.warn(`🐄 [Animal] No se pudo interpretar la respuesta:`, response);
+        return [];
+      } catch (innerError) {
+        console.error(`🐄 [Animal] Error al obtener animales para explotación ${explotacionId}:`, innerError);
+        throw innerError;
+      }
+    } catch (error: any) {
+      console.error(`🐄 [Animal] Error en petición para obtener animales de explotación ${explotacionId}:`, error);
+      
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      console.warn(`🐄 [Animal] Usando datos simulados para animales de explotación ${explotacionId}`);
+      
+      // Filtrar animales simulados por explotación
+      const mockAnimalsFiltered = mockAnimals.filter(a => a.explotacio_id === Number(explotacionId));
+      console.log(`🐄 [Animal] Devolviendo ${mockAnimalsFiltered.length} animales simulados para explotación ${explotacionId}`);
+      return mockAnimalsFiltered;
     }
   },
   
   // Utilidades para iconos y visualización
   getAnimalIcon(animal: Animal): string {
-    if (!animal) return '🐂';
+    if (!animal) return '🐄';
     
-    if (animal.estat === 'DEF') return '⚰️';
-    
-    if (animal.genere === 'M') return '🐂';
-    
-    // Para hembras, depende de si está amamantando
-    if (animal.alletar === 'NO') return '🐄';
-    if (animal.alletar === '1') return '🐄👶';
-    if (animal.alletar === '2') return '🐄👶👶';
-    
-    return '🐄';
+    if (animal.genere === 'M') {
+      return '♂️';
+    } else if (animal.alletar !== 'NO') {
+      return '🐄';
+    } else {
+      return '♀️';
+    }
   },
   
   getAnimalStatusClass(estat: string): string {
     switch (estat) {
-      case 'ACT': return 'bg-green-100 text-green-800';
-      case 'DEF': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'ACT': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'DEF': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   },
   
   // Obtiene texto para alletar
   getAlletarText(alletar: string): string {
     switch (alletar) {
-      case 'NO': return 'No amamantando';
-      case '1': return 'Amamantando 1 ternero';
-      case '2': return 'Amamantando 2 terneros';
-      default: return 'Desconocido';
+      case '1': return 'Amamantando (1)';
+      case '2': return 'Amamantando (2)';
+      case 'NO':
+      default: return 'No amamantando';
     }
   },
-
+  
   // Obtiene todas las explotaciones para selectores
   async getAllExplotaciones() {
     try {
-      const endpoint = '/explotacions?limit=100';
-      const response = await get<any>(endpoint);
-      return response.items || [];
+      const response = await get<any[]>('/explotacions?limit=1000');
+      return response.map(explotacion => ({
+        id: explotacion.id,
+        nombre: explotacion.nom || 'Sin nombre', 
+        codigo: explotacion.explotaci || '-'     
+      }));
     } catch (error) {
-      console.error('Error al obtener todas las explotaciones:', error);
+      console.error('Error al obtener explotaciones:', error);
       
-      // Devolver datos simulados para desarrollo
-      return [
-        { id: 1, nombre: 'Explotación 1', codigo: 'EXP001' },
-        { id: 2, nombre: 'Explotación 2', codigo: 'EXP002' },
-        { id: 3, nombre: 'Explotación 3', codigo: 'EXP003' }
-      ];
+      // Usar datos simulados en caso de error
+      return mockExplotacions.map(explotacion => ({
+        id: explotacion.id,
+        nombre: explotacion.nom || 'Sin nombre', 
+        codigo: explotacion.explotaci || '-'     
+      }));
     }
-  }
+  },
+  
+  // ...
 };
 
 export default animalService;

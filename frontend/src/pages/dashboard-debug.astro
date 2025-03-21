@@ -1,0 +1,198 @@
+---
+// Importar el layout y componentes necesarios
+import Layout from '../layouts/Layout.astro';
+import { getToken } from '../utils/auth';
+
+// Verificar si el usuario está autenticado
+const token = getToken();
+const isAuthenticated = !!token;
+
+// Lista de endpoints disponibles según la documentación real de la API
+const endpoints = [
+  {
+    name: 'Estadísticas del Dashboard',
+    url: '/api/v1/dashboard/stats',
+    description: 'Obtiene estadísticas generales del dashboard'
+  },
+  {
+    name: 'Estadísticas del Dashboard (con fechas)',
+    url: '/api/v1/dashboard/stats?inicio=2023-01-01&fin=2023-12-31',
+    description: 'Obtiene estadísticas generales del dashboard filtradas por fechas'
+  },
+  {
+    name: 'Lista de Explotaciones',
+    url: '/api/v1/dashboard/explotacions',
+    description: 'Obtiene la lista de explotaciones disponibles'
+  },
+  {
+    name: 'Estadísticas de Explotación',
+    url: '/api/v1/dashboard/explotacions/1',
+    description: 'Obtiene estadísticas detalladas de una explotación específica'
+  },
+  {
+    name: 'Estadísticas de Explotación (con fechas)',
+    url: '/api/v1/dashboard/explotacions/1?inicio=2023-01-01&fin=2023-12-31',
+    description: 'Obtiene estadísticas de una explotación filtradas por fechas'
+  },
+  {
+    name: 'Resumen del Dashboard',
+    url: '/api/v1/dashboard/resumen',
+    description: 'Obtiene un resumen general del dashboard'
+  },
+  {
+    name: 'Estadísticas de Partos',
+    url: '/api/v1/dashboard/partos',
+    description: 'Obtiene estadísticas de partos'
+  },
+  {
+    name: 'Datos Combinados',
+    url: '/api/v1/dashboard/combined',
+    description: 'Obtiene datos combinados del dashboard'
+  },
+  {
+    name: 'Actividades Recientes',
+    url: '/api/v1/dashboard/recientes',
+    description: 'Obtiene las actividades recientes'
+  },
+  {
+    name: 'Login',
+    url: '/api/v1/auth/login',
+    description: 'Endpoint para iniciar sesión'
+  },
+  {
+    name: 'Información de Usuario',
+    url: '/api/v1/auth/me',
+    description: 'Obtiene información del usuario actual'
+  }
+];
+
+// Función para probar un endpoint
+const testEndpoint = async (url) => {
+  try {
+    const headers = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(url, { headers });
+    const data = await response.json();
+    
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data
+    };
+  } catch (error) {
+    return {
+      error: error.message
+    };
+  }
+};
+---
+
+<Layout title="Debug Dashboard">
+  <main class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Debug Dashboard - Endpoints Disponibles</h1>
+    
+    {!isAuthenticated && (
+      <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+        <p class="font-bold">Atención</p>
+        <p>No estás autenticado. Algunos endpoints pueden requerir autenticación para funcionar correctamente.</p>
+        <a href="/login" class="text-blue-500 hover:underline">Ir a la página de login</a>
+      </div>
+    )}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {endpoints.map((endpoint) => (
+        <div class="border rounded-lg p-4 bg-white shadow">
+          <h2 class="text-lg font-semibold">{endpoint.name}</h2>
+          <p class="text-gray-600 mb-2">{endpoint.description}</p>
+          <div class="bg-gray-100 p-2 rounded mb-2 font-mono text-sm overflow-x-auto">
+            {endpoint.url}
+          </div>
+          <button
+            class="test-endpoint-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+            data-url={endpoint.url}
+          >
+            Probar
+          </button>
+          <div class="result mt-2 hidden">
+            <div class="loading text-gray-500">Cargando...</div>
+            <pre class="output bg-gray-800 text-green-400 p-2 rounded text-xs mt-2 overflow-x-auto hidden"></pre>
+          </div>
+        </div>
+      ))}
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Función para formatear JSON con indentación
+  function formatJSON(obj) {
+    return JSON.stringify(obj, null, 2);
+  }
+  
+  // Función para obtener el token de autenticación
+  function getToken() {
+    return localStorage.getItem('token');
+  }
+  
+  // Función para probar un endpoint
+  async function testEndpoint(url) {
+    try {
+      const token = getToken();
+      const headers = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+      
+      return {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      };
+    } catch (error) {
+      return {
+        error: error.message
+      };
+    }
+  }
+  
+  // Configurar los botones de prueba
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('.test-endpoint-btn');
+    
+    buttons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const url = button.getAttribute('data-url');
+        const resultDiv = button.nextElementSibling;
+        const loadingDiv = resultDiv.querySelector('.loading');
+        const outputPre = resultDiv.querySelector('.output');
+        
+        // Mostrar el div de resultado y el indicador de carga
+        resultDiv.classList.remove('hidden');
+        loadingDiv.classList.remove('hidden');
+        outputPre.classList.add('hidden');
+        
+        try {
+          const result = await testEndpoint(url);
+          
+          // Ocultar el indicador de carga y mostrar el resultado
+          loadingDiv.classList.add('hidden');
+          outputPre.classList.remove('hidden');
+          
+          // Formatear y mostrar el resultado
+          outputPre.textContent = formatJSON(result);
+        } catch (error) {
+          // Mostrar el error
+          loadingDiv.classList.add('hidden');
+          outputPre.classList.remove('hidden');
+          outputPre.textContent = `Error: ${error.message}`;
+        }
+      });
+    });
+  });
+</script>

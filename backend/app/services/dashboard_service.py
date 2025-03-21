@@ -2,11 +2,12 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import date, datetime, timedelta
 from tortoise.functions import Count
 from tortoise.expressions import Q
-from app.models.animal import Animal
+from app.models.animal import Animal, Genere, Estado, EstadoAlletar
 from app.models.animal import Part
 from app.models.explotacio import Explotacio
 from calendar import month_name
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,17 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     
     # Distribución por alletar (amamantamiento)
     por_alletar = {}
-    for alletar_value in [0, 1, 2]:
+    alletar_values = [EstadoAlletar.NO_ALLETAR, EstadoAlletar.UN_TERNERO, EstadoAlletar.DOS_TERNEROS]
+    for alletar_value in alletar_values:
         count = await Animal.filter(**base_filter, alletar=alletar_value).count()
-        por_alletar[str(alletar_value)] = count
+        por_alletar[alletar_value] = count
+    
+    # Calcular el número total de terneros (basado en el estado de amamantamiento)
+    total_terneros = 0
+    # Vacas con 1 ternero
+    total_terneros += por_alletar.get(EstadoAlletar.UN_TERNERO, 0)
+    # Vacas con 2 terneros (cada una cuenta como 2)
+    total_terneros += por_alletar.get(EstadoAlletar.DOS_TERNEROS, 0) * 2
     
     # Distribución por cuadra
     cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
@@ -201,13 +210,8 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
         explotaciones_activas = await Explotacio.filter(activa=True).count()
         explotaciones_inactivas = total_explotaciones - explotaciones_activas
         
-        # Distribución por provincia
-        provincias = await Explotacio.all().distinct().values_list('provincia', flat=True)
+        # Eliminamos la distribución por provincia ya que el campo no existe en el modelo
         por_provincia = {}
-        for provincia in provincias:
-            if provincia:  # Ignorar valores nulos
-                count = await Explotacio.filter(provincia=provincia).count()
-                por_provincia[provincia] = count
         
         # Ranking de explotaciones por número de animales
         ranking_animales = []
@@ -329,17 +333,18 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
         "tendencia_animales": await calculate_tendencia_animales(base_filter, end_date, 3)  # Tendencia últimos 3 meses
     }
     
-    # Construir respuesta
-    response = {
+    # Crear el diccionario de respuesta
+    stats = {
         "animales": {
             "total": total_animales,
             "machos": total_machos,
             "hembras": total_hembras,
-            "ratio_m_h": ratio,
+            "ratio_m_h": round(ratio, 3),
             "por_estado": por_estado,
             "por_alletar": por_alletar,
             "por_quadra": por_quadra,
-            "edades": edades
+            "edades": edades,
+            "total_terneros": total_terneros
         },
         "partos": {
             "total": total_partos,
@@ -362,9 +367,9 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     
     # Añadir estadísticas de explotaciones solo si no se filtra por explotación
     if explotaciones_stats:
-        response["explotaciones"] = explotaciones_stats
+        stats["explotaciones"] = explotaciones_stats
     
-    return response
+    return stats
 
 async def get_explotacio_dashboard(explotacio_id: int,
                                    start_date: Optional[date] = None,
@@ -381,59 +386,177 @@ async def get_explotacio_dashboard(explotacio_id: int,
         Dict: Diccionario con las estadísticas de la explotación
     """
     try:
-        exists = await Explotacio.exists(id=explotacio_id)
-        if not exists:
+        # Verificar que la explotación existe
+        explotacio = await Explotacio.get_or_none(id=explotacio_id)
+        if not explotacio:
             raise ValueError(f"La explotación con ID {explotacio_id} no existe")
-    except TypeError:
-        # Manejar el caso de los mocks en los tests
-        # Verificar si el mock está configurado para devolver un awaitable
-        if hasattr(Explotacio.exists, 'return_value'):
-            mock_awaitable = Explotacio.exists.return_value
-            # Si el mock awaitable está configurado para devolver False, lanzar excepción
-            if hasattr(mock_awaitable, 'return_value') and mock_awaitable.return_value is False:
-                raise ValueError(f"La explotación con ID {explotacio_id} no existe")
-    
-    # Reutilizar la función general pero con ID de explotación específico
-    return await get_dashboard_stats(
-        explotacio_id=explotacio_id,
-        start_date=start_date,
-        end_date=end_date
-    )
-
-def calculate_tendencia(datos_por_mes: Dict[str, int], meses: int = 3) -> Dict[str, float]:
-    """
-    Calcula la tendencia de los últimos meses.
-    
-    Args:
-        datos_por_mes: Diccionario con datos por mes
-        meses: Número de meses para calcular la tendencia
         
-    Returns:
-        Dict: Diccionario con las tendencias
-    """
-    # Ordenar las claves para obtener los últimos meses
-    ordered_keys = sorted(datos_por_mes.keys())
-    
-    if len(ordered_keys) < meses:
-        return {"tendencia": 0.0, "promedio": 0.0}
-    
-    # Obtener los últimos N meses
-    ultimos_meses = ordered_keys[-meses:]
-    valores = [datos_por_mes[key] for key in ultimos_meses]
-    
-    # Calcular promedios y tendencia
-    if len(valores) < 2:
-        return {"tendencia": 0.0, "promedio": sum(valores) / len(valores) if valores else 0.0}
-    
-    # Tendencia simple: diferencia entre último y primer valor
-    tendencia = valores[-1] - valores[0]
-    promedio = sum(valores) / len(valores)
-    
-    return {
-        "tendencia": tendencia,
-        "promedio": promedio,
-        "valores": dict(zip(ultimos_meses, valores))
-    }
+        # Si no se especifican fechas, usar el último año
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            start_date = end_date - timedelta(days=365)
+        
+        # Filtro base para todos los queries - usar 'explotacio' en lugar de 'explotacio_id'
+        base_filter = {"explotacio": explotacio_id}
+        
+        # Estadísticas de animales
+        animal_fecha_filter = {}
+        # Para consultas con fechas futuras, no debe contar ningún animal
+        if start_date > date.today():
+            # Si la fecha de inicio es futura, no debería haber animales
+            animal_fecha_filter["dob__lt"] = date(1900, 1, 1)  # Filtro imposible
+
+        total_animales = await Animal.filter(**base_filter, **animal_fecha_filter).count()
+        total_machos = await Animal.filter(**base_filter, **animal_fecha_filter, genere="M").count()
+        total_hembras = await Animal.filter(**base_filter, **animal_fecha_filter, genere="F").count()
+        
+        # Ratio machos/hembras (evitar división por cero)
+        ratio = 0.0 if total_hembras == 0 else total_machos / total_hembras
+        
+        # Distribución por estado
+        por_estado = {}
+        estados = ["OK", "DEF"]  # Añadir otros estados si existen
+        for estado in estados:
+            count = await Animal.filter(**base_filter, estado=estado).count()
+            por_estado[estado] = count
+        
+        # Distribución por alletar (amamantamiento)
+        por_alletar = {}
+        alletar_values = [EstadoAlletar.NO_ALLETAR, EstadoAlletar.UN_TERNERO, EstadoAlletar.DOS_TERNEROS]
+        for alletar_value in alletar_values:
+            count = await Animal.filter(**base_filter, alletar=alletar_value).count()
+            por_alletar[alletar_value] = count
+        
+        # Calcular el número total de terneros (basado en el estado de amamantamiento)
+        total_terneros = 0
+        # Vacas con 1 ternero
+        total_terneros += por_alletar.get(EstadoAlletar.UN_TERNERO, 0)
+        # Vacas con 2 terneros (cada una cuenta como 2)
+        total_terneros += por_alletar.get(EstadoAlletar.DOS_TERNEROS, 0) * 2
+        
+        # Distribución por cuadra
+        cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
+        por_quadra = {}
+        for cuadra in cuadras:
+            if cuadra:  # Ignorar valores nulos
+                count = await Animal.filter(**base_filter, quadra=cuadra).count()
+                por_quadra[cuadra] = count
+        
+        # Distribución por edades
+        today = date.today()
+        edades = {
+            "menos_1_año": await Animal.filter(**base_filter, dob__gte=today - timedelta(days=365)).count(),
+            "1_2_años": await Animal.filter(
+                **base_filter, 
+                dob__lt=today - timedelta(days=365),
+                dob__gte=today - timedelta(days=365*2)
+            ).count(),
+            "2_5_años": await Animal.filter(
+                **base_filter, 
+                dob__lt=today - timedelta(days=365*2),
+                dob__gte=today - timedelta(days=365*5)
+            ).count(),
+            "mas_5_años": await Animal.filter(
+                **base_filter, 
+                dob__lt=today - timedelta(days=365*5)
+            ).count()
+        }
+        
+        # Estadísticas de partos
+        parto_filter = {"animal__explotacio": explotacio_id}
+
+        # Aplicar filtro de fechas a los partos
+        fecha_filter = {
+            "data__gte": start_date,
+            "data__lte": end_date
+        }
+        
+        total_partos = await Part.filter(**parto_filter, **fecha_filter).count()
+        
+        # Partos en el último mes
+        un_mes_atras = end_date - timedelta(days=30)
+        partos_ultimo_mes = await Part.filter(
+            **parto_filter,
+            data__gte=un_mes_atras,
+            data__lte=end_date
+        ).count()
+        
+        # Partos en el último año
+        partos_ultimo_año = await Part.filter(
+            **parto_filter,
+            data__gte=start_date,
+            data__lte=end_date
+        ).count()
+        
+        # Promedio mensual
+        meses_periodo = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
+        if meses_periodo <= 0:
+            meses_periodo = 1  # Evitar división por cero
+        promedio_mensual = partos_ultimo_año / meses_periodo
+        
+        # Distribución de partos por mes
+        partos_por_mes = {}
+        current_date = start_date
+        while current_date <= end_date:
+            month_key = f"{current_date.year}-{current_date.month:02d}"
+            month_start = date(current_date.year, current_date.month, 1)
+            
+            # Calcular el último día del mes
+            if current_date.month == 12:
+                next_month = date(current_date.year + 1, 1, 1)
+            else:
+                next_month = date(current_date.year, current_date.month + 1, 1)
+            month_end = next_month - timedelta(days=1)
+            
+            # Contar partos en este mes
+            count = await Part.filter(
+                **parto_filter,
+                data__gte=month_start,
+                data__lte=month_end
+            ).count()
+            
+            partos_por_mes[month_key] = count
+            
+            # Avanzar al siguiente mes
+            if current_date.month == 12:
+                current_date = date(current_date.year + 1, 1, 1)
+            else:
+                current_date = date(current_date.year, current_date.month + 1, 1)
+        
+        # Construir el resultado
+        return {
+            "explotacion": {
+                "id": explotacio.id,
+                "nombre": explotacio.nom
+            },
+            "periodo": {
+                "inicio": start_date.isoformat(),
+                "fin": end_date.isoformat(),
+                "dias": (end_date - start_date).days
+            },
+            "animales": {
+                "total": total_animales,
+                "machos": total_machos,
+                "hembras": total_hembras,
+                "ratio_m_h": round(ratio, 3),
+                "por_estado": por_estado,
+                "por_alletar": por_alletar,
+                "por_quadra": por_quadra,
+                "por_edad": edades,
+                "terneros": total_terneros
+            },
+            "partos": {
+                "total": total_partos,
+                "ultimo_mes": partos_ultimo_mes,
+                "ultimo_año": partos_ultimo_año,
+                "promedio_mensual": round(promedio_mensual, 2),
+                "por_mes": partos_por_mes
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error en get_explotacio_dashboard: {str(e)}", exc_info=True)
+        raise
 
 async def calculate_tendencia_animales(base_filter: Dict, end_date: date, meses: int = 3) -> Dict[str, float]:
     """
@@ -447,7 +570,9 @@ async def calculate_tendencia_animales(base_filter: Dict, end_date: date, meses:
     Returns:
         Dict: Diccionario con las tendencias
     """
-    tendencia = {}
+    tendencia_dict = {}
+    valores = []
+    
     for i in range(meses):
         mes_actual = end_date.month - i
         año_actual = end_date.year
@@ -472,9 +597,80 @@ async def calculate_tendencia_animales(base_filter: Dict, end_date: date, meses:
         ).count()
         
         # Guardamos el resultado para este mes
-        tendencia[f"{año_actual}-{mes_actual:02d}"] = count
+        tendencia_dict[f"{año_actual}-{mes_actual:02d}"] = count
+        valores.append(count)
     
-    return tendencia
+    # Si no hay suficientes datos, devolver valores por defecto
+    if len(valores) == 0:
+        return {
+            "tendencia": 0.0,
+            "promedio": 0.0,
+            "valores": 0.0
+        }
+    
+    # Calcular tendencia y promedio
+    if len(valores) < 2:
+        return {
+            "tendencia": 0.0,
+            "promedio": float(valores[0]),
+            "valores": float(valores[0])
+        }
+    
+    # Tendencia simple: diferencia entre último y primer valor
+    tendencia = valores[0] - valores[-1]  # Nota: valores[0] es el más reciente
+    promedio = sum(valores) / len(valores)
+    
+    # Para compatibilidad con el esquema, devolvemos valores como un float
+    valor_representativo = float(valores[0])  # Usamos el valor más reciente
+    
+    return {
+        "tendencia": float(tendencia),
+        "promedio": float(promedio),
+        "valores": valor_representativo
+    }
+
+def calculate_tendencia(datos_por_mes: Dict[str, int], meses: int = 3) -> Dict[str, float]:
+    """
+    Calcula la tendencia de los últimos meses.
+    
+    Args:
+        datos_por_mes: Diccionario con datos por mes
+        meses: Número de meses para calcular la tendencia
+        
+    Returns:
+        Dict: Diccionario con las tendencias
+    """
+    # Ordenar las claves para obtener los últimos meses
+    ordered_keys = sorted(datos_por_mes.keys())
+    
+    if len(ordered_keys) < meses:
+        return {"tendencia": 0.0, "promedio": 0.0, "valores": 0.0}
+    
+    # Obtener los últimos N meses
+    ultimos_meses = ordered_keys[-meses:]
+    valores = [datos_por_mes[key] for key in ultimos_meses]
+    
+    # Calcular promedios y tendencia
+    if len(valores) < 2:
+        return {
+            "tendencia": 0.0, 
+            "promedio": sum(valores) / len(valores) if valores else 0.0,
+            "valores": float(valores[0]) if valores else 0.0
+        }
+    
+    # Tendencia simple: diferencia entre último y primer valor
+    tendencia = valores[-1] - valores[0]
+    promedio = sum(valores) / len(valores)
+    
+    # Para compatibilidad con el esquema, devolvemos valores como un float
+    # (promedio de los valores o último valor)
+    valor_representativo = float(valores[-1])
+    
+    return {
+        "tendencia": float(tendencia),
+        "promedio": float(promedio),
+        "valores": valor_representativo
+    }
 
 async def get_partos_dashboard(explotacio_id: Optional[int] = None,
                               start_date: Optional[date] = None,
@@ -601,8 +797,9 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
                     "partos": count
                 })
     
-    # Calcular tendencia de partos
-    tendencia = await calculate_tendencia(partos_por_mes, 3)
+    # Calcular tendencia de partos usando la función corregida
+    # Aseguramos que devuelve el formato correcto según el esquema PartosResponse
+    tendencia = calculate_tendencia(partos_por_mes, 3)
     
     return {
         "total": total_partos,
@@ -610,7 +807,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         "por_genero_cria": por_genero_cria,
         "tasa_supervivencia": tasa_supervivencia,
         "distribucion_anual": distribucion_anual,
-        "tendencia": tendencia,
+        "tendencia": tendencia,  # Ya está en el formato correcto: Dict[str, float]
         "por_animal": por_animal,
         "ultimo_mes": partos_ultimo_mes,
         "ultimo_año": partos_ultimo_año,
@@ -720,6 +917,7 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
             rendimiento_partos["eficiencia_reproductiva"] = stats["partos"]["ultimo_año"] / hembras_adultas
     
     # Tendencias para diferentes métricas
+    # Utilizamos las funciones corregidas para obtener tendencias en el formato correcto
     tendencias = {
         "partos": calculate_tendencia(stats["partos"]["por_mes"], 6),
         "animales": await calculate_tendencia_animales(base_filter, end_date, 6)
@@ -738,5 +936,69 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
         "periodo": {
             "inicio": start_date,
             "fin": end_date
+        }
+    }
+
+# Función auxiliar para generar datos simulados de partos
+def generar_datos_simulados_partos(start_date: Optional[date] = None, end_date: Optional[date] = None) -> Dict:
+    """
+    Genera datos simulados para estadísticas de partos.
+    
+    Args:
+        start_date: Fecha de inicio para el periodo simulado
+        end_date: Fecha de fin para el periodo simulado
+        
+    Returns:
+        Dict: Diccionario con estadísticas simuladas de partos
+    """
+    if not end_date:
+        end_date = date.today()
+    if not start_date:
+        start_date = end_date - timedelta(days=365)
+    
+    # Generar datos por mes
+    datos_por_mes = {}
+    current_date = start_date
+    while current_date <= end_date:
+        month_key = current_date.strftime("%Y-%m")
+        datos_por_mes[month_key] = random.randint(1, 5)  # Entre 1 y 5 partos por mes
+        # Avanzar al siguiente mes
+        if current_date.month == 12:
+            current_date = date(current_date.year + 1, 1, 1)
+        else:
+            current_date = date(current_date.year, current_date.month + 1, 1)
+    
+    # Calcular totales
+    total_partos = sum(datos_por_mes.values())
+    exitosos = int(total_partos * 0.85)  # 85% de éxito
+    fallidos = total_partos - exitosos
+    
+    # Generar distribución por género
+    machos = int(total_partos * 0.5)  # 50% machos
+    hembras = total_partos - machos
+    
+    # Generar datos por animal (simulados)
+    datos_por_animal = []
+    for i in range(1, 6):  # 5 animales simulados
+        datos_por_animal.append({
+            "animal_id": i,
+            "nombre": f"Animal Simulado {i}",
+            "total_partos": random.randint(1, 4),
+            "exitosos": random.randint(1, 3),
+            "fallidos": random.randint(0, 1)
+        })
+    
+    return {
+        "total_partos": total_partos,
+        "exitosos": exitosos,
+        "fallidos": fallidos,
+        "tasa_exito": round(exitosos / total_partos, 2) if total_partos > 0 else 0,
+        "por_mes": datos_por_mes,
+        "por_genero": {"M": machos, "F": hembras},
+        "por_animal": datos_por_animal,
+        "tendencia": {
+            "valores": list(datos_por_mes.values())[-3:] if len(datos_por_mes) >= 3 else [1, 2, 3],
+            "cambio_porcentual": 15.0,
+            "tendencia": "alza"
         }
     }

@@ -198,23 +198,28 @@ async def update_parto(animal_id: int, parto_id: int, parto_data: PartoUpdate) -
         if parto_data.data:
             animal = await validate_animal(parto_db.animal_id)
             validate_parto_date(parto_data.data, animal.dob)
-
-        # Preparar datos de actualización
-        update_data = parto_data.dict(exclude_unset=True)
-        # Comentado: Actualización automática del estado de amamantamiento
-        # if parto_data.estat_fill is not None:
-        #     await Animal.filter(id=parto_db.animal_id).update(
-        #         alletar=EstadoAlletar.UN_TERNERO if parto_data.estat_fill == Estado.OK
-        #         else EstadoAlletar.NO_ALLETAR
-        #     )
-
-
-        # Actualizar parto
-        await Part.filter(id=parto_id).update(**update_data)
-        updated_parto = await Part.get(id=parto_id)
-
-        return await updated_parto.to_dict()
-
+            
+            # Actualizar fecha
+            parto_db.data = DateConverter.to_db_format(parto_data.data)
+            
+        # Actualizar otros campos si se proporcionan
+        if parto_data.genere_fill:
+            parto_db.genere_fill = parto_data.genere_fill
+            
+        if parto_data.estat_fill:
+            parto_db.estat_fill = parto_data.estat_fill
+            
+        if parto_data.observacions is not None:
+            parto_db.observacions = parto_data.observacions
+            
+        # Guardar cambios
+        await parto_db.save()
+        
+        return {
+            "status": "success",
+            "data": await parto_db.to_dict()
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
