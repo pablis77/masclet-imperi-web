@@ -93,7 +93,7 @@ frontend/
 
 - `Dashboard/*.tsx` - Componentes de estadísticas y gráficos
 - `Animals/*.tsx` - Componentes para CRUD de animales
-- `Partos/*.tsx` - Componentes para gestión de partos
+- `Explotaciones/*.tsx` - Componentes de estadísticas de explotaciones, que no son otra cosa que donde se encuetnran los animales, no son elementos independietnes, son agrupaciones de animales
 - `Imports/*.tsx` - Componentes para importación de datos
 - `Sync/*.tsx` - Componentes para sincronización de datos offline
 

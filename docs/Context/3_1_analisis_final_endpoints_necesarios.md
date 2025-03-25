@@ -1,5 +1,3 @@
-
-
 # Análisis Final de Endpoints Necesarios
 
 ## Introducción
@@ -62,6 +60,18 @@ El proyecto Masclet Imperi tiene una arquitectura clara dividida en:
 - Los endpoints con parámetros de fecha aceptan los formatos `YYYY-MM-DD`.
 - El endpoint de estadísticas de explotación requiere un ID de explotación válido.
 - Los datos de actividad reciente se filtran por defecto para los últimos 7 días.
+
+## Notas Adicionales para el Dashboard
+
+1. **Rango de Fechas**:
+   - No se debe incluir funcionalidad ni análisis relacionados con rangos de fechas en el Dashboard.
+
+2. **Campos Válidos**:
+   - Los únicos campos válidos para análisis y funcionalidad son los que figuran en el archivo CSV (`matriz_master.csv`).
+   - Cualquier campo adicional como "región", "provincia" u otros términos no presentes en el CSV se consideran errores de programación.
+
+3. **Licencia para el Campo `ID`**:
+   - Aunque el campo `ID` se ha mantenido en la programación de los endpoints para trazabilidad interna entre backend y frontend, **nunca debe visualizarse en el frontend**.
 
 ### 3. Animales
 
