@@ -104,6 +104,46 @@ Comparativas temporales (mes a mes, año a año)
 Rendimiento por cuadra o área
 
 
+Plan de Ampliación del Dashboard
+1. Primera fase: Mejora del endpoint existente
+Extender /api/v1/dashboard/resumen:
+Añadir estadísticas básicas combinadas de animales y partos
+Implementar filtros por fecha y explotación
+Mantener compatibilidad con la versión actual
+2. Segunda fase: Endpoints específicos de estadísticas
+Implementar /api/v1/dashboard/explotaciones:
+Estadísticas detalladas por explotación
+Comparativas entre explotaciones
+Métricas de rendimiento
+Implementar /api/v1/dashboard/partos:
+Análisis detallado de partos
+Métricas temporales (distribución por meses/años)
+Tasas de éxito y estadísticas por género
+3. Tercera fase: Estadísticas avanzadas y vista combinada
+Implementar /api/v1/dashboard/combined:
+Vista consolidada de todas las estadísticas
+Gráficos y tendencias
+Opciones avanzadas de filtrado y agrupación
+Implementar análisis avanzados:
+Comparativas temporales
+Rendimiento por cuadra
+Predicciones basadas en datos históricos
+Metodología de Desarrollo
+Para cada fase seguiremos este enfoque:
+
+Análisis y diseño: Definir la estructura exacta de cada endpoint y sus respuestas
+Implementación del servicio: Desarrollar los métodos en DashboardService
+Implementación de endpoints: Crear los endpoints en la API
+Testing inicial: Pruebas unitarias de la lógica de servicio
+Testing de integración: Validar el flujo completo
+Refactorización: Optimizar donde sea necesario
+Documentación: Actualizar la documentación del API
+Esta metodología permite:
+
+Entregar valor incremental
+Validar cada componente antes de avanzar
+Mantener una base de código estable
+Facilitar la identificación y corrección de problemas
 
 
 
@@ -113,6 +153,7 @@ Backend (FastAPI):
 
 ¿Tests de integración?
 ¿Optimización de queries?
+REPASO GENERAL AL SISTEMA DE BACKUP
 ¿Sistema de backups?
 
 Frontend (React):
@@ -127,6 +168,13 @@ DevOps:
 ¿Monitorización?
 ¿CI/CD?
 
+¿Qué puntos te gustaría tratar ahora? Podemos:
+
+Mejorar la documentación del código
+Revisar el rendimiento del Dashboard con grandes conjuntos de datos
+Ampliar la batería de tests para otros componentes
+Refactorizar alguna otra parte del código que necesite atención
+
 
 Veo varios archivos abiertos que podrían ser relevantes:
 
@@ -134,6 +182,35 @@ test_results.md
 endpoints_test_log.md
 fix_plan.md
 backup_system_summary.md
+
+
+Tests Pendientes para Alcanzar 100% de Cobertura
+1. Capa de Utilidades y Helpers (100% → 100%)
+✅ Cobertura completa alcanzada
+2. Capa de Modelos y Schemas (95% → 100%)
+Tests de validación para métodos especiales en modelos Animal (métodos de cálculo de edad, validación, etc.)
+Tests de validación para casos extremos en schemas de serialización/deserialización
+Tests para validaciones de restricciones únicas en modelos
+Tests para métodos auxiliares de User y su gestión de contraseñas
+Tests de validación de enums personalizados restantes
+3. Capa de Servicios y Lógica de Negocio (90% → 100%)
+Tests para los métodos de filtro avanzado en AnimalService
+Tests para manejo de errores en ImportService con datos malformados adicionales
+Tests para casos extremos en DashboardService (sin datos, fechas inválidas)
+Tests de recuperación de backup en BackupService
+Tests para manejo de transacciones concurrentes en servicios
+4. Capa de Endpoints y API (98% → 100%)
+Tests para endpoints de gestión de usuarios con distintos roles (pendientes algunas validaciones)
+Tests para paginación avanzada y ordenación en endpoints de Animal y Parto
+Tests para casos de error específicos en endpoints de dashboard
+Tests para restricciones de formato en endpoints de importación
+Tests para endpoints de exportación de datos
+5. Capa de Integraciones (98% → 100%)
+Tests de flujo de trabajo para recuperación del sistema después de errores
+Tests de integración para proceso de exportación de datos completo
+Tests de integración para el ciclo completo de estadísticas avanzadas del dashboard
+Tests de rendimiento para cargas masivas de datos
+Tests de flujo de usuario completo (desde login hasta operaciones complejas)
 
 
 

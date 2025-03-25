@@ -37,7 +37,25 @@ FAILED new_tests/auth/test_auth.py::test_login - AssertionError: Error: 401 - {"
 
 ### Resultados de Tests de Autenticación
 
-#### `new_tests/auth/test_auth.py`
+#### `test_auth.py`
+- **Estado**: Fallido
+- **Problema**: Error de conexión con la dirección `192.168.68.57`.
+- **Mensaje de Error**:
+  ```
+  HTTPConnectionPool(host='192.168.68.57', port=8000): Max retries exceeded with url: /api/v1/auth/login (Caused by ConnectTimeoutError(...))
+  ```
+
+#### `test_http_login.py`
+- **Estado**: Fallido
+- **Problema**: Código de estado `401` con el mensaje `"Credenciales incorrectos"`.
+- **Detalles de Respuesta**:
+  ```json
+  {
+    "detail": "Credenciales incorrectos"
+  }
+  ```
+
+#### `test_auth_simple.py`
 - **Estado**: Exitoso
 - **Detalles**:
   - Código de estado: `200`

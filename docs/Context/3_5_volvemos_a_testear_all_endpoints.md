@@ -9,15 +9,23 @@ Este documento detalla los endpoints disponibles en la API de Masclet Imperi, lo
 
 ### 1. Autenticación
 
-| Endpoint | Método | Descripción | Tests Asociados |
-|----------|--------|-------------|-----------------|
-| `/api/v1/auth/login` | POST | Inicio de sesión | `backend/test_auth.py` |
+| Endpoint | Método | Descripción | Tests Asociados | Estado |
+|----------|--------|-------------|-----------------|--------|
+| `/api/v1/auth/login` | POST | Inicio de sesión | `new_tests/auth/test_auth.py` | ✅ Exitoso |
 | `/api/v1/auth/signup` | POST | Registro de usuario | `backend/test_auth.py` |
 | `/api/v1/auth/me` | GET | Obtener información del usuario actual | `backend/test_auth.py` |
-| `/api/v1/auth/refresh` | POST | Renovación de token | `backend/test_auth.py` |
+| `/api/v1/auth/refresh` | POST | Renovación de token | `new_tests/auth/test_auth.py` | ✅ Exitoso |
 | `/api/v1/auth/users` | GET | Listado de usuarios | `backend/test_auth.py` |
 | `/api/v1/auth/users/{user_id}` | DELETE | Eliminar usuario | `backend/test_auth.py` |
 | `/api/v1/auth/users/{user_id}/password` | PATCH | Cambiar contraseña de usuario | `backend/test_auth.py` |
+
+#### Detalles de los Tests
+- **Login**:
+  - **Código de Estado**: 200
+  - **Token Generado**: `eyJhbGciOiJIUzI1NiIs...` (truncado por seguridad)
+- **Renovación de Token**:
+  - **Código de Estado**: 200
+  - **Nuevo Token Generado**: `eyJhbGciOiJIUzI1NiIs...` (truncado por seguridad)
 
 ### 2. Dashboard
 
