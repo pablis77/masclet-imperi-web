@@ -355,3 +355,37 @@ def ejecutar_pruebas():
 
 if __name__ == "__main__":
     ejecutar_pruebas()
+
+import pytest
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_list_partos_includes_animal_nom(async_client: AsyncClient):
+    response = await async_client.get("/api/v1/partos")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert "items" in data
+    for parto in data["items"]:
+        assert "animal_nom" in parto  # Validar que el nombre de la vaca está presente
+        assert isinstance(parto["animal_nom"], str)  # Validar que es una cadena de texto
+
+@pytest.mark.asyncio
+async def test_get_parto_includes_animal_nom(async_client: AsyncClient):
+    # Crear un parto de prueba
+    new_parto = {
+        "animal_id": 1,
+        "data": "15/03/2023",
+        "genere_fill": "M",
+        "estat_fill": "OK",
+        "numero_part": 1
+    }
+    create_response = await async_client.post("/api/v1/partos", json=new_parto)
+    assert create_response.status_code == 201
+    parto_id = create_response.json()["data"]["id"]
+
+    # Obtener el parto por ID
+    response = await async_client.get(f"/api/v1/partos/{parto_id}")
+    assert response.status_code == 200
+    parto = response.json()["data"]
+    assert "animal_nom" in parto  # Validar que el nombre de la vaca está presente
+    assert isinstance(parto["animal_nom"], str)  # Validar que es una cadena de texto

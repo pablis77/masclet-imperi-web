@@ -192,50 +192,15 @@ async def list_partos(
     date_filters = Q()
     
     if year:
-        # Filtrar por año
         start_of_year = date(year, 1, 1)
         end_of_year = date(year, 12, 31)
         date_filters &= Q(data__gte=start_of_year, data__lte=end_of_year)
     
     if month:
-        # Filtrar por mes (en cualquier año)
-        
         if year:
-            # Si tenemos año, filtramos para ese mes específico en ese año
-            year_value = year
-            start_date_month = date(year_value, month, 1)
-            if month == 12:
-                end_date_month = date(year_value, 12, 31)
-            else:
-                end_date_month = date(year_value, month + 1, 1) - timedelta(days=1)
-            # Aplicar filtro para rango de fechas específico del mes y año
+            start_date_month = date(year, month, 1)
+            end_date_month = date(year, month + 1, 1) - timedelta(days=1) if month < 12 else date(year, 12, 31)
             date_filters &= Q(data__gte=start_date_month, data__lte=end_date_month)
-        else:
-            # Si no tenemos año, filtramos por mes usando rangos de fechas para múltiples años
-            # Obtener rango de años para abarcar todos los posibles registros
-            current_year = datetime.now().year
-            start_year = current_year - 10  # 10 años atrás
-            end_year = current_year + 1     # Hasta el próximo año
-            
-            # Construir un filtro que combine todos los posibles meses en diferentes años
-            month_filter = Q()
-            for year_value in range(start_year, end_year + 1):
-                try:
-                    # Para cada año, filtramos por el mes específico
-                    start_date_month = date(year_value, month, 1)
-                    if month == 12:
-                        end_date_month = date(year_value, 12, 31)
-                    else:
-                        end_date_month = date(year_value, month + 1, 1) - timedelta(days=1)
-                    
-                    # Añadimos el rango de fechas para este año y mes
-                    month_filter |= Q(data__gte=start_date_month, data__lte=end_date_month)
-                except ValueError:
-                    # Ignorar errores por fechas inválidas
-                    continue
-            
-            # Añadir el filtro de mes al filtro principal
-            date_filters &= month_filter
     
     if start_date:
         try:
@@ -272,10 +237,7 @@ async def list_partos(
     
     # Aplicar ordenación
     if sort and sort in ["data", "numero_part", "created_at"]:
-        if order and order.lower() == "asc":
-            query = query.order_by(sort)
-        else:
-            query = query.order_by(f"-{sort}")
+        query = query.order_by(sort if order == "asc" else f"-{sort}")
     
     # Aplicar paginación
     query = query.offset(offset).limit(limit)
@@ -289,9 +251,10 @@ async def list_partos(
         results.append({
             "id": parto.id,
             "animal_id": parto.animal.id,
-            "data": parto.data.strftime("%d/%m/%Y"),
-            "genere_fill": parto.genere_fill,
-            "estat_fill": parto.estat_fill,
+            "animal_nom": parto.animal.nom,  # Incluir el nombre de la vaca
+            "part": parto.data.strftime("%d/%m/%Y"),  # Cambiar data a part
+            "GenereT": parto.genere_fill,  # Cambiar genere_fill a GenereT
+            "EstadoT": parto.estat_fill,  # Cambiar estat_fill a EstadoT
             "numero_part": parto.numero_part,
             "created_at": parto.created_at.strftime("%d/%m/%Y %H:%M:%S") if parto.created_at else None
         })

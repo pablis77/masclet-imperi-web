@@ -51,3 +51,16 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 @router.get("/users", response_model=list[UserResponse])
 async def get_users(current_user: User = Depends(check_permission(Action.GESTIONAR_USUARIOS))):
     return await User.all()
+
+@router.delete("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(username: str, current_user: User = Depends(check_permission(Action.GESTIONAR_USUARIOS))):
+    """Elimina un usuario por su nombre de usuario."""
+    user = await User.get_or_none(username=username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado"
+        )
+
+    await user.delete()
+    return
