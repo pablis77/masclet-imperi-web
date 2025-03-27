@@ -112,7 +112,7 @@
 
 ### Gestión de Fichas
 
-- Actualización: 
+- Actualización:
   - Modificación datos existentes
   - Registro histórico de cambios
   - Validaciones específicas por campo
@@ -138,7 +138,7 @@
 ## 8. Filosofía de Diseño y Usabilidad
 
 - **Flexibilidad Extrema**: La aplicación está diseñada para ganaderos trabajando en campo, no en oficina
-- **Tolerancia a Datos Imperfectos**: 
+- **Tolerancia a Datos Imperfectos**:
   * Acepta datos incompletos o con erratas
   * Prioriza el registro sobre la validación estricta
   * Proporciona defaults inteligentes

@@ -1,0 +1,11 @@
+id,explotacio,nom,genere,data_naixement,mare,pare,estado
+1,Gurans,Paca,Femella,2020-01-01,,,,A
+2,Gurans,Toro Rey,Mascle,2020-02-01,,,,A
+3,Gurans,Luna,Femella,2021-01-01,Paca,Toro Rey,A
+4,Gurans,Sol,Mascle,2021-03-15,Paca,Toro Rey,B
+5,Gurans,Estrella,Femella,2022-05-20,Luna,,A
+6,Gurans,Nova,Femella,2022-06-01,Luna,,A
+7,Gurans,Cometa,Mascle,2023-01-10,Nova,Sol,A
+8,Gurans,Rayo,Mascle,2023-02-15,Estrella,Sol,A
+9,Gurans,Tornado,Mascle,2023-04-01,Paca,Toro Rey,A
+10,Gurans,Lluvia,Femella,2023-05-20,Luna,Rayo,A

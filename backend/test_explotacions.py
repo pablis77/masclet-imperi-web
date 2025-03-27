@@ -48,7 +48,7 @@ def test_get_explotacio(explotacio_id):
         print(response.text)
         return None
 
-def test_create_explotacio(nom, explotacio=None, activa=True):
+def test_create_explotacio(nom, explotaci=None, activa=True):
     """Prueba el endpoint POST /explotacions/"""
     url = f"{BASE_URL}/explotacions/"
     data = {
@@ -56,8 +56,8 @@ def test_create_explotacio(nom, explotacio=None, activa=True):
         "activa": activa
     }
     
-    if explotacio:
-        data["explotacio"] = explotacio
+    if explotaci:
+        data["explotaci"] = explotaci
     
     response = requests.post(url, headers=HEADERS, json=data)
     
@@ -71,15 +71,15 @@ def test_create_explotacio(nom, explotacio=None, activa=True):
         print(response.text)
         return None
 
-def test_update_explotacio(explotacio_id, nom=None, explotacio=None, activa=None):
+def test_update_explotacio(explotacio_id, nom=None, explotaci=None, activa=None):
     """Prueba el endpoint PUT /explotacions/{id}"""
     url = f"{BASE_URL}/explotacions/{explotacio_id}"
     data = {}
     
     if nom is not None:
         data["nom"] = nom
-    if explotacio is not None:
-        data["explotacio"] = explotacio
+    if explotaci is not None:
+        data["explotaci"] = explotaci
     if activa is not None:
         data["activa"] = activa
     
@@ -123,16 +123,16 @@ if __name__ == "__main__":
         elif command == "create" and len(sys.argv) > 2:
             # Crear una nueva explotación
             nom = sys.argv[2]
-            explotacio = sys.argv[3] if len(sys.argv) > 3 else None
-            test_create_explotacio(nom, explotacio)
+            explotaci = sys.argv[3] if len(sys.argv) > 3 else None
+            test_create_explotacio(nom, explotaci)
         
         elif command == "update" and len(sys.argv) > 3:
             # Actualizar una explotación existente
             explotacio_id = int(sys.argv[2])
             nom = sys.argv[3]
-            explotacio = sys.argv[4] if len(sys.argv) > 4 else None
+            explotaci = sys.argv[4] if len(sys.argv) > 4 else None
             activa = True if len(sys.argv) <= 5 or sys.argv[5].lower() == "true" else False
-            test_update_explotacio(explotacio_id, nom, explotacio, activa)
+            test_update_explotacio(explotacio_id, nom, explotaci, activa)
         
         elif command == "delete" and len(sys.argv) > 2:
             # Eliminar una explotación
@@ -143,8 +143,8 @@ if __name__ == "__main__":
             print("Uso:")
             print("  python test_explotacions.py                  # Listar todas las explotaciones")
             print("  python test_explotacions.py get ID           # Obtener una explotación específica")
-            print("  python test_explotacions.py create NOMBRE [EXPLOTACIO]  # Crear una nueva explotación")
-            print("  python test_explotacions.py update ID NOMBRE [EXPLOTACIO] [ACTIVA]  # Actualizar una explotación")
+            print("  python test_explotacions.py create NOMBRE [EXPLOTACI]  # Crear una nueva explotación")
+            print("  python test_explotacions.py update ID NOMBRE [EXPLOTACI] [ACTIVA]  # Actualizar una explotación")
             print("  python test_explotacions.py delete ID        # Eliminar una explotación")
     else:
         # Listar todas las explotaciones

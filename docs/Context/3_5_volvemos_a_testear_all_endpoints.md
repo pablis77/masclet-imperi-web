@@ -744,21 +744,21 @@ El archivo `matriz_master.csv` contiene los siguientes campos:
 
 - **POST /api/v1/animals/**: Permite crear un nuevo animal. Los datos enviados incluyen `explotacio`, `NOM`, `Genere`, `Estado`, y `Alletar`.
   - **Coincidencias con el CSV**: Todos los campos enviados coinciden con los definidos en el archivo CSV.
-  - **Discrepancias**: Ninguna.
+  - **Discrepancias**: faltan campos por incluir aquim cuando creo una ficah de un neuvo animal debo permitir que se puedan introducir todos los campos que tenemos en la tabla CSV, otra cosas esq ue no todos sean obligatorios
 
 #### 2. **Endpoints de Partos**
 - **GET /api/v1/partos/**: Devuelve un listado de partos con los campos `part`, `GenereT`, y `EstadoT`.
   - **Coincidencias con el CSV**: Todos los campos coinciden con los definidos en el archivo CSV.
-  - **Discrepancias**: Ninguna.
+  - **Discrepancias**: este lsitado en caso de solicitarlo asi, comol listado de partos deberia veneir cada aprto a la madre vaca que ha tenido el parto
 
 - **POST /api/v1/partos/**: Permite registrar un nuevo parto. Los datos enviados incluyen `part`, `GenereT`, y `EstadoT`.
   - **Coincidencias con el CSV**: Todos los campos enviados coinciden con los definidos en el archivo CSV.
-  - **Discrepancias**: Ninguna.
+  - **Discrepancias**: siempre cada parto nuevo que se cree debe venir asociado a una vaca
 
-#### 3. **Endpoints de Explotaciones**
+#### 3. **Endpoints de Explotaciones** ESTO SE QUEDA EN LA NEVERA
 - **GET /api/v1/explotacions/**: Devuelve un listado de explotaciones con el campo `explotacio`.
   - **Coincidencias con el CSV**: El campo `explotacio` coincide con el definido en el archivo CSV.
-  - **Discrepancias**: Ninguna.
+  - **Discrepancias**: Ninguna. no veo ahora mismo que esto lo necesitemos en el frontend
 
 #### 4. **Endpoints de Importación**
 - **POST /api/v1/imports/**: Permite importar datos desde un archivo CSV. Los datos procesados incluyen todos los campos del archivo `matriz_master.csv`.
@@ -769,6 +769,9 @@ El archivo `matriz_master.csv` contiene los siguientes campos:
 Todos los endpoints probados utilizan campos que coinciden completamente con los definidos en el archivo `matriz_master.csv`. No se han identificado discrepancias entre los datos procesados por los endpoints y los campos del CSV. Esto asegura que el sistema está alineado con la estructura de datos esperada y que no hay campos adicionales o faltantes en las respuestas de los endpoints.
 
 ### Resultados de los Tests de Explotaciones
+ESTOS TESTS de explotacion estan todos mal ya que no se peude tener en cuetna el concepto REGIN, no existe, esto hayq uqe revisarlo bien!!!!!!!!!!!!!!!!!!!!!!!!
+
+lo vuelvo a poner aqui por enesima vez, las expltoaciones son agurpacioens de animales, solo tienen sentido apra sumar a las vacas a los toros y a las vacas que estan amamantando, el resto es accesorio
 
 #### 1. **GET /api/v1/explotacions/**
 - **Propósito**: Listar todas las explotaciones registradas.
@@ -778,19 +781,24 @@ Todos los endpoints probados utilizan campos que coinciden completamente con los
     {
       "id": 1,
       "explotacio": "Gurans",
-      "total_animals": 50,
-      "region": "Valencia"
+      "total_animals": 50, esto no es solo la suam de toros y vacas (aquis e suman los toros + las vacas + terneros(que son vacas que amamantan 1 ternero suman 1 ternero y vacas que amamantan 2 terneros sumann 2 terneros))
+    aqui falta un recuento de toros, un recuento de vacas y un recuento de terneros (re hace el recuento de terneros contando las vacas que estan amamantando 1 o 2 terneros)
+      
+      "region": "Valencia" MALLLLLLLLLLLLLLLLLL
     },
     {
       "id": 2,
       "explotacio": "Guadalajara",
-      "total_animals": 30,
-      "region": "Castilla-La Mancha"
+      
+      "total_animals": 30, esto no es solo la suam de toros y vacas (aquis e suman los toros + las vacas + terneros(que son vacas que amamantan 1 ternero suman 1 ternero y vacas que amamantan 2 terneros sumann 2 terneros))
+    aqui falta un recuento de toros, un recuento de vacas y un recuento de terneros (re hace el recuento de terneros contando las vacas que estan amamantando 1 o 2 terneros)
+      "region": "Castilla-La Mancha"MALLLLLLLLLLLLLLLLLL
     }
   ]
   ```
 - **Coincidencias con el CSV**: El campo `explotacio` coincide con el definido en el archivo CSV.
-- **Discrepancias**: Ninguna.
+- **Discrepancias**: si claro region nod ebe estar aqui, no tenemos ninmgun campoq ue se llame region
+
 
 #### 2. **POST /api/v1/explotacions/**
 - **Propósito**: Crear una nueva explotación.
@@ -798,7 +806,7 @@ Todos los endpoints probados utilizan campos que coinciden completamente con los
   ```json
   {
     "explotacio": "Madrid",
-    "region": "Madrid"
+    "region": "Madrid"MALLLLLLLLLLLLLLLLLL
   }
   ```
 - **Resultado del Test**:
@@ -806,12 +814,12 @@ Todos los endpoints probados utilizan campos que coinciden completamente con los
   {
     "id": 3,
     "explotacio": "Madrid",
-    "region": "Madrid",
-    "total_animals": 0
+    "region": "Madrid",MALLLLLLLLLLLLLLLLLL
+    "total_animals": 0v
   }
   ```
 - **Coincidencias con el CSV**: El campo `explotacio` coincide con el definido en el archivo CSV.
-- **Discrepancias**: Ninguna.
+- **Discrepancias**: si claro region nod ebe estar aqui, no tenemos ninmgun campoq ue se llame region
 
 #### 3. **GET /api/v1/explotacions/{explotacio_id}**
 - **Propósito**: Obtener los detalles de una explotación específica.
@@ -820,19 +828,21 @@ Todos los endpoints probados utilizan campos que coinciden completamente con los
   {
     "id": 1,
     "explotacio": "Gurans",
-    "total_animals": 50,
-    "region": "Valencia"
+    "total_animals": 50, esto no es solo la suam de toros y vacas (aquis e suman los toros + las vacas + terneros(que son vacas que amamantan 1 ternero suman 1 ternero y vacas que amamantan 2 terneros sumann 2 terneros))
+    aqui falta un recuento de toros, un recuento de vacas y un recuento de terneros (re hace el recuento de terneros contando las vacas que estan amamantando 1 o 2 terneros)
+    "region": "Valencia"MALLLLLLLLLLLLLLLLLL
   }
   ```
 - **Coincidencias con el CSV**: El campo `explotacio` coincide con el definido en el archivo CSV.
-- **Discrepancias**: Ninguna.
+- **Discrepancias**: si claro region nod ebe estar aqui, no tenemos ninmgun campoq ue se llame region
+
 
 #### 4. **PUT /api/v1/explotacions/{explotacio_id}**
 - **Propósito**: Actualizar los datos de una explotación existente.
 - **Datos Enviados**:
   ```json
   {
-    "region": "Comunidad Valenciana"
+    "region": "Comunidad Valenciana"MALLLLLLLLLLLLLLLLLL
   }
   ```
 - **Resultado del Test**:
@@ -840,12 +850,14 @@ Todos los endpoints probados utilizan campos que coinciden completamente con los
   {
     "id": 1,
     "explotacio": "Gurans",
-    "total_animals": 50,
-    "region": "Comunidad Valenciana"
+    "total_animals": 50, esto no es solo la suam de toros y vacas (aquis e suman los toros + las vacas + terneros(que son vacas que amamantan 1 ternero suman 1 ternero y vacas que amamantan 2 terneros sumann 2 terneros))
+    aqui falta un recuento de toros, un recuento de vacas y un recuento de terneros (re hace el recuento de terneros contando las vacas que estan amamantando 1 o 2 terneros)
+    "region": "Comunidad Valenciana"MALLLLLLLLLLLLLLLLLL
   }
   ```
 - **Coincidencias con el CSV**: El campo `explotacio` coincide con el definido en el archivo CSV.
-- **Discrepancias**: Ninguna.
+- **Discrepancias**: si claro region nod ebe estar aqui, no tenemos ninmgun campoq ue se llame region
+
 
 #### 5. **DELETE /api/v1/explotacions/{explotacio_id}**
 - **Propósito**: Eliminar una explotación existente.
