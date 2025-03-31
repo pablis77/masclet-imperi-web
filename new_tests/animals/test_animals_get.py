@@ -81,16 +81,45 @@ def test_get_animal_by_id(auth_token):
     assert "data" in data
     assert data["data"]["id"] == animal_id
     
-    # Verificar que los campos del CSV están presentes
+    # Verificar que los campos del CSV están presentes y tienen los valores correctos
     retrieved_animal = data["data"]
+    original_animal = animal  # El animal que obtuvimos de la lista
+    
+    # Verificar campos principales
     assert "nom" in retrieved_animal
+    assert retrieved_animal["nom"] == original_animal["nom"], f"Nombre no coincide: {retrieved_animal['nom']} != {original_animal['nom']}"
+    
     assert "genere" in retrieved_animal
+    assert retrieved_animal["genere"] == original_animal["genere"], f"Género no coincide: {retrieved_animal['genere']} != {original_animal['genere']}"
+    
     assert "explotacio" in retrieved_animal
+    assert retrieved_animal["explotacio"] == original_animal["explotacio"], f"Explotación no coincide: {retrieved_animal['explotacio']} != {original_animal['explotacio']}"
+    
     assert "estado" in retrieved_animal
+    assert retrieved_animal["estado"] == original_animal["estado"], f"Estado no coincide: {retrieved_animal['estado']} != {original_animal['estado']}"
+    
     assert "alletar" in retrieved_animal
+    assert retrieved_animal["alletar"] == original_animal["alletar"], f"Estado de amamantamiento no coincide: {retrieved_animal['alletar']} != {original_animal['alletar']}"
     
     # Verificar campos adicionales según el CSV
     for field in ["mare", "pare", "quadra", "cod", "num_serie", "dob", "part"]:
         assert field in retrieved_animal, f"Campo {field} no encontrado en la respuesta"
+        assert retrieved_animal[field] == original_animal[field], f"Campo {field} no coincide: {retrieved_animal[field]} != {original_animal[field]}"
+    
+    # Verificar campos de metadatos
+    assert "created_at" in retrieved_animal
+    assert "updated_at" in retrieved_animal
+    
+    # Imprimir todos los campos para verificar si hay campos adicionales no esperados
+    print("\nCampos en la respuesta del animal:")
+    for field, value in retrieved_animal.items():
+        print(f"  - {field}: {value}")
+    
+    # Verificar si hay campos en la respuesta que no están en el CSV
+    csv_fields = ["id", "nom", "genere", "explotacio", "estado", "alletar", "mare", "pare", "quadra", "cod", "num_serie", "dob", "part", "created_at", "updated_at"]
+    extra_fields = [field for field in retrieved_animal.keys() if field not in csv_fields]
+    
+    if extra_fields:
+        print(f"\nCAMPOS ADICIONALES encontrados en la respuesta (no en CSV): {extra_fields}")
     
     print("Test de obtener animal por ID completado con éxito.")

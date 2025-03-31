@@ -118,6 +118,45 @@ class AnimalUpdate(BaseModel):
     estado_t: Optional[str] = None  # Validado como enum en el endpoint
     dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)
 
+    @validator('dob')
+    def validate_dob(cls, v):
+        """Validar y normalizar formato de fecha"""
+        if not v:
+            return None
+        
+        import re
+        # Primero validar el formato con regex
+        if not re.match(r'^\d{2}/\d{2}/\d{4}$', v):
+            raise ValueError('La fecha debe estar en formato DD/MM/YYYY')
+            
+        try:
+            # Intentar parsear la fecha
+            parsed_date = DateConverter.parse_date(v)
+            if parsed_date:
+                # Devolver siempre en formato DD/MM/YYYY
+                return parsed_date.strftime('%d/%m/%Y')
+            return None
+        except ValueError:
+            raise ValueError('La fecha es inválida para el formato DD/MM/YYYY')
+
+    @validator('estado')
+    def validate_estado(cls, v):
+        if v is None:
+            return v
+        try:
+            return Estado(v).value
+        except ValueError:
+            raise ValueError(f'Estado inválido: {v}. Valores válidos: {[e.value for e in Estado]}')
+
+    @validator('alletar')
+    def validate_alletar(cls, v):
+        if v is None:
+            return v
+        try:
+            return EstadoAlletar(v).value
+        except ValueError:
+            raise ValueError(f'Estado de amamantamiento inválido: {v}. Valores válidos: {[e.value for e in EstadoAlletar]}')
+
     model_config = ConfigDict(
         extra='forbid',
         from_attributes=True,

@@ -125,27 +125,31 @@ class Animal(models.Model):
 class Part(models.Model):
     """Modelo de Parto"""
     id = fields.IntField(pk=True)
-    animal = fields.ForeignKeyField(
-        "models.Animal", related_name="partos"
+    animal: fields.ForeignKeyRelation["Animal"] = fields.ForeignKeyField(
+        "models.Animal", related_name="parts", on_delete=fields.CASCADE
     )
-    data = fields.DateField()
-    genere_fill = fields.CharEnumField(Genere)  # Corregido para coincidir con la base de datos
-    estat_fill = fields.CharEnumField(Estado, default=Estado.OK)  # Corregido para coincidir con la base de datos
-    numero_part = fields.IntField()
-    observacions = fields.TextField(null=True)
+    part = fields.DateField()
+    GenereT = fields.CharField(max_length=1, description="Gènere del terner (M/F/E)")
+    EstadoT = fields.CharField(max_length=3, default="OK", description="Estat del terner (OK/DEF)")
+    numero_part = fields.IntField(default=1)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+    observacions = fields.TextField(null=True)
+
+    class Meta:
+        table = "part"
+        ordering = ["-part", "animal"]
 
     async def to_dict(self) -> dict:
-        """Convierte el modelo a diccionario"""
+        # Devolvemos el animal_id directamente desde la clave foránea
         return {
             "id": self.id,
-            "animal_id": self.animal_id,
-            "data": self.data.strftime("%d/%m/%Y"),
-            "genere_fill": self.genere_fill,  # Corregido para coincidir con la base de datos
-            "estat_fill": self.estat_fill,  # Corregido para coincidir con la base de datos
+            "animal_id": self.animal_id,  
+            "part": self.part,
+            "GenereT": self.GenereT,
+            "EstadoT": self.EstadoT,
             "numero_part": self.numero_part,
             "observacions": self.observacions,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
         }

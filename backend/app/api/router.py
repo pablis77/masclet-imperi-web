@@ -45,7 +45,6 @@ api_router.include_router(
 # Rutas para partos (anidadas dentro de animals)
 api_router.include_router(
     partos_router,
-    prefix="/animals/{animal_id}/parts",
     tags=["partos"]
 )
 

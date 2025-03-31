@@ -74,7 +74,7 @@ async def create_animal(
 
         # Crear el animal
         new_animal = await Animal.create(
-            explotacio=explotacio.nom,  # Usar el nombre de la explotación
+            explotacio=animal.explotacio,
             nom=animal.nom,
             genere=animal.genere,
             estado=animal.estado,
@@ -93,49 +93,15 @@ async def create_animal(
             "status": "success",
             "data": await new_animal.to_dict()
         }
-
-
-        # Validar madre y padre si se especifican
-        if animal.mare:
-            mare = await Animal.get_or_none(
-                nom=animal.mare,
-                explotacio=explotacio,
-                genere=Genere.FEMELLA
-            )
-            if not mare:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Madre {animal.mare} no encontrada"
-                )
-
-        if animal.pare:
-            pare = await Animal.get_or_none(
-                nom=animal.pare,
-                explotacio=explotacio,
-                genere=Genere.MASCLE
-            )
-            if not pare:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Padre {animal.pare} no encontrado"
-                )
-
-        # Crear animal con todos los campos
-        animal_dict = animal.model_dump()
-        animal_dict["dob"] = dob
-        animal_dict["explotacio"] = explotacio
-        
-        animal_db = await Animal.create(**animal_dict)
-        return {
-            "status": "success",
-            "data": await animal_db.to_dict()
-        }
-
+    
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creando animal: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error al crear animal: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al crear animal: {str(e)}"
+        )
 
 @router.get("/{animal_id}", response_model=AnimalResponse)
 async def get_animal(animal_id: int) -> AnimalResponse:
@@ -166,7 +132,7 @@ async def list_animals(
     explotacio_id: Optional[str] = None,
     genere: Optional[str] = None,
     estado: Optional[str] = None,
-    alletar: Optional[bool] = None,
+    alletar: Optional[str] = None,
     mare: Optional[str] = None,
     pare: Optional[str] = None,
     quadra: Optional[str] = None,
@@ -181,7 +147,7 @@ async def list_animals(
 
         # Filtros básicos
         if explotacio_id:
-            query = query.filter(explotacio_id=explotacio_id)
+            query = query.filter(explotacio=explotacio_id)
             
         # Filtros de enums
         # Validar y aplicar filtro de género
@@ -308,6 +274,49 @@ async def update_animal(animal_id: int, animal_data: AnimalUpdate) -> dict:
         if "estado_t" in update_data:
             update_data["estado_t"] = update_data["estado_t"]
             
+        # Validar campos de enumeración
+        if "estado" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum Estado
+                if update_data["estado"] not in [e.value for e in Estado]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para estado: {update_data['estado']}. Valores válidos: {[e.value for e in Estado]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para estado: {update_data['estado']}. Valores válidos: {[e.value for e in Estado]}"
+                )
+                
+        if "alletar" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum EstadoAlletar
+                if update_data["alletar"] not in [e.value for e in EstadoAlletar]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para alletar: {update_data['alletar']}. Valores válidos: {[e.value for e in EstadoAlletar]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para alletar: {update_data['alletar']}. Valores válidos: {[e.value for e in EstadoAlletar]}"
+                )
+                
+        if "genere" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum Genere
+                if update_data["genere"] not in [e.value for e in Genere]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para genere: {update_data['genere']}. Valores válidos: {[e.value for e in Genere]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para genere: {update_data['genere']}. Valores válidos: {[e.value for e in Genere]}"
+                )
+            
         # Actualizar el animal
         await Animal.filter(id=animal_id).update(**update_data)
         updated_animal = await Animal.get(id=animal_id)
@@ -319,12 +328,131 @@ async def update_animal(animal_id: int, animal_data: AnimalUpdate) -> dict:
     
     except HTTPException:
         raise
+    except ValueError as e:
+        logger.error(f"Error de validación actualizando animal {animal_id}: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error actualizando animal {animal_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/{animal_id}")
-async def delete_animal(animal_id: int) -> dict:
+@router.put("/{animal_id}", response_model=AnimalResponse)
+async def update_animal_put(animal_id: int, animal_data: AnimalUpdate) -> dict:
+    """Actualizar un animal (método PUT)"""
+    try:
+        animal = await Animal.get_or_none(id=animal_id)
+        if not animal:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Animal {animal_id} no encontrado"
+            )
+            
+        # Actualizar campos
+        update_data = animal_data.model_dump(exclude_unset=True)
+        
+        # Procesar la fecha si se actualiza
+        if "dob" in update_data:
+            try:
+                update_data["dob"] = DateConverter.to_db_format(update_data["dob"])
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Formato de fecha inválido: {str(e)}"
+                )
+
+        # Validar madre y padre si se actualizan
+        if "mare" in update_data:
+            mare = await Animal.get_or_none(
+                nom=update_data["mare"],
+                explotacio=animal.explotacio,
+                genere=Genere.FEMELLA
+            )
+            if not mare and update_data["mare"] is not None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Madre {update_data['mare']} no encontrada"
+                )
+
+        if "pare" in update_data:
+            pare = await Animal.get_or_none(
+                nom=update_data["pare"],
+                explotacio=animal.explotacio,
+                genere=Genere.MASCLE
+            )
+            if not pare and update_data["pare"] is not None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Padre {update_data['pare']} no encontrado"
+                )
+                
+        # Actualizar campos de transición
+        if "genere_t" in update_data:
+            update_data["genere_t"] = update_data["genere_t"]
+        if "estado_t" in update_data:
+            update_data["estado_t"] = update_data["estado_t"]
+            
+        # Validar campos de enumeración
+        if "estado" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum Estado
+                if update_data["estado"] not in [e.value for e in Estado]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para estado: {update_data['estado']}. Valores válidos: {[e.value for e in Estado]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para estado: {update_data['estado']}. Valores válidos: {[e.value for e in Estado]}"
+                )
+                
+        if "alletar" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum EstadoAlletar
+                if update_data["alletar"] not in [e.value for e in EstadoAlletar]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para alletar: {update_data['alletar']}. Valores válidos: {[e.value for e in EstadoAlletar]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para alletar: {update_data['alletar']}. Valores válidos: {[e.value for e in EstadoAlletar]}"
+                )
+                
+        if "genere" in update_data:
+            try:
+                # Verificar que el valor es válido para el enum Genere
+                if update_data["genere"] not in [e.value for e in Genere]:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Valor inválido para genere: {update_data['genere']}. Valores válidos: {[e.value for e in Genere]}"
+                    )
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Valor inválido para genere: {update_data['genere']}. Valores válidos: {[e.value for e in Genere]}"
+                )
+            
+        # Actualizar el animal
+        await Animal.filter(id=animal_id).update(**update_data)
+        updated_animal = await Animal.get(id=animal_id)
+        
+        return {
+            "status": "success",
+            "data": await updated_animal.to_dict()
+        }
+    
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Error de validación actualizando animal {animal_id}: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error actualizando animal {animal_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{animal_id}", status_code=204)
+async def delete_animal(animal_id: int) -> None:
     """Eliminar un animal"""
     try:
         animal = await Animal.get_or_none(id=animal_id)
@@ -335,13 +463,7 @@ async def delete_animal(animal_id: int) -> dict:
             )
             
         await animal.delete()
-        return {
-            "status": "success",
-            "data": {
-                "message": "Animal eliminado exitosamente",
-                "id": animal_id
-            }
-        }
+        return None
     
     except HTTPException:
         raise

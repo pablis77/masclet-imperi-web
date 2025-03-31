@@ -96,7 +96,7 @@ async def test_list_animals_with_filters(auth_token):
         {"explotacio": "Gurans"},
         {"genere": "M"},
         {"estado": "OK"},
-        # Omitimos el filtro de alletar por ahora debido a la discrepancia entre el modelo y el endpoint
+        {"alletar": "NO"},  
         {"explotacio": "Gurans", "genere": "F"},
         {"search": "Test"}
     ]
@@ -144,6 +144,10 @@ async def test_list_animals_with_filters(auth_token):
             if "estado" in filter_params and data["data"]["items"]:
                 for animal in data["data"]["items"]:
                     assert animal["estado"] == filter_params["estado"], f"El filtro de estado no se aplicó correctamente: {animal['estado']} != {filter_params['estado']}"
+            
+            if "alletar" in filter_params and data["data"]["items"]:
+                for animal in data["data"]["items"]:
+                    assert animal["alletar"] == filter_params["alletar"], f"El filtro de alletar no se aplicó correctamente: {animal['alletar']} != {filter_params['alletar']}"
             
             print(f"Número de animales encontrados con filtros {filter_params}: {len(data['data']['items'])}")
             

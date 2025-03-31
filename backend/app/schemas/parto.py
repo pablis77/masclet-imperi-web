@@ -10,12 +10,12 @@ from app.core.date_utils import DateConverter
 
 class PartoBase(BaseModel):
     """Schema base para partos"""
-    data: str = Field(..., description="Fecha del parto en formato DD/MM/YYYY")
-    genere_fill: Genere = Field(..., description="Género de la cría (M/F)")
-    estat_fill: Estado = Field(default=Estado.OK, description="Estado de la cría (OK/DEF)")
+    part: str = Field(..., description="Fecha del parto en formato DD/MM/YYYY")
+    GenereT: Genere = Field(..., description="Género de la cría (M/F)")
+    EstadoT: Estado = Field(default=Estado.OK, description="Estado de la cría (OK/DEF)")
 
-    @validator('data')
-    def validate_data(cls, v):
+    @validator('part')
+    def validate_part(cls, v):
         """Valida y convierte la fecha al formato de almacenamiento"""
         if not v:
             return None
@@ -37,16 +37,17 @@ class PartoCreate(PartoBase):
     """Schema para crear partos"""
     animal_id: int = Field(..., description="ID del animal (madre)")
     numero_part: int = Field(..., description="Número de parto")
+    observacions: Optional[str] = Field(None, description="Observaciones sobre el parto")
 
 class PartoUpdate(BaseModel):
     """Schema para actualizar partos"""
-    data: Optional[str] = Field(None, description="Fecha del parto en formato DD/MM/YYYY")
-    genere_fill: Optional[Genere] = None
-    estat_fill: Optional[Estado] = None
+    part: Optional[str] = Field(None, description="Fecha del parto en formato DD/MM/YYYY")
+    GenereT: Optional[Genere] = None
+    EstadoT: Optional[Estado] = None
     numero_part: Optional[int] = None
 
-    @validator('data')
-    def validate_data(cls, v):
+    @validator('part')
+    def validate_part(cls, v):
         """Valida y convierte la fecha al formato de almacenamiento"""
         if not v:
             return None
@@ -68,33 +69,36 @@ class PartoData(BaseModel):
     """Schema para los datos del parto"""
     id: int
     animal_id: int
-    data: str
-    genere_fill: Genere
-    estat_fill: Estado
+    part: str
+    GenereT: Genere
+    EstadoT: Estado
     numero_part: int
     created_at: str
     observacions: Optional[str] = None
 
-    @validator('data', pre=True)
-    def format_data(cls, v):
+    @validator('part', pre=True)
+    def format_part(cls, v):
         """Formatea la fecha del parto para la respuesta"""
-        if not v:
-            return None
-        return DateConverter.get_display_format(v)
+        if isinstance(v, date):
+            return DateConverter.get_display_format(v)
+        return v
 
     @validator('created_at', pre=True)
     def format_created_at(cls, v):
         """Formatea la fecha de creación para la respuesta"""
-        if not v:
-            return None
-        # Convertir datetime a formato DD/MM/YYYY
-        if isinstance(v, str):
-            try:
-                dt = datetime.fromisoformat(v.replace('Z', '+00:00'))
-                return dt.strftime('%d/%m/%Y')
-            except ValueError:
-                return v
-        return v.strftime('%d/%m/%Y') if isinstance(v, datetime) else v
+        if isinstance(v, datetime):
+            return v.strftime("%d/%m/%Y %H:%M:%S")
+        return v
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            date: lambda v: DateConverter.get_display_format(v),
+            datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S"),
+            Genere: lambda v: v.value,
+            Estado: lambda v: v.value
+        }
+    )
 
 class PartosListData(BaseModel):
     """Schema para lista paginada de partos"""

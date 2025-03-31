@@ -1,0 +1,4 @@
+recuerda completar en 3_6 completar de forma completa los campos de los tests y como hemos resuelto un error la resolución del mismo
+
+
+podras acordarte y meter en tu memoria que tienes en el doceumtnod e referencia @3_6_endpoints_BACKEND_test_retest.md un capitulo apra los errores??? y que cada vez que vas a editar un test o crearlo, antes debes leer ese archivo completo???? enb tu memoria para que note nga que escribirte esto cada 3 minutos
