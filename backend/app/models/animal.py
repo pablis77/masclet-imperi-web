@@ -74,7 +74,7 @@ class Animal(models.Model):
         if include_partos and self.genere == Genere.FEMELLA:
             try:
                 # Obtener todos los partos ordenados por fecha descendente
-                partos_list = await self.partos.all().order_by('-data', '-id')
+                partos_list = await self.parts.all().order_by('-part', '-id')
                 
                 # Convertir a lista de diccionarios
                 parto_dicts = []
@@ -85,13 +85,13 @@ class Animal(models.Model):
                         parto_dicts.append(parto_dict)
                     
                     # Asegurar ordenación por fecha descendente
-                    parto_dicts.sort(key=lambda x: x['data'], reverse=True)
+                    parto_dicts.sort(key=lambda x: x.get('part', ''), reverse=True)
                     
                     data["partos"] = {
                         "total": len(parto_dicts),
                         "items": parto_dicts,
-                        "first_date": partos_list[-1].data.strftime("%d/%m/%Y"),  # El más antiguo
-                        "last_date": partos_list[0].data.strftime("%d/%m/%Y")     # El más reciente
+                        "first_date": partos_list[-1].part.strftime("%d/%m/%Y"),  # El más antiguo
+                        "last_date": partos_list[0].part.strftime("%d/%m/%Y")     # El más reciente
                     }
                 else:
                     data["partos"] = {
@@ -145,7 +145,7 @@ class Part(models.Model):
         return {
             "id": self.id,
             "animal_id": self.animal_id,  
-            "part": self.part,
+            "part": self.part.strftime("%d/%m/%Y") if self.part else None,
             "GenereT": self.GenereT,
             "EstadoT": self.EstadoT,
             "numero_part": self.numero_part,

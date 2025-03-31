@@ -101,18 +101,21 @@ async def test_create_parto_for_animal(get_existing_animal):
         created_parto = response.json()
         print(f"Respuesta recibida: {created_parto}")
 
+        # Extraer los datos del parto de la estructura de respuesta
+        parto_data_response = created_parto.get("data", created_parto)
+        
         # Verificar campos clave en la respuesta
-        assert "id" in created_parto, "La respuesta no contiene el ID del parto"
+        assert "id" in parto_data_response, "La respuesta no contiene el ID del parto"
         # Verificar animal_id en la respuesta
-        assert created_parto.get("animal_id") == animal_id, f"El animal_id esperado era {animal_id}, pero se obtuvo {created_parto.get('animal_id')}" 
-        assert created_parto.get("part") == parto_data["part"], "La fecha del parto no coincide"
-        assert created_parto.get("GenereT") == parto_data["GenereT"], "El género de la cría no coincide"
-        assert created_parto.get("EstadoT") == parto_data["EstadoT"], "El estado de la cría no coincide"
-        assert created_parto.get("observacions") == parto_data["observacions"], "Las observaciones no coinciden"
+        assert parto_data_response.get("animal_id") == animal_id, f"El animal_id esperado era {animal_id}, pero se obtuvo {parto_data_response.get('animal_id')}"
+        assert parto_data_response.get("part") == parto_data["part"], "La fecha del parto no coincide"
+        assert parto_data_response.get("GenereT") == parto_data["GenereT"], "El género de la cría no coincide"
+        assert parto_data_response.get("EstadoT") == parto_data["EstadoT"], "El estado de la cría no coincide"
+        assert parto_data_response.get("observacions") == parto_data["observacions"], "Las observaciones no coinciden"
         
         print("Parto creado y verificado con éxito.")
         # Guardar el ID del parto creado por si se necesita en otros tests o limpieza
-        get_existing_animal['created_parto_id'] = created_parto['id']
+        get_existing_animal['created_parto_id'] = parto_data_response['id']
 
     except requests.exceptions.RequestException as e:
         pytest.fail(f"Error en la solicitud HTTP: {e}\nRespuesta: {e.response.text if e.response else 'N/A'}")

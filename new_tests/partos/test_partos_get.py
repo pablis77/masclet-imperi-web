@@ -52,9 +52,9 @@ def test_parto(auth_token):
     # Datos para crear un parto
     parto_data = {
         "animal_id": animal_id,
-        "data": fecha_parto,
-        "genere_fill": "M",  # Cría masculina
-        "estat_fill": "OK",  # Cría en buen estado
+        "part": fecha_parto,
+        "GenereT": "M",  # Cría masculina
+        "EstadoT": "OK",  # Cría en buen estado
         "numero_part": 1     # Primer parto
     }
     
@@ -86,10 +86,13 @@ def test_parto(auth_token):
 async def test_get_parto(test_parto):
     """Test para obtener los detalles de un parto específico."""
     parto_id = test_parto["parto_id"]
+    animal_id = test_parto["animal_id"]
     headers = test_parto["headers"]
     parto_data = test_parto["parto_data"]
     
-    url = f"{BASE_URL}/{parto_id}"
+    # Usar el endpoint anidado en lugar del endpoint standalone
+    base = BASE_URL.split('/api/v1')[0]  # Obtener solo la parte base de la URL (http://localhost:8000)
+    url = f"{base}/api/v1/animals/{animal_id}/partos/{parto_id}/"
     
     print(f"\nProbando obtener detalles del parto: {url}")
     
@@ -99,22 +102,22 @@ async def test_get_parto(test_parto):
         
         print(f"Código de estado: {response.status_code}")
         
-        assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+        assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"   
         data = response.json()
         
         # Verificar que la respuesta tiene la estructura correcta
         assert "status" in data, "La respuesta no contiene el campo 'status'"
-        assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+        assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"  
         assert "data" in data, "La respuesta no contiene el campo 'data'"
         
         parto = data["data"]
         
         # Verificar que los campos del parto son correctos
-        assert parto["id"] == parto_id, f"ID de parto incorrecto: {parto['id']} != {parto_id}"
+        assert parto["id"] == parto_id, f"ID de parto incorrecto: {parto['id']} != {parto_id}"   
         assert parto["animal_id"] == parto_data["animal_id"], f"ID de animal incorrecto: {parto['animal_id']} != {parto_data['animal_id']}"
-        assert parto["data"] == parto_data["data"], f"Fecha de parto incorrecta: {parto['data']} != {parto_data['data']}"
-        assert parto["genere_fill"] == parto_data["genere_fill"], f"Género de cría incorrecto: {parto['genere_fill']} != {parto_data['genere_fill']}"
-        assert parto["estat_fill"] == parto_data["estat_fill"], f"Estado de cría incorrecto: {parto['estat_fill']} != {parto_data['estat_fill']}"
+        assert parto["part"] == parto_data["part"], f"Fecha de parto incorrecta: {parto['part']} != {parto_data['part']}"
+        assert parto["GenereT"] == parto_data["GenereT"], f"Género de cría incorrecto: {parto['GenereT']} != {parto_data['GenereT']}"
+        assert parto["EstadoT"] == parto_data["EstadoT"], f"Estado de cría incorrecto: {parto['EstadoT']} != {parto_data['EstadoT']}"
         assert parto["numero_part"] == parto_data["numero_part"], f"Número de parto incorrecto: {parto['numero_part']} != {parto_data['numero_part']}"
         
         print("Test de obtención de parto completado con éxito.")
@@ -130,9 +133,14 @@ async def test_get_nonexistent_parto(auth_token):
     """Test para intentar obtener un parto que no existe."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     
+    # ID de un animal que existe (usamos un ID conocido)
+    animal_id = 446  # ID conocido de un animal
     # ID de un parto que no existe
     nonexistent_id = 99999
-    url = f"{BASE_URL}/{nonexistent_id}"
+    
+    # Usar el endpoint anidado
+    base = BASE_URL.split('/api/v1')[0]  # Obtener solo la parte base de la URL (http://localhost:8000)
+    url = f"{base}/api/v1/animals/{animal_id}/partos/{nonexistent_id}/"
     
     print(f"\nProbando obtener parto inexistente: {url}")
     

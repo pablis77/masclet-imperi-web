@@ -54,6 +54,11 @@ def test_partos(auth_token):
         animal_names.append(animal_name) # Guardar el nombre
         print(f"Animal femenino creado con ID: {animal_id}, Nombre: {animal_name}")
         
+        # Verificar que el animal se ha creado como hembra
+        get_animal_response = requests.get(f"{ANIMALS_URL}/{animal_id}", headers=headers)
+        assert get_animal_response.status_code == 200, f"Error al obtener animal: {get_animal_response.status_code} - {get_animal_response.text}"
+        assert get_animal_response.json()["data"]["genere"] == "F", f"El animal no se ha creado como hembra: {get_animal_response.json()['data']['genere']}"
+        
         # Crear dos partos para cada animal (con fechas diferentes)
         for j in range(2):
             # Fecha hace j+1 días
@@ -65,12 +70,12 @@ def test_partos(auth_token):
             
             # Datos para crear un parto
             parto_data = {
-                "animal_nom": animal_name,  # Corregido: usar nombre del animal
-                "part": fecha_parto,       # Corregido: usar 'part' para la fecha
-                "GenereT": genere_fill,
-                "EstadoT": "OK",
-                "numero_part": j + 1,  # Número de parto
-                "observacions": f"Parto de prueba {j+1} para {animal_name}" # Añadido para claridad
+                "animal_id": animal_id,  # Usar el ID del animal en lugar del nombre
+                "part": fecha_parto,     # Fecha del parto
+                "GenereT": genere_fill,  # Género de la cría
+                "EstadoT": "OK",         # Estado de la cría (viva)
+                "numero_part": j + 1,    # Número de parto (se calculará automáticamente)
+                "observacions": f"Parto de prueba {j+1} para {animal_name}" # Observaciones
             }
             
             print(f"Creando parto {j+1} para animal {i+1}...")
@@ -131,7 +136,7 @@ async def test_list_all_partos(test_partos):
         # Verificar que los partos tienen la estructura correcta
         for parto in partos:
             assert "id" in parto, "El parto no tiene ID"
-            assert "animal_nom" in parto, "El parto no tiene nombre de animal (animal_nom)" # Corregido
+            assert "animal_id" in parto, "El parto no tiene ID de animal (animal_id)" # Corregido
             assert "part" in parto, "El parto no tiene fecha (part)"
             assert "GenereT" in parto, "El parto no tiene género de cría (GenereT)"
             assert "EstadoT" in parto, "El parto no tiene estado de cría (EstadoT)"
@@ -149,9 +154,9 @@ async def test_list_all_partos(test_partos):
 async def test_list_partos_by_animal(test_partos):
     """Test para listar los partos de un animal específico."""
     headers = test_partos["headers"]
-    animal_name_to_test = test_partos["animal_names"][0]  # Usar el primer nombre de animal
+    animal_id_to_test = test_partos["animal_ids"][0]  # Usar el primer ID de animal
 
-    url = f"{BASE_URL}/?animal_nom={animal_name_to_test}" # Corregido: usar animal_nom
+    url = f"{BASE_URL}/?animal_id={animal_id_to_test}" # Corregido: usar animal_id
 
     print(f"\nProbando listar partos por animal: {url}")
 
@@ -173,8 +178,8 @@ async def test_list_partos_by_animal(test_partos):
         # Verificar que todos los partos pertenecen al animal especificado
         partos = data["data"]["items"]
         for parto in partos:
-            assert "animal_nom" in parto, f"Parto con ID {parto.get('id')} no tiene 'animal_nom'"
-            assert parto["animal_nom"] == animal_name_to_test, f"Parto con ID {parto.get('id')} pertenece al animal {parto['animal_nom']}, no al {animal_name_to_test}" # Corregido
+            assert "animal_id" in parto, f"Parto con ID {parto.get('id')} no tiene 'animal_id'"
+            assert parto["animal_id"] == animal_id_to_test, f"Parto con ID {parto.get('id')} pertenece al animal {parto['animal_id']}, no al {animal_id_to_test}" # Corregido
 
         print("Test de listado de partos por animal completado con éxito.")
         

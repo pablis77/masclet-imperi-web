@@ -76,14 +76,25 @@ def validate_parto_date(parto_date_str: str, animal_dob: date = None) -> date:
 async def create_parto(parto_data: PartoCreate) -> dict:
     """Registrar un nuevo parto"""
     try:
-        # Validar el animal
-        animal = await validate_animal(parto_data.animal_nom)
+        # Obtener el animal por ID
+        animal = await Animal.get_or_none(id=parto_data.animal_id)
+        if not animal:
+            raise HTTPException(status_code=404, detail=f"Animal con ID {parto_data.animal_id} no encontrado")
+        
+        # Verificar que sea hembra (usando el valor de texto de la enumeración)
+        animal_genere = animal.genere
+        # Para asegurar la comparación correcta independientemente de si es str o Enum
+        if isinstance(animal_genere, Genere):
+            animal_genere = animal_genere.value
+        if animal_genere != "F":
+            raise HTTPException(status_code=400, 
+                                detail=f"El animal {animal.id} ({animal.nom}) no es hembra y no puede tener partos")
         
         # Validar fecha del parto
         if animal.dob:
             validate_parto_date(parto_data.part, animal.dob)
         
-        # Contar partos existentes para asignar número secuencial
+        # Contar partos existentes para asignar número secuencial automáticamente
         num_partos = await Part.filter(animal_id=animal.id).count()
         
         # Crear nuevo parto
@@ -139,8 +150,18 @@ async def get_parto(parto_id: int) -> dict:
 async def update_parto(parto_id: int, parto_data: PartoUpdate) -> dict:
     """Actualizar un parto existente"""
     try:
+        # Los partos son registros históricos que no pueden modificarse según las reglas de negocio
+        # Implementamos esta restricción devolviendo un error 405 (Method Not Allowed)
+        raise HTTPException(
+            status_code=405,
+            detail="Los partos son registros históricos y no pueden ser modificados"
+        )
+        
+        # El código siguiente no se ejecutará debido a la restricción de inmutabilidad
+        # Se mantiene como referencia
+        """
         # Buscar parto por ID
-        parto_db = await Part.get_or_none(id=parto_id)
+        parto_db = await Part.get_or_none(id=parto_id).prefetch_related("animal")
         if not parto_db:
             raise HTTPException(
                 status_code=404,
@@ -148,6 +169,12 @@ async def update_parto(parto_id: int, parto_data: PartoUpdate) -> dict:
             )
             
         # Validar animal
+        if not parto_db.animal:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Animal asociado al parto {parto_id} no encontrado"
+            )
+            
         animal = await validate_animal(parto_db.animal.nom, check_female=False)
         
         # Validar fecha si se proporciona
@@ -173,6 +200,7 @@ async def update_parto(parto_id: int, parto_data: PartoUpdate) -> dict:
             "status": "success",
             "data": await parto_db.to_dict()
         }
+        """
         
     except HTTPException:
         raise
@@ -182,6 +210,7 @@ async def update_parto(parto_id: int, parto_data: PartoUpdate) -> dict:
 
 @router.get("", response_model=PartosListResponse)
 async def list_partos(
+    animal_id: Optional[int] = None,
     animal_nom: Optional[str] = None,
     year: Optional[int] = None,
     month: Optional[int] = None,
@@ -193,11 +222,12 @@ async def list_partos(
     limit: int = Query(10, ge=1, le=100),
     sort: Optional[str] = "part",
     order: Optional[str] = "desc"
-):
+) -> dict:
     """
     Obtiene un listado de partos con filtros opcionales.
     
-    - **animal_nom**: Filtrar por nombre del animal (madre)
+    - **animal_id**: Filtrar por ID del animal
+    - **animal_nom**: Filtrar por nombre del animal (madre) - Mantenido por retrocompatibilidad
     - **year**: Filtrar por año
     - **month**: Filtrar por mes
     - **start_date**: Fecha inicial (DD/MM/YYYY)
@@ -213,7 +243,9 @@ async def list_partos(
     query = Part.all().prefetch_related("animal")
     
     # Aplicar filtros
-    if animal_nom:
+    if animal_id:
+        query = query.filter(animal_id=animal_id)
+    elif animal_nom:
         animal = await Animal.get_or_none(nom=animal_nom)
         if not animal:
             raise HTTPException(
