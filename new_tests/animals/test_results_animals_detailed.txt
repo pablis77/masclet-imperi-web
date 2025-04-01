@@ -1,0 +1,24 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 13 items
+
+new_tests/animals/test_animals_create.py::test_create_animal_minimal PASSED [  7%]
+new_tests/animals/test_animals_create.py::test_create_animal_complete PASSED [ 15%]
+new_tests/animals/test_animals_create.py::test_create_animal_invalid_data PASSED [ 23%]
+new_tests/animals/test_animals_delete.py::test_delete_animal PASSED      [ 30%]
+new_tests/animals/test_animals_delete.py::test_delete_nonexistent_animal PASSED [ 38%]
+new_tests/animals/test_animals_get.py::test_get_animal_by_id PASSED      [ 46%]
+new_tests/animals/test_animals_integration.py::test_animal_crud_workflow PASSED [ 53%]
+new_tests/animals/test_animals_integration.py::test_animal_with_partos PASSED [ 61%]
+new_tests/animals/test_animals_list.py::test_list_animals PASSED         [ 69%]
+new_tests/animals/test_animals_list.py::test_list_animals_with_filters PASSED [ 76%]
+new_tests/animals/test_animals_update.py::test_update_animal_partial PASSED [ 84%]
+new_tests/animals/test_animals_update.py::test_update_animal_complete PASSED [ 92%]
+new_tests/animals/test_animals_update.py::test_update_animal_invalid_data PASSED [100%]
+
+============================= 13 passed in 3.45s ==============================

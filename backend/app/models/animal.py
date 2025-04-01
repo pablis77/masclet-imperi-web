@@ -21,7 +21,7 @@ class Estado(str, Enum):
 
 class EstadoAlletar(str, Enum):
     """Estado de amamantamiento"""
-    NO_ALLETAR = "NO"
+    NO_ALLETAR = "0"  # Cambiado de "NO" a "0" según estándares
     UN_TERNERO = "1"
     DOS_TERNEROS = "2"
 
@@ -34,7 +34,7 @@ class Animal(models.Model):
     nom = fields.CharField(max_length=100)
     genere = fields.CharEnumField(Genere)
     estado = fields.CharEnumField(Estado, default=Estado.OK)
-    alletar = fields.CharEnumField(EstadoAlletar, default=EstadoAlletar.NO_ALLETAR)  # Cambiado a CharEnumField para soportar 3 estados
+    alletar = fields.CharEnumField(EstadoAlletar, default=EstadoAlletar.NO_ALLETAR)  # "0" para todos, incluyendo machos
     dob = fields.DateField(null=True)  # Date of birth
     mare = fields.CharField(max_length=100, null=True)
     pare = fields.CharField(max_length=100, null=True)

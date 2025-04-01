@@ -91,7 +91,7 @@ async def test_create_animal_complete(auth_token):
         "genere": "F",
         "explotacio": "Gurans",
         "estado": "OK",
-        "alletar": "NO",
+        "alletar": "0",  # Cambiado de "NO" a "0" según estándares
         "dob": "01/01/2022",
         "mare": "Madre Test",
         "pare": "Padre Test",

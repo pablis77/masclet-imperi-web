@@ -41,7 +41,7 @@ class AnimalBase(BaseModel):
     genere: str  # Validado como enum en el endpoint
     explotacio: str  # ID o nombre de la explotación
     estado: str = "OK"  # Validado como enum en el endpoint (OK/DEF)
-    alletar: str = "NO"  # Validado como enum en el endpoint
+    alletar: Optional[str] = "0"  # Cambiado de "NO" a "0" según estándares
     dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)
     mare: Optional[str] = None
     pare: Optional[str] = None
@@ -88,11 +88,20 @@ class AnimalBase(BaseModel):
             raise ValueError('Estado inválido')
 
     @validator('alletar')
-    def validate_alletar(cls, v):
+    def validate_alletar(cls, v, values):
+        """Validar el estado de amamantamiento según el género del animal"""
+        if v is None:
+            # Si es null, verificar que el animal es macho
+            genere = values.get('genere')
+            if genere == Genere.MASCLE.value:
+                return None
+            raise ValueError('El valor de alletar no puede ser null para hembras')
+            
+        # Para valores no nulos, validar contra la enumeración
         try:
             return EstadoAlletar(v).value
         except ValueError:
-            raise ValueError('Estado de amamantamiento inválido')
+            raise ValueError(f'Estado de amamantamiento inválido. Valores válidos: {[e.value for e in EstadoAlletar]}')
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -106,17 +115,31 @@ class AnimalCreate(AnimalBase):
 class AnimalUpdate(BaseModel):
     """Esquema para actualizar animales"""
     nom: Optional[str] = None
-    estado: Optional[str] = None  # Validado como enum en el endpoint
-    alletar: Optional[str] = None  # Validado como enum en el endpoint
+    genere: Optional[str] = None
+    estado: Optional[str] = None
+    alletar: Optional[str] = None
     mare: Optional[str] = None
     pare: Optional[str] = None
     quadra: Optional[str] = None
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     part: Optional[str] = None
-    genere_t: Optional[str] = None  # Validado como enum en el endpoint
-    estado_t: Optional[str] = None  # Validado como enum en el endpoint
-    dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)
+    genere_t: Optional[str] = None
+    estado_t: Optional[str] = None
+    dob: Optional[str] = None
+
+    model_config = ConfigDict(
+        extra='forbid',
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "nom": "Nombre Animal",
+                "estado": "OK",
+                "alletar": "0",
+                "dob": "01/01/2020"
+            }
+        }
+    )
 
     @validator('dob')
     def validate_dob(cls, v):
@@ -141,34 +164,33 @@ class AnimalUpdate(BaseModel):
 
     @validator('estado')
     def validate_estado(cls, v):
-        if v is None:
-            return v
+        if not v:
+            return None
         try:
             return Estado(v).value
         except ValueError:
-            raise ValueError(f'Estado inválido: {v}. Valores válidos: {[e.value for e in Estado]}')
+            raise ValueError('Estado inválido')
 
     @validator('alletar')
-    def validate_alletar(cls, v):
+    def validate_alletar(cls, v, values):
+        """Validar el estado de amamantamiento según el género del animal"""
         if v is None:
-            return v
+            return None  # Permitir valores nulos para actualización
+
+        # Para valores no nulos, validar contra la enumeración
         try:
             return EstadoAlletar(v).value
         except ValueError:
-            raise ValueError(f'Estado de amamantamiento inválido: {v}. Valores válidos: {[e.value for e in EstadoAlletar]}')
+            raise ValueError(f'Estado de amamantamiento inválido. Valores válidos: {[e.value for e in EstadoAlletar]}')
 
-    model_config = ConfigDict(
-        extra='forbid',
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "nom": "Nombre Animal",
-                "estado": "OK",
-                "alletar": "NO",
-                "dob": "01/01/2020"
-            }
-        }
-    )
+    @validator('genere')
+    def validate_genere(cls, v):
+        if not v:
+            return None
+        try:
+            return Genere(v).value
+        except ValueError:
+            raise ValueError('Género inválido')
 
 class AnimalResponseData(AnimalBase):
     """Esquema para datos de respuesta de animales"""

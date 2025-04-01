@@ -96,7 +96,7 @@ async def test_list_animals_with_filters(auth_token):
         {"explotacio": "Gurans"},
         {"genere": "M"},
         {"estado": "OK"},
-        {"alletar": "NO"},  
+        {"alletar": "0"},
         {"explotacio": "Gurans", "genere": "F"},
         {"search": "Test"}
     ]

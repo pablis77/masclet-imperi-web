@@ -1,0 +1,549 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 13 items
+
+new_tests/animals/test_animals_create.py::test_create_animal_minimal 
+Probando crear animal con campos mínimos: http://localhost:8000/api/v1/animals/
+Código de estado: 201
+Test de crear animal con campos mínimos completado con éxito.
+PASSED
+new_tests/animals/test_animals_create.py::test_create_animal_complete 
+Probando crear animal con todos los campos: http://localhost:8000/api/v1/animals/
+Código de estado: 201
+Test de crear animal con todos los campos completado con éxito.
+PASSED
+new_tests/animals/test_animals_create.py::test_create_animal_invalid_data 
+Probando crear animal con datos inválidos - Falta el nombre
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nnom\n  Field required [type=missing, input_value={'genere': 'M', 'explotac...Gurans', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Falta el género
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ngenere\n  Field required [type=missing, input_value={'nom': 'Test Sin Género...Gurans', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Falta la explotación
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nexplotacio\n  Field required [type=missing, input_value={'nom': 'Test Sin Explota...e': 'M', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Género inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ngenere\n  Value error, Género inválido [type=value_error, input_value='X', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+
+Probando crear animal con datos inválidos - Estado inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nestado\n  Value error, Estado inválido [type=value_error, input_value='INVALID', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+
+Probando crear animal con datos inválidos - Fecha de nacimiento con formato inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ndob\n  Value error, La fecha debe estar en formato DD/MM/YYYY [type=value_error, input_value='2022-01-01', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+Test de validación de datos al crear animales completado con éxito.
+PASSED
+new_tests/animals/test_animals_delete.py::test_delete_animal 
+Creando animal de prueba para eliminar...
+Animal creado con ID: 53
+Probando eliminar animal: http://localhost:8000/api/v1/animals/53
+Código de estado de eliminación: 204
+Test de eliminar animal completado con éxito.
+PASSED
+new_tests/animals/test_animals_delete.py::test_delete_nonexistent_animal 
+Probando eliminar animal inexistente: http://localhost:8000/api/v1/animals/99999
+Código de estado: 404
+Error recibido (esperado): {"detail":"Animal 99999 no encontrado"}
+Test de eliminar animal inexistente completado con éxito.
+PASSED
+new_tests/animals/test_animals_get.py::test_get_animal_by_id 
+=== Obteniendo token de autenticación ===
+Respuesta de autenticación: 200
+Token obtenido: eyJhbGciOi...
+
+=== Obteniendo lista de animales ===
+FAILED
+new_tests/animals/test_animals_integration.py::test_animal_crud_workflow 
+1. CREACIÓN DE ANIMAL
+Creando animal con nombre: Integration_14a042ca
+FAILED
+new_tests/animals/test_animals_integration.py::test_animal_with_partos 
+1. CREACIÓN DE ANIMAL HEMBRA
+FAILED
+new_tests/animals/test_animals_list.py::test_list_animals 
+Probando listar animales: http://localhost:8000/api/v1/animals/
+Código de estado: 500
+Error durante la solicitud: Error: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+assert 500 == 200
+ +  where 500 = <Response [500]>.status_code
+FAILED
+new_tests/animals/test_animals_list.py::test_list_animals_with_filters 
+Probando listar animales con filtros: http://localhost:8000/api/v1/animals/?explotacio=Gurans
+Código de estado: 500
+Error durante la solicitud con filtros {'explotacio': 'Gurans'}: Error: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+assert 500 == 200
+ +  where 500 = <Response [500]>.status_code
+FAILED
+new_tests/animals/test_animals_update.py::test_update_animal_partial 
+Probando actualizar parcialmente un animal: http://localhost:8000/api/v1/animals/54
+Código de estado: 200
+Error durante la solicitud: El código cambió inesperadamente: None != UPDATE1
+assert None == 'UPDATE1'
+FAILED
+new_tests/animals/test_animals_update.py::test_update_animal_complete 
+Probando actualizar completamente un animal: http://localhost:8000/api/v1/animals/55
+Género del animal: M, usando alletar=0
+Código de estado: 200
+Test de actualización completa completado con éxito.
+PASSED
+new_tests/animals/test_animals_update.py::test_update_animal_invalid_data 
+Probando actualizar animal con datos inválidos - Género inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","genere"],"msg":"Value error, Género inválido","input":"X","ctx":{"error":{}}}]}
+
+Probando actualizar animal con datos inválidos - Estado inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","estado"],"msg":"Value error, Estado inválido","input":"INVALID","ctx":{"error":{}}}]}
+
+Probando actualizar animal con datos inválidos - Fecha de nacimiento con formato inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","dob"],"msg":"Value error, La fecha debe estar en formato DD/MM/YYYY","input":"2022-01-01","ctx":{"error":{}}}]}
+Test de validación de datos al actualizar animales completado con éxito.
+PASSED
+
+================================== FAILURES ===================================
+____________________________ test_get_animal_by_id ____________________________
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwNn0.2PMvBmt4iRCbU_y-Bj_ylBajvpuJ5FKIQEBN-0-ituQ'
+
+    def test_get_animal_by_id(auth_token):
+        """Probar obtener un animal por ID."""
+        # En lugar de crear un animal, vamos a obtener uno existente de la lista
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print("\n=== Obteniendo lista de animales ===")
+        list_response = requests.get(f"{BASE_URL}/", headers=headers)
+>       assert list_response.status_code == 200, f"Error al listar animales: {list_response.status_code} - {list_response.text}"
+E       AssertionError: Error al listar animales: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+E       assert 500 == 200
+E        +  where 500 = <Response [500]>.status_code
+
+new_tests\animals\test_animals_get.py:51: AssertionError
+__________________________ test_animal_crud_workflow __________________________
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwNn0.2PMvBmt4iRCbU_y-Bj_ylBajvpuJ5FKIQEBN-0-ituQ'
+
+    @pytest.mark.asyncio
+    async def test_animal_crud_workflow(auth_token):
+        """Test que verifica el flujo completo de CRUD para animales."""
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        # 1. Crear un animal
+        animal_name = f"Integration_{uuid.uuid4().hex[:8]}"
+        unique_code = f"INT{uuid.uuid4().hex[:8]}"  # Generamos un código único para cada ejecución
+        animal_data = {
+            "nom": animal_name,
+            "genere": "F",
+            "explotacio": "Gurans",
+            "estado": "OK",
+            "alletar": "NO",
+            "cod": unique_code,
+            "num_serie": f"ES{uuid.uuid4().hex[:8]}",
+            "dob": "01/01/2022",
+            "mare": "Madre Test",
+            "pare": "Padre Test",
+            "quadra": "Quadra Test"
+        }
+    
+        print("\n1. CREACIÓN DE ANIMAL")
+        print(f"Creando animal con nombre: {animal_name}")
+    
+        create_response = requests.post(f"{BASE_URL}/", json=animal_data, headers=headers)
+>       assert create_response.status_code == 201, f"Error al crear animal: {create_response.status_code} - {create_response.text}"
+E       AssertionError: Error al crear animal: 400 - {"detail":"1 validation error for AnimalCreate\nalletar\n  Value error, Estado de amamantamiento inválido. Valores válidos: ['0', '1', '2'] [type=value_error, input_value='NO', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+E       assert 400 == 201
+E        +  where 400 = <Response [400]>.status_code
+
+new_tests\animals\test_animals_integration.py:49: AssertionError
+___________________________ test_animal_with_partos ___________________________
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwNn0.2PMvBmt4iRCbU_y-Bj_ylBajvpuJ5FKIQEBN-0-ituQ'
+
+    @pytest.mark.asyncio
+    async def test_animal_with_partos(auth_token):
+        """Test para verificar la funcionalidad de partos en animales hembra."""
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        # 1. Crear una hembra
+        animal_name = f"Hembra_Partos_{uuid.uuid4().hex[:8]}"
+        animal_data = {
+            "nom": animal_name,
+            "genere": "F",
+            "explotacio": "Gurans",
+            "estado": "OK",
+            "alletar": "NO",
+            "cod": f"PART{uuid.uuid4().hex[:8]}",
+            "num_serie": f"ES{uuid.uuid4().hex[:8]}",
+            "dob": "01/01/2020"
+        }
+    
+        print("\n1. CREACIÓN DE ANIMAL HEMBRA")
+    
+        create_response = requests.post(f"{BASE_URL}/", json=animal_data, headers=headers)
+>       assert create_response.status_code == 201, f"Error al crear animal: {create_response.status_code} - {create_response.text}"
+E       AssertionError: Error al crear animal: 400 - {"detail":"1 validation error for AnimalCreate\nalletar\n  Value error, Estado de amamantamiento inválido. Valores válidos: ['0', '1', '2'] [type=value_error, input_value='NO', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+E       assert 400 == 201
+E        +  where 400 = <Response [400]>.status_code
+
+new_tests\animals\test_animals_integration.py:185: AssertionError
+______________________________ test_list_animals ______________________________
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwNn0.2PMvBmt4iRCbU_y-Bj_ylBajvpuJ5FKIQEBN-0-ituQ'
+
+    @pytest.mark.asyncio
+    async def test_list_animals(auth_token):
+        """Test para el endpoint de listar animales."""
+        url = f"{BASE_URL}/"
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"\nProbando listar animales: {url}")
+    
+        try:
+            # Realizar la solicitud GET para listar animales
+            response = requests.get(url, headers=headers)
+    
+            print(f"Código de estado: {response.status_code}")
+    
+>           assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+E           AssertionError: Error: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+E           assert 500 == 200
+E            +  where 500 = <Response [500]>.status_code
+
+new_tests\animals\test_animals_list.py:35: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwNn0.2PMvBmt4iRCbU_y-Bj_ylBajvpuJ5FKIQEBN-0-ituQ'
+
+    @pytest.mark.asyncio
+    async def test_list_animals(auth_token):
+        """Test para el endpoint de listar animales."""
+        url = f"{BASE_URL}/"
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"\nProbando listar animales: {url}")
+    
+        try:
+            # Realizar la solicitud GET para listar animales
+            response = requests.get(url, headers=headers)
+    
+            print(f"Código de estado: {response.status_code}")
+    
+            assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+            data = response.json()
+    
+            # Verificar que la respuesta tiene la estructura correcta
+            assert "status" in data, "La respuesta no contiene el campo 'status'"
+            assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+            assert "data" in data, "La respuesta no contiene el campo 'data'"
+    
+            # Verificar que data contiene los campos de paginación
+            assert "total" in data["data"], "Falta el campo 'total' en la paginación"
+            assert "offset" in data["data"], "Falta el campo 'offset' en la paginación"
+            assert "limit" in data["data"], "Falta el campo 'limit' en la paginación"
+            assert "items" in data["data"], "Falta el campo 'items' en la paginación"
+    
+            # Si hay animales, verificar la estructura de cada uno
+            if data["data"]["items"]:
+                print(f"Número de animales encontrados: {len(data['data']['items'])}")
+    
+                # Tomar el primer animal como muestra
+                animal = data["data"]["items"][0]
+    
+                # Verificar que todos los campos esperados según el CSV están presentes
+                # Campos obligatorios
+                assert "id" in animal, "Falta el campo 'id'"
+                assert "explotacio" in animal, "Falta el campo 'explotacio'"
+                assert "nom" in animal, "Falta el campo 'nom'"
+                assert "genere" in animal, "Falta el campo 'genere'"
+                assert "estado" in animal, "Falta el campo 'estado'"
+    
+                # Campos opcionales pero importantes
+                assert "alletar" in animal, "Falta el campo 'alletar'"
+                assert "dob" in animal, "Falta el campo 'dob'"
+                assert "mare" in animal, "Falta el campo 'mare'"
+                assert "pare" in animal, "Falta el campo 'pare'"
+                assert "quadra" in animal, "Falta el campo 'quadra'"
+                assert "cod" in animal, "Falta el campo 'cod'"
+                assert "num_serie" in animal, "Falta el campo 'num_serie'"
+                assert "part" in animal, "Falta el campo 'part'"
+    
+                # Verificar campos adicionales de metadatos
+                assert "created_at" in animal, "Falta el campo 'created_at'"
+                assert "updated_at" in animal, "Falta el campo 'updated_at'"
+    
+                # Imprimir el primer animal para verificación
+                print(f"Ejemplo de animal: {animal}")
+            else:
+                print("No se encontraron animales en la respuesta.")
+    
+            print("Test de listar animales completado con éxito.")
+    
+        except Exception as e:
+            print(f"Error durante la solicitud: {e}")
+            import traceback
+            traceback.print_exc()
+>           assert False, "Excepción durante la solicitud HTTP."
+E           AssertionError: Excepción durante la solicitud HTTP.
+E           assert False
+
+new_tests\animals\test_animals_list.py:89: AssertionError
+_______________________ test_list_animals_with_filters ________________________
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwN30.EGh9kcSjLu61U8f2io3pBJz-cVkONFghFLFVdH_HF3s'
+
+    @pytest.mark.asyncio
+    async def test_list_animals_with_filters(auth_token):
+        """Test para el endpoint de listar animales con filtros."""
+        # Probar diferentes combinaciones de filtros
+        filters = [
+            {"explotacio": "Gurans"},
+            {"genere": "M"},
+            {"estado": "OK"},
+            {"alletar": "NO"},
+            {"explotacio": "Gurans", "genere": "F"},
+            {"search": "Test"}
+        ]
+    
+        for filter_params in filters:
+            # Construir la URL con los parámetros de consulta
+            url = f"{BASE_URL}/?"
+            for key, value in filter_params.items():
+                url += f"{key}={value}&"
+            url = url.rstrip("&")  # Eliminar el último '&'
+    
+            headers = {"Authorization": f"Bearer {auth_token}"}
+    
+            print(f"\nProbando listar animales con filtros: {url}")
+    
+            try:
+                # Realizar la solicitud GET para listar animales con filtros
+                response = requests.get(url, headers=headers)
+    
+                print(f"Código de estado: {response.status_code}")
+    
+>               assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+E               AssertionError: Error: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+E               assert 500 == 200
+E                +  where 500 = <Response [500]>.status_code
+
+new_tests\animals\test_animals_list.py:121: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwN30.EGh9kcSjLu61U8f2io3pBJz-cVkONFghFLFVdH_HF3s'
+
+    @pytest.mark.asyncio
+    async def test_list_animals_with_filters(auth_token):
+        """Test para el endpoint de listar animales con filtros."""
+        # Probar diferentes combinaciones de filtros
+        filters = [
+            {"explotacio": "Gurans"},
+            {"genere": "M"},
+            {"estado": "OK"},
+            {"alletar": "NO"},
+            {"explotacio": "Gurans", "genere": "F"},
+            {"search": "Test"}
+        ]
+    
+        for filter_params in filters:
+            # Construir la URL con los parámetros de consulta
+            url = f"{BASE_URL}/?"
+            for key, value in filter_params.items():
+                url += f"{key}={value}&"
+            url = url.rstrip("&")  # Eliminar el último '&'
+    
+            headers = {"Authorization": f"Bearer {auth_token}"}
+    
+            print(f"\nProbando listar animales con filtros: {url}")
+    
+            try:
+                # Realizar la solicitud GET para listar animales con filtros
+                response = requests.get(url, headers=headers)
+    
+                print(f"Código de estado: {response.status_code}")
+    
+                assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+                data = response.json()
+    
+                # Verificar que la respuesta tiene la estructura correcta
+                assert "status" in data, "La respuesta no contiene el campo 'status'"
+                assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+                assert "data" in data, "La respuesta no contiene el campo 'data'"
+    
+                # Verificar que data contiene los campos de paginación
+                assert "total" in data["data"], "Falta el campo 'total' en la paginación"
+                assert "offset" in data["data"], "Falta el campo 'offset' en la paginación"
+                assert "limit" in data["data"], "Falta el campo 'limit' en la paginación"
+                assert "items" in data["data"], "Falta el campo 'items' en la paginación"
+    
+                # Verificar que los filtros se aplicaron correctamente
+                if "explotacio" in filter_params and data["data"]["items"]:
+                    for animal in data["data"]["items"]:
+                        assert animal["explotacio"] == filter_params["explotacio"], f"El filtro de explotación no se aplicó correctamente: {animal['explotacio']} != {filter_params['explotacio']}"
+    
+                if "genere" in filter_params and data["data"]["items"]:
+                    for animal in data["data"]["items"]:
+                        assert animal["genere"] == filter_params["genere"], f"El filtro de género no se aplicó correctamente: {animal['genere']} != {filter_params['genere']}"
+    
+                if "estado" in filter_params and data["data"]["items"]:
+                    for animal in data["data"]["items"]:
+                        assert animal["estado"] == filter_params["estado"], f"El filtro de estado no se aplicó correctamente: {animal['estado']} != {filter_params['estado']}"
+    
+                if "alletar" in filter_params and data["data"]["items"]:
+                    for animal in data["data"]["items"]:
+                        assert animal["alletar"] == filter_params["alletar"], f"El filtro de alletar no se aplicó correctamente: {animal['alletar']} != {filter_params['alletar']}"
+    
+                print(f"Número de animales encontrados con filtros {filter_params}: {len(data['data']['items'])}")
+    
+            except Exception as e:
+                print(f"Error durante la solicitud con filtros {filter_params}: {e}")
+                import traceback
+                traceback.print_exc()
+>               assert False, f"Excepción durante la solicitud HTTP con filtros {filter_params}."
+E               AssertionError: Excepción durante la solicitud HTTP con filtros {'explotacio': 'Gurans'}.
+E               assert False
+
+new_tests\animals\test_animals_list.py:158: AssertionError
+_________________________ test_update_animal_partial __________________________
+
+test_animal = {'data': {'alletar': '0', 'cod': 'UPDATE1', 'dob': '01/01/2022', 'estado': 'OK', ...}, 'headers': {'Authorization': 'B...G1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwN30.EGh9kcSjLu61U8f2io3pBJz-cVkONFghFLFVdH_HF3s'}, 'id': 54}
+
+    @pytest.mark.asyncio
+    async def test_update_animal_partial(test_animal):
+        """Test para actualizar parcialmente un animal."""
+        animal_id = test_animal["id"]
+        headers = test_animal["headers"]
+    
+        # Datos para actualización parcial
+        update_data = {
+            "nom": f"Updated_{uuid.uuid4().hex[:8]}",
+            "estado": "DEF",
+            "quadra": "Quadra Actualizada"
+        }
+    
+        url = f"{BASE_URL}/{animal_id}"
+    
+        print(f"\nProbando actualizar parcialmente un animal: {url}")
+    
+        try:
+            # Realizar la solicitud PATCH para actualizar el animal
+            response = requests.patch(url, json=update_data, headers=headers)
+    
+            print(f"Código de estado: {response.status_code}")
+    
+            assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+            data = response.json()
+    
+            # Verificar que la respuesta tiene la estructura correcta
+            assert "status" in data, "La respuesta no contiene el campo 'status'"
+            assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+            assert "data" in data, "La respuesta no contiene el campo 'data'"
+    
+            animal = data["data"]
+    
+            # Verificar que los campos actualizados tienen los nuevos valores
+            assert animal["nom"] == update_data["nom"], f"El nombre no se actualizó correctamente: {animal['nom']} != {update_data['nom']}"
+            assert animal["estado"] == update_data["estado"], f"El estado no se actualizó correctamente: {animal['estado']} != {update_data['estado']}"
+            assert animal["quadra"] == update_data["quadra"], f"La cuadra no se actualizó correctamente: {animal['quadra']} != {update_data['quadra']}"
+    
+            # Verificar que los campos no actualizados mantienen sus valores originales
+            assert animal["genere"] == test_animal["data"]["genere"], f"El género cambió inesperadamente: {animal['genere']} != {test_animal['data']['genere']}"
+            assert animal["explotacio"] == test_animal["data"]["explotacio"], f"La explotación cambió inesperadamente: {animal['explotacio']} != {test_animal['data']['explotacio']}"
+            assert animal["alletar"] == test_animal["data"]["alletar"], f"El estado de amamantamiento cambió inesperadamente: {animal['alletar']} != {test_animal['data']['alletar']}"
+>           assert animal["cod"] == test_animal["data"]["cod"], f"El código cambió inesperadamente: {animal['cod']} != {test_animal['data']['cod']}"
+E           AssertionError: El código cambió inesperadamente: None != UPDATE1
+E           assert None == 'UPDATE1'
+
+new_tests\animals\test_animals_update.py:105: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+test_animal = {'data': {'alletar': '0', 'cod': 'UPDATE1', 'dob': '01/01/2022', 'estado': 'OK', ...}, 'headers': {'Authorization': 'B...G1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0MzUzODEwN30.EGh9kcSjLu61U8f2io3pBJz-cVkONFghFLFVdH_HF3s'}, 'id': 54}
+
+    @pytest.mark.asyncio
+    async def test_update_animal_partial(test_animal):
+        """Test para actualizar parcialmente un animal."""
+        animal_id = test_animal["id"]
+        headers = test_animal["headers"]
+    
+        # Datos para actualización parcial
+        update_data = {
+            "nom": f"Updated_{uuid.uuid4().hex[:8]}",
+            "estado": "DEF",
+            "quadra": "Quadra Actualizada"
+        }
+    
+        url = f"{BASE_URL}/{animal_id}"
+    
+        print(f"\nProbando actualizar parcialmente un animal: {url}")
+    
+        try:
+            # Realizar la solicitud PATCH para actualizar el animal
+            response = requests.patch(url, json=update_data, headers=headers)
+    
+            print(f"Código de estado: {response.status_code}")
+    
+            assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+            data = response.json()
+    
+            # Verificar que la respuesta tiene la estructura correcta
+            assert "status" in data, "La respuesta no contiene el campo 'status'"
+            assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+            assert "data" in data, "La respuesta no contiene el campo 'data'"
+    
+            animal = data["data"]
+    
+            # Verificar que los campos actualizados tienen los nuevos valores
+            assert animal["nom"] == update_data["nom"], f"El nombre no se actualizó correctamente: {animal['nom']} != {update_data['nom']}"
+            assert animal["estado"] == update_data["estado"], f"El estado no se actualizó correctamente: {animal['estado']} != {update_data['estado']}"
+            assert animal["quadra"] == update_data["quadra"], f"La cuadra no se actualizó correctamente: {animal['quadra']} != {update_data['quadra']}"
+    
+            # Verificar que los campos no actualizados mantienen sus valores originales
+            assert animal["genere"] == test_animal["data"]["genere"], f"El género cambió inesperadamente: {animal['genere']} != {test_animal['data']['genere']}"
+            assert animal["explotacio"] == test_animal["data"]["explotacio"], f"La explotación cambió inesperadamente: {animal['explotacio']} != {test_animal['data']['explotacio']}"
+            assert animal["alletar"] == test_animal["data"]["alletar"], f"El estado de amamantamiento cambió inesperadamente: {animal['alletar']} != {test_animal['data']['alletar']}"
+            assert animal["cod"] == test_animal["data"]["cod"], f"El código cambió inesperadamente: {animal['cod']} != {test_animal['data']['cod']}"
+            assert animal["num_serie"] == test_animal["data"]["num_serie"], f"El número de serie cambió inesperadamente: {animal['num_serie']} != {test_animal['data']['num_serie']}"
+            assert animal["dob"] == test_animal["data"]["dob"], f"La fecha de nacimiento cambió inesperadamente: {animal['dob']} != {test_animal['data']['dob']}"
+            assert animal["mare"] == test_animal["data"]["mare"], f"La madre cambió inesperadamente: {animal['mare']} != {test_animal['data']['mare']}"
+            assert animal["pare"] == test_animal["data"]["pare"], f"El padre cambió inesperadamente: {animal['pare']} != {test_animal['data']['pare']}"
+    
+            print("Test de actualización parcial completado con éxito.")
+    
+        except Exception as e:
+            print(f"Error durante la solicitud: {e}")
+            import traceback
+            traceback.print_exc()
+>           assert False, "Excepción durante la solicitud HTTP."
+E           AssertionError: Excepción durante la solicitud HTTP.
+E           assert False
+
+new_tests\animals\test_animals_update.py:117: AssertionError
+=========================== short test summary info ===========================
+FAILED new_tests/animals/test_animals_get.py::test_get_animal_by_id - AssertionError: Error al listar animales: 500 - {"detail":"'NO' is not a valid EstadoAlletar"}
+assert 500 == 200
+ +  where 500 = <Response [500]>.status_code
+FAILED new_tests/animals/test_animals_integration.py::test_animal_crud_workflow - AssertionError: Error al crear animal: 400 - {"detail":"1 validation error for AnimalCreate\nalletar\n  Value error, Estado de amamantamiento inválido. Valores válidos: ['0', '1', '2'] [type=value_error, input_value='NO', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+assert 400 == 201
+ +  where 400 = <Response [400]>.status_code
+FAILED new_tests/animals/test_animals_integration.py::test_animal_with_partos - AssertionError: Error al crear animal: 400 - {"detail":"1 validation error for AnimalCreate\nalletar\n  Value error, Estado de amamantamiento inválido. Valores válidos: ['0', '1', '2'] [type=value_error, input_value='NO', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+assert 400 == 201
+ +  where 400 = <Response [400]>.status_code
+FAILED new_tests/animals/test_animals_list.py::test_list_animals - AssertionError: Excepción durante la solicitud HTTP.
+assert False
+FAILED new_tests/animals/test_animals_list.py::test_list_animals_with_filters - AssertionError: Excepción durante la solicitud HTTP con filtros {'explotacio': 'Gurans'}.
+assert False
+FAILED new_tests/animals/test_animals_update.py::test_update_animal_partial - AssertionError: Excepción durante la solicitud HTTP.
+assert False
+========================= 6 failed, 7 passed in 2.60s =========================

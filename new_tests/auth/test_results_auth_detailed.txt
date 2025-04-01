@@ -1,0 +1,18 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 7 items
+
+new_tests/auth/test_auth.py::test_login PASSED                           [ 14%]
+new_tests/auth/test_auth.py::test_refresh_token PASSED                   [ 28%]
+new_tests/auth/test_auth.py::test_get_users PASSED                       [ 42%]
+new_tests/auth/test_auth.py::test_delete_user PASSED                     [ 57%]
+new_tests/auth/test_auth_change_password.py::test_change_user_password_by_admin PASSED [ 71%]
+new_tests/auth/test_auth_change_password.py::test_change_own_password PASSED [ 85%]
+new_tests/auth/test_auth_me.py::test_get_current_user_info PASSED        [100%]
+
+============================== 7 passed in 3.06s ==============================

@@ -19,23 +19,24 @@ Esta sección refleja la estructura real de la base de datos verificada tras la 
 
 La tabla principal que contiene todos los datos de los animales.
 
-| Campo      | Tipo    | Nulo | Descripción                                                  |
-| ---------- | ------- | ---- | ------------------------------------------------------------- |
-| id         | integer | NO   | Identificador único (PK) (no CSV)                           |
-| explotacio | varchar | NO   | Código de explotación a la que pertenece (CSV)             |
-| nom        | varchar | NO   | Nombre del animal (CSV)                                      |
-| genere     | varchar | NO   | Género (M/F) (CSV)                                          |
-| estado     | varchar | NO   | Estado (OK/DEF), valor por defecto 'OK' (CSV)                |
-| pare       | varchar | SÍ  | Padre del animal (CSV)                                       |
-| mare       | varchar | SÍ  | Madre del animal (CSV)                                       |
-| quadra     | varchar | SÍ  | Cuadra (es como el apellido) (CSV)                            |
-| cod        | varchar | SÍ  | Código identificativo (CSV)                                 |
-| num_serie  | varchar | SÍ  | Número de serie oficial (CSV)                               |
-| dob        | date    | SÍ  | Fecha de nacimiento (CSV)                                    |
-| part       | varchar | SÍ  | Campo legado, no utilizado (CSV)                              |
-| alletar    | varchar | SÍ  | Estado de amamantamiento ("NO", "1", "2") - Solo para hembras (CSV) |
-| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (no CSV) |
-| updated_at | timestamp | NO   | Fecha de actualización, valor por defecto CURRENT_TIMESTAMP (no CSV) |
+| Campo      | Tipo      | Nulo | Descripción                                                                                                                                           |
+| ---------- | --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id         | integer   | NO   | Identificador único (PK) (no CSV)                                                                                                                     |
+| explotacio | varchar   | NO   | Código de explotación a la que pertenece (CSV)                                                                                                       |
+| nom        | varchar   | NO   | Nombre del animal (CSV)                                                                                                                                |
+| genere     | varchar   | NO   | Género (M/F) (CSV)                                                                                                                                    |
+| estado     | varchar   | NO   | Estado (OK/DEF), valor por defecto 'OK' (CSV)                                                                                                          |
+| pare       | varchar   | SÍ  | Padre del animal (CSV)                                                                                                                                 |
+| mare       | varchar   | SÍ  | Madre del animal (CSV)                                                                                                                                 |
+| quadra     | varchar   | SÍ  | Cuadra (es como el apellido) (CSV)                                                                                                                     |
+| cod        | varchar   | SÍ  | Código identificativo (CSV)                                                                                                                           |
+| num_serie  | varchar   | SÍ  | Número de serie oficial (CSV)                                                                                                                         |
+| dob        | date      | SÍ  | Fecha de nacimiento (CSV)                                                                                                                              |
+| part       | varchar   | SÍ  | Campo legado, no utilizado (CSV)                                                                                                                       |
+| alletar    | varchar   | SÍ  | Estado de amamantamiento ("0", "1", "2") - Solo para hembras (CSV)  Para animales macho,`alletar` debe ser "0" en el CSV y nunca podrá ser 1 o 2 |
+| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                       |
+| updated_at | timestamp | NO   | Fecha de actualización, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                  |
+
 
 **Índices y Restricciones**:
 
@@ -48,17 +49,17 @@ La tabla principal que contiene todos los datos de los animales.
 
 Registra los partos asociados a animales hembra.
 
-| Campo        | Tipo      | Nulo | Descripción                                           |
-| ------------ | --------- | ---- | ------------------------------------------------------ |
-| id           | integer   | NO   | Identificador único (PK) (no CSV)                     |
-| part         | date      | NO   | Fecha del parto (CSV)                                  |
-| GenereT      | varchar   | NO   | Género de la cría (M/F/E) (CSV)                      |
-| EstadoT      | varchar   | NO   | Estado de la cría (OK/DEF), valor por defecto 'OK' (CSV)|
-| numero_part  | integer   | NO   | Número secuencial del parto para ese animal (No CSV) |
-| observacions | text      | SÍ  | Observaciones adicionales (No CSV)                    |
-| created_at   | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+| Campo        | Tipo      | Nulo | Descripción                                                                 |
+| ------------ | --------- | ---- | ---------------------------------------------------------------------------- |
+| id           | integer   | NO   | Identificador único (PK) (no CSV)                                           |
+| part         | date      | NO   | Fecha del parto (CSV)                                                        |
+| GenereT      | varchar   | NO   | Género de la cría (M/F/E) (CSV)                                            |
+| EstadoT      | varchar   | NO   | Estado de la cría (OK/DEF), valor por defecto 'OK' (CSV)                    |
+| numero_part  | integer   | NO   | Número secuencial del parto para ese animal (No CSV)                        |
+| observacions | text      | SÍ  | Observaciones adicionales (No CSV)                                           |
+| created_at   | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV)             |
 | updated_at   | timestamp | NO   | Fecha de última modificación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
-| animal_id    | integer   | NO   | ID del animal (FK a animals.id) (no CSV)               |
+| animal_id    | integer   | NO   | ID del animal (FK a animals.id) (no CSV)                                     |
 
 **Índices y Restricciones**:
 
@@ -70,15 +71,15 @@ Registra los partos asociados a animales hembra.
 
 Registra los cambios realizados en las fichas de los animales.
 
-| Campo        | Tipo      | Nulo | Descripción                                       |
-| ------------ | --------- | ---- | -------------------------------------------------- |
-| id           | integer   | NO   | Identificador único (PK) (No CSV)                 |
-| field_name   | varchar   | NO   | Nombre del campo modificado (No CSV)              |
-| old_value    | varchar   | SÍ   | Valor anterior del campo (No CSV)                 |
-| new_value    | varchar   | SÍ   | Nuevo valor del campo (No CSV)                    |
-| changed_at   | timestamp | NO   | Fecha y hora del cambio, valor por defecto CURRENT_TIMESTAMP (No CSV) |
-| changed_by   | varchar   | SÍ   | Usuario que realizó el cambio (No CSV)           |
-| animal_id    | integer   | NO   | ID del animal (FK a animals.id) (No CSV)          |
+| Campo      | Tipo      | Nulo | Descripción                                                          |
+| ---------- | --------- | ---- | --------------------------------------------------------------------- |
+| id         | integer   | NO   | Identificador único (PK) (No CSV)                                    |
+| field_name | varchar   | NO   | Nombre del campo modificado (No CSV)                                  |
+| old_value  | varchar   | SÍ  | Valor anterior del campo (No CSV)                                     |
+| new_value  | varchar   | SÍ  | Nuevo valor del campo (No CSV)                                        |
+| changed_at | timestamp | NO   | Fecha y hora del cambio, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+| changed_by | varchar   | SÍ  | Usuario que realizó el cambio (No CSV)                               |
+| animal_id  | integer   | NO   | ID del animal (FK a animals.id) (No CSV)                              |
 
 **Índices y Restricciones**:
 
@@ -90,15 +91,15 @@ Registra los cambios realizados en las fichas de los animales.
 
 Gestión de usuarios del sistema.
 
-| Campo         | Tipo      | Nulo | Descripción                             |
-| ------------- | --------- | ---- | ---------------------------------------- |
-| id            | integer   | NO   | Identificador único (PK) (No CSV)      |
-| username      | varchar   | NO   | Nombre de usuario (único) (No CSV)     |
-| password_hash | varchar   | NO   | Hash de la contraseña (No CSV)         |
-| email         | varchar   | NO   | Correo electrónico (único) (No CSV)   |
-| role          | varchar   | NO   | Rol (admin, editor, usuario), valor por defecto 'usuario' (No CSV) |
-| is_active     | boolean   | NO   | Estado activo del usuario, valor por defecto true (No CSV) |
-| created_at    | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+| Campo         | Tipo      | Nulo | Descripción                                                                 |
+| ------------- | --------- | ---- | ---------------------------------------------------------------------------- |
+| id            | integer   | NO   | Identificador único (PK) (No CSV)                                           |
+| username      | varchar   | NO   | Nombre de usuario (único) (No CSV)                                          |
+| password_hash | varchar   | NO   | Hash de la contraseña (No CSV)                                              |
+| email         | varchar   | NO   | Correo electrónico (único) (No CSV)                                        |
+| role          | varchar   | NO   | Rol (admin, editor, usuario), valor por defecto 'usuario' (No CSV)           |
+| is_active     | boolean   | NO   | Estado activo del usuario, valor por defecto true (No CSV)                   |
+| created_at    | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV)             |
 | updated_at    | timestamp | NO   | Fecha de última modificación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
 
 **Índices y Restricciones**:
@@ -117,21 +118,21 @@ Tabla utilizada por Aerich para gestionar las migraciones de la base de datos.
 
 Tabla utilizada para pruebas de formatos de fechas personalizados.
 
-| Campo      | Tipo      | Nulo | Descripción                              |
-| ---------- | --------- | ---- | ----------------------------------------- |
-| id         | integer   | NO   | Identificador único (PK)                 |
-| date       | date      | NO   | Fecha de prueba                           |
-| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP |
+| Campo      | Tipo      | Nulo | Descripción                                                         |
+| ---------- | --------- | ---- | -------------------------------------------------------------------- |
+| id         | integer   | NO   | Identificador único (PK)                                            |
+| date       | date      | NO   | Fecha de prueba                                                      |
+| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP              |
 | updated_at | timestamp | NO   | Fecha de última actualización, valor por defecto CURRENT_TIMESTAMP |
 
 #### 3. Tabla `test_dates`
 
 Tabla utilizada para pruebas básicas de fechas.
 
-| Campo      | Tipo      | Nulo | Descripción                              |
-| ---------- | --------- | ---- | ----------------------------------------- |
-| id         | integer   | NO   | Identificador único (PK)                 |
-| date       | date      | NO   | Fecha de prueba                           |
+| Campo | Tipo    | Nulo | Descripción              |
+| ----- | ------- | ---- | ------------------------- |
+| id    | integer | NO   | Identificador único (PK) |
+| date  | date    | NO   | Fecha de prueba           |
 
 ### Tablas Eliminadas
 
@@ -230,7 +231,6 @@ Los partos están estrechamente relacionados con los animales (específicamente 
   - `GET`: Obtener partos de un animal
   - `GET /list`: Listar partos de un animal
   - Operaciones sobre partos específicos (`/{parto_id}`)
-
 - Endpoints independientes (`/api/v1/partos/`):
 
   - `POST`: Crear un nuevo parto (especificando el animal)
@@ -238,5 +238,6 @@ Los partos están estrechamente relacionados con los animales (específicamente 
   - Operaciones sobre partos específicos (`/{parto_id}`)
 
 **Nota**: La API maneja la relación entre los partos y animales utilizando:
+
 - Al recibir datos: Recibe nom -> Busca la vaca por nom -> Obtiene el id de esa vaca -> Guarda el parto usando ese animal_id.
 - Al enviar datos: Carga el parto (con animal_id) -> Carga la vaca relacionada usando animal_id -> Devuelve el nom de la vaca.

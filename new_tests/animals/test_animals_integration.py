@@ -33,7 +33,7 @@ async def test_animal_crud_workflow(auth_token):
         "genere": "F",
         "explotacio": "Gurans",
         "estado": "OK",
-        "alletar": "NO",
+        "alletar": "0",
         "cod": unique_code,
         "num_serie": f"ES{uuid.uuid4().hex[:8]}",
         "dob": "01/01/2022",
@@ -173,7 +173,7 @@ async def test_animal_with_partos(auth_token):
         "genere": "F",
         "explotacio": "Gurans",
         "estado": "OK",
-        "alletar": "NO",
+        "alletar": "0",
         "cod": f"PART{uuid.uuid4().hex[:8]}",
         "num_serie": f"ES{uuid.uuid4().hex[:8]}",
         "dob": "01/01/2020"
@@ -263,7 +263,7 @@ async def test_animal_with_partos(auth_token):
         print("Parto verificado correctamente en el animal")
 
         # 4. No podemos eliminar el parto (regla de negocio: los partos son registros históricos permanentes)
-        print("\n4. VERIFICAR QUE LOS PARTOS NO PUEDEN ELIMINARSE (REGLA DE NEGOCIO)")
+        print("\n4. VERIFICAR QUE LOS PARTOS NO PUEDAN ELIMINARSE (REGLA DE NEGOCIO)")
 
         delete_parto_response = requests.delete(f"{BASE_URL}/{animal_id}/partos/{parto_id}", headers=headers)
         assert delete_parto_response.status_code == 405, f"Los partos deberían no poder eliminarse (Método no permitido). Respuesta: {delete_parto_response.status_code}"

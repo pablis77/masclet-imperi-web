@@ -31,7 +31,7 @@ def test_animal(auth_token):
         "genere": "M",
         "explotacio": "Gurans",
         "estado": "OK",
-        "alletar": "NO",
+        "alletar": "0",  # Para machos, alletar debe ser "0"
         "cod": "UPDATE1",
         "num_serie": "ES11111111",
         "dob": "01/01/2022",
@@ -122,11 +122,16 @@ async def test_update_animal_complete(test_animal):
     animal_id = test_animal["id"]
     headers = test_animal["headers"]
     
+    # Determinar el valor correcto de alletar según el género
+    # Para hembras: "0", "1", "2" para los diferentes estados de amamantamiento
+    # Para machos: debe ser "0" ya que no pueden tener otro valor
+    alletar_value = "1" if test_animal["data"]["genere"] == "F" else "0"
+    
     # Datos para actualización completa
     update_data = {
         "nom": f"FullUpdate_{uuid.uuid4().hex[:8]}",
         "estado": "DEF",
-        "alletar": "1",
+        "alletar": alletar_value,
         "cod": "UPDATE2",
         "num_serie": test_animal["data"]["num_serie"],  # No se puede cambiar el número de serie
         "dob": "02/02/2022",
@@ -138,6 +143,7 @@ async def test_update_animal_complete(test_animal):
     url = f"{BASE_URL}/{animal_id}"
     
     print(f"\nProbando actualizar completamente un animal: {url}")
+    print(f"Género del animal: {test_animal['data']['genere']}, usando alletar={alletar_value}")
     
     try:
         # Realizar la solicitud PUT para actualizar el animal
@@ -160,7 +166,10 @@ async def test_update_animal_complete(test_animal):
         assert animal["genere"] == test_animal["data"]["genere"], f"El género cambió inesperadamente: {animal['genere']} != {test_animal['data']['genere']}"
         assert animal["explotacio"] == test_animal["data"]["explotacio"], f"La explotación cambió inesperadamente: {animal['explotacio']} != {test_animal['data']['explotacio']}"
         assert animal["estado"] == update_data["estado"], f"El estado no se actualizó correctamente: {animal['estado']} != {update_data['estado']}"
+        
+        # Verificar el valor de alletar según el género
         assert animal["alletar"] == update_data["alletar"], f"El estado de amamantamiento no se actualizó correctamente: {animal['alletar']} != {update_data['alletar']}"
+        
         assert animal["cod"] == update_data["cod"], f"El código no se actualizó correctamente: {animal['cod']} != {update_data['cod']}"
         assert animal["num_serie"] == update_data["num_serie"], f"El número de serie no coincide: {animal['num_serie']} != {update_data['num_serie']}"
         assert animal["dob"] == update_data["dob"], f"La fecha de nacimiento no se actualizó correctamente: {animal['dob']} != {update_data['dob']}"
