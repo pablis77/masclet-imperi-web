@@ -1,0 +1,136 @@
+(masclet-imperi) PS C:\Proyectos\claude\masclet-imperi-web> python new_tests/imports/show_simple_db.py
+Conexión establecida con la base de datos
+
+=== TABLAS EN LA BASE DE DATOS ===
+- aerich
+- animal_history
+- animals
+- part
+- test_custom_dates
+- test_dates
+- users
+
+=== CONTEO DE REGISTROS POR TABLA ===
+TABLA                     REGISTROS 
+-----------------------------------
+aerich                    4
+animal_history            0
+animals                   39        
+part                      16        
+test_custom_dates         0
+test_dates                0
+users                     4
+
+=== COLUMNAS DE LA TABLA: animals ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('animals_id_seq'::regclass)   
+explotacio           character varying         NO
+nom                  character varying         NO
+genere               character varying         NO
+estado               character varying         NO              'OK'::character varying
+pare                 character varying         YES
+mare                 character varying         YES
+quadra               character varying         YES
+cod                  character varying         YES
+num_serie            character varying         YES
+dob                  date                      YES
+created_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+updated_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+part                 character varying         YES
+alletar              character varying         YES
+
+=== RESTRICCIONES DE LA TABLA: animals ===
+NOMBRE                         TIPO            DEFINICIÓN
+-------------------------------------------------------------------------------------
+animals_pkey                   PRIMARY KEY     PRIMARY KEY (id)
+animals_cod_key                UNIQUE          UNIQUE (cod)
+
+=== RELACIONES DE LA TABLA: animals ===
+No se encontraron relaciones para la tabla animals.
+
+=== COLUMNAS DE LA TABLA: part ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT       
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('part_id_seq'::regclass)      
+part                 date                      NO
+GenereT              character varying         NO
+EstadoT              character varying         NO              'OK'::character varying
+numero_part          integer                   NO
+observacions         text                      YES
+created_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+updated_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+animal_id            integer                   NO
+
+=== RESTRICCIONES DE LA TABLA: part ===
+NOMBRE                         TIPO            DEFINICIÓN
+-------------------------------------------------------------------------------------
+part_animal_id_fkey            FOREIGN KEY     FOREIGN KEY (animal_id) REFERENCES animals(id) ON DELETE CASCADE
+part_pkey                      PRIMARY KEY     PRIMARY KEY (id)
+
+=== RELACIONES DE LA TABLA: part ===
+COLUMNA ORIGEN       TABLA DESTINO        COLUMNA DESTINO
+------------------------------------------------------------
+animal_id            animals              id
+
+=== COLUMNAS DE LA TABLA: users ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('users_id_seq'::regclass)     
+username             character varying         NO
+password_hash        character varying         NO
+email                character varying         NO
+role                 character varying         NO              'usuario'::character varying
+is_active            boolean                   NO              true
+created_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+updated_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+
+=== RESTRICCIONES DE LA TABLA: users ===
+NOMBRE                         TIPO            DEFINICIÓN
+-------------------------------------------------------------------------------------
+users_pkey                     PRIMARY KEY     PRIMARY KEY (id)
+users_email_key                UNIQUE          UNIQUE (email)
+users_username_key             UNIQUE          UNIQUE (username)
+
+=== RELACIONES DE LA TABLA: users ===
+No se encontraron relaciones para la tabla users.
+
+=== COLUMNAS DE LA TABLA: animal_history ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('animal_history_id_seq'::regclass)
+field_name           character varying         NO
+old_value            character varying         YES
+new_value            character varying         YES
+changed_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+changed_by           character varying         YES
+animal_id            integer                   NO
+
+=== RESTRICCIONES DE LA TABLA: animal_history ===
+NOMBRE                         TIPO            DEFINICIÓN
+-------------------------------------------------------------------------------------
+animal_history_animal_id_fkey  FOREIGN KEY     FOREIGN KEY (animal_id) REFERENCES animals(id) ON DELETE CASCADE
+animal_history_pkey            PRIMARY KEY     PRIMARY KEY (id)
+
+=== RELACIONES DE LA TABLA: animal_history ===
+COLUMNA ORIGEN       TABLA DESTINO        COLUMNA DESTINO     
+------------------------------------------------------------
+animal_id            animals              id
+
+=== TABLAS DE PRUEBA ===
+
+=== COLUMNAS DE LA TABLA: test_custom_dates ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('test_custom_dates_id_seq'::regclass)
+date                 date                      NO
+created_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+updated_at           timestamp with time zone  NO              CURRENT_TIMESTAMP
+
+=== COLUMNAS DE LA TABLA: test_dates ===
+COLUMNA              TIPO                      PERMITE NULL    VALOR DEFAULT
+--------------------------------------------------------------------------------
+id                   integer                   NO              nextval('test_dates_id_seq'::regclass)
+date                 date                      NO
+INFO:tortoise:Tortoise-ORM shutdown
+Conexión cerrada

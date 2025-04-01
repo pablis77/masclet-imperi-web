@@ -6,10 +6,14 @@ from datetime import datetime
 from typing import Optional
 
 class ExplotacioBase(BaseModel):
-    """Schema base para explotaciones."""
-    nom: str
-    explotaci: Optional[str] = None
-    activa: bool = True
+    """
+    Schema base para explotaciones.
+    
+    IMPORTANTE: Reglas de nomenclatura en el sistema:
+    - 'explotacio' es el identificador único obligatorio que identifica la explotación
+    - 'id' es un campo técnico autogenerado por la base de datos
+    """
+    explotacio: str  # Identificador único de la explotación
 
 class ExplotacioCreate(ExplotacioBase):
     """Schema para crear explotaciones."""
@@ -17,9 +21,7 @@ class ExplotacioCreate(ExplotacioBase):
 
 class ExplotacioUpdate(BaseModel):
     """Schema para actualizar explotaciones."""
-    nom: Optional[str] = None
-    explotaci: Optional[str] = None
-    activa: Optional[bool] = None
+    explotacio: Optional[str] = None
 
 class ExplotacioResponse(ExplotacioBase):
     """Schema para respuestas de explotaciones."""
@@ -28,4 +30,4 @@ class ExplotacioResponse(ExplotacioBase):
     updated_at: datetime
     
     class Config:
-        from_attributes = True
+        orm_mode = True

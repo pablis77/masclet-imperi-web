@@ -51,14 +51,14 @@ async def create_animal(
         if animal.explotacio.isdigit():
             explotacio = await Explotacio.get_or_none(id=animal.explotacio)
         
-        # Si no se encuentra por ID o no es numérico, buscar por nombre
+        # Si no se encuentra por ID, buscar por campo explotacio
         if not explotacio:
-            explotacio = await Explotacio.get_or_none(nom=animal.explotacio)
+            explotacio = await Explotacio.get_or_none(explotacio=animal.explotacio)
             
         if not explotacio:
             raise HTTPException(
                 status_code=404,
-                detail=f"Explotación {animal.explotacio} no encontrada"
+                detail=f"Explotación con identificador {animal.explotacio} no encontrada"
             )
 
         # Usar la fecha ya validada por el schema

@@ -39,7 +39,7 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
         try:
             explotacio = await Explotacio.get_or_none(id=explotacio_id)
             if explotacio:
-                explotacio_name = explotacio.nom
+                explotacio_name = explotacio.explotacio
         except TypeError:
             # Manejar el caso de los mocks en los tests
             explotacio_name = "Granja Test"
@@ -208,7 +208,7 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     explotaciones_stats = None
     if not explotacio_id:
         total_explotaciones = await Explotacio.all().count()
-        explotaciones_activas = await Explotacio.filter(activa=True).count()
+        explotaciones_activas = await Explotacio.filter().count()
         explotaciones_inactivas = total_explotaciones - explotaciones_activas
         
         # Eliminamos la distribución por provincia ya que el campo no existe en el modelo
@@ -221,7 +221,7 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
             count = await Animal.filter(explotacio=explotacion).count()
             ranking_animales.append({
                 "id": explotacion.id,
-                "nombre": explotacion.nom,
+                "nombre": explotacion.explotacio,
                 "animales": count
             })
         ranking_animales.sort(key=lambda x: x["animales"], reverse=True)
@@ -233,7 +233,7 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
             count = await Part.filter(animal__explotacio=explotacion).count()
             ranking_partos.append({
                 "id": explotacion.id,
-                "nombre": explotacion.nom,
+                "nombre": explotacion.explotacio,
                 "partos": count
             })
         ranking_partos.sort(key=lambda x: x["partos"], reverse=True)
@@ -529,7 +529,7 @@ async def get_explotacio_dashboard(explotacio_id: int,
         return {
             "explotacion": {
                 "id": explotacio.id,
-                "nombre": explotacio.nom
+                "nombre": explotacio.explotacio
             },
             "periodo": {
                 "inicio": start_date.isoformat(),
@@ -709,11 +709,12 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
             year_start = date(year, 1, 1)
             year_end = date(year, 12, 31)
             
-            # Aplicar filtros de forma separada
-            year_query = Part.filter(**animal_filter)
-            year_query = year_query.filter(part__gte=year_start, part__lte=year_end)
-            
-            count = await year_query.count()
+            year_filter = {
+                **animal_filter,
+                "part__gte": year_start,
+                "part__lte": year_end
+            }
+            count = await Part.filter(**year_filter).count()
             distribucion_anual[str(year)] = count
         
         # ======= ANÁLISIS POR ANIMAL =======
@@ -812,7 +813,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         if explotacio_id:
             explotacio = await Explotacio.get_or_none(id=explotacio_id)
             if explotacio:
-                nombre_explotacio = explotacio.nombre
+                nombre_explotacio = explotacio.explotacio
         
         # Nombre del animal si corresponde
         nombre_animal = None
@@ -877,7 +878,7 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
         try:
             explotacio = await Explotacio.get_or_none(id=explotacio_id)
             if explotacio:
-                nombre_explotacio = explotacio.nom
+                nombre_explotacio = explotacio.explotacio
         except TypeError:
             # Manejar el caso de los mocks en los tests
             nombre_explotacio = "Granja Test"
@@ -1005,7 +1006,7 @@ def crear_respuesta_vacia_partos(start_date, end_date, explotacio_id=None, anima
         try:
             explotacio = Explotacio.get(id=explotacio_id)
             if explotacio:
-                nombre_explotacio = explotacio.nombre
+                nombre_explotacio = explotacio.explotacio
         except:
             pass
     
@@ -1067,24 +1068,40 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
         
         # Filtro base para consultas
         base_filter = {}
-        if explotacio_id:
-            base_filter["explotacio"] = explotacio_id
-            
-        # Obtener nombre de la explotación si aplica
         nombre_explotacio = None
+        
         if explotacio_id:
+            # Obtener el nombre de la explotación a partir del ID para filtrar
             explotacio = await Explotacio.get_or_none(id=explotacio_id)
             if explotacio:
-                nombre_explotacio = explotacio.nombre
+                # Usamos el campo 'explotacio' de la explotación como filtro
+                nombre_explotacio = explotacio.explotacio
+                base_filter["explotacio"] = nombre_explotacio
+            else:
+                # Si no existe la explotación, devolver respuesta vacía
+                return crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id, nombre_explotacio)
         
         # Estadísticas de animales
         total_animales = await Animal.filter(**base_filter).count()
         
+        # Cálculo correcto de terneros basado en el estado de amamantamiento
+        # Cada vaca con estado de amamantamiento 1 = 1 ternero
+        # Cada vaca con estado de amamantamiento 2 = 2 terneros
+        alletar_filter = dict(base_filter)
+        alletar_filter["alletar"] = EstadoAlletar.UN_TERNERO  # Vacas con 1 ternero
+        vacas_con_un_ternero = await Animal.filter(**alletar_filter).count()
+        
+        alletar_filter["alletar"] = EstadoAlletar.DOS_TERNEROS  # Vacas con 2 terneros
+        vacas_con_dos_terneros = await Animal.filter(**alletar_filter).count()
+        
+        # El total de terneros es: (1 × número de vacas con alletar=1) + (2 × número de vacas con alletar=2)
+        total_terneros = vacas_con_un_ternero + (vacas_con_dos_terneros * 2)
+        
         # Estadísticas de partos - aplicando filtros por separado
         parto_query = Part
-        if explotacio_id:
+        if explotacio_id and nombre_explotacio:
             # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
-            animal_ids = await Animal.filter(explotacio=explotacio_id).values_list('id', flat=True)
+            animal_ids = await Animal.filter(explotacio=nombre_explotacio).values_list('id', flat=True)
             if animal_ids:
                 parto_query = parto_query.filter(animal_id__in=animal_ids)
             else:
@@ -1113,6 +1130,7 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
         return {
             "total_animales": total_animales,
             "total_partos": total_partos,
+            "total_terneros": total_terneros,  # Nuevo campo con el recuento correcto de terneros
             "ratio_partos_animal": round(total_partos / total_animales, 2) if total_animales > 0 else 0,
             "promedio_partos_mensual": round(total_partos / max(1, (end_date.month - start_date.month + 12 * (end_date.year - start_date.year))), 2),
             "tendencias": tendencias,
@@ -1144,6 +1162,7 @@ def crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id=None, nomb
     return {
         "total_animales": 0,
         "total_partos": 0,
+        "total_terneros": 0,  # Nuevo campo con el recuento correcto de terneros
         "ratio_partos_animal": 0,
         "promedio_partos_mensual": 0,
         "tendencias": {
@@ -1193,7 +1212,7 @@ async def obtener_datos_por_mes(query, start_date, end_date):
             
         month_end = next_month - timedelta(days=1)
         
-        # Filtrar por este mes
+        # Filtrar por mes
         month_query = query.filter(part__gte=current_date, part__lte=month_end)
         count = await month_query.count()
         

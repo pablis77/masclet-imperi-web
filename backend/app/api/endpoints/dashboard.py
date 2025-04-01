@@ -82,12 +82,12 @@ async def list_explotacions(current_user = Depends(get_current_user)):
         # Si es gerente, solo puede ver sus explotaciones asignadas
         if not verify_user_role(current_user, [UserRole.ADMIN]):
             # Los gerentes solo pueden ver sus explotaciones asignadas
-            explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'nom')
+            explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'explotacio')
         else:
             # Los administradores pueden ver todas las explotaciones
-            explotaciones = await Explotacio.all().values('id', 'nom')
+            explotaciones = await Explotacio.all().values('id', 'explotacio')
             
-        return [{"id": e["id"], "nombre": e["nom"]} for e in explotaciones]
+        return [{"id": e["id"], "explotacio": e["explotacio"]} for e in explotaciones]
     except Exception as e:
         logger.error(f"Error al listar explotaciones: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error obteniendo lista de explotaciones")
@@ -132,12 +132,12 @@ async def get_explotacio_stats(
             # Obtener lista de explotaciones disponibles para el usuario
             if not verify_user_role(current_user, [UserRole.ADMIN]):
                 # Los gerentes solo pueden ver sus explotaciones asignadas
-                explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'nom')
+                explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'explotacio')
             else:
                 # Los administradores pueden ver todas las explotaciones
-                explotaciones = await Explotacio.all().values('id', 'nom')
+                explotaciones = await Explotacio.all().values('id', 'explotacio')
                 
-            explotaciones_list = [{"id": e["id"], "nombre": e["nom"]} for e in explotaciones]
+            explotaciones_list = [{"id": e["id"], "explotacio": e["explotacio"]} for e in explotaciones]
             
             raise HTTPException(
                 status_code=404, 
@@ -164,9 +164,9 @@ async def get_explotacio_stats(
 
 @router.get("/resumen", response_model=Dict)
 async def obtener_resumen(
-    explotacio_id: Optional[int] = Query(None, description="ID de la explotación (opcional)"),
-    start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
-    end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
+    explotacio: Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     current_user = Depends(get_current_user)
 ):
     """
@@ -188,10 +188,10 @@ async def obtener_resumen(
             )
             
         # Si se especifica una explotación, verificar que el usuario tenga acceso
-        if explotacio_id and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio_id:
-                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_id} sin permisos")
+            if current_user.explotacio_id != explotacio:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
                 raise HTTPException(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
@@ -201,7 +201,7 @@ async def obtener_resumen(
         from app.services.dashboard_service import get_dashboard_resumen
         
         resumen = await get_dashboard_resumen(
-            explotacio_id=explotacio_id,
+            explotacio_id=explotacio,
             start_date=start_date,
             end_date=end_date
         )
@@ -210,10 +210,10 @@ async def obtener_resumen(
         resultado = {
             "total_animals": resumen["total_animales"],
             "terneros": {
-                "total": resumen["total_partos"]  # Aproximación: contamos partos como terneros
+                "total": resumen["total_terneros"]  # Ahora utilizamos el campo correcto de total_terneros
             },
             "explotaciones": {
-                "count": 1 if explotacio_id else 9  # Valor por defecto o real si está disponible
+                "count": 1 if explotacio else 9  # Valor por defecto o real si está disponible
             },
             "partos": {
                 "total": resumen["total_partos"]
@@ -392,8 +392,6 @@ def generar_datos_simulados_partos(start_date, end_date):
     # Calcular último mes y año
     ultimo_mes = por_mes.get(end_date.strftime("%Y-%m"), 0)
     ultimo_año = sum(por_mes.get(f"{end_date.year}-{month:02d}", 0) for month in range(1, 13))
-    
-    # Calcular promedio mensual
     num_meses = len(por_mes)
     promedio_mensual = total_partos / num_meses if num_meses > 0 else 0
     
@@ -480,18 +478,16 @@ def generar_datos_simulados_combined(explotacio_id, start_date, end_date):
     if not explotacio_id:
         explotaciones = {
             "total": 5,
-            "activas": 4,
-            "inactivas": 1,
             "por_provincia": {"Barcelona": 2, "Girona": 1, "Lleida": 1, "Tarragona": 1},
             "ranking_partos": [
-                {"id": 1, "nombre": "Explotación A", "partos": 45},
-                {"id": 2, "nombre": "Explotación B", "partos": 30},
-                {"id": 3, "nombre": "Explotación C", "partos": 15}
+                {"id": 1, "explotacio": "Explotación A", "partos": 45},
+                {"id": 2, "explotacio": "Explotación B", "partos": 30},
+                {"id": 3, "explotacio": "Explotación C", "partos": 15}
             ],
             "ranking_animales": [
-                {"id": 1, "nombre": "Explotación A", "animales": 60},
-                {"id": 2, "nombre": "Explotación B", "animales": 25},
-                {"id": 3, "nombre": "Explotación C", "animales": 15}
+                {"id": 1, "explotacio": "Explotación A", "animales": 60},
+                {"id": 2, "explotacio": "Explotación B", "animales": 25},
+                {"id": 3, "explotacio": "Explotación C", "animales": 15}
             ]
         }
     

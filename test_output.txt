@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 3 items
+
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_fields_nomenclature PASSED [ 33%]
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_stats PASSED [ 66%]
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_animals PASSED [100%]
+
+============================== 3 passed in 0.90s ==============================
