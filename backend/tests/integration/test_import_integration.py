@@ -57,8 +57,8 @@ def generate_test_csv(filename: str, rows: List[Dict]) -> io.BytesIO:
     # Definir todos los campos posibles que pueden aparecer en cualquier fila
     all_fields = [
         "nom", "cod", "num_serie", "explotacio", "genere", "estado", 
-        "alletar", "data_naixement", "quadra", "mare", "pare",
-        "part", "genere_t", "estado_t"
+        "alletar", "dob", "quadra", "mare", "pare",
+        "part", "GenereT", "EstadoT"
     ]
     
     output = io.StringIO()
@@ -106,7 +106,7 @@ async def test_csv_import_successful(db_session, clean_db):
             "genere": "F",
             "estado": "OK",
             "alletar": "1",
-            "data_naixement": "01/01/2022",
+            "dob": "01/01/2022",
             "quadra": "Q1",
             "mare": "Madre Test",
             "pare": "Padre Test"
@@ -118,7 +118,7 @@ async def test_csv_import_successful(db_session, clean_db):
             "explotacio": "Test Explotacio Import",
             "genere": "M",
             "estado": "OK",
-            "data_naixement": "02/02/2022",
+            "dob": "02/02/2022",
             "quadra": "Q2"
         },
         {
@@ -129,11 +129,11 @@ async def test_csv_import_successful(db_session, clean_db):
             "genere": "F",
             "estado": "OK",
             "alletar": "1",
-            "data_naixement": "03/03/2022",
+            "dob": "03/03/2022",
             "quadra": "Q1",
             "part": "01/01/2023",
-            "genere_t": "M",
-            "estado_t": "OK"
+            "GenereT": "M",
+            "EstadoT": "OK"
         }
     ]
     
@@ -185,7 +185,7 @@ async def test_csv_import_with_errors(db_session, clean_db):
             "explotacio": "Test Explotacio Errors",
             "genere": "F",
             "estado": "OK",
-            "data_naixement": "01/01/2022"
+            "dob": "01/01/2022"
         },
         {
             # Sin nombre (error)
@@ -349,12 +349,12 @@ async def test_csv_import_and_query(db_session, clean_db):
             "genere": "F",
             "estado": "OK",
             "alletar": "1",
-            "data_naixement": f"01/01/{current_year-2}",  # 2 años
+            "dob": f"01/01/{current_year-2}",  # 2 años
             "quadra": "QA",
             "mare": "Madre Query",
             "part": f"01/01/{current_year}",  # Este año
-            "genere_t": "M",
-            "estado_t": "OK"
+            "GenereT": "M",
+            "EstadoT": "OK"
         },
         {
             "nom": "Animal Query 2",
@@ -363,11 +363,11 @@ async def test_csv_import_and_query(db_session, clean_db):
             "genere": "F",
             "estado": "OK",
             "alletar": "1",
-            "data_naixement": f"01/01/{current_year-3}",  # 3 años
+            "dob": f"01/01/{current_year-3}",  # 3 años
             "quadra": "QB",
             "part": f"01/02/{current_year}",  # Este año
-            "genere_t": "M",
-            "estado_t": "OK"
+            "GenereT": "M",
+            "EstadoT": "OK"
         },
         {
             "nom": "Animal Query 3",
@@ -375,7 +375,7 @@ async def test_csv_import_and_query(db_session, clean_db):
             "explotacio": "Test Explotacio Query",
             "genere": "M",
             "estado": "OK",
-            "data_naixement": f"01/01/{current_year-1}",  # 1 año
+            "dob": f"01/01/{current_year-1}",  # 1 año
             "quadra": "QC"
         }
     ]

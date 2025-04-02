@@ -58,7 +58,9 @@ async def show_tables():
     tables = await execute_query(query)
     
     if tables:
-        print(tabulate(tables, headers=["Nombre de tabla"], tablefmt="grid"))
+        # Convertir la lista de diccionarios a una lista de listas para tabulate
+        table_data = [[table['table_name']] for table in tables]
+        print(tabulate(table_data, headers=["Nombre de tabla"], tablefmt="grid"))
     else:
         print("No se encontraron tablas.")
 
@@ -86,7 +88,9 @@ async def show_table_structure(table_name):
     
     if columns:
         print("\nCOLUMNAS:")
-        print(tabulate(columns, headers=["Nombre", "Tipo de dato", "Permite NULL", "Valor por defecto"], tablefmt="grid"))
+        # Convertir la lista de diccionarios a una lista de listas
+        column_data = [[col['column_name'], col['data_type'], col['is_nullable'], col['column_default']] for col in columns]
+        print(tabulate(column_data, headers=["Nombre", "Tipo de dato", "Permite NULL", "Valor por defecto"], tablefmt="grid"))
     else:
         print(f"No se encontraron columnas para la tabla {table_name}.")
     
@@ -101,14 +105,21 @@ async def show_table_structure(table_name):
             WHEN c.contype = 'u' THEN 'UNIQUE'
             ELSE c.contype::text
         END AS constraint_type,
-        pg_get_constraintdef(c.oid) AS definition
+        pg_get_constraintdef(c.oid) AS definition,
+        ccu.table_name AS referenced_table,
+        array_to_string(array_agg(ccu.column_name), ', ') AS referenced_columns,
+        array_to_string(array_agg(kcu.column_name), ', ') AS column_names
     FROM
         pg_constraint c
         JOIN pg_namespace n ON n.oid = c.connamespace
         JOIN pg_class cl ON cl.oid = c.conrelid
+        LEFT JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = c.conname
+        LEFT JOIN information_schema.key_column_usage kcu ON kcu.constraint_name = c.conname
     WHERE
         n.nspname = 'public'
         AND cl.relname = $1
+    GROUP BY
+        c.conname, c.contype, c.oid, ccu.table_name
     ORDER BY
         c.contype, c.conname
     """
@@ -117,7 +128,11 @@ async def show_table_structure(table_name):
     
     if constraints:
         print("\nRESTRICCIONES:")
-        print(tabulate(constraints, headers=["Nombre", "Tipo", "Definición"], tablefmt="grid"))
+        # Convertir la lista de diccionarios a una lista de listas
+        constraint_data = [[c['constraint_name'], c['constraint_type'], c['column_names'], c.get('referenced_table', ''), c.get('referenced_columns', '')] for c in constraints]
+        print(tabulate(constraint_data, 
+                        headers=["Nombre", "Tipo", "Columnas", "Tabla referenciada", "Columnas referenciadas"], 
+                        tablefmt="grid"))
     else:
         print(f"No se encontraron restricciones para la tabla {table_name}.")
     
@@ -148,7 +163,9 @@ async def show_table_structure(table_name):
     
     if indices:
         print("\nÍNDICES:")
-        print(tabulate(indices, headers=["Nombre", "Columna", "Es único", "Es PK"], tablefmt="grid"))
+        # Convertir la lista de diccionarios a una lista de listas
+        index_data = [[idx['index_name'], idx['column_name'], idx['is_unique'], idx['is_primary']] for idx in indices]
+        print(tabulate(index_data, headers=["Nombre", "Columna", "Es único", "Es PK"], tablefmt="grid"))
     else:
         print(f"No se encontraron índices para la tabla {table_name}.")
 
@@ -180,7 +197,9 @@ async def show_relationships():
     relationships = await execute_query(query)
     
     if relationships:
-        print(tabulate(relationships, headers=["Tabla origen", "Columna origen", "Tabla destino", "Columna destino"], tablefmt="grid"))
+        # Convertir la lista de diccionarios a una lista de listas
+        rel_data = [[r['tabla_origen'], r['columna_origen'], r['tabla_destino'], r['columna_destino']] for r in relationships]
+        print(tabulate(rel_data, headers=["Tabla origen", "Columna origen", "Tabla destino", "Columna destino"], tablefmt="grid"))
     else:
         print("No se encontraron relaciones entre tablas.")
 
@@ -207,7 +226,7 @@ async def show_record_counts():
     
     results = []
     for table in tables:
-        table_name = table[0]
+        table_name = table['table_name']
         count = await count_records(table_name)
         results.append([table_name, count])
     
@@ -221,7 +240,7 @@ async def main():
         await show_tables()
         
         # Mostrar estructura de tablas principales
-        main_tables = ['animal', 'part', 'explotacions', 'users']
+        main_tables = ['animals', 'part', 'explotacions', 'users']
         for table in main_tables:
             await show_table_structure(table)
         

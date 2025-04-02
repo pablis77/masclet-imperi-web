@@ -37,7 +37,6 @@ La tabla principal que contiene todos los datos de los animales.
 | created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                       |
 | updated_at | timestamp | NO   | Fecha de actualización, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                  |
 
-
 **Índices y Restricciones**:
 
 - Clave primaria: `animals_pkey` - PRIMARY KEY (id)
@@ -241,3 +240,21 @@ Los partos están estrechamente relacionados con los animales (específicamente 
 
 - Al recibir datos: Recibe nom -> Busca la vaca por nom -> Obtiene el id de esa vaca -> Guarda el parto usando ese animal_id.
 - Al enviar datos: Carga el parto (con animal_id) -> Carga la vaca relacionada usando animal_id -> Devuelve el nom de la vaca.
+
+### 5. Endpoints Actuales de Importación
+
+1. **`GET /api/v1/imports/`**
+   * Obtiene la lista paginada de importaciones realizadas (historial)
+   * Parámetros: page, size
+   * En la implementación actual parece devolver un array vacío (pendiente)
+2. **`POST /api/v1/imports/csv`** ⚠️
+   * Importa datos desde un archivo CSV
+   * Acepta el archivo como File y un campo description opcional
+3. **`GET /api/v1/imports/{import_id}`**
+   * Obtiene el estado de una importación específica
+   * Usa un ID numérico en la ruta
+
+#### IMPORTS nuevos
+
+GET        /api/v1/imports/template                 download_template
+GET        /api/v1/imports/{import_id}/errors       get_import_errors

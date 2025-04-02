@@ -222,7 +222,7 @@ const importService = {
   async downloadAnimalTemplate(): Promise<Blob> {
     try {
       // Crear plantilla de ejemplo
-      const headers = ['nom', 'genere', 'estado', 'alletar', 'mare', 'pare', 'quadra', 'cod', 'num_serie', 'data_naixement'];
+      const headers = ['nom', 'genere', 'estado', 'alletar', 'mare', 'pare', 'quadra', 'cod', 'num_serie', 'dob'];
       const exampleData = [
         {
           nom: 'Ejemplo',
@@ -234,7 +234,7 @@ const importService = {
           quadra: 'A1',
           cod: 'ABCD123',
           num_serie: 'SN12345',
-          data_naixement: '01/01/2020'
+          dob: '01/01/2020'
         }
       ];
       

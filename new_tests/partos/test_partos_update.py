@@ -1,266 +1,182 @@
+import uuid
 import pytest
 import requests
-import uuid
 from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
 
-BASE_URL = "http://localhost:8000/api/v1/partos"
-ANIMALS_URL = "http://localhost:8000/api/v1/animals"
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
-@pytest.fixture
+# URL base de la API 
+BASE_URL = os.getenv("API_URL", "http://localhost:8000")
+ANIMALS_URL = f"{BASE_URL}/api/v1/animals"
+PARTOS_URL = f"{BASE_URL}/api/v1/partos"
+
+@pytest.fixture(scope="function")
 def auth_token():
-    """Obtiene un token de autenticación del administrador."""
+    """Obtener token de autenticación para las pruebas"""
     credentials = {
         "username": "admin",
-        "password": "admin123"
+        "password": "admin123"  # Contraseña correcta
     }
-    response = requests.post(
-        "http://localhost:8000/api/v1/auth/login",
-        data=credentials,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
+    # Usar data= en lugar de json= para enviar como form-urlencoded
+    response = requests.post(f"{BASE_URL}/api/v1/auth/login", data=credentials)
     assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
     return response.json()["access_token"]
 
-@pytest.fixture
-def test_parto(auth_token):
-    """Crea un animal femenino y un parto de prueba para los tests de actualización."""
+@pytest.fixture(scope="function")
+def get_existing_parto(auth_token):
+    """Fixture para encontrar o crear un parto existente para los tests."""
+    print(f"\n--- Buscando o creando parto existente para el test ---")
     headers = {"Authorization": f"Bearer {auth_token}"}
-    
+
+    # En lugar de usar un ID fijo, creamos un animal y un parto para el test
     # Crear un animal femenino
     animal_name = f"Test_Female_{uuid.uuid4().hex[:8]}"
     animal_data = {
         "nom": animal_name,
         "genere": "F",  # Femenino
-        "explotacio": "Gurans",
+        "explotacio": "Test",
         "estado": "OK",
-        "alletar": "NO"  # No amamanta
+        "alletar": "0"  # No amamanta (valores válidos: '0', '1', '2')
     }
     
-    print(f"\nCreando animal femenino de prueba...")
+    print(f"Creando animal hembra para test de partos...")
     
     # Crear el animal
-    create_animal_response = requests.post(f"{ANIMALS_URL}/", json=animal_data, headers=headers)
-    assert create_animal_response.status_code == 201, f"Error al crear animal: {create_animal_response.status_code} - {create_animal_response.text}"
+    create_animal_response = requests.post(f"{ANIMALS_URL}", json=animal_data, headers=headers)
     
-    animal_id = create_animal_response.json()["data"]["id"]
-    print(f"Animal femenino creado con ID: {animal_id}")
+    if create_animal_response.status_code != 201:
+        pytest.fail(f"Error al crear animal: {create_animal_response.status_code} - {create_animal_response.text}")
     
-    # Fecha para el parto (ayer)
-    yesterday = datetime.now() - timedelta(days=1)
-    fecha_parto = yesterday.strftime("%d/%m/%Y")
+    animal_data = create_animal_response.json()
+    if "data" in animal_data:
+        animal_data = animal_data["data"]
+        
+    animal_id = animal_data["id"]
+    print(f"Animal creado con ID: {animal_id}, Nombre: {animal_name}")
     
-    # Datos para crear un parto
+    # Crear un parto para este animal
     parto_data = {
         "animal_id": animal_id,
-        "part": fecha_parto,           # Corregido: data → part
-        "GenereT": "M",                # Corregido: genere_fill → GenereT
-        "EstadoT": "OK",               # Corregido: estat_fill → EstadoT
-        "numero_part": 1     # Primer parto
+        "numero_part": 1,
+        "part": datetime.now().strftime('%d/%m/%Y'),  # Formato DD/MM/YYYY
+        "GenereT": "F",  # Género de la cría: hembra
+        "EstadoT": "OK",  # Estado de la cría: vivo
+        "observacions": "Parto de prueba para tests"
     }
     
-    print(f"Creando parto de prueba...")
+    # Crear el parto usando el endpoint directo
+    create_parto_response = requests.post(f"{PARTOS_URL}", json=parto_data, headers=headers)
+        
+    if create_parto_response.status_code not in [200, 201]:
+        pytest.fail(f"No se pudo crear el parto: {create_parto_response.status_code} - {create_parto_response.text}")
     
-    # Crear el parto
-    create_parto_response = requests.post(f"{BASE_URL}/", json=parto_data, headers=headers)
-    assert create_parto_response.status_code == 201, f"Error al crear parto: {create_parto_response.status_code} - {create_parto_response.text}"
-    
-    parto_id = create_parto_response.json()["data"]["id"]
-    print(f"Parto creado con ID: {parto_id}")
-    
-    # Devolver los datos para usar en los tests
-    test_data = {
+    parto_data = create_parto_response.json()
+    if "data" in parto_data:
+        parto_data = parto_data["data"]
+        
+    parto_id = parto_data["id"]
+    print(f"Parto creado con ID: {parto_id} para el animal ID: {animal_id}")
+
+    # Limpiar después del test
+    yield {
         "animal_id": animal_id,
+        "animal_name": animal_name,
         "parto_id": parto_id,
         "headers": headers,
         "parto_data": parto_data
     }
     
-    yield test_data
-    
-    # Limpiar: eliminar el animal después de los tests (esto eliminará también el parto por cascada)
-    print(f"Eliminando animal de prueba (ID: {animal_id})...")
-    delete_response = requests.delete(f"{ANIMALS_URL}/{animal_id}", headers=headers)
-    assert delete_response.status_code == 204, f"Error al eliminar animal: {delete_response.status_code} - {delete_response.text}"
+    # Eliminar el animal (esto también eliminará el parto debido a la cascada)
+    try:
+        requests.delete(f"{ANIMALS_URL}/{animal_id}", headers=headers)
+        print(f"Animal ID {animal_id} eliminado después del test")
+    except Exception as e:
+        print(f"Error al eliminar animal después del test: {e}")
 
-@pytest.mark.asyncio
-async def test_update_parto_partial(test_parto):
-    """Test para actualizar parcialmente un parto."""
-    parto_id = test_parto["parto_id"]
-    headers = test_parto["headers"]
+def test_update_parto_partial(get_existing_parto):
+    """Test para verificar que los partos son inmutables al intentar actualizarlos."""
+    parto_id = get_existing_parto["parto_id"]
+    headers = get_existing_parto["headers"]
     
     # Datos para actualizar el parto (solo algunos campos)
     update_data = {
-        "GenereT": "F"  # Cambiar el género de la cría a femenino
+        "observacions": "Parto actualizado por test"
     }
     
-    url = f"{BASE_URL}/{parto_id}"
+    # Intentar actualizar el parto
+    url = f"{PARTOS_URL}/{parto_id}"
+    print(f"\nTest: Intentando actualizar parto ID {parto_id} con PATCH en {url}")
     
-    print(f"\nProbando actualizar parcialmente el parto: {url}")
-    print(f"Datos de actualización: {update_data}")
+    # Probar con PATCH - la API debe rechazar la operación con 405
+    response = requests.patch(url, json=update_data, headers=headers)
     
-    try:
-        # Realizar la solicitud PATCH para actualizar el parto
-        response = requests.patch(url, json=update_data, headers=headers)
-        
-        print(f"Código de estado: {response.status_code}")
-        
-        # Verificar que la solicitud falla con código 405 (Method Not Allowed)
-        # Los partos son registros históricos inmutables, por lo que no se pueden actualizar
-        assert response.status_code in [404, 405, 422], f"Se esperaba un error 405, pero se recibió: {response.status_code} - {response.text}"
-        
-        # Registrar el código recibido
-        print(f"Código de error recibido: {response.status_code} - Los partos son registros históricos inmutables")
-        
-        # Si pasa la verificación, el test es exitoso
-        print("Test de actualización parcial de parto completado con éxito (validación de inmutabilidad).")
-        
-    except Exception as e:
-        print(f"Error durante la solicitud: {e}")
-        import traceback
-        traceback.print_exc()
-        assert False, "Excepción durante la solicitud HTTP."
+    # Comprobar que se rechaza correctamente
+    assert response.status_code == 405, f"Se esperaba código 405, se recibió: {response.status_code} - {response.text}"
+    print(f"Actualización rechazada correctamente (405) - Los partos son inmutables por regla de negocio")
 
-@pytest.mark.asyncio
-async def test_update_parto_complete(test_parto):
-    """Test para actualizar completamente un parto."""
-    parto_id = test_parto["parto_id"]
-    headers = test_parto["headers"]
-    animal_id = test_parto["animal_id"]
+def test_update_parto_put(get_existing_parto):
+    """Test para verificar que los partos son inmutables al intentar actualizarlos con PUT."""
+    parto_id = get_existing_parto["parto_id"]
+    headers = get_existing_parto["headers"]
     
-    # Fecha para el parto (hace 2 días)
-    two_days_ago = datetime.now() - timedelta(days=2)
-    nueva_fecha_parto = two_days_ago.strftime("%d/%m/%Y")
+    # Para PUT necesitamos enviar todos los datos
+    parto_completo = get_existing_parto["parto_data"].copy()
+    parto_completo["observacions"] = "Actualizado mediante PUT"
     
-    # Datos para actualizar el parto (todos los campos)
-    update_data = {
-        "part": nueva_fecha_parto,
-        "GenereT": "F",
-        "EstadoT": "OK",
-        "observacions": "Actualización completa del parto"
-    }
+    # Intentar actualizar el parto
+    url = f"{PARTOS_URL}/{parto_id}"
+    print(f"\nTest: Intentando actualizar parto ID {parto_id} con PUT en {url}")
     
-    url = f"{BASE_URL}/{parto_id}"
+    response = requests.put(url, json=parto_completo, headers=headers)
     
-    print(f"\nProbando actualizar completamente el parto: {url}")
-    print(f"Datos de actualización: {update_data}")
-    
-    try:
-        # Realizar la solicitud PATCH para actualizar el parto
-        response = requests.patch(url, json=update_data, headers=headers)
-        
-        print(f"Código de estado: {response.status_code}")
-        
-        # Verificar que la solicitud falla con código 405 (Method Not Allowed)
-        # Los partos son registros históricos inmutables, por lo que no se pueden actualizar
-        assert response.status_code in [404, 405, 422], f"Se esperaba un error 405, pero se recibió: {response.status_code} - {response.text}"
-        
-        # Registrar el código recibido
-        print(f"Código de error recibido: {response.status_code} - Los partos son registros históricos inmutables")
-        
-        # Si pasa la verificación, el test es exitoso
-        print("Test de actualización completa de parto completado con éxito (validación de inmutabilidad).")
-        
-    except Exception as e:
-        print(f"Error durante la solicitud: {e}")
-        import traceback
-        traceback.print_exc()
-        assert False, "Excepción durante la solicitud HTTP."
+    # Los partos son inmutables, debe rechazar la actualización
+    assert response.status_code == 405, f"Se esperaba código 405, se recibió: {response.status_code} - {response.text}"
+    print(f"Actualización rechazada correctamente (405) - Los partos son inmutables por regla de negocio")
 
-@pytest.mark.asyncio
-async def test_update_parto_invalid_date(test_parto):
+def test_update_parto_invalid_date(get_existing_parto):
     """Test para verificar que no se puede actualizar un parto con fecha inválida."""
-    parto_id = test_parto["parto_id"]
-    headers = test_parto["headers"]
+    parto_id = get_existing_parto["parto_id"]
+    headers = get_existing_parto["headers"]
     
     # Fecha futura (mañana)
     tomorrow = datetime.now() + timedelta(days=1)
     fecha_futura = tomorrow.strftime("%d/%m/%Y")
     
-    # Datos para intentar actualizar el parto con fecha futura
+    # Datos para actualizar el parto con fecha inválida
     update_data = {
         "part": fecha_futura
     }
     
-    url = f"{BASE_URL}/{parto_id}"
+    # Intentar actualizar el parto
+    url = f"{PARTOS_URL}/{parto_id}"
+    print(f"\nTest: Intentando actualizar parto ID {parto_id} con fecha futura en {url}")
     
-    print(f"\nProbando actualizar parto con fecha futura: {url}")
+    # Intentar actualizar con PATCH
+    response = requests.patch(url, json=update_data, headers=headers)
     
-    try:
-        # Realizar la solicitud PATCH para intentar actualizar el parto con fecha futura
-        response = requests.patch(url, json=update_data, headers=headers)
-        
-        print(f"Código de estado: {response.status_code}")
-        
-        # Verificar que la solicitud falla con código 405 o 422
-        # Si es 405, es porque los partos son inmutables
-        # Si es 422, es porque validó la fecha inválida
-        assert response.status_code in [404, 405, 422], f"Se esperaba un error 405 o 422, pero se recibió: {response.status_code} - {response.text}"
-        
-        # Registrar el código recibido
-        print(f"Código de error recibido: {response.status_code} - Los partos son registros históricos inmutables o fecha inválida")
-        
-        # Probar con formato de fecha inválido
-        update_data = {
-            "part": "fecha-invalida"
-        }
-        
-        print(f"\nProbando actualizar parto con formato de fecha inválido: {url}")
-        
-        response = requests.patch(url, json=update_data, headers=headers)
-        
-        print(f"Código de estado: {response.status_code}")
-        
-        # Verificar que la solicitud falla con código 405 o 422
-        # Si es 405, es porque los partos son inmutables
-        # Si es 422, es porque validó el formato de fecha inválido
-        assert response.status_code in [404, 405, 422], f"Se esperaba un error 405 o 422, pero se recibió: {response.status_code} - {response.text}"
-        
-        # Registrar el código recibido
-        print(f"Código de error recibido: {response.status_code} - Los partos son registros históricos inmutables o formato de fecha inválido")
-        
-        print("Test de validación de fecha en actualización completado con éxito.")
-        
-    except Exception as e:
-        print(f"Error durante la solicitud: {e}")
-        import traceback
-        traceback.print_exc()
-        assert False, "Excepción durante la solicitud HTTP."
+    # Los partos son inmutables, debe rechazar la actualización
+    assert response.status_code == 405, f"Se esperaba código 405, se recibió: {response.status_code} - {response.text}"
+    print(f"Actualización rechazada correctamente (405) - Los partos son inmutables")
 
-@pytest.mark.asyncio
-async def test_update_nonexistent_parto(auth_token):
-    """Test para intentar actualizar un parto que no existe."""
+def test_update_nonexistent_parto(auth_token):
+    """Test para verificar el comportamiento al intentar actualizar un parto inexistente."""
     headers = {"Authorization": f"Bearer {auth_token}"}
+    nonexistent_id = 99999  # ID que no existe
     
-    # ID de un parto que no existe
-    nonexistent_id = 99999
-    
-    # Datos para intentar actualizar el parto
+    # Datos para actualizar un parto inexistente
     update_data = {
-        "GenereT": "F"
+        "observacions": "Este parto no existe"
     }
     
-    url = f"{BASE_URL}/{nonexistent_id}"
+    url = f"{PARTOS_URL}/{nonexistent_id}"
+    print(f"\nTest: Intentando actualizar parto inexistente ID {nonexistent_id}")
     
-    print(f"\nProbando actualizar parto inexistente: {url}")
+    # Intentar actualizar un parto inexistente
+    response = requests.patch(url, json=update_data, headers=headers)
     
-    try:
-        # Realizar la solicitud PATCH para un parto que no existe
-        response = requests.patch(url, json=update_data, headers=headers)
-        
-        print(f"Código de estado: {response.status_code}")
-        
-        # Verificar que la solicitud falla con código 404 o 405
-        # Si es 404, es porque el parto no existe
-        # Si es 405, es porque los partos son inmutables
-        assert response.status_code in [404, 405], f"Se esperaba un error 404 o 405, pero se recibió: {response.status_code} - {response.text}"
-        
-        # Registrar el código recibido
-        print(f"Código de error recibido: {response.status_code} - Parto no encontrado o los partos son registros históricos inmutables")
-        
-        print("Test de actualización de parto inexistente completado con éxito.")
-        
-    except Exception as e:
-        print(f"Error durante la solicitud: {e}")
-        import traceback
-        traceback.print_exc()
-        assert False, "Excepción durante la solicitud HTTP."
+    # Debería devolver 404 Not Found o 405 Method Not Allowed
+    assert response.status_code in [404, 405], f"Se esperaba código 404 o 405, se recibió: {response.status_code} - {response.text}"
+    print(f"Respuesta correcta ({response.status_code}) al intentar actualizar un parto inexistente")

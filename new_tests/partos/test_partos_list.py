@@ -40,7 +40,7 @@ def test_partos(auth_token):
             "genere": "F",  # Femenino
             "explotacio": "Gurans",
             "estado": "OK",
-            "alletar": "NO"  # No amamanta
+            "alletar": "0"  # No amamanta (valores válidos: '0', '1', '2')
         }
         
         print(f"\nCreando animal femenino de prueba {i+1}...")

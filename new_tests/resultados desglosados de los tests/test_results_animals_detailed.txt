@@ -1,0 +1,260 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 14 items
+
+new_tests/animals/test_animals_create.py::test_create_animal_minimal 
+Probando crear animal con campos mínimos: http://localhost:8000/api/v1/animals/
+Código de estado: 201
+Test de crear animal con campos mínimos completado con éxito.
+PASSED [  7%]
+new_tests/animals/test_animals_create.py::test_create_animal_complete 
+Probando crear animal con todos los campos: http://localhost:8000/api/v1/animals/
+Código de estado: 201
+Test de crear animal con todos los campos completado con éxito.
+PASSED [ 14%]
+new_tests/animals/test_animals_create.py::test_create_animal_invalid_data 
+Probando crear animal con datos inválidos - Falta el nombre
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nnom\n  Field required [type=missing, input_value={'genere': 'M', 'explotac...Gurans', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Falta el género
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ngenere\n  Field required [type=missing, input_value={'nom': 'Test Sin Género...Gurans', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Falta la explotación
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nexplotacio\n  Field required [type=missing, input_value={'nom': 'Test Sin Explota...e': 'M', 'estado': 'OK'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"}
+
+Probando crear animal con datos inválidos - Género inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ngenere\n  Value error, Género inválido [type=value_error, input_value='X', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+
+Probando crear animal con datos inválidos - Estado inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\nestado\n  Value error, Estado inválido [type=value_error, input_value='INVALID', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+
+Probando crear animal con datos inválidos - Fecha de nacimiento con formato inválido
+Código de estado: 400
+Error recibido (esperado): {"detail":"1 validation error for AnimalCreate\ndob\n  Value error, La fecha debe estar en formato DD/MM/YYYY [type=value_error, input_value='2022-01-01', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.6/v/value_error"}
+Test de validación de datos al crear animales completado con éxito.
+PASSED [ 21%]
+new_tests/animals/test_animals_delete.py::test_delete_animal 
+Creando animal de prueba para eliminar...
+Animal creado con ID: 377
+Probando eliminar animal: http://localhost:8000/api/v1/animals/377
+Código de estado de eliminación: 204
+Test de eliminar animal completado con éxito.
+PASSED      [ 28%]
+new_tests/animals/test_animals_delete.py::test_delete_nonexistent_animal 
+Probando eliminar animal inexistente: http://localhost:8000/api/v1/animals/99999
+Código de estado: 404
+Error recibido (esperado): {"detail":"Animal 99999 no encontrado"}
+Test de eliminar animal inexistente completado con éxito.
+PASSED [ 35%]
+new_tests/animals/test_animals_get.py::test_get_animal_by_id 
+=== Obteniendo token de autenticación ===
+Respuesta de autenticación: 200
+Token obtenido: eyJhbGciOi...
+
+=== Obteniendo lista de animales ===
+Estructura de la respuesta: ['status', 'data']
+Usando animal existente con ID: 119
+Datos del animal: {
+  "nom": "AnimalParcial53464",
+  "genere": "F",
+  "explotacio": "TestExplotacio",
+  "estado": "OK",
+  "alletar": "0",
+  "dob": "01/01/2021",
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": "COD53464",
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 119,
+  "partos": {
+    "total": 0,
+    "ultimo": null,
+    "items": [],
+    "first_date": null,
+    "last_date": null
+  },
+  "created_at": "02/04/2025",
+  "updated_at": "02/04/2025"
+}
+
+=== Obteniendo animal por ID ===
+URL: http://localhost:8000/api/v1/animals/119
+Código de respuesta: 200
+Datos del animal obtenido: {
+  "status": "success",
+  "data": {
+    "nom": "AnimalParcial53464",
+    "genere": "F",
+    "explotacio": "TestExplotacio",
+    "estado": "OK",
+    "alletar": "0",
+    "dob": "01/01/2021",
+    "mare": null,
+    "pare": null,
+    "quadra": null,
+    "cod": "COD53464",
+    "num_serie": null,
+    "part": null,
+    "genere_t": null,
+    "estado_t": null,
+    "id": 119,
+    "partos": {
+      "total": 0,
+      "ultimo": null,
+      "items": [],
+      "first_date": null,
+      "last_date": null
+    },
+    "created_at": "02/04/2025",
+    "updated_at": "02/04/2025"
+  }
+}
+
+Campos en la respuesta del animal:
+  - nom: AnimalParcial53464
+  - genere: F
+  - explotacio: TestExplotacio
+  - estado: OK
+  - alletar: 0
+  - dob: 01/01/2021
+  - mare: None
+  - pare: None
+  - quadra: None
+  - cod: COD53464
+  - num_serie: None
+  - part: None
+  - genere_t: None
+  - estado_t: None
+  - id: 119
+  - partos: {'total': 0, 'ultimo': None, 'items': [], 'first_date': None, 'last_date': None}
+  - created_at: 02/04/2025
+  - updated_at: 02/04/2025
+
+CAMPOS ADICIONALES encontrados en la respuesta (no en CSV): ['genere_t', 'estado_t', 'partos']
+Test de obtener animal por ID completado con éxito.
+PASSED      [ 42%]
+new_tests/animals/test_animals_integration.py::test_animal_crud_workflow 
+1. CREACIÓN DE ANIMAL
+Creando animal con nombre: Integration_0008c93a
+Animal creado con ID: 378
+
+2. OBTENCIÓN DE ANIMAL POR ID
+Obteniendo animal con ID: 378
+Animal obtenido correctamente: Integration_0008c93a
+
+3. ACTUALIZACIÓN DE ANIMAL
+Actualizando animal con ID 378 - Nuevo nombre: Updated_Integration_0008c93a
+Animal actualizado correctamente: Updated_Integration_0008c93a
+
+4. LISTADO DE ANIMALES
+Animal encontrado y verificado: Updated_Integration_0008c93a
+
+5. ELIMINACIÓN DE ANIMAL
+Eliminando animal con ID: 378
+Animal eliminado correctamente
+
+6. VERIFICACIÓN DE ELIMINACIÓN EN LISTA
+Animal no encontrado en la lista después de eliminarlo (correcto)
+
+Test de integración CRUD completado con éxito.
+PASSED [ 50%]
+new_tests/animals/test_animals_integration.py::test_animal_with_partos 
+1. CREACIÓN DE ANIMAL HEMBRA
+Hembra creada con ID: 379
+
+2. AÑADIR PARTO
+Parto añadido con ID: 245
+
+3. VERIFICAR PARTO EN ANIMAL
+Parto verificado correctamente en el animal
+
+4. VERIFICAR QUE LOS PARTOS NO PUEDAN ELIMINARSE (REGLA DE NEGOCIO)
+Verificado: Los partos no pueden eliminarse (son registros históricos permanentes)
+Animal eliminado correctamente
+
+Test de animal con partos completado con éxito.
+PASSED [ 57%]
+new_tests/animals/test_animals_list.py::test_list_animals 
+Probando listar animales: http://localhost:8000/api/v1/animals/
+Código de estado: 200
+Número de animales encontrados: 10
+Ejemplo de animal: {'nom': 'AnimalParcial53464', 'genere': 'F', 'explotacio': 'TestExplotacio', 'estado': 'OK', 'alletar': '0', 'dob': '01/01/2021', 'mare': None, 'pare': None, 'quadra': None, 'cod': 'COD53464', 'num_serie': None, 'part': None, 'genere_t': None, 'estado_t': None, 'id': 119, 'partos': {'total': 0, 'ultimo': None, 'items': [], 'first_date': None, 'last_date': None}, 'created_at': '02/04/2025', 'updated_at': '02/04/2025'}
+Test de listar animales completado con éxito.
+PASSED         [ 64%]
+new_tests/animals/test_animals_list.py::test_list_animals_with_filters 
+Probando listar animales con filtro: http://localhost:8000/api/v1/animals/?explotacio=TestExplotacio
+Código de estado: 200
+Número de animales encontrados con filtro {'explotacio': 'TestExplotacio'}: 10
+
+Probando listar animales con filtro: http://localhost:8000/api/v1/animals/?genere=M
+Código de estado: 200
+Número de animales encontrados con filtro {'genere': 'M'}: 10
+
+Probando listar animales con filtro: http://localhost:8000/api/v1/animals/?estado=OK
+Código de estado: 200
+Número de animales encontrados con filtro {'estado': 'OK'}: 10
+
+Probando listar animales con filtro: http://localhost:8000/api/v1/animals/?alletar=0
+Código de estado: 200
+Número de animales encontrados con filtro {'alletar': '0'}: 10
+
+Probando listar animales con filtro: http://localhost:8000/api/v1/animals/?search=Test
+Código de estado: 200
+Número de animales encontrados con filtro {'search': 'Test'}: 10
+Test de listar animales con filtros individuales completado con éxito.
+PASSED [ 71%]
+new_tests/animals/test_animals_list.py::test_list_animals_with_combined_filters 
+Probando listar animales con filtros combinados: http://localhost:8000/api/v1/animals/?explotacio=TestExplotacio&genere=F
+Código de estado: 200
+Número de animales encontrados con filtros combinados {'explotacio': 'TestExplotacio', 'genere': 'F'}: 5
+
+Probando listar animales con filtros combinados: http://localhost:8000/api/v1/animals/?estado=OK&alletar=0
+Código de estado: 200
+Número de animales encontrados con filtros combinados {'estado': 'OK', 'alletar': '0'}: 10
+
+Probando listar animales con filtros combinados: http://localhost:8000/api/v1/animals/?explotacio=TestExplotacio&search=Test
+Código de estado: 200
+Número de animales encontrados con filtros combinados {'explotacio': 'TestExplotacio', 'search': 'Test'}: 1
+Test de listar animales con filtros combinados completado con éxito.
+PASSED [ 78%]
+new_tests/animals/test_animals_update.py::test_update_animal_partial 
+Probando actualizar parcialmente un animal: http://localhost:8000/api/v1/animals/380
+Código de estado: 200
+Test de actualización parcial completado con éxito.
+PASSED [ 85%]
+new_tests/animals/test_animals_update.py::test_update_animal_complete 
+Probando actualizar completamente un animal: http://localhost:8000/api/v1/animals/381
+Género del animal: M, usando alletar=0
+Código de estado: 200
+Test de actualización completa completado con éxito.
+PASSED [ 92%]
+new_tests/animals/test_animals_update.py::test_update_animal_invalid_data 
+Probando actualizar animal con datos inválidos - Género inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","genere"],"msg":"Value error, Género inválido","input":"X","ctx":{"error":{}}}]}
+
+Probando actualizar animal con datos inválidos - Estado inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","estado"],"msg":"Value error, Estado inválido","input":"INVALID","ctx":{"error":{}}}]}
+
+Probando actualizar animal con datos inválidos - Fecha de nacimiento con formato inválido
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","dob"],"msg":"Value error, La fecha debe estar en formato DD/MM/YYYY","input":"2022-01-01","ctx":{"error":{}}}]}
+Test de validación de datos al actualizar animales completado con éxito.
+PASSED [100%]
+
+============================= 14 passed in 3.62s ==============================

@@ -9,6 +9,7 @@ class ImportStatus(str, Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    COMPLETED_ERR = "completed_err"
 
 class ImportResult(BaseModel):
     """Resultado de una importación"""

@@ -74,7 +74,7 @@ async def test_create_animal_add_parto_verify_dashboard():
         "genere": Genere.FEMELLA.value,
         "estado": Estado.OK.value,
         "alletar": True,
-        "data_naixement": dob.strftime("%d/%m/%Y"),
+        "dob": dob.strftime("%d/%m/%Y"),
         "quadra": "Q1"
     }
     

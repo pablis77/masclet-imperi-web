@@ -33,7 +33,7 @@ def test_female_animal(auth_token):
         "genere": "F",  # Femenino
         "explotacio": "Gurans",
         "estado": "OK",
-        "alletar": "NO"  # No amamanta
+        "alletar": "0"  # No amamanta (usar valores numéricos según los estándares)
     }
     
     print(f"\nCreando animal femenino de prueba...")

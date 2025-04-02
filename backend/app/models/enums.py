@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import TypedDict  # Añadimos esta importación
+from enum import Enum, auto
+from typing import TypedDict  
 
 class Genere(str, Enum):
     MASCLE = "M"     # Macho
@@ -31,3 +31,11 @@ class UIStyles(TypedDict):
     warning: UIStyle
     error: UIStyle
     info: UIStyle
+
+class ImportStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing" 
+    COMPLETED = "completed"
+    COMPLETED_ERR = "completed_err"
+    FAILED = "failed"
+    CANCELLED = "cancelled"

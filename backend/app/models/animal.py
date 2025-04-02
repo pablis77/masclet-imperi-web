@@ -128,7 +128,7 @@ class Part(models.Model):
     animal: fields.ForeignKeyRelation["Animal"] = fields.ForeignKeyField(
         "models.Animal", related_name="parts", on_delete=fields.CASCADE
     )
-    part = fields.DateField()
+    part = fields.DateField()  # Fecha del parto
     GenereT = fields.CharField(max_length=1, description="Gènere del terner (M/F/E)")
     EstadoT = fields.CharField(max_length=3, default="OK", description="Estat del terner (OK/DEF)")
     numero_part = fields.IntField(default=1)
@@ -141,15 +141,15 @@ class Part(models.Model):
         ordering = ["-part", "animal"]
 
     async def to_dict(self) -> dict:
-        # Devolvemos el animal_id directamente desde la clave foránea
+        """Convierte el modelo a diccionario"""
         return {
             "id": self.id,
-            "animal_id": self.animal_id,  
+            "animal_id": self.animal_id,
             "part": self.part.strftime("%d/%m/%Y") if self.part else None,
             "GenereT": self.GenereT,
             "EstadoT": self.EstadoT,
             "numero_part": self.numero_part,
             "observacions": self.observacions,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "created_at": self.created_at.strftime("%d/%m/%Y") if self.created_at else None,
+            "updated_at": self.updated_at.strftime("%d/%m/%Y") if self.updated_at else None
         }

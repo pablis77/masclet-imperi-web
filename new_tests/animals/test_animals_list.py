@@ -90,14 +90,13 @@ async def test_list_animals(auth_token):
 
 @pytest.mark.asyncio
 async def test_list_animals_with_filters(auth_token):
-    """Test para el endpoint de listar animales con filtros."""
-    # Probar diferentes combinaciones de filtros
+    """Test para el endpoint de listar animales con filtros individuales."""
+    # Probar filtros individuales
     filters = [
-        {"explotacio": "Gurans"},
+        {"explotacio": "TestExplotacio"},
         {"genere": "M"},
         {"estado": "OK"},
         {"alletar": "0"},
-        {"explotacio": "Gurans", "genere": "F"},
         {"search": "Test"}
     ]
     
@@ -110,7 +109,7 @@ async def test_list_animals_with_filters(auth_token):
         
         headers = {"Authorization": f"Bearer {auth_token}"}
         
-        print(f"\nProbando listar animales con filtros: {url}")
+        print(f"\nProbando listar animales con filtro: {url}")
         
         try:
             # Realizar la solicitud GET para listar animales con filtros
@@ -149,12 +148,78 @@ async def test_list_animals_with_filters(auth_token):
                 for animal in data["data"]["items"]:
                     assert animal["alletar"] == filter_params["alletar"], f"El filtro de alletar no se aplicó correctamente: {animal['alletar']} != {filter_params['alletar']}"
             
-            print(f"Número de animales encontrados con filtros {filter_params}: {len(data['data']['items'])}")
+            print(f"Número de animales encontrados con filtro {filter_params}: {len(data['data']['items'])}")
             
         except Exception as e:
-            print(f"Error durante la solicitud con filtros {filter_params}: {e}")
+            print(f"Error durante la solicitud con filtro {filter_params}: {e}")
             import traceback
             traceback.print_exc()
-            assert False, f"Excepción durante la solicitud HTTP con filtros {filter_params}."
+            assert False, f"Excepción durante la solicitud HTTP con filtro {filter_params}."
     
-    print("Test de listar animales con filtros completado con éxito.")
+    print("Test de listar animales con filtros individuales completado con éxito.")
+
+@pytest.mark.asyncio
+async def test_list_animals_with_combined_filters(auth_token):
+    """Test para el endpoint de listar animales con filtros combinados."""
+    # Probar combinaciones de filtros
+    filters = [
+        {"explotacio": "TestExplotacio", "genere": "F"},
+        {"estado": "OK", "alletar": "0"},
+        {"explotacio": "TestExplotacio", "search": "Test"}
+    ]
+    
+    for filter_params in filters:
+        # Construir la URL con los parámetros de consulta
+        url = f"{BASE_URL}/?"
+        for key, value in filter_params.items():
+            url += f"{key}={value}&"
+        url = url.rstrip("&")  # Eliminar el último '&'
+        
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        
+        print(f"\nProbando listar animales con filtros combinados: {url}")
+        
+        try:
+            # Realizar la solicitud GET para listar animales con filtros
+            response = requests.get(url, headers=headers)
+            
+            print(f"Código de estado: {response.status_code}")
+            
+            assert response.status_code == 200, f"Error: {response.status_code} - {response.text}"
+            data = response.json()
+            
+            # Verificar que la respuesta tiene la estructura correcta
+            assert "status" in data, "La respuesta no contiene el campo 'status'"
+            assert data["status"] == "success", f"El estado no es 'success', es '{data['status']}'"
+            assert "data" in data, "La respuesta no contiene el campo 'data'"
+            
+            # Verificar que data contiene los campos de paginación
+            assert "total" in data["data"], "Falta el campo 'total' en la paginación"
+            assert "offset" in data["data"], "Falta el campo 'offset' en la paginación"
+            assert "limit" in data["data"], "Falta el campo 'limit' en la paginación"
+            assert "items" in data["data"], "Falta el campo 'items' en la paginación"
+            
+            # Verificar que todos los filtros se aplicaron correctamente
+            if data["data"]["items"]:
+                for animal in data["data"]["items"]:
+                    # Comprobar cada filtro aplicado
+                    for key, value in filter_params.items():
+                        if key == "explotacio":
+                            assert animal["explotacio"] == value, f"El filtro de explotación no se aplicó correctamente: {animal['explotacio']} != {value}"
+                        elif key == "genere":
+                            assert animal["genere"] == value, f"El filtro de género no se aplicó correctamente: {animal['genere']} != {value}"
+                        elif key == "estado":
+                            assert animal["estado"] == value, f"El filtro de estado no se aplicó correctamente: {animal['estado']} != {value}"
+                        elif key == "alletar":
+                            assert animal["alletar"] == value, f"El filtro de alletar no se aplicó correctamente: {animal['alletar']} != {value}"
+                        # El filtro search es más complejo y no se verifica aquí
+            
+            print(f"Número de animales encontrados con filtros combinados {filter_params}: {len(data['data']['items'])}")
+            
+        except Exception as e:
+            print(f"Error durante la solicitud con filtros combinados {filter_params}: {e}")
+            import traceback
+            traceback.print_exc()
+            assert False, f"Excepción durante la solicitud HTTP con filtros combinados {filter_params}."
+    
+    print("Test de listar animales con filtros combinados completado con éxito.")

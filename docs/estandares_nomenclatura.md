@@ -99,3 +99,41 @@ Esto permite que el frontend muestre la información relevante para el usuario m
 
 * Es solo un campo técnico para la base de datos
 * No tiene significado de negocio
+
+## mas reglas del programa
+
+1. Sobre los nombres de campos y el estándar
+El cambio de data_naixement a dob en los tests resalta la importancia de mantener una nomenclatura estándar en todo el sistema. La implicación principal es que:
+
+Todos los componentes del sistema (backend, frontend, importación) deben usar consistentemente dob en lugar de data_naixement
+Cualquier código existente que use data_naixement debe ser actualizado para cumplir con los estándares de nomenclatura documentados
+2. Sobre el manejo de duplicados
+El uso de timestamps en los nombres de animales para evitar duplicados indica que:
+
+El sistema debe tener mecanismos robustos para evitar duplicados en importaciones repetidas
+La generación de identificadores únicos debería ser parte de la lógica de negocio del sistema
+Sería recomendable implementar validaciones que detecten duplicados antes de intentar insertarlos
+3. Sobre el manejo de estados
+Al hacer la comprobación de estados insensible a mayúsculas y añadir "FAILED" como estado válido:
+
+El sistema debe manejar consistentemente los estados de importación (debe decidirse si se usarán mayúsculas o minúsculas)
+La enumeración ImportStatus debe incluir todos los estados posibles (PENDING, PROCESSING, COMPLETED, FAILED)
+El frontend debe estar preparado para manejar todos estos estados posibles
+4. Sobre la validación de partos
+El asegurar que no hay campos de partos a medias (con fecha pero sin géneros o estados) indica que:
+
+El sistema debe validar que si se proporciona una fecha de parto, también deben proporcionarse los campos GenereT y EstadoT
+Se requiere una validación condicional: si part tiene valor, entonces GenereT y EstadoT no pueden ser nulos
+Los formularios en el frontend deberían reflejar esta lógica, haciendo obligatorios estos campos cuando se introduce una fecha de parto
+5. Sobre el manejo de datos vacíos
+Los cambios en test_import_with_empty_fields destacan que:
+
+El sistema debe ser robusto ante datos faltantes en campos no obligatorios
+Los campos obligatorios deben estar claramente identificados y validados
+Es importante que la aplicación funcione correctamente en entornos de campo donde puede ser difícil completar todos los datos
+6. Sobre el flujo de trabajo de importación
+Los tests revelan un proceso de importación en múltiples pasos:
+
+El sistema permite primero subir un archivo CSV
+Luego procesa los registros uno por uno, pudiendo completar algunos y fallar en otros
+El resultado de la importación debe proporcionar información clara sobre los éxitos y errores
