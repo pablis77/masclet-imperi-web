@@ -27,7 +27,6 @@ def test_token():
     }
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Endpoint puede devolver error 500 - Pendiente de revisión en backend")
 async def test_get_dashboard_combined(test_token):
     """Test para verificar que se puede obtener la información combinada del dashboard."""
     url = f"{BASE_URL}api/v1/dashboard/combined/"
@@ -66,7 +65,6 @@ async def test_get_dashboard_combined(test_token):
     print("Test de información combinada completado con éxito.")
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Endpoint puede devolver error 500 - Pendiente de revisión en backend")
 async def test_get_dashboard_combined_with_filters(test_token):
     """Test para verificar que se pueden aplicar filtros a la información combinada."""
     # Filtrar por explotación específica (si existe)
@@ -83,13 +81,13 @@ async def test_get_dashboard_combined_with_filters(test_token):
         pytest.skip("No hay explotaciones disponibles para probar el filtrado")
         return
     
-    # Obtener ID de la primera explotación
-    explotacio_id = explotacions_data[0]["id"]
+    # Obtener el valor de explotacio de la primera explotación
+    explotacio = explotacions_data[0]["explotacio"]
     
     # URL con filtro de explotación
-    filter_url = f"{BASE_URL}api/v1/dashboard/combined/?explotacio_id={explotacio_id}"
+    filter_url = f"{BASE_URL}api/v1/dashboard/combined/?explotacio={explotacio}"
     
-    print(f"\nProbando filtrar información combinada por explotación ID {explotacio_id}: {filter_url}")
+    print(f"\nProbando filtrar información combinada por explotación {explotacio}: {filter_url}")
     
     # Realizar la solicitud GET para obtener la información filtrada
     filter_response = requests.get(filter_url, headers=test_token)

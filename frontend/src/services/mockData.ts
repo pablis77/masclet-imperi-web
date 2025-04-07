@@ -6,15 +6,13 @@ import type { UserRole } from './authService';
 // Tipos básicos
 export interface Animal {
   id: number;
-  explotacio_id: number;
+  explotacio: string;
   nom: string;
   genere: 'M' | 'F';
-  estat: 'ACT' | 'DEF';
-  alletar: 'NO' | '1' | '2';
-  pare_id?: number | null;
-  pare_nom?: string | null;
-  mare_id?: number | null;
-  mare_nom?: string | null;
+  estado: 'OK' | 'DEF';
+  alletar: '0' | '1' | '2';
+  pare?: string | null;
+  mare?: string | null;
   quadra?: string | null;
   cod?: string | null;
   num_serie?: string | null;
@@ -25,15 +23,16 @@ export interface Animal {
 
 export interface Explotacio {
   id: number;
-  nom: string;  // Cambiado de nombre a nom para coincidir con el backend
+  descripcion: string;  // Nombre descriptivo de la explotación
+  explotacio: string;   // Identificador único de la explotación
   direccion?: string;
-  explotaci?: string;  // Cambiado de codigo a explotaci
-  responsable?: string;
+  municipio?: string;
+  provincia?: string;
+  cp?: string;
   telefono?: string;
   email?: string;
+  responsable?: string;
   animal_count?: number; // Cantidad de animales en la explotación
-  region?: string; // Añadido para filtrado por región
-  activa?: boolean; // Añadido para coincidir con el backend
   created_at: string;
   updated_at: string;
 }
@@ -89,12 +88,12 @@ export const mockAnimals: Animal[] = [
   {
     id: 1,
     nom: 'Lucero',
-    explotacio_id: 1,
+    explotacio: '1',
     genere: 'M',
-    estat: 'ACT',
-    alletar: 'NO',
-    pare_id: null,
-    mare_id: null,
+    estado: 'OK',
+    alletar: '0',
+    pare: null,
+    mare: null,
     quadra: 'Q1',
     cod: 'A001',
     num_serie: 'SN001',
@@ -105,13 +104,12 @@ export const mockAnimals: Animal[] = [
   {
     id: 2,
     nom: 'Estrella',
-    explotacio_id: 1,
+    explotacio: '1',
     genere: 'F',
-    estat: 'ACT',
+    estado: 'OK',
     alletar: '1',
-    pare_id: 1,
-    pare_nom: 'Lucero',
-    mare_id: null,
+    pare: 'Lucero',
+    mare: null,
     quadra: 'Q2',
     cod: 'A002',
     num_serie: 'SN002',
@@ -122,12 +120,12 @@ export const mockAnimals: Animal[] = [
   {
     id: 3,
     nom: 'Luna',
-    explotacio_id: 2,
+    explotacio: '2',
     genere: 'F',
-    estat: 'ACT',
+    estado: 'OK',
     alletar: '2',
-    pare_id: null,
-    mare_id: null,
+    pare: null,
+    mare: null,
     quadra: 'Q1',
     cod: 'A003',
     num_serie: 'SN003',
@@ -138,14 +136,12 @@ export const mockAnimals: Animal[] = [
   {
     id: 4,
     nom: 'Tornado',
-    explotacio_id: 2,
+    explotacio: '2',
     genere: 'M',
-    estat: 'DEF',
-    alletar: 'NO',
-    pare_id: 1,
-    pare_nom: 'Lucero',
-    mare_id: 2,
-    mare_nom: 'Estrella',
+    estado: 'DEF',
+    alletar: '0',
+    pare: 'Lucero',
+    mare: 'Estrella',
     quadra: 'Q3',
     cod: 'A004',
     num_serie: 'SN004',
@@ -174,73 +170,78 @@ export const mockAnimals: Animal[] = [
 export const mockExplotacions: Explotacio[] = [
   {
     id: 1,
-    nom: 'Explotación Norte',
-    direccion: 'Camino de los Molinos, 23',
-    explotaci: 'EXP001',
+    descripcion: 'Granja Los Olivos',
+    explotacio: 'EXP001',
+    direccion: 'Camino de los Olivos, 23',
+    municipio: 'Valencia',
+    provincia: 'Valencia',
+    cp: '46010',
     responsable: 'Juan Martínez',
-    telefono: '654123987',
-    email: 'juan@explotacionnorte.com',
-    animal_count: 3,
-    region: 'norte',
-    activa: true,
-    created_at: '2023-01-01T09:00:00Z',
-    updated_at: '2023-01-01T09:00:00Z'
+    telefono: '655123456',
+    email: 'olivos@ejemplo.com',
+    animal_count: 25,
+    created_at: '2022-10-01T09:00:00Z',
+    updated_at: '2023-01-05T14:30:00Z'
   },
   {
     id: 2,
-    nom: 'Explotación Sur',
+    descripcion: 'Explotación Sur',
+    explotacio: 'EXP002',
     direccion: 'Carretera de Valencia, km 12',
-    explotaci: 'EXP002',
+    municipio: 'Alicante',
+    provincia: 'Alicante',
+    cp: '03002',
     responsable: 'María Gómez',
     telefono: '678456321',
-    email: 'maria@explotacionsur.com',
-    animal_count: 2,
-    region: 'sur',
-    activa: true,
-    created_at: '2023-01-02T10:30:00Z',
-    updated_at: '2023-01-02T10:30:00Z'
+    email: 'sur@ejemplo.com',
+    animal_count: 20,
+    created_at: '2022-11-01T10:00:00Z',
+    updated_at: '2023-01-10T10:00:00Z'
   },
   {
     id: 3,
-    nom: 'Granja El Amanecer',
+    descripcion: 'Granja El Amanecer',
+    explotacio: 'EXP003',
     direccion: 'Partida La Vall, s/n',
-    explotaci: 'EXP003',
+    municipio: 'Castellón',
+    provincia: 'Castellón',
+    cp: '12001',
     responsable: 'Pedro Sánchez',
     telefono: '612345678',
-    email: 'pedro@elamanecer.com',
-    animal_count: 0,
-    region: 'este',
-    activa: true,
-    created_at: '2023-01-03T11:15:00Z',
-    updated_at: '2023-01-03T11:15:00Z'
+    email: 'amanecer@ejemplo.com',
+    animal_count: 15,
+    created_at: '2022-12-01T11:00:00Z',
+    updated_at: '2023-01-15T11:00:00Z'
   },
   {
     id: 4,
-    nom: 'Ganadería Occidental',
+    descripcion: 'Ganadería Occidental',
+    explotacio: 'EXP004',
     direccion: 'Calle Mayor, 45',
-    explotaci: 'EXP004',
+    municipio: 'Murcia',
+    provincia: 'Murcia',
+    cp: '30001',
     responsable: 'Ana López',
     telefono: '698765432',
-    email: 'ana@ganaderiaoccidental.com',
-    animal_count: 0,
-    region: 'oeste',
-    activa: true,
-    created_at: '2023-01-04T14:00:00Z',
-    updated_at: '2023-01-04T14:00:00Z'
+    email: 'occidental@ejemplo.com',
+    animal_count: 10,
+    created_at: '2023-01-01T12:00:00Z',
+    updated_at: '2023-01-20T12:00:00Z'
   },
   {
     id: 5,
-    nom: 'Gurans',
+    descripcion: 'Gurans',
+    explotacio: 'EXP005',
     direccion: 'Carretera del Norte, km 5',
-    explotaci: 'EXP005',
+    municipio: 'Barcelona',
+    provincia: 'Barcelona',
+    cp: '08001',
     responsable: 'Carlos Rodríguez',
     telefono: '634567890',
-    email: 'carlos@gurans.com',
-    animal_count: 0,
-    region: 'norte',
-    activa: true,
-    created_at: '2023-01-05T16:45:00Z',
-    updated_at: '2023-01-05T16:45:00Z'
+    email: 'gurans@ejemplo.com',
+    animal_count: 5,
+    created_at: '2023-01-05T13:00:00Z',
+    updated_at: '2023-01-25T13:00:00Z'
   }
 ];
 
@@ -419,9 +420,9 @@ export const mockDashboardData = {
   totalAnimals: mockAnimals.length,
   maleAnimals: mockAnimals.filter(a => a.genere === 'M').length,
   femaleAnimals: mockAnimals.filter(a => a.genere === 'F').length,
-  okAnimals: mockAnimals.filter(a => a.estat === 'ACT').length,
-  defAnimals: mockAnimals.filter(a => a.estat === 'DEF').length,
-  allettingAnimals: mockAnimals.filter(a => a.alletar !== 'NO').length,
+  okAnimals: mockAnimals.filter(a => a.estado === 'OK').length,
+  defAnimals: mockAnimals.filter(a => a.estado === 'DEF').length,
+  allettingAnimals: mockAnimals.filter(a => a.alletar !== '0').length,
   explotacionsCount: mockExplotacions.length,
   recentParts: mockParts.slice(0, 3).map(p => ({
     id: p.id,
@@ -470,7 +471,7 @@ export const getExplotacionById = (id: number) => {
 
 // Para el endpoint animals por explotación
 export const getAnimalsByExplotacion = (explotacioId: number) => {
-  const filteredAnimals = mockAnimals.filter(a => a.explotacio_id === explotacioId);
+  const filteredAnimals = mockAnimals.filter(animal => animal.explotacio === String(explotacioId));
   return {
     items: filteredAnimals,
     total: filteredAnimals.length,

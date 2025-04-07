@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { AnimalFilters as AnimalFiltersType } from '../../services/animalService';
-import { getAllExplotaciones } from '../../services/explotacionService';
+import * as explotacionService from '../../services/explotacionService';
 import type { Explotacion } from '../../services/explotacionService';
 
 interface AnimalFiltersProps {
@@ -23,7 +23,7 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
     const loadExplotaciones = async () => {
       try {
         setLoading(true);
-        const data = await getAllExplotaciones();
+        const data = await explotacionService.getAllExplotaciones();
         setExplotaciones(data);
       } catch (error) {
         console.error('Error al cargar explotaciones:', error);
@@ -38,22 +38,11 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     
-    // Manejar checkboxes
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
+    // Manejar selects de explotación
+    if (name === 'explotacio') {
       setFilters(prev => ({
         ...prev,
-        [name]: checked
-      }));
-      return;
-    }
-    
-    // Manejar selects numéricos
-    if (name === 'explotacio_id') {
-      const numValue = value === '' ? undefined : parseInt(value, 10);
-      setFilters(prev => ({
-        ...prev,
-        [name]: numValue
+        [name]: value === '' ? undefined : value
       }));
       return;
     }
@@ -107,34 +96,17 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
               Explotación
             </label>
             <select
-              name="explotacio_id"
-              value={filters.explotacio_id || ''}
+              name="explotacio"
+              value={filters.explotacio || ''}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
             >
               <option value="">Todas</option>
               {explotaciones.map(explotacion => (
-                <option key={explotacion.id} value={explotacion.id}>
-                  {explotacion.nombre}
+                <option key={explotacion.id} value={explotacion.codigo}>
+                  {explotacion.codigo}
                 </option>
               ))}
-            </select>
-          </div>
-
-          {/* Género */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Género
-            </label>
-            <select
-              name="genere"
-              value={filters.genere || ''}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">Todos</option>
-              <option value="M">Macho</option>
-              <option value="F">Hembra</option>
             </select>
           </div>
 
@@ -144,31 +116,33 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
               Estado
             </label>
             <select
-              name="estat"
-              value={filters.estat || ''}
+              name="estado"
+              value={filters.estado || ''}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
             >
               <option value="">Todos</option>
-              <option value="ACT">Activo</option>
+              <option value="OK">Activo</option>
               <option value="DEF">Baja</option>
             </select>
           </div>
 
-          {/* Amamantando */}
+          {/* Amamantamiento */}
           <div className="mb-3">
-            <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                name="alletar"
-                checked={!!filters.alletar}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <span className="ml-2">
-                Solo amamantando
-              </span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Amamantamiento
             </label>
+            <select
+              name="alletar"
+              value={filters.alletar || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Todos</option>
+              <option value="0">No amamantando</option>
+              <option value="1">Amamantando 1 ternero</option>
+              <option value="2">Amamantando 2 terneros</option>
+            </select>
           </div>
 
           {/* Búsqueda */}
@@ -205,7 +179,7 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
               onClick={handleApplyFilters}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              Aplicar filtros
+              BUSCAR
             </button>
           </div>
         </>

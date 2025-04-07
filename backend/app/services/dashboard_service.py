@@ -4,20 +4,19 @@ from tortoise.functions import Count
 from tortoise.expressions import Q
 from app.models.animal import Animal, Genere, Estado, EstadoAlletar
 from app.models.animal import Part
-from app.models.explotacio import Explotacio
 from calendar import month_name
 import logging
 
 logger = logging.getLogger(__name__)
 
-async def get_dashboard_stats(explotacio_id: Optional[int] = None, 
-                             start_date: Optional[date] = None,
-                             end_date: Optional[date] = None) -> Dict:
+async def get_dashboard_stats(explotacio: Optional[str] = None, 
+                              start_date: Optional[date] = None,
+                              end_date: Optional[date] = None) -> Dict:
     """
     Obtiene estadísticas para el dashboard general o de una explotación específica.
     
     Args:
-        explotacio_id: ID de la explotación (opcional)
+        explotacio: Valor del campo explotacio para filtrar (opcional)
         start_date: Fecha de inicio para el periodo de análisis (opcional)
         end_date: Fecha de fin para el periodo de análisis (opcional)
         
@@ -34,15 +33,9 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     base_filter = {}
     explotacio_name = None
     
-    if explotacio_id:
-        base_filter["explotacio"] = explotacio_id
-        try:
-            explotacio = await Explotacio.get_or_none(id=explotacio_id)
-            if explotacio:
-                explotacio_name = explotacio.explotacio
-        except TypeError:
-            # Manejar el caso de los mocks en los tests
-            explotacio_name = "Granja Test"
+    if explotacio:
+        base_filter["explotacio"] = explotacio
+        explotacio_name = explotacio  # El nombre de la explotación es el mismo valor del campo
     
     # Estadísticas de animales
     animal_fecha_filter = {}
@@ -117,9 +110,14 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     
     # Estadísticas de partos
     parto_filter = {}
-    if explotacio_id:
-        # Para filtrar partos por explotación, necesitamos un join
-        parto_filter["animal__explotacio"] = explotacio_id
+    if explotacio:
+        # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
+        animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+        if animal_ids:
+            parto_filter["animal_id__in"] = list(animal_ids)  # Convertir a lista para evitar problemas con los mocks
+        else:
+            # Si no hay animales en esta explotación, forzar que no se devuelvan resultados
+            parto_filter["animal_id"] = -1  # ID inexistente
 
     # Aplicar filtro de fechas a los partos
     fecha_filter = {
@@ -206,22 +204,23 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     
     # Estadísticas de explotaciones (solo si no se filtra por explotación)
     explotaciones_stats = None
-    if not explotacio_id:
-        total_explotaciones = await Explotacio.all().count()
-        explotaciones_activas = await Explotacio.filter().count()
-        explotaciones_inactivas = total_explotaciones - explotaciones_activas
+    if not explotacio:
+        # Obtener lista de explotaciones únicas
+        explotaciones_valores = await Animal.all().distinct().values_list('explotacio', flat=True)
+        total_explotaciones = len(explotaciones_valores)
+        explotaciones_activas = total_explotaciones
+        explotaciones_inactivas = 0
         
         # Eliminamos la distribución por provincia ya que el campo no existe en el modelo
         por_provincia = {}
         
         # Ranking de explotaciones por número de animales
         ranking_animales = []
-        explotaciones = await Explotacio.all()
-        for explotacion in explotaciones:
-            count = await Animal.filter(explotacio=explotacion).count()
+        for explotacion_valor in explotaciones_valores:
+            count = await Animal.filter(explotacio=explotacion_valor).count()
             ranking_animales.append({
-                "id": explotacion.id,
-                "nombre": explotacion.explotacio,
+                "explotacio": explotacion_valor,
+                "nombre": explotacion_valor,
                 "animales": count
             })
         ranking_animales.sort(key=lambda x: x["animales"], reverse=True)
@@ -229,11 +228,15 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
         
         # Ranking de explotaciones por número de partos
         ranking_partos = []
-        for explotacion in explotaciones:
-            count = await Part.filter(animal__explotacio=explotacion).count()
+        for explotacion_valor in explotaciones_valores:
+            animal_ids = await Animal.filter(explotacio=explotacion_valor).values_list('id', flat=True)
+            if animal_ids:
+                count = await Part.filter(animal_id__in=animal_ids).count()
+            else:
+                count = 0
             ranking_partos.append({
-                "id": explotacion.id,
-                "nombre": explotacion.explotacio,
+                "explotacio": explotacion_valor,
+                "nombre": explotacion_valor,
                 "partos": count
             })
         ranking_partos.sort(key=lambda x: x["partos"], reverse=True)
@@ -357,7 +360,7 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
             "tasa_supervivencia": tasa_supervivencia,
             "distribucion_anual": distribucion_anual
         },
-        "explotacio_id": explotacio_id,
+        "explotacio": explotacio,
         "nombre_explotacio": explotacio_name,
         "periodo": {
             "inicio": start_date,
@@ -372,14 +375,14 @@ async def get_dashboard_stats(explotacio_id: Optional[int] = None,
     
     return stats
 
-async def get_explotacio_dashboard(explotacio_id: int,
+async def get_explotacio_dashboard(explotacio_value: str,
                                    start_date: Optional[date] = None,
                                    end_date: Optional[date] = None) -> Dict:
     """
-    Obtiene estadísticas específicas para una explotación.
+    Obtiene estadísticas específicas para una explotación usando su valor.
     
     Args:
-        explotacio_id: ID de la explotación
+        explotacio_value: Valor del campo explotacio para filtrar
         start_date: Fecha de inicio para el periodo de análisis (opcional)
         end_date: Fecha de fin para el periodo de análisis (opcional)
         
@@ -388,9 +391,9 @@ async def get_explotacio_dashboard(explotacio_id: int,
     """
     try:
         # Verificar que la explotación existe
-        explotacio = await Explotacio.get_or_none(id=explotacio_id)
-        if not explotacio:
-            raise ValueError(f"La explotación con ID {explotacio_id} no existe")
+        exists = await Animal.filter(explotacio=explotacio_value).exists()
+        if not exists:
+            raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
         
         # Si no se especifican fechas, usar el último año
         if not end_date:
@@ -398,8 +401,8 @@ async def get_explotacio_dashboard(explotacio_id: int,
         if not start_date:
             start_date = end_date - timedelta(days=365)
         
-        # Filtro base para todos los queries - usar 'explotacio' en lugar de 'explotacio_id'
-        base_filter = {"explotacio": explotacio_id}
+        # Filtro base para todos los queries
+        base_filter = {"explotacio": explotacio_value}
         
         # Estadísticas de animales
         animal_fecha_filter = {}
@@ -465,7 +468,7 @@ async def get_explotacio_dashboard(explotacio_id: int,
         }
         
         # Estadísticas de partos
-        parto_filter = {"animal__explotacio": explotacio_id}
+        parto_filter = {"animal__explotacio": explotacio_value}
 
         # Aplicar filtro de fechas a los partos
         fecha_filter = {
@@ -527,9 +530,11 @@ async def get_explotacio_dashboard(explotacio_id: int,
         
         # Construir el resultado
         return {
+            # Incluimos el campo explotacio directamente en la raíz
+            "explotacio": explotacio_value,
             "explotacion": {
-                "id": explotacio.id,
-                "nombre": explotacio.explotacio
+                "explotacio": explotacio_value,
+                "nombre": explotacio_value
             },
             "periodo": {
                 "inicio": start_date.isoformat(),
@@ -559,7 +564,7 @@ async def get_explotacio_dashboard(explotacio_id: int,
         logger.error(f"Error en get_explotacio_dashboard: {str(e)}", exc_info=True)
         raise
 
-async def get_partos_dashboard(explotacio_id: Optional[int] = None,
+async def get_partos_dashboard(explotacio: Optional[str] = None,
                               animal_id: Optional[int] = None,
                               start_date: Optional[date] = None,
                               end_date: Optional[date] = None) -> Dict:
@@ -567,7 +572,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
     Obtiene estadísticas detalladas de partos para el dashboard.
     
     Args:
-        explotacio_id: ID de la explotación (opcional)
+        explotacio: Valor del campo explotacio para filtrar (opcional)
         animal_id: ID del animal para filtrar (opcional)
         start_date: Fecha de inicio para el periodo de análisis (opcional)
         end_date: Fecha de fin para el periodo de análisis (opcional)
@@ -599,33 +604,14 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         animals_in_explotacion = []
         
         # Para filtrar por explotación, necesitamos obtener primero los animales de esa explotación
-        if explotacio_id:
-            try:
-                explotacio = await Explotacio.get_or_none(id=explotacio_id)
-                if not explotacio:
-                    logger.warning(f"No se encontró explotación con ID {explotacio_id}")
-                    # Devolvemos datos vacíos en lugar de datos simulados
-                    return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
-                    
-                # Obtenemos IDs de animales de esta explotación
-                animals_in_explotacion = await Animal.filter(explotacio=explotacio_id).values_list('id', flat=True)
-                
-                # Si no hay animales, devolvemos datos vacíos
-                if not animals_in_explotacion:
-                    return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
-                    
-                # Si ya estamos filtrando por un animal específico, verificamos si pertenece a esta explotación
-                if animal_id and animal_id not in animals_in_explotacion:
-                    # El animal no pertenece a esta explotación
-                    return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
-                    
-                # Si no estamos filtrando por animal específico, filtramos por todos los de la explotación
-                if not animal_id:
-                    animal_filter = {"animal_id__in": animals_in_explotacion}
-                    
-            except Exception as e:
-                logger.error(f"Error al consultar explotación: {str(e)}")
-                return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
+        if explotacio:
+            animals_in_explotacion = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+            if not animal_id:
+                if animals_in_explotacion:
+                    animal_filter["animal_id__in"] = list(animals_in_explotacion)  # Convertir a lista para evitar problemas con los mocks
+                else:
+                    # Si no hay animales en esta explotación, forzar que no se devuelvan resultados
+                    animal_filter["animal_id"] = -1  # ID inexistente
         
         # Combinar filtros simples iniciales (solo después de procesar la explotación)
         combined_filter = {**animal_filter}
@@ -645,7 +631,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         
         # Si no hay partos, devolver valores predeterminados
         if total_partos == 0:
-            return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
+            return crear_respuesta_vacia_partos(start_date, end_date, explotacio)
     
         # ======= ANÁLISIS POR MES =======
         
@@ -723,7 +709,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         
         if total_partos > 0 and not animal_id:
             # Si estamos filtrando por explotación, ya tenemos los IDs de animales
-            if explotacio_id and animals_in_explotacion:
+            if explotacio and animals_in_explotacion:
                 animal_ids_to_check = animals_in_explotacion
             else:
                 # Si no filtramos por explotación, extraer IDs únicos de animales
@@ -810,10 +796,8 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         
         # Obtener nombre de explotación si corresponde
         nombre_explotacio = None
-        if explotacio_id:
-            explotacio = await Explotacio.get_or_none(id=explotacio_id)
-            if explotacio:
-                nombre_explotacio = explotacio.explotacio
+        if explotacio:
+            nombre_explotacio = explotacio
         
         # Nombre del animal si corresponde
         nombre_animal = None
@@ -833,7 +817,7 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
             "ultimo_mes": partos_ultimo_mes,
             "ultimo_año": total_partos,  # Esto es un alias para total
             "promedio_mensual": promedio_mensual,
-            "explotacio_id": explotacio_id,
+            "explotacio": explotacio,
             "nombre_explotacio": nombre_explotacio,
             "animal_id": animal_id,
             "nombre_animal": nombre_animal,
@@ -844,16 +828,16 @@ async def get_partos_dashboard(explotacio_id: Optional[int] = None,
         }
     except Exception as e:
         logger.error(f"Error en get_partos_dashboard: {str(e)}", exc_info=True)
-        return crear_respuesta_vacia_partos(start_date, end_date, explotacio_id)
+        return crear_respuesta_vacia_partos(start_date, end_date, explotacio)
 
-async def get_combined_dashboard(explotacio_id: Optional[int] = None,
+async def get_combined_dashboard(explotacio: Optional[str] = None,
                                 start_date: Optional[date] = None,
                                 end_date: Optional[date] = None) -> Dict:
     """
     Obtiene una vista combinada de todas las estadísticas para el dashboard.
     
     Args:
-        explotacio_id: ID de la explotación (opcional)
+        explotacio: Valor del campo explotacio para filtrar (opcional)
         start_date: Fecha de inicio para el periodo de análisis (opcional)
         end_date: Fecha de fin para el periodo de análisis (opcional)
         
@@ -867,21 +851,15 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
         start_date = end_date - timedelta(days=365)
     
     # Obtener estadísticas básicas
-    stats = await get_dashboard_stats(explotacio_id, start_date, end_date)
+    stats = await get_dashboard_stats(explotacio, start_date, end_date)
     
     # Filtro base para todos los queries
     base_filter = {}
     nombre_explotacio = None
     
-    if explotacio_id:
-        base_filter["explotacio"] = explotacio_id
-        try:
-            explotacio = await Explotacio.get_or_none(id=explotacio_id)
-            if explotacio:
-                nombre_explotacio = explotacio.explotacio
-        except TypeError:
-            # Manejar el caso de los mocks en los tests
-            nombre_explotacio = "Granja Test"
+    if explotacio:
+        base_filter["explotacio"] = explotacio
+        nombre_explotacio = explotacio
     
     # Estadísticas por cuadra con detalles (animales y partos)
     por_quadra = {}
@@ -899,7 +877,7 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
             # Animales en esta cuadra que han tenido partos
             animal_ids = await Animal.filter(**base_filter, quadra=cuadra).values_list('id', flat=True)
             
-            parto_filter = {"animal__id__in": animal_ids}
+            parto_filter = {"animal_id__in": animal_ids}
             total_partos_cuadra = await Part.filter(**parto_filter).count()
             
             # Partos en el periodo especificado
@@ -958,7 +936,7 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
         "por_quadra": por_quadra,
         "rendimiento_partos": rendimiento_partos,
         "tendencias": tendencias,
-        "explotacio_id": explotacio_id,
+        "explotacio": explotacio,
         "nombre_explotacio": nombre_explotacio,
         "periodo": {
             "inicio": start_date,
@@ -967,15 +945,14 @@ async def get_combined_dashboard(explotacio_id: Optional[int] = None,
     }
 
 # Función para crear respuesta vacía para partos (reemplaza a generar_datos_simulados)
-def crear_respuesta_vacia_partos(start_date, end_date, explotacio_id=None, animal_id=None):
+def crear_respuesta_vacia_partos(start_date, end_date, explotacio=None):
     """
     Crea una estructura de respuesta vacía para cuando no hay datos de partos.
     
     Args:
         start_date: Fecha de inicio del periodo
         end_date: Fecha de fin del periodo
-        explotacio_id: ID de la explotación (opcional)
-        animal_id: ID del animal (opcional)
+        explotacio: Valor del campo explotacio para filtrar (opcional)
         
     Returns:
         Dict: Estructura de respuesta vacía
@@ -1001,25 +978,8 @@ def crear_respuesta_vacia_partos(start_date, end_date, explotacio_id=None, anima
     
     # Obtener nombre de explotación si corresponde
     nombre_explotacio = None
-    if explotacio_id:
-        explotacio = None
-        try:
-            explotacio = Explotacio.get(id=explotacio_id)
-            if explotacio:
-                nombre_explotacio = explotacio.explotacio
-        except:
-            pass
-    
-    # Nombre del animal si corresponde
-    nombre_animal = None
-    if animal_id:
-        animal = None
-        try:
-            animal = Animal.get(id=animal_id)
-            if animal:
-                nombre_animal = animal.nom
-        except:
-            pass
+    if explotacio:
+        nombre_explotacio = explotacio
     
     return {
         "total": 0,
@@ -1035,24 +995,22 @@ def crear_respuesta_vacia_partos(start_date, end_date, explotacio_id=None, anima
         "ultimo_mes": 0,
         "ultimo_año": 0,
         "promedio_mensual": 0.0,
-        "explotacio_id": explotacio_id,
+        "explotacio": explotacio,
         "nombre_explotacio": nombre_explotacio,
-        "animal_id": animal_id,
-        "nombre_animal": nombre_animal,
         "periodo": {
             "inicio": start_date,
             "fin": end_date
         }
     }
 
-async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
+async def get_dashboard_resumen(explotacio: Optional[str] = None,
                               start_date: Optional[date] = None,
                               end_date: Optional[date] = None) -> Dict[str, Any]:
     """
     Obtiene un resumen general para el dashboard.
     
     Args:
-        explotacio_id: ID de la explotación (opcional)
+        explotacio: Valor del campo explotacio para filtrar (opcional)
         start_date: Fecha de inicio para el periodo de análisis (opcional)
         end_date: Fecha de fin para el periodo de análisis (opcional)
         
@@ -1070,16 +1028,10 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
         base_filter = {}
         nombre_explotacio = None
         
-        if explotacio_id:
-            # Obtener el nombre de la explotación a partir del ID para filtrar
-            explotacio = await Explotacio.get_or_none(id=explotacio_id)
-            if explotacio:
-                # Usamos el campo 'explotacio' de la explotación como filtro
-                nombre_explotacio = explotacio.explotacio
-                base_filter["explotacio"] = nombre_explotacio
-            else:
-                # Si no existe la explotación, devolver respuesta vacía
-                return crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id, nombre_explotacio)
+        if explotacio:
+            # Usar directamente el valor de explotación
+            base_filter["explotacio"] = explotacio
+            nombre_explotacio = explotacio
         
         # Estadísticas de animales
         total_animales = await Animal.filter(**base_filter).count()
@@ -1099,14 +1051,14 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
         
         # Estadísticas de partos - aplicando filtros por separado
         parto_query = Part
-        if explotacio_id and nombre_explotacio:
+        if explotacio and nombre_explotacio:
             # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
             animal_ids = await Animal.filter(explotacio=nombre_explotacio).values_list('id', flat=True)
             if animal_ids:
                 parto_query = parto_query.filter(animal_id__in=animal_ids)
             else:
                 # Si no hay animales en esta explotación, no habrá partos
-                return crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id, nombre_explotacio)
+                return crear_respuesta_vacia_resumen(start_date, end_date, explotacio, nombre_explotacio)
         
         # Aplicar filtros de fecha por separado
         if start_date:
@@ -1134,7 +1086,7 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
             "ratio_partos_animal": round(total_partos / total_animales, 2) if total_animales > 0 else 0,
             "promedio_partos_mensual": round(total_partos / max(1, (end_date.month - start_date.month + 12 * (end_date.year - start_date.year))), 2),
             "tendencias": tendencias,
-            "explotacio_id": explotacio_id,
+            "explotacio": explotacio,
             "nombre_explotacio": nombre_explotacio,
             "periodo": {
                 "inicio": start_date,
@@ -1143,17 +1095,17 @@ async def get_dashboard_resumen(explotacio_id: Optional[int] = None,
         }
     except Exception as e:
         logger.error(f"Error en get_dashboard_resumen: {str(e)}", exc_info=True)
-        return crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id, nombre_explotacio)
+        return crear_respuesta_vacia_resumen(start_date, end_date, explotacio, nombre_explotacio)
 
 # Función para crear respuesta vacía para el resumen del dashboard
-def crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id=None, nombre_explotacio=None):
+def crear_respuesta_vacia_resumen(start_date, end_date, explotacio=None, nombre_explotacio=None):
     """
     Crea una estructura de respuesta vacía para el resumen cuando no hay datos.
     
     Args:
         start_date: Fecha de inicio del periodo
         end_date: Fecha de fin del periodo
-        explotacio_id: ID de la explotación (opcional)
+        explotacio: Identificador de la explotación (opcional)
         nombre_explotacio: Nombre de la explotación (opcional)
         
     Returns:
@@ -1177,7 +1129,7 @@ def crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id=None, nomb
                 "valores": 0.0
             }
         },
-        "explotacio_id": explotacio_id,
+        "explotacio": explotacio,
         "nombre_explotacio": nombre_explotacio,
         "periodo": {
             "inicio": start_date,

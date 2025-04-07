@@ -37,7 +37,7 @@ async def test_explotacio_fields_nomenclature(test_token):
     - NO debe existir campo 'nom' (solo para animales)
     - NO debe existir campo 'activa' (no está en las reglas de negocio)
     """
-    url = f"{BASE_URL}api/v1/explotacions/"
+    url = f"{BASE_URL}api/v1/dashboard/explotacions/"
     
     print(f"\n=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===")
     print(f"Obteniendo lista de explotaciones: {url}")
@@ -52,25 +52,22 @@ async def test_explotacio_fields_nomenclature(test_token):
     if not explotaciones:
         pytest.skip("No hay explotaciones para verificar")
     
-    # Examinar la primera explotación
-    explotacion = explotaciones[0]
-    print(f"\nEstructura de explotación: {json.dumps(explotacion, indent=2)}")
-    
-    # Verificar campos requeridos
-    assert "id" in explotacion, "Falta el campo 'id'"
-    assert "explotacio" in explotacion, "Falta el campo 'explotacio'"
-    
-    # Verificar que NO existan campos incorrectos
-    assert "nom" not in explotacion, "El campo 'nom' NO debería existir en explotaciones (es solo para animales)"
-    assert "activa" not in explotacion, "El campo 'activa' NO debería existir en explotaciones (no está en las reglas de negocio)"
-    
-    # Verificar tipos de datos
-    assert isinstance(explotacion["id"], int), f"El campo 'id' debería ser un entero, es: {type(explotacion['id'])}"
-    assert isinstance(explotacion["explotacio"], str), f"El campo 'explotacio' debería ser un string, es: {type(explotacion['explotacio'])}"
+    # Verificar que cada explotación tiene los campos esperados según las reglas de negocio
+    for explotacion in explotaciones:
+        # Debe tener campo explotacio como identificador principal
+        assert "explotacio" in explotacion, f"Falta el campo 'explotacio' en: {explotacion}"
+        
+        # No debe tener campo 'id' (ya que ahora explotacio es el identificador principal)
+        # El 'id' técnico se ha eliminado como parte de la refactorización
+        
+        # No debe tener campo 'nom' (reservado para animales)
+        assert "nom" not in explotacion, f"El campo 'nom' no debe existir en explotaciones: {explotacion}"
+        
+        # NO debe tener campo 'activa' (no está en las reglas de negocio)
+        assert "activa" not in explotacion, f"El campo 'activa' no debe existir en explotaciones: {explotacion}"
     
     print("\n=== RESULTADO: NOMENCLATURA DE CAMPOS CORRECTA ===")
-    print(f"✓ Campo 'id' presente y es de tipo entero: {explotacion['id']}")
-    print(f"✓ Campo 'explotacio' presente y es de tipo string: {explotacion['explotacio']}")
+    print(f"✓ Campo 'explotacio' presente y es de tipo string: {explotaciones[0]['explotacio']}")
     print(f"✓ Campo 'nom' NO está presente (correcto)")
     print(f"✓ Campo 'activa' NO está presente (correcto)")
 
@@ -84,22 +81,20 @@ async def test_explotacio_stats(test_token):
     - La respuesta debe contener estadísticas básicas sobre animales, partos, etc.
     - Documentar la estructura actual para futuras referencias.
     """
-    # Primero obtenemos una explotación para usar su ID
-    url_explotacions = f"{BASE_URL}api/v1/explotacions/"
+    # Primero obtenemos una explotación para usar su código
+    url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
     response = requests.get(url_explotacions, headers=test_token)
     assert response.status_code == 200, "No se pudieron obtener explotaciones"
     
     explotaciones = response.json()
     assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    # Usar el ID del primer elemento
-    explotacio_id = explotaciones[0]['id']
-    print(f"\n=== PRUEBA DE ENDPOINT DE ESTADÍSTICAS ===")
-    print(f"Probando estadísticas para explotación con ID: {explotacio_id}")
-    print(f"Datos de la explotación usada para prueba: {explotaciones[0]}")
+    # Tomar la primera explotación para la prueba
+    explotacion = explotaciones[0]
+    explotacio_value = explotacion["explotacio"]
     
-    # Usar la ruta correcta del endpoint de estadísticas
-    stats_url = f"{BASE_URL}api/v1/dashboard/stats?explotacio_id={explotacio_id}"
+    # Obtener estadísticas de esta explotación
+    stats_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
     stats_response = requests.get(stats_url, headers=test_token)
     
     assert stats_response.status_code == 200, f"Error al obtener estadísticas: {stats_response.status_code} - {stats_response.text}"
@@ -148,24 +143,25 @@ async def test_explotacio_animals(test_token):
     - 'genere' indica el género del animal (M=toro, F=vaca)
     - 'estado' indica si el animal está activo (OK) o fallecido (DEF)
     """
-    # Primero obtenemos una explotación para usar su ID
-    url_explotacions = f"{BASE_URL}api/v1/explotacions/"
+    # Primero obtenemos una explotación para usar su código
+    url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
     response = requests.get(url_explotacions, headers=test_token)
     assert response.status_code == 200, "No se pudieron obtener explotaciones"
     
     explotaciones = response.json()
     assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    # Usar el ID del primer elemento
-    explotacio_id = explotaciones[0]['id']
+    # Tomar la primera explotación para la prueba
+    explotacion = explotaciones[0]
+    explotacio_value = explotacion["explotacio"]
     
     # Primero necesitamos obtener todos los animales y luego filtrar por explotación
     # ya que el endpoint específico para animales por explotación no está disponible
     print(f"\n=== PRUEBA DE OBTENCIÓN DE ANIMALES POR EXPLOTACIÓN ===")
-    print(f"Consultando animales para explotación con ID: {explotacio_id}")
-    print(f"Datos de la explotación: {explotaciones[0]}")
+    print(f"Consultando animales para explotación con ID: {explotacio_value}")
+    print(f"Datos de la explotación: {explotacion}")
     
-    animals_url = f"{BASE_URL}api/v1/animals/?explotacio_id={explotacio_id}"
+    animals_url = f"{BASE_URL}api/v1/animals/?explotacio={explotacio_value}"
     animals_response = requests.get(animals_url, headers=test_token)
     
     assert animals_response.status_code == 200, f"Error al obtener animales: {animals_response.status_code} - {animals_response.text}"

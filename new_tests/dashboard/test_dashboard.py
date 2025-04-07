@@ -28,7 +28,6 @@ def test_token():
     }
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Endpoint puede devolver error 500 - Pendiente de revisión en backend")
 async def test_get_dashboard_stats(test_token):
     """Test para verificar que se pueden obtener estadísticas del dashboard."""
     url = f"{BASE_URL}api/v1/dashboard/stats/"
@@ -80,7 +79,6 @@ async def test_get_dashboard_stats(test_token):
     print("Test de estadísticas completado con éxito.")
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Endpoint puede devolver error 500 - Pendiente de revisión en backend")
 async def test_get_dashboard_stats_with_filter(test_token):
     """Test para verificar que se pueden filtrar las estadísticas del dashboard por explotación."""
     # Primero obtenemos una lista de explotaciones para usar un ID válido
@@ -97,13 +95,13 @@ async def test_get_dashboard_stats_with_filter(test_token):
         pytest.skip("No hay explotaciones disponibles para probar filtros")
         return
     
-    # Tomamos el ID de la primera explotación
-    explotacio_id = explotacions[0]["id"]
+    # Tomamos el código de la primera explotación
+    explotacio = explotacions[0]["explotacio"]
     
     # Probamos el endpoint con filtro por explotación
-    filter_url = f"{BASE_URL}api/v1/dashboard/stats/?explotacio_id={explotacio_id}"
+    filter_url = f"{BASE_URL}api/v1/dashboard/stats/?explotacio={explotacio}"
     
-    print(f"\nProbando obtener estadísticas filtradas por explotación (ID: {explotacio_id}): {filter_url}")
+    print(f"\nProbando obtener estadísticas filtradas por explotación (Código: {explotacio}): {filter_url}")
     
     filter_response = requests.get(filter_url, headers=test_token)
     
@@ -124,7 +122,6 @@ async def test_get_dashboard_stats_with_filter(test_token):
     print("Test de estadísticas filtradas completado con éxito.")
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Test pausado temporalmente - Pendiente de revisión posterior")
 async def test_get_explotacio_stats(test_token):
     """Test para verificar que se pueden obtener las estadísticas de una explotación específica."""
     # Primero obtenemos una lista de explotaciones para usar un ID válido
@@ -141,13 +138,13 @@ async def test_get_explotacio_stats(test_token):
         pytest.skip("No hay explotaciones disponibles para probar")
         return
     
-    # Tomamos el ID de la primera explotación
-    explotacio_id = explotacions[0]["id"]
+    # Tomamos el código de la primera explotación
+    explotacio = explotacions[0]["explotacio"]
     
     # Obtenemos las estadísticas de esta explotación
-    url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_id}/stats"
+    url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio}/stats"
     
-    print(f"\nProbando obtener estadísticas de la explotación {explotacio_id}: {url}")
+    print(f"\nProbando obtener estadísticas de la explotación {explotacio}: {url}")
     
     response = requests.get(url, headers=test_token)
     
@@ -160,9 +157,9 @@ async def test_get_explotacio_stats(test_token):
     # Verificar la estructura de la respuesta
     data = response.json()
     
-    # Verificar al menos el ID que debe coincidir con el solicitado
-    assert "id" in data, "No se encontró el campo 'id'"
-    assert data["id"] == explotacio_id, f"El ID de explotación no coincide: esperado {explotacio_id}, recibido {data['id']}"
+    # Verificar que la explotación es la correcta
+    assert "explotacio" in data, "No se encontró el campo 'explotacio'"
+    assert data["explotacio"] == explotacio, f"El código de explotación no coincide: esperado {explotacio}, recibido {data['explotacio']}"
     
     print("Test de estadísticas de explotación completado con éxito.")
 

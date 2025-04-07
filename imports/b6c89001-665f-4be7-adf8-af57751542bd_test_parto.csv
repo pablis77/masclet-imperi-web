@@ -1,0 +1,3 @@
+nom;genere;estado;explotacio;part;GenereT;EstadoT
+TestHembraParto;F;OK;ExplotacioTest;01/01/2023;M;OK
+TestMachoParto;M;OK;ExplotacioTest;01/01/2023;F;OK

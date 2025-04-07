@@ -4,15 +4,13 @@ import { mockAnimals, mockExplotacions } from './mockData';
 // Interfaces
 export interface Animal {
   id: number;
-  explotacio_id: number;
+  explotacio: string;
   nom: string;
   genere: 'M' | 'F';
-  estat: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
-  alletar: 'NO' | '1' | '2';  // NO, 1 ternero, 2 terneros (solo para vacas)
-  pare_id?: number | null;
-  pare_nom?: string | null;
-  mare_id?: number | null;
-  mare_nom?: string | null;
+  estado: 'OK' | 'DEF';
+  alletar: '0' | '1' | '2';  // 0: No amamanta, 1: Un ternero, 2: Dos terneros (solo para vacas)
+  pare?: string | null;
+  mare?: string | null;
   quadra?: string | null;
   cod?: string | null;
   num_serie?: string | null;
@@ -22,13 +20,13 @@ export interface Animal {
 }
 
 export interface AnimalCreateDto {
-  explotacio_id: number;
+  explotacio: string;
   nom: string;
   genere: 'M' | 'F';
-  estat: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
-  alletar: 'NO' | '1' | '2';
-  pare_id?: number | null;
-  mare_id?: number | null;
+  estado: 'OK' | 'DEF';
+  alletar: '0' | '1' | '2';
+  pare?: string | null;
+  mare?: string | null;
   quadra?: string | null;
   cod?: string | null;
   num_serie?: string | null;
@@ -38,10 +36,10 @@ export interface AnimalCreateDto {
 export interface AnimalUpdateDto extends Partial<AnimalCreateDto> {}
 
 export interface AnimalFilters {
-  explotacio_id?: number;
+  explotacio?: string;
   genere?: 'M' | 'F';
-  estat?: 'ACT' | 'DEF';  // Cambiado de 'estado' a 'estat' y de 'OK' a 'ACT'
-  alletar?: boolean | 'NO' | '1' | '2';
+  estado?: 'OK' | 'DEF';
+  alletar?: '0' | '1' | '2';
   quadra?: string;
   search?: string;
   page?: number;
@@ -61,24 +59,20 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
   let filteredAnimals = [...mockAnimals];
   
   // Aplicar filtros
-  if (filters.explotacio_id !== undefined) {
-    filteredAnimals = filteredAnimals.filter(a => a.explotacio_id === filters.explotacio_id);
+  if (filters.explotacio !== undefined) {
+    filteredAnimals = filteredAnimals.filter(a => a.explotacio === filters.explotacio);
   }
   
   if (filters.genere !== undefined) {
     filteredAnimals = filteredAnimals.filter(a => a.genere === filters.genere);
   }
   
-  if (filters.estat !== undefined) {
-    filteredAnimals = filteredAnimals.filter(a => a.estat === filters.estat);
+  if (filters.estado !== undefined) {
+    filteredAnimals = filteredAnimals.filter(a => a.estado === filters.estado);
   }
   
   if (filters.alletar !== undefined) {
-    // Convertir boolean a string para comparar
-    const alletarValue = filters.alletar;
-    filteredAnimals = filteredAnimals.filter(a => 
-      a.alletar === alletarValue
-    );
+    filteredAnimals = filteredAnimals.filter(a => a.alletar === filters.alletar);
   }
   
   if (filters.quadra !== undefined) {
@@ -86,15 +80,59 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
   }
   
   if (filters.search !== undefined && filters.search !== '') {
-    const searchLower = filters.search.toLowerCase();
-    filteredAnimals = filteredAnimals.filter(a => 
-      a.nom.toLowerCase().includes(searchLower) || 
-      (a.cod && a.cod.toLowerCase().includes(searchLower)) ||
-      (a.num_serie && a.num_serie.toLowerCase().includes(searchLower))
-    );
+    const searchLower = filters.search.toLowerCase().trim();
+    console.log(`Filtrando por término de búsqueda: "${searchLower}"`);
+    filteredAnimals = filteredAnimals.filter(a => {
+      // Búsqueda por nom (principal)
+      if (a.nom.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Búsqueda por código identificativo
+      if (a.cod && a.cod.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Búsqueda por número de serie
+      if (a.num_serie && a.num_serie.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Búsqueda por explotación 
+      if (a.explotacio.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      return false;
+    });
+    console.log(`Se encontraron ${filteredAnimals.length} animales que coinciden con la búsqueda`);
   }
   
   return filteredAnimals;
+};
+
+// Funciones auxiliares para la UI
+export const getAnimalStatusClass = (estado: string) => {
+  return estado === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+};
+
+export const getAnimalIcon = (animal: Animal) => {
+  if (animal.genere === 'M') {
+    return '🐂'; // Toro
+  } else {
+    if (animal.alletar !== '0') {
+      return '🐄'; // Vaca amamantando
+    } else {
+      return '🐮'; // Vaca
+    }
+  }
+};
+
+export const getAlletarText = (alletar: string) => {
+  if (alletar === '0') return 'No amamantando';
+  if (alletar === '1') return 'Amamantando 1 ternero';
+  if (alletar === '2') return 'Amamantando 2 terneros';
+  return 'Desconocido';
 };
 
 // Servicio de animales
@@ -108,72 +146,110 @@ const animalService = {
       params.append('limit', (filters.limit || 10).toString());
       
       // Añadir filtros opcionales si están presentes
-      if (filters.explotacio_id) params.append('explotacio_id', filters.explotacio_id.toString());
+      if (filters.explotacio) params.append('explotacio', filters.explotacio);
       if (filters.genere) params.append('genere', filters.genere);
-      if (filters.estat) params.append('estat', filters.estat);
-      if (filters.alletar && filters.alletar !== 'NO') params.append('alletar', filters.alletar.toString());
+      if (filters.estado) params.append('estado', filters.estado);
+      if (filters.alletar) params.append('alletar', filters.alletar);
       if (filters.quadra) params.append('quadra', filters.quadra);
-      if (filters.search) params.append('search', filters.search);
+      
+      // Búsqueda por nombre y otros campos (nom, cod, num_serie)
+      if (filters.search) {
+        params.append('search', filters.search);
+        console.log(`Buscando animales que coincidan con: "${filters.search}"`);
+      }
       
       console.log('Obteniendo animales con parámetros:', Object.fromEntries(params.entries()));
       
       // Realizar petición a la API
-      const response = await get<PaginatedResponse<Animal>>(`/animals?${params.toString()}`);
-      console.log('Respuesta de animales recibida:', response);
-      return response;
+      const apiResponse = await get<any>(`/animals?${params.toString()}`);
+      console.log('Respuesta RAW de animales recibida:', apiResponse);
+      
+      // Transformar la estructura de respuesta del backend a nuestro formato esperado
+      let processedResponse: PaginatedResponse<Animal>;
+      
+      // Verificar si la respuesta tiene el formato {status, data}
+      if (apiResponse && apiResponse.status === 'success' && apiResponse.data) {
+        console.log('Detectada respuesta con formato {status, data}. Procesando correctamente...');
+        
+        const { total, offset, limit, items } = apiResponse.data;
+        
+        processedResponse = {
+          items: items || [],
+          total: total || 0,
+          page: Math.floor(offset / limit) + 1, // Calcular página en base a offset y limit
+          limit: limit || 10,
+          pages: Math.ceil((total || 0) / (limit || 10))
+        };
+      } else {
+        // Si ya tiene el formato esperado o no conocemos el formato
+        console.log('Usando respuesta en formato directo');
+        processedResponse = apiResponse as PaginatedResponse<Animal>;
+      }
+      
+      console.log('Respuesta procesada de animales:', processedResponse);
+      
+      // Notificar al usuario que los datos son reales
+      if (filters.search) {
+        document.dispatchEvent(new CustomEvent('search-completed', {
+          detail: {
+            term: filters.search,
+            count: processedResponse.items.length,
+            total: processedResponse.total,
+            usedMock: false
+          }
+        }));
+      }
+      
+      return processedResponse;
     } catch (error: any) {
       console.error('Error en petición GET /animals:', error);
       
-      // Verificar si es el error específico de estado_t
+      // Usar datos simulados en caso de error
+      let useMockReason = '';
+      
+      // Verificar el tipo de error
       if (error.code === 'DB_COLUMN_ERROR' || (error.message && error.message.includes('estado_t'))) {
-        console.warn('Usando datos simulados debido al error de estado_t en el backend');
-        
-        // Filtrar datos simulados según los filtros proporcionados
-        const filteredAnimals = getFilteredAnimals(filters);
-        
-        // Calcular paginación
-        const page = filters.page || 1;
-        const limit = filters.limit || 10;
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedAnimals = filteredAnimals.slice(startIndex, endIndex);
-        
-        // Devolver respuesta paginada simulada
-        return {
-          items: paginatedAnimals,
-          total: filteredAnimals.length,
-          page,
-          limit,
-          pages: Math.ceil(filteredAnimals.length / limit)
-        };
+        useMockReason = 'error en la estructura de la tabla en el backend';
+      } else if (error.code === 'NETWORK_ERROR') {
+        useMockReason = 'error de conexión al servidor';
+      } else {
+        // Si no es un error específico conocido, seguir usando datos simulados pero con otro mensaje
+        useMockReason = 'error en el servidor';
       }
       
-      // Si es un error de red, también usar datos simulados
-      if (error.code === 'NETWORK_ERROR') {
-        console.warn('Usando datos simulados debido a error de conexión');
-        
-        // Filtrar datos simulados según los filtros proporcionados
-        const filteredAnimals = getFilteredAnimals(filters);
-        
-        // Calcular paginación
-        const page = filters.page || 1;
-        const limit = filters.limit || 10;
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedAnimals = filteredAnimals.slice(startIndex, endIndex);
-        
-        // Devolver respuesta paginada simulada
-        return {
-          items: paginatedAnimals,
-          total: filteredAnimals.length,
-          page,
-          limit,
-          pages: Math.ceil(filteredAnimals.length / limit)
-        };
+      console.warn(`Usando datos simulados debido a: ${useMockReason}`);
+      
+      // Filtrar datos simulados según los filtros proporcionados
+      const filteredAnimals = getFilteredAnimals(filters);
+      
+      // Calcular paginación
+      const page = filters.page || 1;
+      const limit = filters.limit || 10;
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedAnimals = filteredAnimals.slice(startIndex, endIndex);
+      
+      // Notificar al usuario que los datos son simulados si es una búsqueda
+      if (filters.search) {
+        document.dispatchEvent(new CustomEvent('search-completed', {
+          detail: {
+            term: filters.search,
+            count: paginatedAnimals.length,
+            total: filteredAnimals.length,
+            usedMock: true,
+            reason: useMockReason
+          }
+        }));
       }
       
-      // Si no es un error de estado_t o de red, propagar el error
-      throw error;
+      // Devolver respuesta paginada simulada
+      return {
+        items: paginatedAnimals,
+        total: filteredAnimals.length,
+        page,
+        limit,
+        pages: Math.ceil(filteredAnimals.length / limit)
+      };
     }
   },
   
@@ -228,8 +304,6 @@ const animalService = {
         return {
           id: newId,
           ...animalData,
-          pare_nom: animalData.pare_id ? mockAnimals.find(a => a.id === animalData.pare_id)?.nom || null : null,
-          mare_nom: animalData.mare_id ? mockAnimals.find(a => a.id === animalData.mare_id)?.nom || null : null,
           created_at: now,
           updated_at: now
         };
@@ -255,20 +329,25 @@ const animalService = {
           (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
         console.warn('Usando datos simulados para actualizar animal debido a error en el backend');
         
-        // Buscar en datos simulados
-        const animal = mockAnimals.find(a => a.id === id);
-        if (!animal) {
-          throw new Error(`Animal con ID ${id} no encontrado en los datos simulados`);
+        const now = new Date().toISOString();
+        const currentAnimal = mockAnimals.find(a => a.id === id);
+        
+        if (!currentAnimal) {
+          throw new Error(`No se encontró el animal con ID ${id}`);
         }
         
-        // Actualizar datos simulados
+        // Actualizar los campos en el animal simulado
         const updatedAnimal = {
-          ...animal,
+          ...currentAnimal,
           ...animalData,
-          pare_nom: animalData.pare_id ? mockAnimals.find(a => a.id === animalData.pare_id)?.nom || animal.pare_nom : animal.pare_nom,
-          mare_nom: animalData.mare_id ? mockAnimals.find(a => a.id === animalData.mare_id)?.nom || animal.mare_nom : animal.mare_nom,
-          updated_at: new Date().toISOString()
+          updated_at: now
         };
+        
+        // Actualizar el animal en el array de animales simulados
+        const index = mockAnimals.findIndex(a => a.id === id);
+        if (index !== -1) {
+          mockAnimals[index] = updatedAnimal;
+        }
         
         return updatedAnimal;
       }
@@ -279,11 +358,14 @@ const animalService = {
   },
   
   // Elimina un animal (marcado como DEF)
-  async deleteAnimal(id: number): Promise<void> {
+  async deleteAnimal(id: number): Promise<Animal> {
     try {
       console.log(`Eliminando animal con ID ${id}`);
       await del(`/animals/${id}`);
       console.log('Animal eliminado correctamente');
+      
+      // Marcar como DEF en el frontend (el backend realmente no lo borra)
+      return this.updateAnimal(id, { estado: 'DEF' });
     } catch (error: any) {
       console.error(`Error al eliminar animal con ID ${id}:`, error);
       
@@ -291,7 +373,9 @@ const animalService = {
       if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
           (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
         console.warn('Usando datos simulados para eliminar animal debido a error en el backend');
-        return;
+        
+        // Marcar como DEF en el frontend (el backend realmente no lo borra)
+        return this.updateAnimal(id, { estado: 'DEF' });
       }
       
       // Si no es un error manejable, propagar el error
@@ -299,16 +383,11 @@ const animalService = {
     }
   },
   
-  // Da de baja a un animal (cambia estado a DEF)
-  async deactivateAnimal(id: number): Promise<Animal> {
-    return this.updateAnimal(id, { estat: 'DEF' });
-  },
-  
   // Obtiene los posibles padres (machos) para selección en formularios
-  async getPotentialFathers(explotacioId: number): Promise<Animal[]> {
+  async getPotentialFathers(explotacioId: number | string): Promise<Animal[]> {
     try {
       console.log(`Obteniendo posibles padres para explotación ${explotacioId}`);
-      const response = await get<Animal[]>(`/animals/fathers?explotacio_id=${explotacioId}`);
+      const response = await get<Animal[]>(`/animals/fathers?explotacio=${explotacioId}`);
       console.log('Posibles padres recibidos:', response);
       return response;
     } catch (error: any) {
@@ -318,7 +397,11 @@ const animalService = {
       if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
           (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
         console.warn('Usando datos simulados para posibles padres debido a error en el backend');
-        return mockAnimals.filter(a => a.explotacio_id === explotacioId && a.genere === 'M' && a.estat === 'ACT');
+        // Filtrar animales simulados (machos activos de la misma explotación)
+        return mockAnimals.filter(a => 
+          a.genere === 'M' && 
+          a.estado === 'OK' && 
+          a.explotacio === String(explotacioId));
       }
       
       // Si no es un error manejable, propagar el error
@@ -327,10 +410,10 @@ const animalService = {
   },
   
   // Obtiene las posibles madres (hembras) para selección en formularios
-  async getPotentialMothers(explotacioId: number): Promise<Animal[]> {
+  async getPotentialMothers(explotacioId: number | string): Promise<Animal[]> {
     try {
       console.log(`Obteniendo posibles madres para explotación ${explotacioId}`);
-      const response = await get<Animal[]>(`/animals/mothers?explotacio_id=${explotacioId}`);
+      const response = await get<Animal[]>(`/animals/mothers?explotacio=${explotacioId}`);
       console.log('Posibles madres recibidas:', response);
       return response;
     } catch (error: any) {
@@ -340,7 +423,11 @@ const animalService = {
       if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
           (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
         console.warn('Usando datos simulados para posibles madres debido a error en el backend');
-        return mockAnimals.filter(a => a.explotacio_id === explotacioId && a.genere === 'F' && a.estat === 'ACT');
+        // Filtrar animales simulados (hembras activas de la misma explotación)
+        return mockAnimals.filter(a => 
+          a.genere === 'F' && 
+          a.estado === 'OK' && 
+          a.explotacio === String(explotacioId));
       }
       
       // Si no es un error manejable, propagar el error
@@ -357,7 +444,6 @@ const animalService = {
         
         // Probar con diferentes formatos de endpoint para mayor compatibilidad
         const endpoints = [
-          `/animals?explotacio_id=${explotacionId}`,
           `/animals?explotacio=${explotacionId}`,
           `/animals/explotacio/${explotacionId}`
         ];
@@ -419,7 +505,7 @@ const animalService = {
       console.warn(`🐄 [Animal] Usando datos simulados para animales de explotación ${explotacionId}`);
       
       // Filtrar animales simulados por explotación
-      const mockAnimalsFiltered = mockAnimals.filter(a => a.explotacio_id === Number(explotacionId));
+      const mockAnimalsFiltered = mockAnimals.filter(a => a.explotacio === String(explotacionId));
       console.log(`🐄 [Animal] Devolviendo ${mockAnimalsFiltered.length} animales simulados para explotación ${explotacionId}`);
       return mockAnimalsFiltered;
     }
@@ -427,43 +513,42 @@ const animalService = {
   
   // Utilidades para iconos y visualización
   getAnimalIcon(animal: Animal): string {
-    if (!animal) return '🐄';
-    
     if (animal.genere === 'M') {
-      return '♂️';
-    } else if (animal.alletar !== 'NO') {
-      return '🐄';
+      return '🐂'; // Toro
     } else {
-      return '♀️';
+      if (animal.alletar !== '0') {
+        return '🐄'; // Vaca amamantando
+      } else {
+        return '🐮'; // Vaca
+      }
     }
   },
   
-  getAnimalStatusClass(estat: string): string {
-    switch (estat) {
-      case 'ACT': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'DEF': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  getAnimalStatusClass(estado: string): string {
+    if (estado === 'OK') {
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    } else if (estado === 'DEF') {
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     }
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   },
   
   // Obtiene texto para alletar
   getAlletarText(alletar: string): string {
-    switch (alletar) {
-      case '1': return 'Amamantando (1)';
-      case '2': return 'Amamantando (2)';
-      case 'NO':
-      default: return 'No amamantando';
-    }
+    if (alletar === '0') return 'No amamantando';
+    if (alletar === '1') return 'Amamantando 1 ternero';
+    if (alletar === '2') return 'Amamantando 2 terneros';
+    return 'Desconocido';
   },
   
   // Obtiene todas las explotaciones para selectores
-  async getAllExplotaciones() {
+  async getAllExplotaciones(): Promise<{id: number, descripcion: string, explotacio: string}[]> {
     try {
       const response = await get<any[]>('/explotacions?limit=1000');
       return response.map(explotacion => ({
         id: explotacion.id,
-        nombre: explotacion.nom || 'Sin nombre', 
-        codigo: explotacion.explotaci || '-'     
+        descripcion: explotacion.descripcion || 'Sin nombre', 
+        explotacio: explotacion.explotacio || '-'     
       }));
     } catch (error) {
       console.error('Error al obtener explotaciones:', error);
@@ -471,14 +556,11 @@ const animalService = {
       // Usar datos simulados en caso de error
       return mockExplotacions.map(explotacion => ({
         id: explotacion.id,
-        nombre: explotacion.nom || 'Sin nombre', 
-        codigo: explotacion.explotaci || '-'     
+        descripcion: explotacion.descripcion || 'Sin nombre', 
+        explotacio: explotacion.explotacio || '-'     
       }));
     }
-  },
-  
-  // ...
+  }
 };
 
 export default animalService;
-export { getFilteredAnimals };

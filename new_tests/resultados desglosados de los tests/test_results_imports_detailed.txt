@@ -1,0 +1,341 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 11 items
+
+new_tests/imports/test_alletar_improved.py::test_alletar_improved Usando prefijo único para este test: Test_6631d7
+Contenido del CSV:
+nom;genere;estado;explotacio;alletar
+Test_6631d7_M0;M;OK;ExplotTest;0
+Test_6631d7_M1;M;OK;ExplotTest;1
+Test_6631d7_M2;M;OK;ExplotTest;2
+Test_6631d7_F0;F;OK;ExplotTest;0
+Test_6631d7_F1;F;OK;ExplotTest;1
+Test_6631d7_F2;F;OK;ExplotTest;2
+
+=== Iniciando importación ===
+Resultado de importación: {
+  "id": 285,
+  "file_name": "Test_6631d7_alletar.csv",
+  "file_size": 240,
+  "file_type": "text/csv",
+  "status": "completed",
+  "created_at": "2025-04-07T17:06:19.787615Z",
+  "updated_at": "2025-04-07T17:06:19.800876Z",
+  "completed_at": null,
+  "description": "Test alletar Test_6631d7",
+  "result": {
+    "total": 6,
+    "success": 6,
+    "errors": 0,
+    "error_details": null
+  }
+}
+
+=== Listado completo de animales ===
+Total de animales en la BD: 10
+Animales encontrados de este test: 6
+- Test_6631d7_F0: género=F, alletar=0, explotacio=ExplotTest
+- Test_6631d7_F1: género=F, alletar=1, explotacio=ExplotTest
+- Test_6631d7_F2: género=F, alletar=2, explotacio=ExplotTest
+- Test_6631d7_M0: género=M, alletar=0, explotacio=ExplotTest
+- Test_6631d7_M1: género=M, alletar=0, explotacio=ExplotTest
+- Test_6631d7_M2: género=M, alletar=0, explotacio=ExplotTest
+
+=== Verificando animales por ID ===
+Verificando animal: Test_6631d7_F0 (ID: 593)
+Datos: {
+  "nom": "Test_6631d7_F0",
+  "genere": "F",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "0",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 593,
+  "partos": {
+    "total": 0,
+    "ultimo": null,
+    "items": [],
+    "first_date": null,
+    "last_date": null
+  },
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal hembra: Test_6631d7_F0, alletar actual=0, esperado=0
+Verificando animal: Test_6631d7_F1 (ID: 594)
+Datos: {
+  "nom": "Test_6631d7_F1",
+  "genere": "F",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "1",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 594,
+  "partos": {
+    "total": 0,
+    "ultimo": null,
+    "items": [],
+    "first_date": null,
+    "last_date": null
+  },
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal hembra: Test_6631d7_F1, alletar actual=1, esperado=1
+Verificando animal: Test_6631d7_F2 (ID: 595)
+Datos: {
+  "nom": "Test_6631d7_F2",
+  "genere": "F",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "2",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 595,
+  "partos": {
+    "total": 0,
+    "ultimo": null,
+    "items": [],
+    "first_date": null,
+    "last_date": null
+  },
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal hembra: Test_6631d7_F2, alletar actual=2, esperado=2
+Verificando animal: Test_6631d7_M0 (ID: 590)
+Datos: {
+  "nom": "Test_6631d7_M0",
+  "genere": "M",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "0",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 590,
+  "partos": null,
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal macho: Test_6631d7_M0, alletar=0
+Verificando animal: Test_6631d7_M1 (ID: 591)
+Datos: {
+  "nom": "Test_6631d7_M1",
+  "genere": "M",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "0",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 591,
+  "partos": null,
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal macho: Test_6631d7_M1, alletar=0
+Verificando animal: Test_6631d7_M2 (ID: 592)
+Datos: {
+  "nom": "Test_6631d7_M2",
+  "genere": "M",
+  "explotacio": "ExplotTest",
+  "estado": "OK",
+  "alletar": "0",
+  "dob": null,
+  "mare": null,
+  "pare": null,
+  "quadra": null,
+  "cod": null,
+  "num_serie": null,
+  "part": null,
+  "genere_t": null,
+  "estado_t": null,
+  "id": 592,
+  "partos": null,
+  "created_at": "07/04/2025",
+  "updated_at": "07/04/2025"
+}
+Animal macho: Test_6631d7_M2, alletar=0
+
+=== Intentando actualizar alletar a 1 para macho ID: 590 ===
+Error esperado al actualizar alletar en macho: {
+  "detail": "Los machos solo pueden tener estado de amamantamiento '0' (sin amamantar)"
+}
+Alletar después de actualización: 0
+
+=== Limpieza ===
+Animal ID 593 eliminado: 204
+Animal ID 594 eliminado: 204
+Animal ID 595 eliminado: 204
+Animal ID 590 eliminado: 204
+Animal ID 591 eliminado: 204
+Animal ID 592 eliminado: 204
+Archivo CSV eliminado: Test_6631d7_alletar.csv
+PASSED [  9%]
+new_tests/imports/test_imports_additional.py::test_download_template 
+Probando descarga de plantilla CSV: http://localhost:8000/api/v1/imports/template
+Headers encontrados: ['nom', 'genere', 'estado', 'explotacio', 'alletar', 'mare', 'pare', 'quadra', 'cod', 'num_serie', 'dob', 'part', 'GenereT', 'EstadoT']
+PASSED [ 18%]
+new_tests/imports/test_imports_additional.py::test_import_real_csv 
+Probando importación con CSV real: http://localhost:8000/api/v1/imports/csv
+Resultado de la importación real: {'id': 286, 'file_name': 'test_import.csv', 'file_size': 254, 'file_type': 'text/csv', 'status': 'completed_err', 'created_at': '2025-04-07T17:06:21.212951Z', 'updated_at': '2025-04-07T17:06:21.217460Z', 'completed_at': None, 'description': 'Test importación real', 'result': {'total': 2, 'success': 0, 'errors': 2, 'error_details': [{'message': "Error al importar animal: Unable to parse date string '27/10/1977'"}, {'message': "Error al importar animal: Unable to parse date string '28/07/1981'"}]}}
+PASSED [ 27%]
+new_tests/imports/test_imports_additional.py::test_get_import_errors 
+Creando importación con errores: http://localhost:8000/api/v1/imports/csv
+Respuesta de importación: {'id': 287, 'file_name': 'test_error.csv', 'file_size': 209, 'file_type': 'text/csv', 'status': 'completed_err', 'created_at': '2025-04-07T17:06:21.419665Z', 'updated_at': '2025-04-07T17:06:21.423169Z', 'completed_at': None, 'description': 'Test importación con errores', 'result': {'total': 1, 'success': 0, 'errors': 1, 'error_details': [{'message': "Error al importar animal: Unable to parse date string '01/01/2020'"}]}}
+
+Probando consulta de errores de importación: http://localhost:8000/api/v1/imports/287/errors
+Respuesta de errores: {'import_id': 287, 'file_name': 'test_error.csv', 'total_records': 0, 'success_count': 0, 'error_count': 0, 'errors': []}
+Número de errores encontrados: 0
+PASSED [ 36%]
+new_tests/imports/test_imports_additional.py::test_import_with_empty_fields 
+Probando importación con campos vacíos: http://localhost:8000/api/v1/imports/csv
+Resultado de la importación con campos vacíos: {'id': 288, 'file_name': 'test_empty_fields.csv', 'file_size': 216, 'file_type': 'text/csv', 'status': 'completed_err', 'created_at': '2025-04-07T17:06:23.607042Z', 'updated_at': '2025-04-07T17:06:23.608235Z', 'completed_at': None, 'description': 'Test importación con campos vacíos', 'result': {'total': 2, 'success': 0, 'errors': 2, 'error_details': [{'message': "Error al importar animal: Campo obligatorio 'nom' no encontrado o vacío"}, {'message': "Error al importar animal: Campo obligatorio 'nom' no encontrado o vacío"}]}}
+PASSED [ 45%]
+new_tests/imports/test_imports_basic.py::test_list_imports 
+Probando listar importaciones: http://localhost:8000/api/v1/imports/?page=1&size=10
+PASSED        [ 54%]
+new_tests/imports/test_imports_basic.py::test_simple_import_csv 
+Probando importación CSV: http://localhost:8000/api/v1/imports/csv
+PASSED   [ 63%]
+new_tests/imports/test_imports_basic.py::test_get_import_status 
+Probando consulta de estado de importación: http://localhost:8000/api/v1/imports/290
+PASSED   [ 72%]
+new_tests/imports/test_imports_errors.py::test_import_invalid_csv PASSED [ 81%]
+new_tests/imports/test_imports_errors.py::test_import_missing_required_fields PASSED [ 90%]
+new_tests/imports/test_partos_improved.py::test_partos_improved Usando prefijo único para este test: Test_0252e6
+Contenido del CSV:
+nom;genere;estado;explotacio;part;GenereT;EstadoT
+Test_0252e6_F_Parto1;F;OK;ExplotTest;01/01/2023;M;OK
+Test_0252e6_F_Parto2;F;OK;ExplotTest;02/02/2023;F;OK
+Test_0252e6_F_Parto3;F;OK;ExplotTest;03/03/2023;F;DEF
+Test_0252e6_M_NoParto;M;OK;ExplotTest;01/01/2023;M;OK
+
+=== Iniciando importación ===
+Resultado de importación: {
+  "id": 293,
+  "file_name": "Test_0252e6_partos.csv",
+  "file_size": 267,
+  "file_type": "text/csv",
+  "status": "completed",
+  "created_at": "2025-04-07T17:06:24.689919Z",
+  "updated_at": "2025-04-07T17:06:24.704536Z",
+  "completed_at": null,
+  "description": "Test partos Test_0252e6",
+  "result": {
+    "total": 4,
+    "success": 4,
+    "errors": 0,
+    "error_details": null
+  }
+}
+
+=== Listado completo de animales de este test ===
+Total de animales en la BD: 28
+Animales encontrados de este test: 4
+- Test_0252e6_F_Parto1: género=F, alletar=1, explotacio=ExplotTest
+- Test_0252e6_F_Parto2: género=F, alletar=1, explotacio=ExplotTest
+- Test_0252e6_F_Parto3: género=F, alletar=1, explotacio=ExplotTest
+- Test_0252e6_M_NoParto: género=M, alletar=0, explotacio=ExplotTest
+
+=== Verificando partos para cada animal ===
+
+VERIFICANDO: Test_0252e6_F_Parto1 (ID: 596, Género: F)
+Intentando obtener partos con endpoint principal: http://localhost:8000/api/v1/partos con params={'animal_id': 596}
+Partos encontrados: 1
+Datos del parto: {
+  "id": 361,
+  "animal_id": 596,
+  "part": "01/01/2023",
+  "GenereT": "M",
+  "EstadoT": "OK",
+  "numero_part": 1,
+  "created_at": "07/04/2025 17:06:24",
+  "observacions": null
+}
+Alletar del animal con parto: 1
+
+VERIFICANDO: Test_0252e6_F_Parto2 (ID: 597, Género: F)
+Intentando obtener partos con endpoint principal: http://localhost:8000/api/v1/partos con params={'animal_id': 597}
+Partos encontrados: 1
+Datos del parto: {
+  "id": 362,
+  "animal_id": 597,
+  "part": "02/02/2023",
+  "GenereT": "F",
+  "EstadoT": "OK",
+  "numero_part": 1,
+  "created_at": "07/04/2025 17:06:24",
+  "observacions": null
+}
+Alletar del animal con parto: 1
+
+VERIFICANDO: Test_0252e6_F_Parto3 (ID: 598, Género: F)
+Intentando obtener partos con endpoint principal: http://localhost:8000/api/v1/partos con params={'animal_id': 598}
+Partos encontrados: 1
+Datos del parto: {
+  "id": 363,
+  "animal_id": 598,
+  "part": "03/03/2023",
+  "GenereT": "F",
+  "EstadoT": "DEF",
+  "numero_part": 1,
+  "created_at": "07/04/2025 17:06:24",
+  "observacions": null
+}
+Alletar del animal con parto: 1
+
+VERIFICANDO: Test_0252e6_M_NoParto (ID: 599, Género: M)
+Intentando obtener partos con endpoint principal: http://localhost:8000/api/v1/partos con params={'animal_id': 599}
+Partos encontrados: 0
+
+=== Limpieza ===
+Animal ID 596 eliminado: 204
+Animal ID 597 eliminado: 204
+Animal ID 598 eliminado: 204
+Animal ID 599 eliminado: 204
+Archivo CSV eliminado: Test_0252e6_partos.csv
+PASSED   [100%]
+
+============================= 11 passed in 7.50s ==============================

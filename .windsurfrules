@@ -1,0 +1,669 @@
+#Estándares de Nomenclatura en Masclet Imperi Web
+
+
+##Modelo de Animales
+
+###Campos y Significado
+
+| Campo                | Tipo         | Descripción                                                   |
+
+|--------------------|------------|--------------------------------------------------------------|
+
+|**id**         | int          | ID técnico autogenerado. Uso interno.                         |
+
+|**nom**        | string       | Nombre del animal.                                             |
+
+|**explotacio**| string       | Identificador de la explotación a la que pertenece el animal. |
+
+|**genere**     | enum(M/F)    | Género del animal (M: toro, F: vaca).                         |
+
+|**estado**     | enum(OK/DEF) | Estado del animal (OK: activo, DEF: fallecido).                |
+
+|**alletar**    | enum(0,1,2)  | Estado de amamantamiento (sólo para vacas).                   |
+
+###Reglas Importantes
+
+- El campo `nom` se usa exclusivamente para el **nombre del animal**
+- El campo `explotacio` hace referencia al código de explotación del registro correspondiente
+- El campo `alletar` solo aplica a animales hembra (vacas)
+
+##Modelo de Partos
+
+###Campos y Significado
+
+| Campo               | Tipo                | Descripción                                     |
+
+|-------------------|-------------------|------------------------------------------------|
+
+|**id**        | int                 | ID técnico autogenerado. Uso interno.           |
+
+|**animal_id**| int                 | ID técnico del animal (vaca) asociado al parto. |
+
+|**part**      | date                | Fecha del parto (formato DD/MM/YYYY).            |
+
+|**GenereT**   | enum(M/F/esforrada) | Género de la cría.                             |
+
+|**EstadoT**   | enum(OK/DEF)        | Estado de la cría.                              |
+
+###Reglas Importantes
+
+- Los partos **siempre** están asociados a una vaca (animal con genere='F')
+- Los partos son registros históricos y **no pueden eliminarse**
+- El `animal_id` es el ID técnico de la vaca, mientras que en la API se utiliza el nombre (`nom`) de la vaca
+
+##Estándar general de identificadores
+
+1.**ID técnico**: Todos los modelos tienen un `id` numérico autogenerado para operaciones CRUD
+
+2.**Nombre descriptivo**:
+
+- Para animales: campo `nom`
+- Para explotaciones: campo `nom`
+
+3.**Codigo de negocio**:
+
+- Para explotaciones: campo `explotacio`
+
+##Endpoints
+
+Los endpoints de la API usan el ID técnico para operaciones CRUD, pero internamente el sistema conoce la relación entre:
+
+- El ID técnico de una explotación y su código de negocio (`explotacio`)
+- El ID técnico de un animal y su nombre (`nom`)
+
+Esto permite que el frontend muestre la información relevante para el usuario mientras se mantiene la integridad referencial interna.
+
+##Reglas Correctas para Explotaciones: (Y PARA TODO EN GENERAL)
+
+1.**Campo EXPLOTACIO** :
+
+* Es el ÚNICO campo para identificar/nombrar la explotación
+* NO debe ser null=True, debe ser obligatorio
+* No existe ni debe existir un campo "descripcion"
+
+1.**Campo NOM** :
+
+* NO debe existir en explotaciones
+* Solo está reservado para ANIMALES
+
+1.**Campo ACTIVA** :
+
+* NO está en las reglas de negocio
+* Debe eliminarse completamente
+
+1.**Campo ID** :
+
+* Es solo un campo técnico para la base de datos
+* No tiene significado de negocio
+
+##mas reglas del programa
+
+1. Sobre los nombres de campos y el estándar
+
+El cambio de data_naixement a dob en los tests resalta la importancia de mantener una nomenclatura estándar en todo el sistema. La implicación principal es que:
+
+Todos los componentes del sistema (backend, frontend, importación) deben usar consistentemente dob en lugar de data_naixement
+
+Cualquier código existente que use data_naixement debe ser actualizado para cumplir con los estándares de nomenclatura documentados
+
+2. Sobre el manejo de duplicados
+
+El uso de timestamps en los nombres de animales para evitar duplicados indica que:
+
+El sistema debe tener mecanismos robustos para evitar duplicados en importaciones repetidas
+
+La generación de identificadores únicos debería ser parte de la lógica de negocio del sistema
+
+Sería recomendable implementar validaciones que detecten duplicados antes de intentar insertarlos
+
+3. Sobre el manejo de estados
+
+Al hacer la comprobación de estados insensible a mayúsculas y añadir "FAILED" como estado válido:
+
+El sistema debe manejar consistentemente los estados de importación (debe decidirse si se usarán mayúsculas o minúsculas)
+
+La enumeración ImportStatus debe incluir todos los estados posibles (PENDING, PROCESSING, COMPLETED, FAILED)
+
+El frontend debe estar preparado para manejar todos estos estados posibles
+
+4. Sobre la validación de partos
+
+El asegurar que no hay campos de partos a medias (con fecha pero sin géneros o estados) indica que:
+
+El sistema debe validar que si se proporciona una fecha de parto, también deben proporcionarse los campos GenereT y EstadoT
+
+Se requiere una validación condicional: si part tiene valor, entonces GenereT y EstadoT no pueden ser nulos
+
+Los formularios en el frontend deberían reflejar esta lógica, haciendo obligatorios estos campos cuando se introduce una fecha de parto
+
+5. Sobre el manejo de datos vacíos
+
+Los cambios en test_import_with_empty_fields destacan que:
+
+El sistema debe ser robusto ante datos faltantes en campos no obligatorios
+
+Los campos obligatorios deben estar claramente identificados y validados
+
+Es importante que la aplicación funcione correctamente en entornos de campo donde puede ser difícil completar todos los datos
+
+6. Sobre el flujo de trabajo de importación
+
+Los tests revelan un proceso de importación en múltiples pasos:
+
+El sistema permite primero subir un archivo CSV
+
+Luego procesa los registros uno por uno, pudiendo completar algunos y fallar en otros
+
+El resultado de la importación debe proporcionar información clara sobre los éxitos y errores
+
+# Estructura Revisada de la Base de Datos - Masclet Imperi
+
+Este documento define la estructura revisada de la base de datos del sistema Masclet Imperi, enfocándose en un diseño centrado en el animal como entidad principal. El documento establece claramente qué tablas se mantienen, cuáles se eliminan y cómo deben funcionar los endpoints asociados.
+
+## Principios de Diseño
+
+1. **El animal como entidad principal**: Todo el sistema gira alrededor del animal.
+2. **Explotaciones como atributo**: La explotación es simplemente un atributo del animal, no una entidad independiente.
+3. **Historial de cambios**: Se mantiene un registro de los cambios realizados en las fichas de animales.
+4. **Partos asociados a animales**: Los partos siempre están asociados a un animal específico (hembra).
+
+## Estructura de Tablas Actual
+
+Esta sección refleja la estructura real de la base de datos verificada tras la migración.
+
+### Tablas Principales
+
+#### 1. Tabla `animals`
+
+La tabla principal que contiene todos los datos de los animales.
+
+| Campo      | Tipo      | Nulo | Descripción                                                                                                                                           |
+| ---------- | --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id         | integer   | NO   | Identificador único (PK) (no CSV)                                                                                                                     |
+| explotacio | varchar   | NO   | Código de explotación a la que pertenece (CSV)                                                                                                       |
+| nom        | varchar   | NO   | Nombre del animal (CSV)                                                                                                                                |
+| genere     | varchar   | NO   | Género (M/F) (CSV)                                                                                                                                    |
+| estado     | varchar   | NO   | Estado (OK/DEF), valor por defecto 'OK' (CSV)                                                                                                          |
+| pare       | varchar   | SÍ  | Padre del animal (CSV)                                                                                                                                 |
+| mare       | varchar   | SÍ  | Madre del animal (CSV)                                                                                                                                 |
+| quadra     | varchar   | SÍ  | Cuadra (es como el apellido) (CSV)                                                                                                                     |
+| cod        | varchar   | SÍ  | Código identificativo (CSV)                                                                                                                           |
+| num_serie  | varchar   | SÍ  | Número de serie oficial (CSV)                                                                                                                         |
+| dob        | date      | SÍ  | Fecha de nacimiento (CSV)                                                                                                                              |
+| part       | varchar   | SÍ  | Campo legado, no utilizado (CSV)                                                                                                                       |
+| alletar    | varchar   | SÍ  | Estado de amamantamiento ("0", "1", "2") - Solo para hembras (CSV)  Para animales macho,`alletar` debe ser "0" en el CSV y nunca podrá ser 1 o 2 |
+| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                       |
+| updated_at | timestamp | NO   | Fecha de actualización, valor por defecto CURRENT_TIMESTAMP (no CSV)                                                                                  |
+
+**Índices y Restricciones**:
+
+- Clave primaria: `animals_pkey` - PRIMARY KEY (id)
+- Índice único: `animals_cod_key` - UNIQUE (cod)
+- Índice secundario: `idx_animals_explotacio` (para búsquedas eficientes por explotación)
+- Índice secundario: `idx_animals_nom` (para búsquedas por nombre)
+
+#### 2. Tabla `part`
+
+Registra los partos asociados a animales hembra.
+
+| Campo        | Tipo      | Nulo | Descripción                                                                 |
+| ------------ | --------- | ---- | ---------------------------------------------------------------------------- |
+| id           | integer   | NO   | Identificador único (PK) (no CSV)                                           |
+| part         | date      | NO   | Fecha del parto (CSV)                                                        |
+| GenereT      | varchar   | NO   | Género de la cría (M/F/E) (CSV)                                            |
+| EstadoT      | varchar   | NO   | Estado de la cría (OK/DEF), valor por defecto 'OK' (CSV)                    |
+| numero_part  | integer   | NO   | Número secuencial del parto para ese animal (No CSV)                        |
+| observacions | text      | SÍ  | Observaciones adicionales (No CSV)                                           |
+| created_at   | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV)             |
+| updated_at   | timestamp | NO   | Fecha de última modificación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+| animal_id    | integer   | NO   | ID del animal (FK a animals.id) (no CSV)                                     |
+
+**Índices y Restricciones**:
+
+- Clave primaria: `part_pkey` - PRIMARY KEY (id)
+- Clave foránea: `part_animal_id_fkey` - FOREIGN KEY (animal_id) REFERENCES animals(id) ON DELETE CASCADE
+- Índice secundario: `idx_part_animal_id` (para búsquedas por animal)
+
+#### 3. Tabla `animal_history`
+
+Registra los cambios realizados en las fichas de los animales.
+
+| Campo      | Tipo      | Nulo | Descripción                                                          |
+| ---------- | --------- | ---- | --------------------------------------------------------------------- |
+| id         | integer   | NO   | Identificador único (PK) (No CSV)                                    |
+| field_name | varchar   | NO   | Nombre del campo modificado (No CSV)                                  |
+| old_value  | varchar   | SÍ  | Valor anterior del campo (No CSV)                                     |
+| new_value  | varchar   | SÍ  | Nuevo valor del campo (No CSV)                                        |
+| changed_at | timestamp | NO   | Fecha y hora del cambio, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+| changed_by | varchar   | SÍ  | Usuario que realizó el cambio (No CSV)                               |
+| animal_id  | integer   | NO   | ID del animal (FK a animals.id) (No CSV)                              |
+
+**Índices y Restricciones**:
+
+- Clave primaria: `animal_history_pkey` - PRIMARY KEY (id)
+- Clave foránea: `animal_history_animal_id_fkey` - FOREIGN KEY (animal_id) REFERENCES animals(id) ON DELETE CASCADE
+- Índice secundario: `idx_animal_history_animal_id` (para búsquedas por animal)
+
+#### 4. Tabla `users`
+
+Gestión de usuarios del sistema.
+
+| Campo         | Tipo      | Nulo | Descripción                                                                 |
+| ------------- | --------- | ---- | ---------------------------------------------------------------------------- |
+| id            | integer   | NO   | Identificador único (PK) (No CSV)                                           |
+| username      | varchar   | NO   | Nombre de usuario (único) (No CSV)                                          |
+| password_hash | varchar   | NO   | Hash de la contraseña (No CSV)                                              |
+| email         | varchar   | NO   | Correo electrónico (único) (No CSV)                                        |
+| role          | varchar   | NO   | Rol (admin, editor, usuario), valor por defecto 'usuario' (No CSV)           |
+| is_active     | boolean   | NO   | Estado activo del usuario, valor por defecto true (No CSV)                   |
+| created_at    | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP (No CSV)             |
+| updated_at    | timestamp | NO   | Fecha de última modificación, valor por defecto CURRENT_TIMESTAMP (No CSV) |
+
+**Índices y Restricciones**:
+
+- Clave primaria: `users_pkey` - PRIMARY KEY (id)
+- Índice único: `users_email_key` - UNIQUE (email)
+- Índice único: `users_username_key` - UNIQUE (username)
+
+### Tablas Auxiliares y de Prueba
+
+#### 1. Tabla `aerich`
+
+Tabla utilizada por Aerich para gestionar las migraciones de la base de datos.
+
+#### 2. Tabla `test_custom_dates`
+
+Tabla utilizada para pruebas de formatos de fechas personalizados.
+
+| Campo      | Tipo      | Nulo | Descripción                                                         |
+| ---------- | --------- | ---- | -------------------------------------------------------------------- |
+| id         | integer   | NO   | Identificador único (PK)                                            |
+| date       | date      | NO   | Fecha de prueba                                                      |
+| created_at | timestamp | NO   | Fecha de creación, valor por defecto CURRENT_TIMESTAMP              |
+| updated_at | timestamp | NO   | Fecha de última actualización, valor por defecto CURRENT_TIMESTAMP |
+
+#### 3. Tabla `test_dates`
+
+Tabla utilizada para pruebas básicas de fechas.
+
+| Campo | Tipo    | Nulo | Descripción              |
+| ----- | ------- | ---- | ------------------------- |
+| id    | integer | NO   | Identificador único (PK) |
+| date  | date    | NO   | Fecha de prueba           |
+
+### Tablas Eliminadas
+
+#### 1. Tabla `explotacions`
+
+Esta tabla se ha eliminado porque:
+
+- La explotación es un atributo del animal, no una entidad independiente
+- Toda la información necesaria está disponible en el campo `explotacio` de la tabla `animals`
+- Las vistas de explotaciones se pueden generar agrupando los datos de animales
+
+#### 2. Tabla `parts`
+
+Esta tabla se ha eliminado porque:
+
+- Es una duplicación innecesaria de la tabla `part`
+- Genera confusión y puede llevar a inconsistencias en los datos
+
+## Reglas de Negocio y Validaciones
+
+### Reglas Fundamentales
+
+1. **Usuarios**: Solo puede existir un administrador en el sistema. Roles definidos: administrador, editor, usuario.
+2. **Animales**:
+   - El estado "DEF" (fallecido) es definitivo y no puede revertirse.
+   - Cada animal tiene un código único (`cod`) que no puede repetirse.
+3. **Partos**:
+   - Los partos son registros históricos y no pueden eliminarse.
+   - Los partos siempre están asociados a una vaca específica.
+   - Los partos solo aplican a animales hembras (genere: "F").
+4. **Amamantamiento**:
+   - Las hembras pueden tener tres estados de amamantamiento:
+     - "NO": No amamanta
+     - "1": Amamanta a un ternero
+     - "2": Amamanta a dos terneros
+   - El estado de amamantamiento es específico para vacas e influye directamente en el recuento de terneros.
+   - El estado de amamantamiento es independiente del registro histórico de partos.
+
+### Convenciones de Nombrado
+
+1. **Explotaciones**:
+   - El identificador único debe ser el campo 'explotacio' (string).
+   - El campo 'nom' está reservado únicamente para animales.
+2. **Animales**:
+   - Se usa 'nom' para el nombre del animal.
+   - Se usa 'explotacio' como referencia a la explotación.
+3. **Fechas**:
+   - El formato estándar de fechas en la API es DD/MM/YYYY.
+
+## Endpoints y su Funcionamiento
+
+### 1. Endpoints de Animales (`/api/v1/animals/`)
+
+Estos endpoints mantienen su funcionalidad actual sin cambios:
+
+- `POST /api/v1/animals/`: Crear un nuevo animal
+- `GET /api/v1/animals/`: Listar animales (con filtros)
+- `GET /api/v1/animals/{animal_id}`: Obtener detalles de un animal
+- `PATCH /api/v1/animals/{animal_id}`: Actualizar parcialmente un animal
+- `PUT /api/v1/animals/{animal_id}`: Actualizar completamente un animal
+- `DELETE /api/v1/animals/{animal_id}`: Eliminar un animal
+- `GET /api/v1/animals/{animal_id}/history`: Obtener el historial de cambios de un animal
+
+### 2. Endpoints de Explotaciones (`/api/v1/explotacions/`) (OBSOLETOS/ ya no sirven, los mantengo en este documento aprq que quede constancia de que se formluaron, PERO YA NO SIRVEN)
+
+Estos endpoints deben modificarse para trabajar directamente con la tabla `animals` en lugar de `explotacions`:
+
+- `GET /api/v1/explotacions/`: Listar explotaciones únicas (agrupando por el campo `explotacio` de `animals`)
+- `GET /api/v1/explotacions/{explotacio}`: Obtener detalles de una explotación (mostrando estadísticas y animales)
+
+Los siguientes endpoints deberían eliminarse o rediseñarse para reflejar que las explotaciones son atributos, no entidades:
+
+- `POST /api/v1/explotacions/`: Modifica la función para agregar el campo `explotacio` a un grupo de animales
+- `PUT /api/v1/explotacions/{explotacio}`: Modifica la función para actualizar el campo `explotacio` en animales
+- `DELETE /api/v1/explotacions/{explotacio}`: Modifica la función para actualizar o mover animales de una explotación
+
+### 3. Endpoints de Dashboard (`/api/v1/dashboard/`)
+
+Estos endpoints ya funcionan correctamente agrupando datos de animales por explotación:
+
+- `GET /api/v1/dashboard/explotacions`: ahora devuelve valores únicos del campo "explotacio" de la tabla animals
+- `GET /api/v1/dashboard/explotacions/{explotacio_id}`: ahora recibe directamente el valor del campo "explotacio" para filtrar
+- `GET /api/v1/dashboard/stats`: Obtener estadísticas generales del sistema
+- `GET /api/v1/dashboard/resumen`: Obtener un resumen de todos los datos
+- `GET /api/v1/dashboard/combined`: Obtener datos combinados para el dashboard
+- `GET /api/v1/dashboard/recientes`: Obtener actividad reciente en el sistema
+- `GET /api/v1/dashboard/partos`: Obtener estadísticas de partos
+
+### 4. Endpoints de Partos
+
+Los partos están estrechamente relacionados con los animales (específicamente las vacas):
+
+- Endpoints anidados bajo animales (`/api/v1/animals/{animal_id}/partos/`):
+
+  - `POST`: Crear un nuevo parto para un animal
+  - `GET`: Obtener partos de un animal
+  - `GET /list`: Listar partos de un animal
+  - Operaciones sobre partos específicos (`/{parto_id}`)
+- Endpoints independientes (`/api/v1/partos/`):
+
+  - `POST`: Crear un nuevo parto (especificando el animal)
+  - `GET`: Listar todos los partos
+  - Operaciones sobre partos específicos (`/{parto_id}`)
+
+**Nota**: La API maneja la relación entre los partos y animales utilizando:
+
+- Al recibir datos: Recibe nom -> Busca la vaca por nom -> Obtiene el id de esa vaca -> Guarda el parto usando ese animal_id.
+- Al enviar datos: Carga el parto (con animal_id) -> Carga la vaca relacionada usando animal_id -> Devuelve el nom de la vaca.
+
+### 5. Endpoints Actuales de Importación
+
+1. **`GET /api/v1/imports/`**
+   - Obtiene la lista paginada de importaciones realizadas (historial)
+   - Parámetros: page, size
+   - En la implementación actual parece devolver un array vacío (pendiente)
+2. **`POST /api/v1/imports/csv`** ⚠️
+   - Importa datos desde un archivo CSV
+   - Acepta el archivo como File y un campo description opcional
+3. **`GET /api/v1/imports/{import_id}`**
+   - Obtiene el estado de una importación específica
+   - Usa un ID numérico en la ruta
+
+#### IMPORTS nuevos
+
+GET        /api/v1/imports/template                 download_template
+GET        /api/v1/imports/{import_id}/errors       get_import_errors
+
+te recuerdo que en el CSV hay varias filas para cada hembra, hay tantas filas como partos han tenido, los campos principales estan repetidos y son exclusivos los de los partos los tres de los partos(part, genereT y estadoT)
+
+nueva estructura actualizada de base de datos:
+
+=== TABLAS EN LA BASE DE DATOS ===
++-------------------+
+| Nombre de tabla   |
++===================+
+| aerich            |
++-------------------+
+| animal_history    |
++-------------------+
+| animals           |
++-------------------+
+| imports           |
++-------------------+
+| part              |
++-------------------+
+| test_custom_dates |
++-------------------+
+| test_dates        |
++-------------------+
+| users             |
++-------------------+
+
+=== ESTRUCTURA DE LA TABLA: animals ===
+
+COLUMNAS:
++------------+--------------------------+----------------+-------------------------------------+
+| Nombre     | Tipo de dato             | Permite NULL   | Valor por defecto                   |
++============+==========================+================+=====================================+
+| id         | integer                  | NO             | nextval('animals_id_seq'::regclass) |
++------------+--------------------------+----------------+-------------------------------------+
+| explotacio | character varying        | NO             |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| nom        | character varying        | NO             |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| genere     | character varying        | NO             |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| estado     | character varying        | NO             | 'OK'::character varying             |
++------------+--------------------------+----------------+-------------------------------------+
+| pare       | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| mare       | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| quadra     | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| cod        | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| num_serie  | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| dob        | date                     | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| created_at | timestamp with time zone | NO             | CURRENT_TIMESTAMP                   |
++------------+--------------------------+----------------+-------------------------------------+
+| updated_at | timestamp with time zone | NO             | CURRENT_TIMESTAMP                   |
++------------+--------------------------+----------------+-------------------------------------+
+| part       | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+| alletar    | character varying        | YES            |                                     |
++------------+--------------------------+----------------+-------------------------------------+
+
+RESTRICCIONES:
++-----------------+-------------+------------+----------------------+--------------------------+
+| Nombre          | Tipo        | Columnas   | Tabla referenciada   | Columnas referenciadas   |
++=================+=============+============+======================+==========================+
+| animals_pkey    | PRIMARY KEY | id         | animals              | id                       |
++-----------------+-------------+------------+----------------------+--------------------------+
+| animals_cod_key | UNIQUE      | cod        | animals              | cod                      |
++-----------------+-------------+------------+----------------------+--------------------------+
+
+ÍNDICES:
++------------------------+------------+------------+---------+
+| Nombre                 | Columna    | Es único   | Es PK   |
++========================+============+============+=========+
+| animals_cod_key        | cod        | True       | False   |
++------------------------+------------+------------+---------+
+| animals_pkey           | id         | True       | True    |
++------------------------+------------+------------+---------+
+| idx_animals_explotacio | explotacio | False      | False   |
++------------------------+------------+------------+---------+
+| idx_animals_nom        | nom        | False      | False   |
++------------------------+------------+------------+---------+
+
+=== ESTRUCTURA DE LA TABLA: part ===
+
+COLUMNAS:
++--------------+--------------------------+----------------+----------------------------------+
+| Nombre       | Tipo de dato             | Permite NULL   | Valor por defecto                |
++==============+==========================+================+==================================+
+| id           | integer                  | NO             | nextval('part_id_seq'::regclass) |
++--------------+--------------------------+----------------+----------------------------------+
+| part         | date                     | NO             |                                  |
++--------------+--------------------------+----------------+----------------------------------+
+| GenereT      | character varying        | NO             |                                  |
++--------------+--------------------------+----------------+----------------------------------+
+| EstadoT      | character varying        | NO             | 'OK'::character varying          |
++--------------+--------------------------+----------------+----------------------------------+
+| numero_part  | integer                  | NO             |                                  |
++--------------+--------------------------+----------------+----------------------------------+
+| observacions | text                     | YES            |                                  |
++--------------+--------------------------+----------------+----------------------------------+
+| created_at   | timestamp with time zone | NO             | CURRENT_TIMESTAMP                |
++--------------+--------------------------+----------------+----------------------------------+
+| updated_at   | timestamp with time zone | NO             | CURRENT_TIMESTAMP                |
++--------------+--------------------------+----------------+----------------------------------+
+| animal_id    | integer                  | NO             |                                  |
++--------------+--------------------------+----------------+----------------------------------+
+
+RESTRICCIONES:
++---------------------+-------------+------------+----------------------+--------------------------+
+| Nombre              | Tipo        | Columnas   | Tabla referenciada   | Columnas referenciadas   |
++=====================+=============+============+======================+==========================+
+| part_animal_id_fkey | FOREIGN KEY | animal_id  | animals              | id                       |
++---------------------+-------------+------------+----------------------+--------------------------+
+| part_pkey           | PRIMARY KEY | id         | part                 | id                       |
++---------------------+-------------+------------+----------------------+--------------------------+
+
+ÍNDICES:
++--------------------+-----------+------------+---------+
+| Nombre             | Columna   | Es único   | Es PK   |
++====================+===========+============+=========+
+| idx_part_animal_id | animal_id | False      | False   |
++--------------------+-----------+------------+---------+
+| part_pkey          | id        | True       | True    |
++--------------------+-----------+------------+---------+
+
+=== ESTRUCTURA DE LA TABLA: explotacions ===
+No se encontraron columnas para la tabla explotacions.
+No se encontraron restricciones para la tabla explotacions.
+No se encontraron índices para la tabla explotacions.
+
+=== ESTRUCTURA DE LA TABLA: users ===
+
+COLUMNAS:
++---------------+--------------------------+----------------+-----------------------------------+
+| Nombre        | Tipo de dato             | Permite NULL   | Valor por defecto                 |
++===============+==========================+================+===================================+
+| id            | integer                  | NO             | nextval('users_id_seq'::regclass) |
++---------------+--------------------------+----------------+-----------------------------------+
+| username      | character varying        | NO             |                                   |
++---------------+--------------------------+----------------+-----------------------------------+
+| password_hash | character varying        | NO             |                                   |
++---------------+--------------------------+----------------+-----------------------------------+
+| email         | character varying        | NO             |                                   |
++---------------+--------------------------+----------------+-----------------------------------+
+| role          | character varying        | NO             | 'usuario'::character varying      |
++---------------+--------------------------+----------------+-----------------------------------+
+| is_active     | boolean                  | NO             | true                              |
++---------------+--------------------------+----------------+-----------------------------------+
+| created_at    | timestamp with time zone | NO             | CURRENT_TIMESTAMP                 |
++---------------+--------------------------+----------------+-----------------------------------+
+| updated_at    | timestamp with time zone | NO             | CURRENT_TIMESTAMP                 |
++---------------+--------------------------+----------------+-----------------------------------+
+
+RESTRICCIONES:
++--------------------+-------------+------------+----------------------+--------------------------+  
+| Nombre             | Tipo        | Columnas   | Tabla referenciada   | Columnas referenciadas   |  
++====================+=============+============+======================+==========================+  
+| users_pkey         | PRIMARY KEY | id         | users                | id                       |  
++--------------------+-------------+------------+----------------------+--------------------------+  
+| users_email_key    | UNIQUE      | email      | users                | email                    |  
++--------------------+-------------+------------+----------------------+--------------------------+  
+| users_username_key | UNIQUE      | username   | users                | username                 |  
++--------------------+-------------+------------+----------------------+--------------------------+  
+
+ÍNDICES:
++--------------------+-----------+------------+---------+
+| Nombre             | Columna   | Es único   | Es PK   |
++====================+===========+============+=========+
+| users_email_key    | email     | True       | False   |
++--------------------+-----------+------------+---------+
+| users_pkey         | id        | True       | True    |
++--------------------+-----------+------------+---------+
+| users_username_key | username  | True       | False   |
++--------------------+-----------+------------+---------+
+
+=== RELACIONES ENTRE TABLAS ===
++----------------+------------------+-----------------+-------------------+
+| Tabla origen   | Columna origen   | Tabla destino   | Columna destino   |
++================+==================+=================+===================+
+| animal_history | animal_id        | animals         | id                |
++----------------+------------------+-----------------+-------------------+
+| part           | animal_id        | animals         | id                |
++----------------+------------------+-----------------+-------------------+
+
+=== CONTEO DE REGISTROS POR TABLA ===
++-------------------+-----------------------+
+| Tabla             |   Número de registros |
++===================+=======================+
+| aerich            |                     4 |
++-------------------+-----------------------+
+| animal_history    |                     0 |
++-------------------+-----------------------+
+| animals           |                    28 |
++-------------------+-----------------------+
+| imports           |                   293 |
++-------------------+-----------------------+
+| part              |                     6 |
++-------------------+-----------------------+
+| test_custom_dates |                     0 |
++-------------------+-----------------------+
+| test_dates        |                     0 |
++-------------------+-----------------------+
+| users             |                     4 |
++-------------------+-----------------------+
+
+
+=== ESTRUCTURA DE LA TABLA: animal_history ===
+
+COLUMNAS:
++---------------+-------------------------+---------------+
+| Nombre        | Tipo de dato            | Permite NULL  |
++===============+=========================+===============+
+| id            | integer                 | NO            |
+| usuario       | character varying       | NO            |
+| cambio        | text                    | NO            |
+| campo         | character varying       | NO            |
+| valor_anterior | text                    | YES           |
+| valor_nuevo   | text                    | YES           |
+| animal_id     | integer                 | NO            |
++---------------+-------------------------+---------------+
+
+RESTRICCIONES:
++--------------------+-------------+------------+----------------------+--------------------------+  
+| Nombre             | Tipo        | Columnas   | Tabla referenciada   | Columnas referenciadas   |  
++====================+=============+============+======================+==========================+  
+| animal_history_pkey | PRIMARY KEY | id         | animal_history       | id                       |
+| animal_history_animal_id_fkey | FOREIGN KEY | animal_id  | animals              | id  
+
+
+
+
+
+## CONCEPTOS FUNDAMENTALES GENERALES DE LA APLICACION:
+
+NO SE CREAN CAMPOS NUEVOS EN EL MODELO DE NEGOCIO SIN VALIDARLOS CON EL USUARIO ()
+
+cuando encontramos un campo que hayq ue quitar tipo explotaci, explotacio_id, fecha, ubicacion, etc, debemos repasar bien todos los posibles archivos en los que esten, antes de dar el visto bueno a la revision
+
+la carpeta de tEST buena es SIEMPRE C:\Proyectos\claude\masclet-imperi-web\new_tests
+ahi estan todos los testsd que cuentan
+
+MUY IMPORTANTE: trabajamos siempre con datos reales, hayq ue ir quitando datos simulados, los datos validos son los del CSV matriz_master.csv (que son datos provisionales pero reales)
+
+te recuerdo que tu eres el programador experto y yo el jefe de proyecto, tu eres es elq ue sabe de codigo, en modo arquitecto, programador de backend, programador de frontend y experto tester y yo soy el que gestiono y se lo que quiere el cliente en su aplicacion
+
+guarda el ejecutable de ver que tiene la base3 de datos y el de resetear la base de datos y el de importar el csv de base etc en la carpeta de complementos (new_tests\complementos)
+
+el programa principal debe leer mayusculas y minusculas de los campos y del contenido de cada campo indistintamente.

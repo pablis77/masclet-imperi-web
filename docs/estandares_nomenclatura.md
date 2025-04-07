@@ -1,22 +1,5 @@
 # Estándares de Nomenclatura en Masclet Imperi Web
 
-## Modelo de Explotaciones
-
-### Campos y Significado
-
-| Campo                | Tipo    | Descripción                                                         |
-| -------------------- | ------- | -------------------------------------------------------------------- |
-| **id**         | int     | ID técnico autogenerado por la base de datos. Uso interno.          |
-| **nom**        | string  | Nombre de la explotación.                                           |
-| **explotacio** | string  | Código/identificador de negocio de la explotación. Puede ser null. |
-| **activa**     | boolean | Estado activo/inactivo de la explotación.                           |
-
-### Reglas Importantes
-
-- El campo `nom` es el **nombre** de la explotación
-- El campo `explotacio` es un **código identificador** de la explotación (distinto del nombre)
-- El `id` es un campo técnico para operaciones CRUD en la API
-
 ## Modelo de Animales
 
 ### Campos y Significado

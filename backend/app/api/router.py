@@ -2,7 +2,6 @@
 Router principal de la API
 """
 from fastapi import APIRouter
-from app.api.endpoints.explotacions import router as explotacions_router
 from app.api.endpoints.animals import router as animals_router
 from app.api.endpoints.partos import router as partos_router
 from app.api.endpoints.partos_standalone import router as partos_standalone_router
@@ -28,12 +27,7 @@ api_router.include_router(
     tags=["users"]
 )
 
-# Incluir sub-routers
-api_router.include_router(
-    explotacions_router,
-    prefix="/explotacions",
-    tags=["explotacions"]
-)
+# Incluir sub-routers - Explotaciones eliminado
 
 # Rutas para animales
 api_router.include_router(

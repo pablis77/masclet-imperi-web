@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import animalService from '../../services/animalService';
 import type { Animal, AnimalFilters, PaginatedResponse } from '../../services/animalService';
 
@@ -18,6 +18,13 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalAnimals, setTotalAnimals] = useState<number>(0);
   const [useMockData, setUseMockData] = useState(false);
+  const [searchInfo, setSearchInfo] = useState<{
+    term: string;
+    count: number;
+    total: number;
+    usedMock: boolean;
+    reason?: string;
+  } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -101,13 +108,37 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     const handleApplyFilters = (event: CustomEvent<AnimalFilters>) => {
       setFilters(event.detail);
       setCurrentPage(1); 
+      // Limpiar la información de búsqueda cuando se aplican nuevos filtros
+      if (!event.detail.search) {
+        setSearchInfo(null);
+      }
     };
 
     const handleRefreshAnimals = () => {
       loadAnimals();
+      setSearchInfo(null); // Limpiar información de búsqueda al refrescar
+    };
+    
+    const handleSearchCompleted = (event: CustomEvent<{
+      term: string;
+      count: number;
+      total: number;
+      usedMock: boolean;
+      reason?: string;
+    }>) => {
+      setSearchInfo(event.detail);
+      setUseMockData(event.detail.usedMock);
+      
+      if (event.detail.usedMock) {
+        setError(`Nota: Mostrando resultados simulados debido a un ${event.detail.reason}. Se encontraron ${event.detail.count} coincidencias para "${event.detail.term}".`);
+      } else {
+        // Si la búsqueda fue exitosa, limpiar mensaje de error
+        setError(null);
+      }
     };
 
     document.addEventListener('refresh-animals', handleRefreshAnimals);
+    document.addEventListener('search-completed', handleSearchCompleted as EventListener);
 
     const rootElement = document.getElementById(id || '');
     if (rootElement) {
@@ -118,6 +149,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
 
     return () => {
       document.removeEventListener('refresh-animals', handleRefreshAnimals);
+      document.removeEventListener('search-completed', handleSearchCompleted as EventListener);
       if (rootElement) {
         rootElement.removeEventListener('apply-filters', handleApplyFilters as EventListener);
       } else {
@@ -137,14 +169,32 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
           </span>
         `;
       } else {
-        totalAnimalsContainer.innerHTML = `
-          <span class="text-sm text-gray-500 dark:text-gray-400">
-            Total: ${totalAnimals} animales
-          </span>
-        `;
+        // Si hay información de búsqueda, mostrarla
+        if (searchInfo && searchInfo.term) {
+          const mockBadge = searchInfo.usedMock ? 
+            '<span class="ml-1 px-1 py-0.5 text-xs bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200 rounded">DATOS SIMULADOS</span>' : 
+            '';
+          
+          totalAnimalsContainer.innerHTML = `
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              Total: ${totalAnimals} animales | Búsqueda: "${searchInfo.term}" (${searchInfo.count} coincidencias) ${mockBadge}
+            </span>
+          `;
+        } else {
+          // Mensaje normal sin búsqueda
+          const mockBadge = useMockData ? 
+            '<span class="ml-1 px-1 py-0.5 text-xs bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200 rounded">DATOS SIMULADOS</span>' : 
+            '';
+          
+          totalAnimalsContainer.innerHTML = `
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              Total: ${totalAnimals} animales ${mockBadge}
+            </span>
+          `;
+        }
       }
     }
-  }, [totalAnimals, loading]);
+  }, [totalAnimals, loading, searchInfo, useMockData]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -155,7 +205,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
 
   const handleAnimalDeactivation = async (animalId: number) => {
     try {
-      await animalService.deactivateAnimal(animalId);
+      await animalService.deleteAnimal(animalId);
       loadAnimals();
     } catch (err) {
       console.error('Error al dar de baja al animal:', err);
@@ -258,11 +308,29 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   };
 
   const getAnimalIcon = (animal: Animal) => {
-    return animalService.getAnimalIcon(animal);
+    const iconClass = "text-2xl";
+    
+    if (animal.genere === 'M') {
+      return <span className={iconClass}>🐂</span>; // Toro
+    } else {
+      if (animal.alletar !== '0') {
+        return <span className={iconClass}>🐄</span>; // Vaca amamantando
+      } else {
+        return <span className={iconClass}>🐮</span>; // Vaca
+      }
+    }
   };
 
-  const getStatusClass = (estat: string) => {
-    return animalService.getAnimalStatusClass(estat);
+  const renderStatusBadge = (animal: Animal) => {
+    const statusClass = animal.estado === 'OK' ?
+      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>
+        {animal.estado === 'OK' ? 'Activo' : 'Baja'}
+      </span>
+    );
   };
 
   return (
@@ -347,7 +415,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                 {animals.map((animal) => (
                   <tr key={animal.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className="text-2xl" title={animalService.getAlletarText(animal.alletar)}>
+                      <span className="text-2xl" title={animal.alletar === '0' ? 'No amamantando' : animal.alletar === '1' ? 'Amamantando 1 ternero' : 'Amamantando 2 terneros'}>
                         {getAnimalIcon(animal)}
                       </span>
                     </td>
@@ -370,14 +438,16 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-200">
-                        {animal.explotacio_id}
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            Exp. {animal.explotacio}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(animal.estat)}`}>
-                        {animal.estat === 'ACT' ? 'Activo' : 'Baja'}
-                      </span>
+                      {renderStatusBadge(animal)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
@@ -391,7 +461,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                           </svg>
                           Ver
                         </a>
-                        {canEdit && animal.estat === 'ACT' && (
+                        {canEdit && animal.estado === 'OK' && (
                           <a 
                             href={`/animals/update/${animal.id}`}
                             className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"

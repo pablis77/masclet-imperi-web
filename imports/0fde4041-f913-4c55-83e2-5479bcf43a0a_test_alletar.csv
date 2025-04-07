@@ -1,0 +1,6 @@
+nom;genere;estado;explotacio;alletar
+TestMacho1;M;OK;ExplotacioTest;0
+TestMacho2;M;OK;ExplotacioTest;1
+TestHembra0;F;OK;ExplotacioTest;0
+TestHembra1;F;OK;ExplotacioTest;1
+TestHembra2;F;OK;ExplotacioTest;2

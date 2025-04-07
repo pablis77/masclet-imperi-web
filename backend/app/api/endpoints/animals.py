@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from tortoise.expressions import Q
 
-from app.models.animal import Animal, Genere, Estado, Part, EstadoAlletar
+from app.models.animal import Animal, Genere, Estado, Part, EstadoAlletar, AnimalHistory
 from app.core.date_utils import DateConverter, is_valid_date
 from app.schemas.animal import AnimalCreate, AnimalResponse
 
@@ -124,6 +124,39 @@ async def get_animal(animal_id: int) -> AnimalResponse:
         logger.error(f"Error obteniendo animal {animal_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/{animal_id}/history", response_model=List[dict])
+async def get_animal_history(
+    animal_id: int,
+    current_user: User = Depends(get_current_user)
+) -> List[dict]:
+    """
+    Obtener el historial de cambios de un animal
+    """
+    try:
+        # Verificar que el animal existe
+        animal = await Animal.get_or_none(id=animal_id)
+        if not animal:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Animal con ID {animal_id} no encontrado"
+            )
+            
+        # Obtener el historial de cambios
+        historial = await AnimalHistory.filter(animal_id=animal_id).order_by('-id')
+        
+        # Convertir a diccionarios
+        resultado = []
+        for registro in historial:
+            resultado.append(await registro.to_dict())
+            
+        return resultado
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error obteniendo historial del animal {animal_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener historial: {str(e)}")
+
 @router.get("/", response_model=AnimalListResponse)
 async def list_animals(
     explotacio: Optional[str] = None,  
@@ -193,8 +226,23 @@ async def list_animals(
             
         # Búsqueda general
         if search:
-            search_condition = Q(nom__icontains=search) | Q(num_serie__icontains=search)
-            filter_conditions = filter_conditions & search_condition
+            # Búsqueda más amplia en múltiples campos
+            search_condition = Q(nom__icontains=search) | \
+                             Q(num_serie__icontains=search) | \
+                             Q(cod__icontains=search) | \
+                             Q(pare__icontains=search) | \
+                             Q(mare__icontains=search) | \
+                             Q(quadra__icontains=search) | \
+                             Q(explotacio__icontains=search)
+            
+            # Si no hay otros filtros, aplicamos solo la condición de búsqueda
+            if filter_conditions == Q():
+                filter_conditions = search_condition
+            else:
+                # Si hay otros filtros, los combinamos con la búsqueda
+                filter_conditions = filter_conditions & search_condition
+            
+            logger.info(f"Buscando término: '{search}' en múltiples campos")
             
         # Búsqueda por número de serie (case-insensitive)
         if num_serie:
@@ -231,7 +279,11 @@ async def list_animals(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/{animal_id}", response_model=AnimalResponse)
-async def update_animal_patch(animal_id: int, animal_data: AnimalUpdate) -> dict:
+async def update_animal_patch(
+    animal_id: int, 
+    animal_data: AnimalUpdate,
+    current_user: User = Depends(get_current_user)
+) -> dict:
     """
     Actualizar parcialmente un animal por ID (método PATCH)
     """
@@ -274,9 +326,44 @@ async def update_animal_patch(animal_id: int, animal_data: AnimalUpdate) -> dict
         # Si es hembra, puede ser "0", "1" o "2"
         update_data["alletar"] = animal_data.alletar
     
+    # Guardar valores anteriores para el historial
+    valores_anteriores = {}
+    for campo in update_data.keys():
+        valores_anteriores[campo] = getattr(animal, campo)
+    
     # Actualizar el animal
     if update_data:
         await animal.update_from_dict(update_data).save()
+        
+        # Registrar los cambios en el historial
+        for campo, nuevo_valor in update_data.items():
+            valor_anterior = valores_anteriores.get(campo)
+            
+            # Convertir fechas a formato legible
+            if campo == 'dob' and valor_anterior:
+                valor_anterior = valor_anterior.strftime("%d/%m/%Y") if hasattr(valor_anterior, 'strftime') else str(valor_anterior)
+            if campo == 'dob' and nuevo_valor:
+                nuevo_valor = nuevo_valor.strftime("%d/%m/%Y") if hasattr(nuevo_valor, 'strftime') else str(nuevo_valor)
+                
+            # Crear descripción del cambio
+            if campo == 'estado':
+                descripcion = f"Actualización de estado: {valor_anterior} → {nuevo_valor}"
+            elif campo == 'alletar':
+                descripcion = f"Cambio de estado de amamantamiento: {valor_anterior} → {nuevo_valor}"
+            elif campo == 'quadra':
+                descripcion = f"Cambio de cuadra: {valor_anterior} → {nuevo_valor}"
+            else:
+                descripcion = f"Actualización de {campo}"
+                
+            # Registrar en historial
+            await AnimalHistory.create(
+                animal=animal,
+                usuario=current_user.username,
+                cambio=descripcion,
+                campo=campo,
+                valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
+                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
+            )
     
     # Devolver el animal actualizado
     return {
@@ -285,7 +372,11 @@ async def update_animal_patch(animal_id: int, animal_data: AnimalUpdate) -> dict
     }
 
 @router.put("/{animal_id}", response_model=AnimalResponse)
-async def update_animal(animal_id: int, animal_data: AnimalUpdate) -> dict:
+async def update_animal(
+    animal_id: int, 
+    animal_data: AnimalUpdate,
+    current_user: User = Depends(get_current_user)
+) -> dict:
     """
     Actualizar un animal por ID
     """
@@ -330,9 +421,44 @@ async def update_animal(animal_id: int, animal_data: AnimalUpdate) -> dict:
         # Si es hembra, puede ser "0", "1" o "2"
         update_data["alletar"] = animal_data.alletar
     
+    # Guardar valores anteriores para el historial
+    valores_anteriores = {}
+    for campo in update_data.keys():
+        valores_anteriores[campo] = getattr(animal, campo)
+    
     # Actualizar el animal
     if update_data:
         await animal.update_from_dict(update_data).save()
+        
+        # Registrar los cambios en el historial
+        for campo, nuevo_valor in update_data.items():
+            valor_anterior = valores_anteriores.get(campo)
+            
+            # Convertir fechas a formato legible
+            if campo == 'dob' and valor_anterior:
+                valor_anterior = valor_anterior.strftime("%d/%m/%Y") if hasattr(valor_anterior, 'strftime') else str(valor_anterior)
+            if campo == 'dob' and nuevo_valor:
+                nuevo_valor = nuevo_valor.strftime("%d/%m/%Y") if hasattr(nuevo_valor, 'strftime') else str(nuevo_valor)
+                
+            # Crear descripción del cambio
+            if campo == 'estado':
+                descripcion = f"Actualización de estado: {valor_anterior} → {nuevo_valor}"
+            elif campo == 'alletar':
+                descripcion = f"Cambio de estado de amamantamiento: {valor_anterior} → {nuevo_valor}"
+            elif campo == 'quadra':
+                descripcion = f"Cambio de cuadra: {valor_anterior} → {nuevo_valor}"
+            else:
+                descripcion = f"Actualización de {campo}"
+                
+            # Registrar en historial
+            await AnimalHistory.create(
+                animal=animal,
+                usuario=current_user.username,
+                cambio=descripcion,
+                campo=campo,
+                valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
+                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
+            )
     
     # Devolver el animal actualizado
     return {
@@ -360,53 +486,41 @@ async def delete_animal(animal_id: int) -> None:
         logger.error(f"Error eliminando animal {animal_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{animal_id}/parts", response_model=List)
-async def get_animal_parts(animal_id: int):
+@router.get("/{animal_id}/history", response_model=List[dict])
+async def get_animal_history(
+    animal_id: int,
+    current_user: User = Depends(get_current_user)
+) -> List[dict]:
     """
-    Obtener los partos de un animal.
-    Solo las hembras pueden tener partos.
+    Obtener el historial de cambios de un animal
     """
     try:
+        # Verificar que el animal existe
         animal = await Animal.get_or_none(id=animal_id)
         if not animal:
             raise HTTPException(
                 status_code=404,
-                detail=f"Animal {animal_id} no encontrado"
+                detail=f"Animal con ID {animal_id} no encontrado"
             )
+            
+        # Obtener el historial de cambios
+        historial = await AnimalHistory.filter(animal_id=animal_id).order_by('-id')
         
-        # Verificar si es hembra
-        if animal.genere != 'F':
-            # Para machos devolvemos lista vacía (no es un error)
-            return []
+        # Convertir a diccionarios
+        resultado = []
+        for registro in historial:
+            resultado.append(await registro.to_dict())
+            
+        return resultado
         
-        # Obtener partos relacionados con el animal
-        parts = await Part.filter(animal=animal).all()
-        
-        # Convertir a formato de respuesta (lista de diccionarios)
-        result = []
-        for part in parts:
-            part_dict = {
-                "id": part.id,
-                "animal_id": part.animal_id,
-                "part": DateConverter.to_display_format(part.part) if part.part else None,
-                "GenereT": part.GenereT,
-                "EstadoT": part.EstadoT,
-                "numero_part": part.numero_part,
-                "created_at": DateConverter.datetime_to_display_format(part.created_at) if part.created_at else None,
-                "observacions": part.observacions
-            }
-            result.append(part_dict)
-        
-        return result
-    
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error obteniendo partos del animal {animal_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-        
-@router.get("/{animal_id}/partos", response_model=List)
-async def get_animal_partos(animal_id: int):
+        logger.error(f"Error obteniendo historial del animal {animal_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener historial: {str(e)}")
+
+@router.get("/{animal_id}/parts", response_model=List)
+async def get_animal_parts(animal_id: int):
     """
     Obtener los partos de un animal.
     Solo las hembras pueden tener partos.

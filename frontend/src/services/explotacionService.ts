@@ -3,8 +3,8 @@ import api from './api';
 // Interfaces
 export interface Explotacion {
   id: number;
-  nombre: string;
-  codigo: string;
+  descripcion: string;
+  explotacio: string;
   direccion?: string;
   municipio?: string;
   provincia?: string;
@@ -17,8 +17,8 @@ export interface Explotacion {
 }
 
 export interface ExplotacionCreateDto {
-  nombre: string;
-  codigo: string;
+  descripcion: string;
+  explotacio: string;
   direccion?: string;
   municipio?: string;
   provincia?: string;

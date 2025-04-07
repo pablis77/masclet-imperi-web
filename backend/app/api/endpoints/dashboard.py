@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends, Path
 from app.models import Animal, Part
-from app.models.explotacio import Explotacio
 from app.models.enums import Estat, Genere
 from app.services.dashboard_service import get_dashboard_stats, get_explotacio_dashboard, get_partos_dashboard, get_combined_dashboard, get_dashboard_resumen
 from app.schemas.dashboard import DashboardResponse, DashboardExplotacioResponse, PartosResponse, CombinedDashboardResponse
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/stats", response_model=DashboardResponse)
 async def get_stats(
-    explotacio_id: Optional[int] = Query(None, description="ID de la explotación (opcional)"),
+    explotacio: Optional[str] = Query(None, description="Valor del campo 'explotacio' para filtrar (opcional)"),
     start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
     current_user = Depends(get_current_user)
@@ -41,17 +40,17 @@ async def get_stats(
             )
             
         # Si se especifica una explotación, verificar que el usuario tenga acceso
-        if explotacio_id and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio_id:
-                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_id} sin permisos")
+            if current_user.explotacio != explotacio:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
                 raise HTTPException(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
                 )
         
         stats = await get_dashboard_stats(
-            explotacio_id=explotacio_id,
+            explotacio=explotacio,
             start_date=start_date,
             end_date=end_date
         )
@@ -66,9 +65,10 @@ async def get_stats(
 @router.get("/explotacions", response_model=List[Dict])
 async def list_explotacions(current_user = Depends(get_current_user)):
     """
-    Lista todas las explotaciones disponibles en el sistema.
+    Lista todas las explotaciones disponibles en el sistema basándose en los valores únicos
+    del campo 'explotacio' de la tabla de animales.
     
-    Devuelve una lista de explotaciones con su ID y nombre.
+    Devuelve una lista de explotaciones con su valor único.
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas de explotaciones
@@ -79,28 +79,64 @@ async def list_explotacions(current_user = Depends(get_current_user)):
                 detail="No tienes permisos para ver la lista de explotaciones"
             )
             
+        # Obtenemos todas las explotaciones únicas desde la tabla de animales
         # Si es gerente, solo puede ver sus explotaciones asignadas
         if not verify_user_role(current_user, [UserRole.ADMIN]):
             # Los gerentes solo pueden ver sus explotaciones asignadas
-            explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'explotacio')
+            # Asumimos que el campo explotacio_id del usuario contiene el valor de explotación
+            explotaciones = await Animal.filter(explotacio=current_user.explotacio_id).distinct().values_list('explotacio', flat=True)
+            explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
         else:
             # Los administradores pueden ver todas las explotaciones
-            explotaciones = await Explotacio.all().values('id', 'explotacio')
+            explotaciones = await Animal.all().distinct().values_list('explotacio', flat=True)
+            explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
             
-        return [{"id": e["id"], "explotacio": e["explotacio"]} for e in explotaciones]
+        return explotaciones_list
     except Exception as e:
         logger.error(f"Error al listar explotaciones: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error obteniendo lista de explotaciones")
 
-@router.get("/explotacions/{explotacio_id}", response_model=Dict)
+@router.get("/explotacions/{explotacio_value}", response_model=Dict)
+async def get_explotacio_info(
+    explotacio_value: str = Path(..., description="Valor del campo 'explotacio' para filtrar"),
+    current_user = Depends(get_current_user)
+):
+    """Obtiene información básica de una explotación"""
+    try:
+        # Verificar permisos del usuario
+        if not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE]):
+            raise HTTPException(status_code=403, detail="No tienes permisos para ver información de explotaciones")
+            
+        # Verificar que la explotación existe
+        exists = await Animal.filter(explotacio=explotacio_value).exists()
+        if not exists:
+            raise HTTPException(status_code=404, detail=f"No existe la explotación '{explotacio_value}'")
+        
+        # Obtener conteos básicos
+        total_animales = await Animal.filter(explotacio=explotacio_value).count()
+        animal_ids = await Animal.filter(explotacio=explotacio_value).values_list('id', flat=True)
+        total_partos = await Part.filter(animal_id__in=list(animal_ids)).count()
+        
+        return {
+            "explotacio": explotacio_value,
+            "total_animales": total_animales,
+            "total_partos": total_partos
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al obtener información de explotación: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error al obtener información de explotación")
+
+@router.get("/explotacions/{explotacio_value}/stats", response_model=Dict)
 async def get_explotacio_stats(
-    explotacio_id: int = Path(..., description="ID de la explotación"),
+    explotacio_value: str = Path(..., description="Valor del campo 'explotacio' para filtrar"),
     start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
     current_user = Depends(get_current_user)
 ):
     """
-    Estadísticas específicas para una explotación.
+    Estadísticas específicas para una explotación usando el valor del campo 'explotacio'.
     
     Incluye:
     - Estadísticas detalladas de animales de la explotación
@@ -119,36 +155,38 @@ async def get_explotacio_stats(
         # Verificar que el gerente solo puede ver sus explotaciones asignadas
         if not verify_user_role(current_user, [UserRole.ADMIN]):
             # Los gerentes solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio_id:
-                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_id} sin permisos")
+            # Asumimos que el campo explotacio_id del usuario contiene el valor de explotación
+            if current_user.explotacio_id != explotacio_value:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_value} sin permisos")
                 raise HTTPException(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
                 )
         
-        # Verificar que la explotación existe
-        explotacio = await Explotacio.get_or_none(id=explotacio_id)
-        if not explotacio:
+        # Verificar que la explotación existe (hay animales con ese valor de explotacio)
+        exists = await Animal.filter(explotacio=explotacio_value).exists()
+        if not exists:
             # Obtener lista de explotaciones disponibles para el usuario
             if not verify_user_role(current_user, [UserRole.ADMIN]):
                 # Los gerentes solo pueden ver sus explotaciones asignadas
-                explotaciones = await Explotacio.filter(id=current_user.explotacio_id).values('id', 'explotacio')
+                explotaciones = await Animal.filter(explotacio=current_user.explotacio_id).distinct().values_list('explotacio', flat=True)
             else:
                 # Los administradores pueden ver todas las explotaciones
-                explotaciones = await Explotacio.all().values('id', 'explotacio')
+                explotaciones = await Animal.all().distinct().values_list('explotacio', flat=True)
                 
-            explotaciones_list = [{"id": e["id"], "explotacio": e["explotacio"]} for e in explotaciones]
+            explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
             
             raise HTTPException(
                 status_code=404, 
                 detail={
-                    "message": f"La explotación con ID {explotacio_id} no existe",
+                    "message": f"No existen animales para la explotación '{explotacio_value}'",
                     "explotaciones_disponibles": explotaciones_list
                 }
             )
         
+        # Modificamos para pasar el valor de explotación en lugar del ID
         stats = await get_explotacio_dashboard(
-            explotacio_id=explotacio_id,
+            explotacio_value=explotacio_value,
             start_date=start_date,
             end_date=end_date
         )
@@ -164,7 +202,7 @@ async def get_explotacio_stats(
 
 @router.get("/resumen", response_model=Dict)
 async def obtener_resumen(
-    explotacio: Optional[int] = None,
+    explotacio: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     current_user = Depends(get_current_user)
@@ -190,7 +228,7 @@ async def obtener_resumen(
         # Si se especifica una explotación, verificar que el usuario tenga acceso
         if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio:
+            if current_user.explotacio != explotacio:
                 logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
                 raise HTTPException(
                     status_code=403, 
@@ -229,7 +267,7 @@ async def obtener_resumen(
 
 @router.get("/partos", response_model=PartosResponse)
 async def get_partos_stats(
-    explotacio_id: Optional[int] = Query(None, description="ID de la explotación (opcional)"),
+    explotacio: Optional[str] = Query(None, description="Valor del campo 'explotacio' para filtrar (opcional)"),
     animal_id: Optional[int] = Query(None, description="ID del animal (opcional)"),
     start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
@@ -246,10 +284,10 @@ async def get_partos_stats(
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas
-        if explotacio_id and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio_id:
-                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_id} sin permisos")
+            if current_user.explotacio != explotacio:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
                 raise HTTPException(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
@@ -257,7 +295,7 @@ async def get_partos_stats(
         
         # Obtener estadísticas reales de la base de datos
         stats = await get_partos_dashboard(
-            explotacio_id=explotacio_id,
+            explotacio=explotacio,
             animal_id=animal_id,
             start_date=start_date,
             end_date=end_date
@@ -272,9 +310,60 @@ async def get_partos_stats(
         logger.error(f"Error en partos stats: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error obteniendo estadísticas de partos")
 
+@router.get("/resumen/", response_model=None)
+async def get_resumen_stats(
+    explotacio: Optional[str] = Query(None, description="Valor del campo 'explotacio' para filtrar (opcional)"),
+    start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
+    current_user = Depends(get_current_user)
+):
+    """
+    Obtiene un resumen general para el dashboard.
+    
+    Incluye:
+    - Total de animales
+    - Información sobre terneros
+    - Conteo de explotaciones
+    - Información sobre partos
+    """
+    try:
+        # Verificar que el usuario tiene acceso a las estadísticas generales
+        if not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE]):
+            logger.warning(f"Usuario {current_user.username} intentó acceder a estadísticas generales sin permisos")
+            raise HTTPException(
+                status_code=403, 
+                detail="No tienes permisos para ver estadísticas generales"
+            )
+            
+        # Si se especifica una explotación, verificar que el usuario tenga acceso
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
+            # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
+            if current_user.explotacio != explotacio:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
+                raise HTTPException(
+                    status_code=403, 
+                    detail="No tienes permisos para ver estadísticas de esta explotación"
+                )
+        
+        # Obtener estadísticas reales de la base de datos
+        stats = await get_dashboard_resumen(
+            explotacio=explotacio,
+            start_date=start_date,
+            end_date=end_date
+        )
+        return stats
+    except HTTPException:
+        # Re-lanzar las excepciones HTTP para que mantengan su código original
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error obteniendo estadísticas: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error obteniendo estadísticas")
+
 @router.get("/combined", response_model=CombinedDashboardResponse)
 async def get_combined_stats(
-    explotacio_id: Optional[int] = Query(None, description="ID de la explotación (opcional)"),
+    explotacio: Optional[str] = Query(None, description="Valor del campo 'explotacio' para filtrar (opcional)"),
     start_date: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
     current_user = Depends(get_current_user)
@@ -291,10 +380,10 @@ async def get_combined_stats(
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas
-        if explotacio_id and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
-            if current_user.explotacio_id != explotacio_id:
-                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_id} sin permisos")
+            if current_user.explotacio != explotacio:
+                logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio} sin permisos")
                 raise HTTPException(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
@@ -302,7 +391,7 @@ async def get_combined_stats(
         
         # Obtener estadísticas reales de la base de datos
         stats = await get_combined_dashboard(
-            explotacio_id=explotacio_id,
+            explotacio=explotacio,
             start_date=start_date,
             end_date=end_date
         )

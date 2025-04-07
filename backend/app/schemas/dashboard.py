@@ -46,13 +46,13 @@ class DashboardResponse(BaseModel):
     partos: PartoStats
     explotaciones: Optional[ExplotacioStats] = None
     comparativas: Optional[ComparativaStats] = None
-    explotacio_id: Optional[int] = None
+    explotacio: Optional[str] = None
     nombre_explotacio: Optional[str] = None
     periodo: Optional[Dict[str, date]] = None
     
 class DashboardExplotacioResponse(BaseModel):
     """Respuesta de dashboard para una explotación específica"""
-    explotacio_id: int
+    explotacio: str
     nombre_explotacio: str
     animales: AnimalStats
     partos: PartoStats
@@ -71,7 +71,7 @@ class PartosResponse(BaseModel):
     ultimo_mes: int
     ultimo_año: int
     promedio_mensual: float
-    explotacio_id: Optional[int] = None
+    explotacio: Optional[str] = None
     periodo: Optional[Dict[str, date]] = None
 
 class CombinedDashboardResponse(BaseModel):
@@ -83,6 +83,6 @@ class CombinedDashboardResponse(BaseModel):
     por_quadra: Dict[str, Dict[str, Any]]
     rendimiento_partos: Dict[str, float]
     tendencias: Dict[str, Dict[str, float]]
-    explotacio_id: Optional[int] = None
+    explotacio: Optional[str] = None
     nombre_explotacio: Optional[str] = None
     periodo: Dict[str, date]

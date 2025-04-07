@@ -111,7 +111,7 @@ print(f"Intentando conectar a la base de datos: {settings.database_url}")
 register_tortoise(
     app,
     config=TORTOISE_ORM,
-    generate_schemas=False,
+    generate_schemas=True,
     add_exception_handlers=True,
 )
 

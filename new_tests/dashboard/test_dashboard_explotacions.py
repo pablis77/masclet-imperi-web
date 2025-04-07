@@ -52,8 +52,9 @@ async def test_list_dashboard_explotacions(test_token):
     
     # Verificar que cada explotación tiene los campos esperados
     for explotacion in data:
-        assert "id" in explotacion, "Falta el campo id en la explotación"
-        assert "nombre" in explotacion, "Falta el campo nombre en la explotación"
+        assert "explotacio" in explotacion, "Falta el campo explotacio en la explotación"
+        # El campo se llama 'explotacio', no 'explotacion' en la API actual
+        # assert "explotacion" in explotacion, "Falta el campo explotacion en la explotación"
 
 @pytest.mark.asyncio
 async def test_list_dashboard_explotacions_with_filters(test_token):
@@ -72,17 +73,17 @@ async def test_list_dashboard_explotacions_with_filters(test_token):
     # Verificar que hay al menos una explotación
     assert len(all_data) > 0, "No se encontraron explotaciones"
     
-    # Si hay al menos una explotación, probamos el filtro por id
+    # Si hay al menos una explotación, probamos el filtro por código de explotación
     if len(all_data) > 0:
-        explotacion_id = all_data[0]["id"]
-        filter_url = f"{BASE_URL}api/v1/dashboard/explotacions/?id={explotacion_id}"
+        explotacio_codigo = all_data[0]["explotacio"]
+        filter_url = f"{BASE_URL}api/v1/dashboard/explotacions/?explotacio={explotacio_codigo}"
         
-        print(f"\nProbando filtrar explotaciones por ID {explotacion_id}: {filter_url}")
+        print(f"\nProbando filtrar explotaciones por código {explotacio_codigo}: {filter_url}")
         
         filter_response = requests.get(filter_url, headers=test_token)
         
         # Verificar que la respuesta sea exitosa
-        assert filter_response.status_code == 200, f"Error al filtrar explotaciones por ID: {filter_response.text}"
+        assert filter_response.status_code == 200, f"Error al filtrar explotaciones por código: {filter_response.text}"
         
         # Verificar que la respuesta contiene la explotación filtrada
         filter_data = filter_response.json()
@@ -92,11 +93,11 @@ async def test_list_dashboard_explotacions_with_filters(test_token):
         if len(filter_data) > 0:
             found = False
             for explotacion in filter_data:
-                if explotacion["id"] == explotacion_id:
+                if explotacion["explotacio"] == explotacio_codigo:
                     found = True
                     break
             
-            assert found, f"No se encontró la explotación con ID {explotacion_id} en la respuesta filtrada"
+            assert found, f"No se encontró la explotación con código {explotacio_codigo} en la respuesta filtrada"
 
 @pytest.mark.asyncio
 async def test_list_dashboard_explotacions_unauthorized():

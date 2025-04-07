@@ -104,7 +104,6 @@ class Settings(BaseSettings):
     MODELS: List[str] = [
         "app.models.animal",  # Contiene Animal y Part
         "app.models.user", 
-        "app.models.explotacio",
         "app.models.import_model",  # Modelo para historial de importaciones
         "aerich.models"  # Este es necesario para las migraciones
     ]

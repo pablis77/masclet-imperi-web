@@ -59,9 +59,46 @@ async def import_csv(
     errors = []
     
     try:
-        # Leer el contenido del archivo
+        # Leer el contenido del archivo con manejo de errores de codificación
         content = await file.read()
-        csv_text = content.decode("utf-8-sig")  # Usar utf-8-sig para manejar BOM
+        try:
+            csv_text = content.decode("utf-8-sig")  # Usar utf-8-sig para manejar BOM
+        except UnicodeDecodeError:
+            # Intentar con otras codificaciones comunes
+            try:
+                csv_text = content.decode("latin-1")
+            except Exception as encoding_error:
+                logger.error(f"Error al decodificar el archivo CSV: {str(encoding_error)}")
+                import_record = await Import.create(
+                    user_id=current_user.id,
+                    description=description,
+                    file_name=file.filename,
+                    file_path="error_decode",
+                    file_size=len(content),
+                    file_type="text/csv",
+                    status="failed",
+                    errors=[f"Error de codificación en el archivo: {str(encoding_error)}"],
+                    total_rows=0,
+                    imported_rows=0
+                )
+                
+                return {
+                    "id": import_record.id,
+                    "status": "failed",
+                    "file_name": file.filename,
+                    "file_size": len(content),
+                    "file_type": "text/csv",
+                    "created_at": import_record.created_at,
+                    "updated_at": import_record.updated_at,
+                    "completed_at": import_record.completed_at,
+                    "description": description,
+                    "result": {
+                        "total": 0,
+                        "success": 0,
+                        "errors": 1,
+                        "error_details": [{"message": f"Error de codificación en el archivo CSV: {str(encoding_error)}"}]
+                    }
+                }
         
         # Guardar una copia del archivo para referencia
         import_id = str(uuid.uuid4())
@@ -71,21 +108,102 @@ async def import_csv(
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(csv_text)
         
-        # Determinar el delimitador (auto-detectar)
-        sample = csv_text[:1000]
-        possible_delimiters = [";", ",", "\t", "|"]
-        delimiter = ";"  # Por defecto
+        # Determinar el delimitador (auto-detectar) con manejo de errores
+        try:
+            # Intentar primero con el sniffer de CSV para autodetectar
+            sniffer = csv.Sniffer()
+            dialect = sniffer.sniff(csv_text[:1000])
+            delimiter = dialect.delimiter
+            logger.debug(f"Delimitador detectado con sniffer: '{delimiter}'")
+        except Exception as sniffer_error:
+            # Si falla el sniffer, usar el método simple
+            logger.warning(f"No se pudo detectar el delimitador con sniffer: {str(sniffer_error)}")
+            sample = csv_text[:1000]
+            possible_delimiters = [";", ",", "\t", "|"] 
+            delimiter = ";"  # Por defecto
+            
+            for delim in possible_delimiters:
+                if delim in sample:
+                    delimiter = delim
+                    break
+            logger.debug(f"Delimitador detectado manualmente: '{delimiter}'")
         
-        for delim in possible_delimiters:
-            if delim in sample:
-                delimiter = delim
-                break
-        
-        # Procesar el CSV
-        reader = csv.DictReader(
-            csv_text.splitlines(),
-            delimiter=delimiter
-        )
+        # Procesar el CSV con manejo de errores
+        try:
+            reader = csv.DictReader(
+                csv_text.splitlines(),
+                delimiter=delimiter
+            )
+            
+            # Verificar que el CSV tiene cabeceras válidas
+            if not reader.fieldnames or len(reader.fieldnames) < 3:
+                error_msg = "El CSV no tiene suficientes columnas o formato inválido"
+                logger.error(error_msg)
+                
+                import_record = await Import.create(
+                    user_id=current_user.id,
+                    description=description,
+                    file_name=file.filename,
+                    file_path="error_format",
+                    file_size=len(content),
+                    file_type="text/csv",
+                    status="completed_err",
+                    errors=[error_msg],
+                    total_rows=0,
+                    imported_rows=0
+                )
+                
+                return {
+                    "id": import_record.id,
+                    "status": "completed_err",
+                    "file_name": file.filename,
+                    "file_size": len(content),
+                    "file_type": "text/csv",
+                    "created_at": import_record.created_at,
+                    "updated_at": import_record.updated_at,
+                    "completed_at": import_record.completed_at,
+                    "description": description,
+                    "result": {
+                        "total": 0,
+                        "success": 0,
+                        "errors": 1,
+                        "error_details": [{"message": error_msg}]
+                    }
+                }
+        except Exception as reader_error:
+            error_msg = f"Error al procesar el formato del CSV: {str(reader_error)}"
+            logger.error(error_msg)
+            
+            import_record = await Import.create(
+                user_id=current_user.id,
+                description=description,
+                file_name=file.filename,
+                file_path="error_reader",
+                file_size=len(content),
+                file_type="text/csv",
+                status="completed_err",
+                errors=[error_msg],
+                total_rows=0,
+                imported_rows=0
+            )
+            
+            return {
+                "id": import_record.id,
+                "status": "completed_err",
+                "file_name": file.filename,
+                "file_size": len(content),
+                "file_type": "text/csv",
+                "created_at": import_record.created_at,
+                "updated_at": import_record.updated_at,
+                "completed_at": import_record.completed_at,
+                "description": description,
+                "result": {
+                    "total": 0,
+                    "success": 0,
+                    "errors": 1,
+                    "error_details": [{"message": error_msg}]
+                }
+            }
         
         # Registrar la información del import
         import_record = await Import.create(
@@ -93,19 +211,12 @@ async def import_csv(
             description=description,
             file_name=file.filename,
             file_path=file_path,
+            file_size=len(content),
+            file_type="text/csv",
             status="processing"
         )
         
-        # DETECCIÓN DE CASOS DE TEST - Ver si este es un caso de test específico
-        is_alletar_test = False
-        is_parto_test = False
-        
-        # Hojear el CSV para detectar si es un test específico
-        for row in csv_text.splitlines():
-            if "TestHembra1" in row or "TestHembra2" in row:
-                is_alletar_test = True
-            if "TestHembraParto" in row:
-                is_parto_test = True
+        # Procesar el CSV línea por línea
         
         # Reiniciar el reader para el procesamiento real
         reader = csv.DictReader(
@@ -128,69 +239,12 @@ async def import_csv(
                         normalized_value = value.strip() if isinstance(value, str) else value
                         normalized_row[normalized_key] = normalized_value
                 
-                # CASO ESPECIAL PARA TESTS DE ALLETAR
-                if is_alletar_test:
-                    # Forzar valores correctos para los casos de test
-                    if normalized_row.get('nom') == 'TestHembra1':
-                        normalized_row['alletar'] = '1'
-                        print(f"DEBUG - Detectado caso de prueba TestHembra1, forzando alletar=1")
-                    elif normalized_row.get('nom') == 'TestHembra2':
-                        normalized_row['alletar'] = '2'
-                        print(f"DEBUG - Detectado caso de prueba TestHembra2, forzando alletar=2")
-                    elif normalized_row.get('genere', '').upper() == 'M':
-                        normalized_row['alletar'] = '0'
-                        print(f"DEBUG - Detectado caso de prueba macho {normalized_row.get('nom')}, forzando alletar=0")
-                
-                # CASO ESPECIAL PARA TESTS DE PARTOS
-                if is_parto_test and normalized_row.get('nom') == 'TestHembraParto':
-                    # Asegurarnos de que los datos están correctos para el test
-                    print(f"DEBUG - Detectado caso de prueba TestHembraParto, verificando datos de parto")
-                    if 'part' not in normalized_row or not normalized_row['part']:
-                        normalized_row['part'] = '01/01/2023'
-                    if 'generet' not in normalized_row and 'GenereT' not in normalized_row:
-                        normalized_row['GenereT'] = 'M'
-                    if 'estadot' not in normalized_row and 'EstadoT' not in normalized_row:
-                        normalized_row['EstadoT'] = 'OK'
+                # El servicio se encargará de aplicar las reglas de negocio correctamente
                 
                 # Importar el animal y sus partos
                 animal = await import_animal_with_partos(normalized_row)
                 
-                # CASO ESPECIAL ADICIONAL - Corrección explícita POST-IMPORTACIÓN para los tests
-                if animal:
-                    if is_alletar_test:
-                        if animal.nom == 'TestHembra1' and animal.alletar != '1':
-                            animal.alletar = '1'
-                            await animal.save()
-                            print(f"DEBUG - Corrección post-importación: TestHembra1 alletar=1")
-                        elif animal.nom == 'TestHembra2' and animal.alletar != '2':
-                            animal.alletar = '2'
-                            await animal.save()
-                            print(f"DEBUG - Corrección post-importación: TestHembra2 alletar=2")
-                        elif animal.genere == 'M' and animal.alletar != '0':
-                            animal.alletar = '0'
-                            await animal.save()
-                            print(f"DEBUG - Corrección post-importación: Macho {animal.nom} alletar=0")
-                    
-                    # CORRECCIÓN ADICIONAL PARA PARTOS
-                    if is_parto_test and animal.nom == 'TestHembraParto':
-                        # Verificar si ya tiene partos
-                        from app.models.part import Part
-                        from app.core.date_utils import DateConverter
-                        
-                        existing_parts = await Part.filter(animal_id=animal.id).all()
-                        if not existing_parts:
-                            # Crear el parto manualmente si no existe
-                            from datetime import datetime
-                            test_date = datetime.strptime("01/01/2023", "%d/%m/%Y").date()
-                            
-                            await Part.create(
-                                animal_id=animal.id,
-                                part=test_date,
-                                GenereT='M',
-                                EstadoT='OK',
-                                numero_part=1
-                            )
-                            print(f"DEBUG - Creado parto manualmente para TestHembraParto")
+                # Si se importó correctamente el animal, lo contamos
                 
                 imported_rows += 1
                 
@@ -210,12 +264,23 @@ async def import_csv(
             
         await import_record.save()
         
+        # Devolver una respuesta completa con todos los campos requeridos
         return {
+            "id": import_record.id,
             "status": import_record.status,
-            "import_id": import_record.id,
-            "total_rows": total_rows,
-            "imported_rows": imported_rows,
-            "errors": errors
+            "file_name": import_record.file_name,
+            "file_size": import_record.file_size,
+            "file_type": import_record.file_type,
+            "created_at": import_record.created_at,
+            "updated_at": import_record.updated_at,
+            "completed_at": import_record.completed_at,
+            "description": description,
+            "result": {
+                "total": total_rows,
+                "success": imported_rows,
+                "errors": len(errors),
+                "error_details": [{'message': error} for error in errors] if errors else None
+            }
         }
         
     except Exception as e:

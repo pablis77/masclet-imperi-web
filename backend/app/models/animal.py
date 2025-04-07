@@ -4,7 +4,7 @@ Modelos para la gestión de animales
 from enum import Enum
 from typing import Optional
 from tortoise import fields, models
-from datetime import date
+from datetime import date, datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -122,6 +122,36 @@ class Animal(models.Model):
         """Metadatos del modelo"""
         table = "animals"
 
+class AnimalHistory(models.Model):
+    """Modelo para registrar el historial de cambios en animales"""
+    id = fields.IntField(pk=True)
+    animal = fields.ForeignKeyField(
+        "models.Animal", related_name="history_records", on_delete=fields.CASCADE
+    )
+    usuario = fields.CharField(max_length=100)
+    cambio = fields.TextField()
+    campo = fields.CharField(max_length=50)
+    valor_anterior = fields.TextField(null=True)
+    valor_nuevo = fields.TextField(null=True)
+    
+    class Meta:
+        """Metadatos del modelo"""
+        table = "animal_history"
+        ordering = ["-id"]
+    
+    async def to_dict(self) -> dict:
+        """Convierte el modelo a diccionario"""
+        return {
+            "id": self.id,
+            "animal_id": self.animal_id,
+            "fecha": datetime.now().strftime("%d/%m/%Y %H:%M"),  # Fecha actual como fallback
+            "usuario": self.usuario,
+            "cambio": self.cambio,
+            "campo": self.campo,
+            "valor_anterior": self.valor_anterior,
+            "valor_nuevo": self.valor_nuevo
+        }
+
 class Part(models.Model):
     """Modelo de Parto"""
     id = fields.IntField(pk=True)
@@ -129,7 +159,8 @@ class Part(models.Model):
         "models.Animal", related_name="parts", on_delete=fields.CASCADE
     )
     part = fields.DateField()  # Fecha del parto
-    GenereT = fields.CharField(max_length=1, description="Gènere del terner (M/F/E)")
+    # Cambiado de max_length=1 a max_length=10 para aceptar 'esforrada'
+    GenereT = fields.CharField(max_length=10, description="Gènere del terner (M/F/esforrada)")
     EstadoT = fields.CharField(max_length=3, default="OK", description="Estat del terner (OK/DEF)")
     numero_part = fields.IntField(default=1)
     created_at = fields.DatetimeField(auto_now_add=True)

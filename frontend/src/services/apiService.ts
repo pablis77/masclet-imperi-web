@@ -9,7 +9,7 @@ const isBrowser = typeof window !== 'undefined';
 // API URL desde variables de entorno o valor por defecto
 const API_URL = isBrowser && import.meta.env.VITE_API_URL ? 
   import.meta.env.VITE_API_URL : 
-  'http://localhost:8000';
+  'http://127.0.0.1:8000'; // Usar IP explícita en lugar de localhost
 
 // Prefijo API 
 const API_PREFIX = '/api/v1';
@@ -17,11 +17,15 @@ const API_PREFIX = '/api/v1';
 // URL completa para la API
 const FULL_API_URL = `${API_URL}${API_PREFIX}`;
 
-// Comprobar si se debe usar datos simulados
+// Comprobar si se debe usar datos simulados (desactivado por defecto)
 const useMockData = isBrowser && (
   import.meta.env.VITE_USE_MOCK_DATA === 'true' || 
-  import.meta.env.VITE_USE_MOCK_DATA === true
+  import.meta.env.VITE_USE_MOCK_DATA === true || 
+  false // Forzar a false si no está definido en el entorno
 );
+
+console.log(`Conectando a API en: ${FULL_API_URL} | Datos simulados: ${useMockData ? 'SI' : 'NO'}`);
+
 
 // Comprobar si se deben mostrar logs detallados
 const showDetailedLogs = isBrowser && (
@@ -52,14 +56,26 @@ const api = axios.create({
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
-  withCredentials: true, // Habilitar envío de cookies y headers de autenticación
+  withCredentials: false, // Desactivar envío de cookies para evitar problemas de CORS
+  maxRedirects: 5, // Permitir seguir redirecciones automáticamente
 });
 
 // Función para configurar el token de autenticación
 export const setupApiToken = (token: string): void => {
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  console.log('Token configurado correctamente');
 };
+
+// Configurar eventos para monitorear las solicitudes HTTP
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && typeof event.reason === 'object' && 'code' in event.reason) {
+      console.error('Error de red no manejado:', event.reason);
+    }
+  });
+}
 
 // Inicializar token desde localStorage solo si estamos en el navegador
 if (isBrowser) {
@@ -106,10 +122,24 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar errores de autenticación
+// Interceptor para manejar redirecciones y errores de autenticación
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Si recibimos una redirección con código 307, seguirla manualmente
+    if (response.status === 307 && response.headers.location) {
+      console.log(`Siguiendo redirección a: ${response.headers.location}`);
+      return axios.get(response.headers.location);
+    }
+    return response;
+  },
   (error) => {
+    // Manejar redirecciones en caso de error
+    if (error.response && error.response.status === 307 && error.response.headers.location) {
+      console.log(`Siguiendo redirección desde error a: ${error.response.headers.location}`);
+      return axios.get(error.response.headers.location);
+    }
+    
+    // Manejar errores de autenticación
     if (error.response && error.response.status === 401) {
       // Token inválido o expirado
       if (isBrowser) {
@@ -130,9 +160,20 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     // Para errores de red (sin respuesta del servidor)
     if (!error.response) {
-      logMessage('error', 'Error de red:', error.message);
-      const networkError = new Error('Error de conexión. Verifica tu conexión a internet.');
+      const errorMsg = `Error de red: ${error.message} al intentar conectar con ${error.config?.url || FULL_API_URL}`;
+      console.error(errorMsg);
+      logMessage('error', 'Error de red detallado:', { 
+        message: error.message,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+      
+      // Mostrar error detallado para diagnóstico
+      const networkError = new Error(`Error de conexión con el servidor. URL: ${error.config?.url}. Detalles: ${error.message}`);
       (networkError as any).code = 'NETWORK_ERROR';
+      (networkError as any).endpoint = error.config?.url;
       return Promise.reject(networkError);
     }
     
@@ -313,7 +354,7 @@ function getMockDataForEndpoint<T>(endpoint: string): T | null {
  * @param params Parámetros de la petición
  * @returns Promesa con la respuesta
  */
-export async function fetchData(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+export async function fetchData<T = any>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
   try {
     // Asegurarse de que el endpoint tenga el prefijo correcto
     let normalizedEndpoint = endpoint;
@@ -330,116 +371,158 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
       const queryParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
+          if (Array.isArray(value)) {
+            // Manejar arrays (por ejemplo, para filtros múltiples)
+            value.forEach(v => queryParams.append(`${key}[]`, String(v)));
+          } else {
+            queryParams.append(key, String(value));
+          }
         }
       });
       url = `${url}?${queryParams.toString()}`;
     }
     
-    console.log(`🔍 [API] Iniciando solicitud DIRECTA a: ${url}`);
+    console.log(`🔍 [API] Iniciando solicitud a: ${url}`);
     
-    // Obtener el token de autenticación
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      // Añadir CORS headers para permitir peticiones cross-origin
-      'Access-Control-Allow-Origin': '*',
-    };
-    
-    // Añadir el token de autenticación si existe
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔐 [API] Token de autenticación añadido a la petición');
-    } else {
-      console.warn('⚠️ [API] No hay token de autenticación disponible.');
-    }
-    
-    // Realizar la petición con un timeout de 10 segundos
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
+    // Intentar primero con axios
     try {
-      const response = await fetch(url, {
-        headers,
-        signal: controller.signal,
-        // Añadir modo CORS para permitir peticiones cross-origin
-        mode: 'cors',
-        credentials: 'include'
-      });
+      console.log('🔄 [API] Intentando con axios...');
+      // Configuración para axios
+      const axiosConfig: AxiosRequestConfig = {
+        method: 'GET',
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': '' // Campo vacío que se reemplazará si hay token
+        },
+        timeout: 15000,
+        maxRedirects: 5,
+        withCredentials: false // Desactivar cookies para evitar CORS
+      };
+
+      // Obtener el token de autenticación
+      const token = localStorage.getItem('token');
+      if (token && axiosConfig.headers) {
+        axiosConfig.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Realizar la petición con axios
+      const axiosResponse = await axios(axiosConfig);
+      console.log(`✅ [API] Axios - Respuesta exitosa de ${url}`, axiosResponse.data);
+      return axiosResponse.data;
+    } catch (axiosError: any) {
+      // Si axios falla (especialmente con 307), intentar con fetch
+      console.warn(`⚠️ [API] Axios falló:`, axiosError.message || 'Error desconocido');
+      console.log('🔄 [API] Intentando con fetch nativo en modo manual de redirecciones...');
       
-      clearTimeout(timeoutId);
-      console.log(`📦 [API] Respuesta recibida con estado: ${response.status} ${response.statusText}`);
+      // Headers para fetch
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
       
-      if (!response.ok) {
-        let errorMessage = `Error ${response.status}: ${response.statusText}`;
-        let errorData;
+      // Añadir el token de autenticación si existe
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Configuración para seguir redirecciones manualmente
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      try {
+        // Primera solicitud con modo manual de redirecciones
+        let response = await fetch(url, {
+          method: 'GET',
+          headers,
+          redirect: 'manual', // Crucial: manejar redirecciones manualmente
+          signal: controller.signal,
+          credentials: 'omit' // No enviar cookies para evitar CORS
+        });
         
-        try {
-          errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          console.error(`🚨 [API] Datos de error:`, errorData);
-        } catch (e) {
-          // Si no podemos parsear el JSON, usamos el mensaje de error por defecto
-          console.error(`🚨 [API] No se pudo parsear la respuesta de error como JSON`);
-        }
-        
-        console.error(`🚨 [API] Error en la petición: ${errorMessage}`);
-        
-        // Si es un 404, probablemente el endpoint no existe
-        if (response.status === 404) {
-          const error = {
-            message: `El endpoint ${normalizedEndpoint} no existe o no está disponible`,
-            status: 404,
-            code: 'ENDPOINT_NOT_FOUND',
-            endpoint: normalizedEndpoint,
-            url: url
-          };
-          console.error('🚨 [API] Error 404:', error);
-          throw error;
-        }
-        
-        // Si es un 401, el usuario no está autenticado
-        if (response.status === 401) {
-          console.warn('⚠️ [API] Error de autenticación.');
+        // Seguir redirecciones manualmente (hasta 5 veces)
+        let redirectCount = 0;
+        while (redirectCount < 5 && 
+              (response.status === 301 || response.status === 302 || 
+               response.status === 307 || response.status === 308)) {
           
-          const error = {
-            message: 'No estás autenticado. Por favor, inicia sesión.',
-            status: 401,
-            code: 'UNAUTHORIZED',
-            endpoint: normalizedEndpoint
-          };
-          console.error('🚨 [API] Error 401:', error);
-          throw error;
+          // Obtener la URL de redirección
+          const location = response.headers.get('Location');
+          if (!location) {
+            console.error('🚨 [API] Redirección sin URL de destino');
+            break;
+          }
+          
+          // Construir URL completa si es relativa
+          const redirectUrl = location.startsWith('http') 
+              ? location 
+              : new URL(location, url).toString();
+          
+          console.log(`🔀 [API] Siguiendo redirección #${redirectCount + 1} a: ${redirectUrl}`);
+          
+          // Hacer la petición a la URL de redirección
+          response = await fetch(redirectUrl, {
+            method: 'GET',
+            headers,
+            redirect: 'manual',
+            signal: controller.signal,
+            credentials: 'omit'
+          });
+          
+          redirectCount++;
         }
         
-        throw new Error(errorMessage);
+        clearTimeout(timeoutId);
+        
+        // Manejar la respuesta final
+        if (response.status >= 200 && response.status < 300) {
+          const data = await response.json();
+          console.log(`✅ [API] Fetch - Respuesta exitosa después de ${redirectCount} redirecciones`);
+          return data;
+        } else {
+          // Manejar errores
+          let errorMessage = `Error ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            console.error('🚨 [API] Datos de error:', errorData);
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch (e) {
+            console.error('🚨 [API] No se pudo parsear el error como JSON');
+          }
+          
+          throw new Error(errorMessage);
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          console.error(`🚨 [API] Timeout en la petición a ${url}`);
+          throw {
+            message: 'La petición ha excedido el tiempo de espera.',
+            status: 0,
+            code: 'TIMEOUT_ERROR',
+            endpoint
+          };
+        }
+        throw fetchError;
       }
-      
-      const data = await response.json();
-      console.log(`📦 [API] Datos recibidos de ${endpoint}:`, data);
-      return data;
-    } catch (fetchError: any) {
-      if (fetchError.name === 'AbortError') {
-        console.error(`🚨 [API] La petición a ${endpoint} ha excedido el tiempo de espera.`);
-        throw {
-          message: 'La petición ha excedido el tiempo de espera.',
-          status: 0,
-          code: 'TIMEOUT_ERROR',
-          endpoint
-        };
-      }
-      throw fetchError;
     }
   } catch (error: any) {
     console.error(`🚨 [API] Error en fetchData para ${endpoint}:`, error);
     
-    // Verificar si es un error de red
-    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
-      console.warn(`⚠️ [API] Error de red al conectar con ${endpoint}. Utilizando datos simulados.`);
+    // Intentar usar datos simulados como último recurso
+    if (useMockData || 
+        (error.message && 
+         (error.message.includes('Failed to fetch') || 
+          error.message.includes('Network Error')))) {
       
-      // Intentar obtener datos simulados
-      const mockEndpoint = endpoint.replace(API_PREFIX, '').replace(/^\//, '');
-      const mockResponse = getMockDataForEndpoint(mockEndpoint);
+      console.warn(`⚠️ [API] Intentando usar datos simulados para ${endpoint}`);
+      
+      // Preparar endpoint para datos simulados
+      const mockEndpoint = endpoint.replace(/^\//, '').replace(API_PREFIX, '');
+      const mockResponse = getMockDataForEndpoint<T>(mockEndpoint);
       
       if (mockResponse) {
         console.warn(`⚠️ [API] Usando datos simulados como fallback para ${endpoint}`);
@@ -447,6 +530,7 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
       }
     }
     
+    // Si no hay datos simulados, lanzar el error
     throw {
       message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
       status: error.status || 0,

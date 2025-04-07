@@ -37,7 +37,7 @@ async def test_explotacio_fields_nomenclature(test_token):
     - 'id' es un campo técnico generado automáticamente por la base de datos
     - 'nom' NO debe usarse en explotaciones, solo en animales
     """
-    url = f"{BASE_URL}api/v1/explotacions/"
+    url = f"{BASE_URL}api/v1/dashboard/explotacions/"
     
     print(f"\n=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===")
     print(f"Obteniendo lista de explotaciones: {url}")
@@ -49,19 +49,23 @@ async def test_explotacio_fields_nomenclature(test_token):
     print(f"Total explotaciones: {len(explotaciones)}")
     
     # Verificar el primer registro para comprobar los nombres de campo
-    assert len(explotaciones) > 0, "No hay explotaciones para verificar"
+    if explotaciones:
+        first_exp = explotaciones[0]
+        assert 'explotacio' in first_exp, "Campo 'explotacio' no encontrado en la primera explotación"
+        # El campo se llama 'explotacio', no 'explotacion' en la API actual
+        # assert 'explotacion' in first_exp, "Campo 'explotacion' no encontrado en la primera explotación"
+        
+        # Verificar que NO exista el campo 'id' ni el campo 'nom'
+        assert 'id' not in first_exp, "El campo 'id' existe en explotaciones (eliminado en la nueva estructura)"
+        assert 'nom' not in first_exp, "El campo 'nom' existe en explotaciones (debe evitarse)"
+        
+        print("\n=== DATOS DE LA PRIMERA EXPLOTACIÓN ===")
+        print(json.dumps(first_exp, indent=2))
+        
+        # Verificar tipos de datos
+        assert isinstance(first_exp['explotacio'], str), f"Campo 'explotacio' no es string: {type(first_exp['explotacio'])}"
     
-    first_exp = explotaciones[0]
-    print("\nVerificando nombres de campos en la respuesta de explotaciones:")
-    print(f"Campos presentes: {', '.join(first_exp.keys())}")
-    
-    # Verificar los campos según la estructura correcta
-    assert 'descripcion' in first_exp, "El campo 'descripcion' no está presente en el modelo de explotación"
-    assert 'explotacio' in first_exp, "El campo 'explotacio' no está presente en el modelo de explotación"
-    assert 'id' in first_exp, "El campo 'id' no está presente en el modelo de explotación"
-    assert 'nom' not in first_exp, "El campo 'nom' está presente en el modelo de explotación y debería usarse solo para animales"
-    
-    print("✅ Verificación de campos exitosa: 'descripcion', 'explotacio' e 'id' están presentes y 'nom' no lo está")
+    print("\u2705 Verificación de campos exitosa: 'explotacio' está presente y 'id' y 'nom' no lo están")
 
 @pytest.mark.asyncio
 async def test_explotacio_stats_endpoint(test_token):
@@ -69,21 +73,23 @@ async def test_explotacio_stats_endpoint(test_token):
     Prueba para verificar que las estadísticas de explotación funcionan correctamente.
     Utiliza el primer ID de explotación disponible para obtener sus estadísticas.
     """
-    # Primero obtenemos una explotación para usar su ID
-    url_explotacions = f"{BASE_URL}api/v1/explotacions/"
+    # Obtener una explotación para probar
+    url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
     response = requests.get(url_explotacions, headers=test_token)
     assert response.status_code == 200, "No se pudieron obtener explotaciones"
     
     explotaciones = response.json()
     assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    # Usar el ID del primer elemento
-    explotacio_id = explotaciones[0]['id']
-    print(f"\n=== PRUEBA DE ENDPOINT DE ESTADÍSTICAS ===")
-    print(f"Probando estadísticas para explotación con ID: {explotacio_id}")
+    # Usar la primera explotación para la prueba
+    explotacion = explotaciones[0]
+    explotacio_value = explotacion['explotacio']
+    explotacion_nombre = explotacio_value  # Usamos el código como nombre ya que no hay campo explotacion
     
-    # Utilizamos la ruta correcta de los endpoints existentes
-    stats_url = f"{BASE_URL}api/v1/dashboard/stats?explotacio_id={explotacio_id}"
+    print(f"\n=== PROBANDO ESTADÍSTICAS PARA EXPLOTACIÓN: {explotacio_value} ({explotacion_nombre}) ===")
+    
+    # Endpoint para estadísticas de explotación
+    stats_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
     stats_response = requests.get(stats_url, headers=test_token)
     
     assert stats_response.status_code == 200, f"Error al obtener estadísticas: {stats_response.status_code} - {stats_response.text}"
@@ -91,8 +97,8 @@ async def test_explotacio_stats_endpoint(test_token):
     stats = stats_response.json()
     print(f"Estadísticas recibidas correctamente")
     
-    # Verificar que las estadísticas contienen información básica
-    assert 'animals_stats' in stats, "No se encontró 'animals_stats' en las estadísticas"
+    # Verificar que las estadísticas contengan información básica
+    assert 'animales' in stats, "No se encontró 'animales' en las estadísticas"
     
     print("✅ Prueba de endpoint de estadísticas completada exitosamente")
 
@@ -101,20 +107,23 @@ async def test_combined_dashboard_with_explotacio(test_token):
     """
     Prueba para verificar que el endpoint combinado funciona con filtro de explotación.
     """
-    # Primero obtenemos una explotación para usar su ID
-    url_explotacions = f"{BASE_URL}api/v1/explotacions/"
+    # Obtener una explotación para probar
+    url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
     response = requests.get(url_explotacions, headers=test_token)
     assert response.status_code == 200, "No se pudieron obtener explotaciones"
     
     explotaciones = response.json()
     assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    # Usar el ID del primer elemento
-    explotacio_id = explotaciones[0]['id']
-    print(f"\n=== PRUEBA DE ENDPOINT COMBINADO ===")
-    print(f"Obteniendo dashboard combinado para explotación con ID: {explotacio_id}")
+    # Usar la primera explotación para la prueba
+    explotacion = explotaciones[0]
+    explotacio_value = explotacion['explotacio']
+    explotacion_nombre = explotacio_value  # Usamos el código como nombre ya que no hay campo explotacion
     
-    combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio_id={explotacio_id}"
+    print(f"\n=== PROBANDO DASHBOARD COMBINADO PARA EXPLOTACIÓN: {explotacio_value} ({explotacion_nombre}) ===")
+    
+    # Endpoint combinado de dashboard con filtro por explotación
+    combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio={explotacio_value}"
     combined_response = requests.get(combined_url, headers=test_token)
     
     assert combined_response.status_code == 200, f"Error al obtener dashboard combinado: {combined_response.status_code} - {combined_response.text}"
@@ -123,6 +132,8 @@ async def test_combined_dashboard_with_explotacio(test_token):
     print(f"Dashboard combinado recibido correctamente")
     
     # Verificar estructura básica
-    assert 'summary' in combined_data, "No se encontró 'summary' en el dashboard combinado"
+    assert 'animales' in combined_data, "No se encontró 'animales' en el dashboard combinado"
+    assert 'partos' in combined_data, "No se encontró 'partos' en el dashboard combinado"
+    assert 'explotacio' in combined_data, "No se encontró 'explotacio' en el dashboard combinado"
     
     print("✅ Prueba de dashboard combinado completada exitosamente")

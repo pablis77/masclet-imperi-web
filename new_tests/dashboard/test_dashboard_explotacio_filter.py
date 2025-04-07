@@ -33,7 +33,7 @@ async def test_list_explotaciones(test_token):
     Prueba para listar explotaciones disponibles y verificar la estructura correcta.
     """
     print("\n=== EXPLOTACIONES DISPONIBLES ===")
-    explotacions_url = f"{BASE_URL}api/v1/explotacions/"
+    explotacions_url = f"{BASE_URL}api/v1/dashboard/explotacions/"
     response = requests.get(explotacions_url, headers=test_token)
     
     assert response.status_code == 200, f"Error al obtener explotaciones: {response.status_code} - {response.text}"
@@ -43,14 +43,14 @@ async def test_list_explotaciones(test_token):
     
     # Mostrar algunas explotaciones para verificar manualmente
     for e in explotaciones[:3]:  # Mostrar las primeras 3
-        print(f"ID: {e.get('id')}, Código: {e.get('explotacio')}, Nombre: {e.get('descripcion')}")
+        print(f"Código: {e.get('explotacio')}")
     
     # Verificar estructura de datos según las reglas de negocio
     if explotaciones:
         first_exp = explotaciones[0]
-        assert 'id' in first_exp, "Campo 'id' no encontrado"
         assert 'explotacio' in first_exp, "Campo 'explotacio' no encontrado"
-        assert 'descripcion' in first_exp, "Campo 'descripcion' no encontrado"
+        # El campo se llama 'explotacio', no 'explotacion' en la API actual
+        # assert 'explotacion' in first_exp, "Campo 'explotacion' no encontrado"
         assert 'nom' not in first_exp, "Campo 'nom' encontrado (no debería estar en explotaciones)"
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_global_dashboard(test_token):
     
     resumen = response.json()
     # Verificar estructura mínima esperada
-    assert 'animals_stats' in resumen, "El resumen no contiene estadísticas de animales"
+    assert 'animales' in resumen, "El resumen no contiene estadísticas de animales"
     
     print("✅ Resumen global obtenido correctamente")
 
@@ -75,45 +75,46 @@ async def test_filtered_dashboard(test_token):
     """
     Prueba para obtener el dashboard filtrado por explotación.
     """
-    # Primero obtenemos las explotaciones
-    explotacions_url = f"{BASE_URL}api/v1/explotacions/"
-    response = requests.get(explotacions_url, headers=test_token)
+    # Obtener lista de explotaciones para usar un código real
+    explotacions_url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+    exp_response = requests.get(explotacions_url, headers=test_token)
+    assert exp_response.status_code == 200, "No se pudieron obtener explotaciones"
     
-    assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    explotaciones = exp_response.json()
+    assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    explotaciones = response.json()
-    assert len(explotaciones) > 0, "No hay explotaciones disponibles para pruebas"
+    # Extraer código de explotación
+    explotacio_value = explotaciones[0]['explotacio']
     
-    # Probar con la primera explotación
-    explotacio_id = explotaciones[0].get('id')
-    descripcion = explotaciones[0].get('descripcion')
+    # Endpoint para estadísticas por explotación
+    dashboard_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
+    response = requests.get(dashboard_url, headers=test_token)
     
-    print(f"\n=== RESUMEN FILTRADO POR EXPLOTACIÓN ID: {explotacio_id} ({descripcion}) ===")
-    filtered_url = f"{BASE_URL}api/v1/dashboard/stats?explotacio_id={explotacio_id}"
-    filtered_response = requests.get(filtered_url, headers=test_token)
+    assert response.status_code == 200, f"Error al obtener resumen filtrado: {response.status_code} - {response.text}"
     
-    assert filtered_response.status_code == 200, f"Error al obtener resumen filtrado: {filtered_response.status_code} - {filtered_response.text}"
-    
-    filtered_resumen = filtered_response.json()
+    data = response.json()
     # Verificar estructura mínima esperada
-    assert 'animals_stats' in filtered_resumen, "El resumen filtrado no contiene estadísticas de animales"
+    assert 'animales' in data, "El resumen filtrado no contiene estadísticas de animales"
+    # Verificar que los datos estén filtrados por la explotación correcta
+    assert 'explotacio' in data, "Código de explotación no encontrado"
+    assert data['explotacio'] == explotacio_value, f"Código incorrecto: {data['explotacio']} != {explotacio_value}"
     
     print("✅ Resumen filtrado obtenido correctamente")
     
     # Si hay más de una explotación, probar también con la última
     if len(explotaciones) > 1:
-        last_explotacio_id = explotaciones[-1].get('id')
-        last_descripcion = explotaciones[-1].get('descripcion')
+        last_explotacio = explotaciones[-1].get('explotacio')
+        last_descripcion = last_explotacio
         
-        print(f"\n=== RESUMEN FILTRADO POR ÚLTIMA EXPLOTACIÓN ID: {last_explotacio_id} ({last_descripcion}) ===")
-        last_filtered_url = f"{BASE_URL}api/v1/dashboard/stats?explotacio_id={last_explotacio_id}"
+        print(f"\n=== RESUMEN FILTRADO POR ÚLTIMA EXPLOTACIÓN: {last_explotacio} ({last_descripcion}) ===")
+        last_filtered_url = f"{BASE_URL}api/v1/dashboard/stats?explotacio={last_explotacio}"
         last_filtered_response = requests.get(last_filtered_url, headers=test_token)
         
         assert last_filtered_response.status_code == 200, f"Error al obtener resumen de última explotación: {last_filtered_response.status_code} - {last_filtered_response.text}"
         
         last_filtered_resumen = last_filtered_response.json()
         # Verificar estructura mínima esperada
-        assert 'animals_stats' in last_filtered_resumen, "El resumen de última explotación no contiene estadísticas de animales"
+        assert 'animales' in last_filtered_resumen, "El resumen de última explotación no contiene estadísticas de animales"
         
         print("✅ Resumen de última explotación obtenido correctamente")
 
@@ -122,29 +123,26 @@ async def test_combined_dashboard_filter(test_token):
     """
     Prueba para verificar el filtrado en el endpoint combinado.
     """
-    # Obtener explotaciones
-    explotacions_url = f"{BASE_URL}api/v1/explotacions/"
-    response = requests.get(explotacions_url, headers=test_token)
+    # Obtener lista de explotaciones para usar un código real
+    explotacions_url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+    exp_response = requests.get(explotacions_url, headers=test_token)
+    assert exp_response.status_code == 200, "No se pudieron obtener explotaciones"
     
-    assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    explotaciones = exp_response.json()
+    assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
     
-    explotaciones = response.json()
-    if not explotaciones:
-        pytest.skip("No hay explotaciones disponibles para probar")
+    # Extraer código de explotación
+    explotacio_value = explotaciones[0]['explotacio']
     
-    # Probar con la primera explotación
-    explotacio_id = explotaciones[0].get('id')
-    descripcion = explotaciones[0].get('descripcion')
-    
-    print(f"\n=== DASHBOARD COMBINADO FILTRADO POR EXPLOTACIÓN ID: {explotacio_id} ({descripcion}) ===")
-    
-    # Usar el endpoint combinado con filtro
-    combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio_id={explotacio_id}"
+    print(f"\n=== DASHBOARD COMBINADO FILTRADO POR EXPLOTACIÓN: {explotacio_value} ===")
+    combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio={explotacio_value}"
     combined_response = requests.get(combined_url, headers=test_token)
     
     assert combined_response.status_code == 200, f"Error al obtener dashboard combinado: {combined_response.status_code} - {combined_response.text}"
     
     combined_data = combined_response.json()
-    assert 'summary' in combined_data, "No se encontró 'summary' en el dashboard combinado"
+    assert 'animales' in combined_data, "No se encontró 'animales' en el dashboard combinado"
+    assert 'partos' in combined_data, "No se encontró 'partos' en el dashboard combinado"
+    assert 'explotacio' in combined_data, "No se encontró 'explotacio' en el dashboard combinado"
     
     print("✅ Dashboard combinado filtrado obtenido correctamente")

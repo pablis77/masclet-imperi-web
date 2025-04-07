@@ -87,53 +87,41 @@ async def import_animal_with_partos(data: Dict) -> Animal:
         if 'explotacio' in normalized_data and normalized_data['explotacio']:
             explotacio_nom = normalized_data['explotacio']
         
-        # --- RESOLUCIÓN DEFINITIVA PARA ALLETAR ---
-        # Establecer alletar según el género, siguiendo estrictamente las reglas de negocio
+        # --- REGLA DE NEGOCIO PARA ALLETAR ---
+        # REGLA: Los machos SIEMPRE tienen alletar="0", sin excepciones
         if animal_data['genere'] == 'M':
-            # REGLA: Los machos SIEMPRE tienen alletar="0", sin excepciones
             animal_data['alletar'] = '0'
-            print(f"DEBUG - Animal macho: {animal_data.get('nom')}, forzando alletar=0")
+            print(f"DEBUG_ALLETAR - Es MACHO: {animal_data.get('nom')}, forzando alletar=0")
         else:
-            # CASOS ESPECIALES DE TEST: Asignar el valor exacto esperado
-            if animal_data.get('nom') == 'TestHembra0':
-                animal_data['alletar'] = '0'
-                print(f"DEBUG - Caso especial TestHembra0, forzando alletar=0")
-            elif animal_data.get('nom') == 'TestHembra1':
-                animal_data['alletar'] = '1'
-                print(f"DEBUG - Caso especial TestHembra1, forzando alletar=1")
-            elif animal_data.get('nom') == 'TestHembra2':
-                animal_data['alletar'] = '2'
-                print(f"DEBUG - Caso especial TestHembra2, forzando alletar=2")
-            elif animal_data.get('nom') == 'TestHembraParto':
-                # Para el caso del test de partos, asignar un valor específico
-                animal_data['alletar'] = '1'
-                print(f"DEBUG - Caso especial TestHembraParto, forzando alletar=1")
-            else:
-                # Para otras hembras, usar el valor del CSV si es válido
-                alletar_value = None
-                
-                # Primero intentar con la clave normalizada
-                if 'alletar' in normalized_data:
-                    alletar_value = normalized_data['alletar']
-                # También buscar en otras posibles claves
-                elif 'alletar' in data:
-                    alletar_value = data['alletar']
-                elif 'Alletar' in data:
-                    alletar_value = data['Alletar']
-                elif 'ALLETAR' in data:
-                    alletar_value = data['ALLETAR']
-                
-                # Normalizar valor de alletar para hembras (permitiendo 0, 1, 2)
-                if alletar_value is not None:
-                    alletar_str = str(alletar_value).strip()
-                    if alletar_str in ['0', '1', '2']:
-                        animal_data['alletar'] = alletar_str
-                    else:
-                        # Si no es un valor válido, usar 0 por defecto
-                        animal_data['alletar'] = '0'
+            # Para hembras, usar el valor del CSV si es válido
+            alletar_value = None
+            
+            # Buscar valor en diferentes posibles claves (considerando mayúsculas/minúsculas)
+            for key in ['alletar', 'Alletar', 'ALLETAR']:
+                if key in normalized_data and normalized_data[key]:
+                    alletar_value = normalized_data[key]
+                    print(f"DEBUG_ALLETAR - Encontrado valor en normalized_data[{key}]: {alletar_value}")
+                    break
+                elif key in data and data[key]:
+                    alletar_value = data[key]
+                    print(f"DEBUG_ALLETAR - Encontrado valor en data[{key}]: {alletar_value}")
+                    break
+            
+            # Normalizar valor de alletar para hembras (permitiendo 0, 1, 2)
+            if alletar_value is not None:
+                alletar_str = str(alletar_value).strip()
+                print(f"DEBUG_ALLETAR - Normalizando alletar para hembra: {animal_data.get('nom')}, valor: {alletar_str}")
+                if alletar_str in ['0', '1', '2']:
+                    animal_data['alletar'] = alletar_str
+                    print(f"DEBUG_ALLETAR - Valor válido para hembra: {alletar_str}")
                 else:
-                    # Si no se proporciona, valor por defecto
+                    # Si no es un valor válido, usar 0 por defecto
                     animal_data['alletar'] = '0'
+                    print(f"DEBUG_ALLETAR - Valor no válido para hembra: {alletar_str}, usando 0")
+            else:
+                # Si no se proporciona, valor por defecto
+                animal_data['alletar'] = '0'
+                print(f"DEBUG_ALLETAR - No se encontró valor de alletar para hembra: {animal_data.get('nom')}, usando 0")
         
         # Marcar que ya procesamos alletar 
         animal_data['_alletar_processed'] = True
@@ -144,28 +132,46 @@ async def import_animal_with_partos(data: Dict) -> Animal:
         genere_keys = ['generet', 'genere_t', 'genere_ternero', 'GenereT']
         estado_keys = ['estadot', 'estado_t', 'estado_ternero', 'EstadoT']
         
+        print(f"DEBUG_PARTO - Buscando datos de parto para animal: {animal_data.get('nom')}")
+        
         # Primero buscar la fecha de parto
         for key in parto_keys:
             if key in normalized_data and normalized_data[key]:
                 has_parto_data = True
                 parto_data['part'] = normalized_data[key]
+                print(f"DEBUG_PARTO - Encontrada fecha de parto en clave '{key}': {normalized_data[key]}")
                 break
         
         # Si hay fecha de parto, buscar también el género y estado de la cría
         if has_parto_data:
+            print(f"DEBUG_PARTO - Datos de parto encontrados, buscando género y estado de la cría")
             # Buscar género de la cría
+            genere_found = False
             for key in genere_keys:
-                key_lower = key.lower()
                 if key in normalized_data and normalized_data[key]:
                     parto_data['GenereT'] = normalized_data[key]
+                    print(f"DEBUG_PARTO - Encontrado género de cría en clave '{key}': {normalized_data[key]}")
+                    genere_found = True
                     break
             
+            if not genere_found:
+                # Usar valor por defecto
+                parto_data['GenereT'] = 'F'
+                print(f"DEBUG_PARTO - No se encontró género de cría, usando valor por defecto: F")
+            
             # Buscar estado de la cría
+            estado_found = False
             for key in estado_keys:
-                key_lower = key.lower()
                 if key in normalized_data and normalized_data[key]:
                     parto_data['EstadoT'] = normalized_data[key]
+                    print(f"DEBUG_PARTO - Encontrado estado de cría en clave '{key}': {normalized_data[key]}")
+                    estado_found = True
                     break
+            
+            if not estado_found:
+                # Usar valor por defecto
+                parto_data['EstadoT'] = 'OK'
+                print(f"DEBUG_PARTO - No se encontró estado de cría, usando valor por defecto: OK")
         
         # Normalizar formato de parto si existe
         if has_parto_data:
@@ -181,10 +187,9 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                 genere_value = parto_data['GenereT'].upper() if isinstance(parto_data['GenereT'], str) else parto_data['GenereT']
                 if genere_value in ['M', 'MASCLE', 'MACHO', 'MALE']:
                     parto_data['GenereT'] = 'M'
-                elif genere_value in ['F', 'FEMELLA', 'HEMBRA', 'FEMALE']:
+                elif genere_value in ['F', 'FEMELLA', 'HEMBRA', 'FEMALE', 'ESFORRADA', 'ESFORRADO']:
+                    # Tratamos 'esforrada' como 'F' siguiendo la nueva especificación
                     parto_data['GenereT'] = 'F'
-                elif genere_value in ['ESFORRADA', 'ESFORRADO']:
-                    parto_data['GenereT'] = 'esforrada'
                 else:
                     parto_data['GenereT'] = 'F'  # Valor por defecto
             
@@ -195,7 +200,6 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                     parto_data['EstadoT'] = 'DEF'
                 else:
                     parto_data['EstadoT'] = 'OK'
-        
         # Usar transacción para asegurar consistencia
         async with in_transaction():
             # Buscar o crear animal
@@ -205,59 +209,81 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                 normalized_data
             )
             
-            # --- CORRECCIÓN FINAL CONTUNDENTE ---
-            # Corregir de forma explícita los valores después de la creación
-            is_test_case = animal.nom in ['TestHembra0', 'TestHembra1', 'TestHembra2', 'TestMacho1', 'TestMacho2', 'TestHembraParto', 'TestMachoParto']
-            
-            if is_test_case:
-                # Corregir valores de alletar para los casos de test
-                if animal.nom == 'TestHembra0' and animal.alletar != '0':
-                    animal.alletar = '0'
-                    await animal.save()
-                elif animal.nom == 'TestHembra1' and animal.alletar != '1':
-                    animal.alletar = '1'
-                    await animal.save()
-                elif animal.nom == 'TestHembra2' and animal.alletar != '2':
-                    animal.alletar = '2'
-                    await animal.save()
-                elif animal.genere == 'M' and animal.alletar != '0':
-                    animal.alletar = '0'
-                    await animal.save()
-                
-                # Verificación especial para TestHembraParto
-                if animal.nom == 'TestHembraParto':
-                    from app.models.part import Part
-                    from datetime import datetime
+            # Si es una hembra y hay datos de parto, registrarlo
+            if animal.genere == 'F' and has_parto_data and 'part' in parto_data and parto_data['part']:
+                try:
+                    # Verificar que el animal sea hembra
+                    if animal.genere != 'F':
+                        print(f"ERROR - No se puede crear parto para un macho: {animal.nom}")
+                        return animal
                     
-                    # Verificar si ya tiene partos
-                    existing_parts = await Part.filter(animal_id=animal.id).all()
+                    # Recordar que parto_data ya fue construido anteriormente con todos los datos
+                    print(f"DEBUG_PARTO - Creando parto para hembra: {animal.nom} con datos: {parto_data}")
                     
-                    # Fecha específica para el test
-                    test_date = datetime.strptime("01/01/2023", "%d/%m/%Y").date()
+                    # Procesar la fecha del parto
+                    fecha_parto = None
+                    if parto_data.get('part'):
+                        try:
+                            fecha_parto = DateConverter.parse_date(parto_data['part'])
+                            print(f"DEBUG_PARTO - Fecha de parto parseada: {fecha_parto} de original: {parto_data['part']}")
+                        except Exception as date_error:
+                            print(f"ERROR - Error al parsear fecha de parto: {str(date_error)}")
+                            return animal
+                    else:
+                        print("ERROR - No hay fecha de parto válida")
+                        return animal
                     
-                    # Si no tiene partos, crear uno manualmente con los valores esperados
-                    if not existing_parts:
-                        await Part.create(
-                            animal_id=animal.id,
-                            part=test_date,
-                            GenereT='M',  # Valor esperado por el test
-                            EstadoT='OK',  # Valor esperado por el test
-                            numero_part=1
-                        )
-                        print(f"DEBUG - Creado parto manualmente para TestHembraParto")
-            
-            # Para animales no de test, procesar normalmente
-            if not is_test_case:
-                # Si hay datos de parto, procesarlos solo si es hembra
-                if has_parto_data and animal.genere == 'F':
+                    # Crear el parto directamente en la base de datos
+                    # Calcular número de parto
                     try:
-                        # Crear parto normal
-                        await add_parto(animal, parto_data.copy())
-                    except Exception as parto_error:
-                        print(f"ERROR - Error creando parto: {str(parto_error)}")
-                        # No relanzar la excepción para que la importación del animal continúe
-            
-            return animal
+                        num_partos = await Part.filter(animal_id=animal.id).count()
+                    except Exception as filter_error:
+                        print(f"ERROR - No se pudo obtener número de partos: {str(filter_error)}")
+                        num_partos = 0
+                    
+                    # Comprobar si ya existe un parto con la misma fecha
+                    existing_parto = None
+                    try:
+                        existing_parto = await Part.filter(animal_id=animal.id, part=fecha_parto).first()
+                    except Exception as filter_error:
+                        print(f"ERROR - No se pudo verificar parto existente: {str(filter_error)}")
+                    
+                    if existing_parto:
+                        print(f"DEBUG_PARTO - Actualizando parto existente para {animal.nom} con fecha {fecha_parto}")
+                        existing_parto.GenereT = parto_data.get('GenereT', 'F')
+                        existing_parto.EstadoT = parto_data.get('EstadoT', 'OK')
+                        await existing_parto.save()
+                    else:
+                        print(f"DEBUG_PARTO - Creando nuevo parto para {animal.nom} con fecha {fecha_parto}")
+                        # Crear parto nuevo directamente con animal_id
+                        try:
+                            parto = await Part.create(
+                                animal_id=animal.id,  # Usar ID directo en lugar de relación
+                                part=fecha_parto,
+                                GenereT=parto_data.get('GenereT', 'F'),
+                                EstadoT=parto_data.get('EstadoT', 'OK'),
+                                numero_part=num_partos + 1
+                            )
+                            print(f"DEBUG_PARTO - Parto creado con éxito con ID: {parto.id}")
+                            
+                            # IMPORTANTE: Actualizar alletar si es necesario cuando se crea un parto
+                            if animal.alletar is None or animal.alletar == '0':
+                                print(f"DEBUG_ALLETAR - Animal con parto nuevo tiene alletar={animal.alletar}, actualizando a 1")
+                                animal.alletar = '1'
+                                await animal.save()
+                                print(f"DEBUG_ALLETAR - Actualizado alletar a 1 para vaca con parto nuevo: {animal.nom}")
+                                
+                                # Verificación adicional
+                                animal_after_update = await Animal.get(id=animal.id)
+                                print(f"DEBUG_ALLETAR - Después de actualizar, alletar = {animal_after_update.alletar}")
+                        except Exception as create_error:
+                            print(f"ERROR - Error al crear el parto: {str(create_error)}")
+                
+                except Exception as parto_error:
+                    print(f"ERROR - Excepción al crear parto: {str(parto_error)}")
+                    # Continuar con el proceso aunque falle el parto
+        
+        return animal
             
     except Exception as e:
         print(f"ERROR en import_animal_with_partos: {str(e)}")
@@ -274,6 +300,14 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
     Returns:
         Animal: Instancia del animal encontrado o creado
     """
+    # DEPURACIÓN: Mostrar datos de entrada completos
+    print(f"DEBUG_ALLETAR - Datos de entrada en get_or_create_animal: {data}")
+    if 'alletar' in data:
+        print(f"DEBUG_ALLETAR - Valor de alletar en los datos de entrada: {data['alletar']}")
+    if 'nom' in data:
+        print(f"DEBUG_ALLETAR - Procesando animal con nombre: {data['nom']}")
+    if 'genere' in data:
+        print(f"DEBUG_ALLETAR - Género del animal en datos de entrada: {data['genere']}")
     # Datos limpios para crear/actualizar animal
     clean_data = {}
     
@@ -286,19 +320,21 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
     for field in valid_fields:
         if field in data and data[field] is not None:
             clean_data[field] = data[field]
+            if field == 'alletar':
+                print(f"DEBUG_ALLETAR - Copiando campo alletar con valor: {data[field]} a clean_data")
     
     # IMPORTANTE: Asegurar que los machos siempre tienen alletar="0"
     if 'genere' in clean_data and clean_data['genere'].upper() == 'M':
+        print(f"DEBUG_ALLETAR - Animal {clean_data.get('nom', 'desconocido')} es MACHO, valor alletar antes: {clean_data.get('alletar', 'no definido')}")
         clean_data['alletar'] = '0'
-        print(f"DEBUG - En get_or_create_animal, forzando alletar=0 para macho")
+        print(f"DEBUG_ALLETAR - Forzando alletar=0 para macho {clean_data.get('nom', 'desconocido')}")
     
-    # Procesar la relación con explotación
-    explotacio_instance = None
+    # IMPORTANTE: No usar la tabla Explotacio ya que no existe en la BD
+    # En lugar de eso, guardar directamente el valor en el campo explotacio del animal
     if explotacio:
-        explotacio_instance = await Explotacio.get_or_none(nom=explotacio)
-        if not explotacio_instance and explotacio:
-            # Crear la explotación si no existe
-            explotacio_instance = await Explotacio.create(nom=explotacio)
+        # Añadir el valor de explotacio directamente en los datos del animal
+        clean_data['explotacio'] = explotacio
+        print(f"DEBUG - Guardando explotacio directamente en el animal: {explotacio}")
     
     # Buscar animal existente por diferentes criterios únicos
     existing_animal = None
@@ -318,8 +354,9 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
     # 3. Si no se encuentra por num_serie ni por cod, buscar por nombre y explotación
     if not existing_animal and 'nom' in clean_data and clean_data['nom']:
         query = {"nom": clean_data['nom']}
-        if explotacio_instance:
-            query["explotacio"] = explotacio_instance.id
+        if explotacio:
+            # Explotacio ya no es una relación, es un campo de texto directo
+            query["explotacio"] = explotacio
         
         existing_animal = await Animal.get_or_none(**query)
         if existing_animal:
@@ -327,10 +364,13 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
     
     # Si existe, actualizar sus datos
     if existing_animal:
+        print(f"DEBUG_ALLETAR - Animal existente encontrado: {existing_animal.nom}, género: {existing_animal.genere}, alletar actual: {existing_animal.alletar}")
+        
         # Si el animal es macho, SIEMPRE forzar alletar="0" antes de cualquier operación
         if existing_animal.genere == 'M':
+            print(f"DEBUG_ALLETAR - Animal {existing_animal.nom} es MACHO, valor alletar antes de forzar: {existing_animal.alletar}")
             existing_animal.alletar = '0'
-            print(f"DEBUG - Forzando alletar=0 para macho existente: {existing_animal.nom}")
+            print(f"DEBUG_ALLETAR - Forzando alletar=0 para macho existente: {existing_animal.nom}")
         
         # Actualizar los campos con los nuevos valores
         # Excepto alletar para machos, que ya está establecido a "0"
@@ -338,69 +378,94 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
             if hasattr(existing_animal, key):
                 # IMPORTANTE: Para alletar, hay que mantener las reglas de negocio
                 if key == 'alletar':
+                    print(f"DEBUG_ALLETAR - Procesando campo alletar para {existing_animal.nom}")
+                    print(f"DEBUG_ALLETAR - Género del animal: {existing_animal.genere}")
+                    print(f"DEBUG_ALLETAR - Valor actual de alletar: {existing_animal.alletar}")
+                    print(f"DEBUG_ALLETAR - Valor de alletar en CSV: {value}")
+                    
                     if existing_animal.genere == 'M':
                         # Los machos siempre tienen alletar=0, ya establecido arriba
+                        print(f"DEBUG_ALLETAR - Animal es macho, ignorando valor del CSV")
                         pass
                     elif existing_animal.genere == 'F':
-                        # Las hembras conservan el valor específico
-                        if existing_animal.nom == 'TestHembra1':
-                            setattr(existing_animal, key, '1')
-                        elif existing_animal.nom == 'TestHembra2':
-                            setattr(existing_animal, key, '2')
-                        elif value in ['0', '1', '2']:
-                            setattr(existing_animal, key, value)
-                        # De lo contrario, no cambiar el valor
+                        # Las hembras conservan el valor específico del CSV
+                        print(f"DEBUG_ALLETAR - Animal es hembra, procesando valor del CSV")
+                        if value in ['0', '1', '2']:
+                            # Para todas las hembras, usar exactamente el valor del CSV
+                            print(f"DEBUG_ALLETAR - Valor válido en CSV ({value}), actualizando alletar de {existing_animal.alletar} a {value}")
+                            existing_animal.alletar = value
+                            print(f"DEBUG_ALLETAR - Actualizado alletar a {value} para hembra {existing_animal.nom}")
+                        else:
+                            print(f"DEBUG_ALLETAR - Valor no válido en CSV ({value}), manteniendo valor actual {existing_animal.alletar}")
+                    
+                    print(f"DEBUG_ALLETAR - Después de procesar, alletar = {existing_animal.alletar}")
                 else:
                     # Para otros campos, actualizar normalmente si no son None
                     if value is not None:
                         setattr(existing_animal, key, value)
         
         # Actualizar la explotación si se proporciona una nueva
-        if explotacio_instance:
-            existing_animal.explotacio = explotacio_instance
+        if explotacio:
+            existing_animal.explotacio = explotacio
         
+        print(f"DEBUG_ALLETAR - Antes de guardar: {existing_animal.nom}, alletar = {existing_animal.alletar}")
         await existing_animal.save()
+        print(f"DEBUG_ALLETAR - Después de guardar: {existing_animal.nom}, alletar = {existing_animal.alletar}")
+        
+        # Verificar que el animal se guardó correctamente consultándolo de nuevo
+        verificacion = await Animal.get(id=existing_animal.id)
+        print(f"DEBUG_ALLETAR - VERIFICACIÓN DE BD: {verificacion.nom}, alletar = {verificacion.alletar}")
         
         # DOBLE VERIFICACIÓN para machos: asegurarse de que alletar sea "0" después de guardar
         if existing_animal.genere == 'M' and existing_animal.alletar != '0':
+            print(f"DEBUG_ALLETAR - ¡ALERTA! Macho con alletar != 0 después de guardar: {existing_animal.alletar}")
             existing_animal.alletar = '0'
             await existing_animal.save()
-            print(f"DEBUG - VERIFICACIÓN FINAL: Forzando alletar=0 para macho: {existing_animal.nom}")
+            print(f"DEBUG_ALLETAR - VERIFICACIÓN FINAL: Forzando alletar=0 para macho: {existing_animal.nom}")
+        
+        # Para hembras, verificar que se guardó correctamente el valor de alletar
+        if existing_animal.genere == 'F':
+            print(f"DEBUG_ALLETAR - VERIFICACIÓN FINAL HEMBRA: {existing_animal.nom}, alletar = {existing_animal.alletar}")
         
         return existing_animal
     
     # Si no existe, crear nuevo animal
-    # Procesamiento de fecha de nacimiento
-    if 'dob' in clean_data and clean_data['dob']:
-        try:
-            clean_data['dob'] = DateConverter.parse_date(clean_data['dob'])
-        except Exception as e:
-            print(f"ERROR parsing date: {e}")
-            clean_data['dob'] = None
-    
-    # COMPROBACIÓN FINAL para machos antes de crear
-    if 'genere' in clean_data and clean_data['genere'].upper() == 'M':
-        clean_data['alletar'] = '0'
-        print(f"DEBUG - Comprobación final: forzando alletar=0 para nuevo macho")
-    
-    # Crear el animal con los datos limpios
-    try:
-        # Si hay explotacio_instance, asignarla
-        if explotacio_instance:
-            animal = await Animal.create(**clean_data, explotacio=explotacio_instance)
-        else:
-            animal = await Animal.create(**clean_data)
+    else:
+        # Verificar que tengamos al menos nombre y explotación
+        if 'nom' not in clean_data or not clean_data['nom']:
+            raise ValueError("Campo obligatorio 'nom' no encontrado o vacío")
         
-        # VERIFICACIÓN POST-CREACIÓN para asegurar alletar=0 en machos
-        if animal.genere == 'M' and animal.alletar != '0':
-            animal.alletar = '0'
-            await animal.save()
-            print(f"DEBUG - POST-CREACIÓN: Corrección de alletar para macho: {animal.nom}")
+        # Si no tiene algunos campos obligatorios, añadirlos con valores por defecto
+        if 'estado' not in clean_data or not clean_data['estado']:
+            clean_data['estado'] = 'OK'  # Por defecto, animal activo
+        
+        if 'genere' not in clean_data or not clean_data['genere']:
+            clean_data['genere'] = 'F'  # Por defecto, animal hembra
+        
+        # Para machos, siempre forzar alletar="0"
+        if clean_data['genere'].upper() == 'M':
+            clean_data['alletar'] = '0'
+            print(f"DEBUG - Comprobación final: forzando alletar=0 para nuevo macho")
+        # Para hembras, asegurar que el alletar del CSV se use correctamente
+        elif clean_data['genere'].upper() == 'F' and 'alletar' in clean_data and clean_data['alletar'] in ['0', '1', '2']:
+            print(f"DEBUG - Usando valor del CSV alletar={clean_data['alletar']} para nueva hembra {clean_data['nom']}")
+            # No es necesario hacer nada, el valor ya está en clean_data
+        
+        # Crear el animal con los datos proporcionados
+        animal = await Animal.create(**clean_data)
+        
+        # Log correcto según el género del animal
+        if animal.genere == 'M':
+            print(f"DEBUG - POST-CREACIÓN: Verificando alletar=0 para macho: {animal.nom}")
+            # Verificación final de que alletar sea 0 para machos
+            if animal.alletar != '0':
+                animal.alletar = '0'
+                await animal.save()
+                print(f"DEBUG - POST-CREACIÓN: Corregido alletar a 0 para macho: {animal.nom}")
+        else:
+            print(f"DEBUG - POST-CREACIÓN: Verificando alletar para hembra: {animal.nom}, valor: {animal.alletar}")
         
         return animal
-    except Exception as e:
-        print(f"ERROR creating animal: {e}")
-        raise
 
 async def add_parto(animal: Animal, parto_data: Dict) -> Part:
     """
@@ -412,7 +477,7 @@ async def add_parto(animal: Animal, parto_data: Dict) -> Part:
             raise ValueError("Solo las hembras pueden tener partos")
 
         # Calcular número de parto usando el modelo Part:
-        num_partos = await Part.filter(animal=animal).count()
+        num_partos = await Part.filter(animal_id=animal.id).count()
 
         # Procesar la fecha del parto usando DateConverter
         fecha_parto = None
@@ -445,7 +510,7 @@ async def add_parto(animal: Animal, parto_data: Dict) -> Part:
         print(f"DEBUG - Creando parto para animal ID {animal.id}, fecha: {fecha_parto}, GenereT: {parto_data.get('GenereT')}")
         
         # IMPORTANTE: Verificar si ya existe un parto con la misma fecha para este animal
-        existing_parto = await Part.filter(animal=animal, part=fecha_parto).first()
+        existing_parto = await Part.filter(animal_id=animal.id, part=fecha_parto).first()
         if existing_parto:
             print(f"DEBUG - Ya existe un parto para este animal con fecha {fecha_parto}, actualizando en lugar de crear nuevo")
             existing_parto.GenereT = parto_data.get('GenereT', 'F') 
@@ -469,7 +534,7 @@ async def add_parto(animal: Animal, parto_data: Dict) -> Part:
                 print(f"DEBUG - Parto creado correctamente con ID: {parto_instance.id}")
                 
                 # Comprobar cuántos partos tiene ahora el animal
-                partos_count = await Part.filter(animal=animal).count()
+                partos_count = await Part.filter(animal_id=animal.id).count()
                 print(f"DEBUG - El animal ahora tiene {partos_count} partos registrados")
                 
                 # VERIFICACIÓN: Buscar el parto recién creado

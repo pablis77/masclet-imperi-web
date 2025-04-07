@@ -195,7 +195,7 @@ Estos endpoints mantienen su funcionalidad actual sin cambios:
 - `DELETE /api/v1/animals/{animal_id}`: Eliminar un animal
 - `GET /api/v1/animals/{animal_id}/history`: Obtener el historial de cambios de un animal
 
-### 2. Endpoints de Explotaciones (`/api/v1/explotacions/`)
+### 2. Endpoints de Explotaciones (`/api/v1/explotacions/`) (OBSOLETOS/ ya no sirven, los mantengo en este documento aprq que quede constancia de que se formluaron, PERO YA NO SIRVEN)
 
 Estos endpoints deben modificarse para trabajar directamente con la tabla `animals` en lugar de `explotacions`:
 
@@ -212,8 +212,8 @@ Los siguientes endpoints deberían eliminarse o rediseñarse para reflejar que l
 
 Estos endpoints ya funcionan correctamente agrupando datos de animales por explotación:
 
-- `GET /api/v1/dashboard/explotacions`: Listar explotaciones con sus estadísticas básicas
-- `GET /api/v1/dashboard/explotacions/{explotacio_id}`: Obtener estadísticas detalladas de una explotación
+- `GET /api/v1/dashboard/explotacions`: ahora devuelve valores únicos del campo "explotacio" de la tabla animals
+- `GET /api/v1/dashboard/explotacions/{explotacio_id}`: ahora recibe directamente el valor del campo "explotacio" para filtrar
 - `GET /api/v1/dashboard/stats`: Obtener estadísticas generales del sistema
 - `GET /api/v1/dashboard/resumen`: Obtener un resumen de todos los datos
 - `GET /api/v1/dashboard/combined`: Obtener datos combinados para el dashboard
