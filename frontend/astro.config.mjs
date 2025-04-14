@@ -11,14 +11,7 @@ export default defineConfig({
     server: {
         port: 3000,
         host: true,
-        // Configuración del proxy para comunicación con backend
-        proxy: {
-            '/api/v1': {
-                target: 'http://localhost:8000',
-                changeOrigin: true,
-                secure: false
-            }
-        }
+        // No usamos proxy para evitar problemas de acceso desde dispositivos externos
     },
 
     // Integraciones

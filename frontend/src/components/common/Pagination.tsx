@@ -88,7 +88,8 @@ export const Pagination: React.FC<PaginationProps> = ({
                       : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                   }`}
                 >
-                  {page}
+                  {/* Asegurar que se muestre el número como string para evitar problemas de renderizado */}
+                  {page.toString()}
                 </button>
               </li>
             ))}

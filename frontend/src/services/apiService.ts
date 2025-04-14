@@ -35,25 +35,74 @@ const safeStorage = {
   }
 };
 
-// API URL desde variables de entorno o valor por defecto
-const API_URL = isBrowser && import.meta.env.VITE_API_URL ? 
-  import.meta.env.VITE_API_URL : 
-  'http://127.0.0.1:8000'; // Usar IP explícita en lugar de localhost
+// Solución flexible que funciona en todos los dispositivos
+const getApiUrl = () => {
+  // En servidor siempre usar localhost
+  if (!isBrowser) return 'http://127.0.0.1:8000';
+  
+  try {
+    // Detectar si estamos en localhost o accediendo desde la red
+    const hostname = window.location.hostname;
+    console.log('Hostname detectado:', hostname);
+    
+    // Si estamos en localhost, conectar a localhost
+    if (hostname === '127.0.0.1' || hostname === 'localhost') {
+      console.log('Usando backend en localhost: http://127.0.0.1:8000');
+      return 'http://127.0.0.1:8000';
+    }
+    
+    // Si estamos accediendo desde otro dispositivo, usar la misma IP
+    console.log(`Usando backend con misma IP: http://${hostname}:8000`);
+    return `http://${hostname}:8000`;
+    
+  } catch (error) {
+    console.error('Error detectando hostname:', error);
+    return 'http://127.0.0.1:8000'; // Fallback
+  }
+};
 
-// Prefijo API 
+const API_URL = getApiUrl();
+
+// Prefijo API - siempre el mismo
 const API_PREFIX = '/api/v1';
 
-// URL completa para la API
-const FULL_API_URL = `${API_URL}${API_PREFIX}`;
+// URL del API (sin prefijo)
+const FULL_API_URL = API_URL;
 
-// Comprobar si se debe usar datos simulados (desactivado por defecto)
-const useMockData = isBrowser && (
-  import.meta.env.VITE_USE_MOCK_DATA === 'true' || 
-  import.meta.env.VITE_USE_MOCK_DATA === true || 
-  false // Forzar a false si no está definido en el entorno
-);
+// NUNCA USAR DATOS SIMULADOS - 100% GARANTIZADO
+const useMockData = false; // Hard-coded to ensure real data ALWAYS
 
-console.log(`Conectando a API en: ${FULL_API_URL} | Datos simulados: ${useMockData ? 'SI' : 'NO'}`);
+// Desactivar completamente cualquier uso de datos simulados
+// Solo intentamos definir la propiedad en el navegador, no en el servidor
+if (isBrowser) {
+  try {
+    Object.defineProperty(window, 'USE_MOCK_DATA', {
+      value: false,
+      writable: false,
+      configurable: false
+    });
+  } catch (err) {
+    console.error('No se pudo definir la propiedad USE_MOCK_DATA en window:', err);
+  }
+}
+
+// Logs para depuración
+// Solo intentamos acceder a propiedades del navegador si estamos en un navegador
+console.log('⚠️⚠️⚠️ DATOS SIMULADOS: DESACTIVADOS PERMANENTEMENTE Y BLOQUEADOS ⚠️⚠️⚠️');
+console.log('🔗 URL del servidor: ' + FULL_API_URL);
+console.log('🔗 Prefijo de los endpoints: ' + API_PREFIX);
+console.log('🔗 URL completa ejemplo: ' + FULL_API_URL + API_PREFIX + '/animals');
+let origen = 'servidor';
+if (isBrowser) {
+  try {
+    origen = window.location.hostname;
+  } catch (err) {
+    console.error('No se pudo acceder a window.location:', err);
+  }
+}
+console.log('💻 Origen de la solicitud: ' + origen);
+
+console.log(`Conectando a API en: ${FULL_API_URL}${API_PREFIX} | Datos simulados: NUNCA`);
 
 
 // Comprobar si se deben mostrar logs detallados
@@ -86,9 +135,13 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Connection': 'keep-alive'
   },
   withCredentials: false, // Desactivar envío de cookies para evitar problemas de CORS
-  maxRedirects: 5, // Permitir seguir redirecciones automáticamente
+  maxRedirects: 5 // Permitir seguir redirecciones automáticamente
 });
 
 // Función para configurar el token de autenticación
@@ -392,8 +445,8 @@ export async function fetchData<T = any>(endpoint: string, params: Record<string
     }
     
     // Construir la URL completa
-    // Usar directamente la URL del backend sin proxy
-    let url = `${API_URL}${API_PREFIX}${normalizedEndpoint}`;
+    // IMPORTANTE: el normalizedEndpoint ya incluye el prefijo API_PREFIX, no debemos duplicarlo
+    let url = `${FULL_API_URL}${normalizedEndpoint}`;
     
     // Añadir parámetros de consulta si existen
     if (Object.keys(params).length > 0) {
@@ -575,9 +628,13 @@ export async function fetchData<T = any>(endpoint: string, params: Record<string
  * @param options Opciones de la petición
  * @returns Promesa con la respuesta
  */
-export async function get<T = any>(endpoint: string, options: { params?: Record<string, any> } = {}): Promise<T> {
-  return fetchData(endpoint, options.params || {});
-}
+export const get = async <T>(endpoint: string, options: { params?: Record<string, any> } = {}): Promise<T> => {
+  // Aplicar prefijo API y normalizar endpoint
+  const normalizedEndpoint = addApiPrefix(endpoint);
+  console.log(`🔗 [API] GET a: ${FULL_API_URL}${normalizedEndpoint}`);
+  
+  return await fetchData<T>(normalizedEndpoint, options.params || {});
+};
 
 /**
  * Realiza una petición POST a la API
