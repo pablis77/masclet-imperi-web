@@ -208,7 +208,28 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
                   </div>
                   <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
-                    <p class="font-medium">{animal.dob ? new Date(animal.dob).toLocaleDateString() : 'No disponible'}</p>
+                    <p class="font-medium">
+                      {animal.dob ? 
+                        (() => {
+                          try {
+                            const fecha = new Date(animal.dob);
+                            // Verificar si es una fecha válida
+                            if (!isNaN(fecha.getTime())) {
+                              // Formatear DD/MM/YYYY
+                              return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                            }
+                            // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
+                            if (typeof animal.dob === 'string' && new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(animal.dob)) {
+                              return animal.dob;
+                            }
+                            return String(animal.dob);
+                          } catch (e) {
+                            return 'Fecha incorrecta';
+                          }
+                        })() 
+                        : 'No disponible'
+                      }
+                    </p>
                   </div>
                   <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
@@ -295,7 +316,28 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
                         return partosArray.map((parto) => (
                           <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parto.part ? (typeof parto.part === 'string' ? new Date(parto.part).toLocaleDateString() : parto.part) : 'N/A'}
+                              {parto.part ? 
+                                (() => {
+                                  try {
+                                    if (typeof parto.part === 'string') {
+                                      const fecha = new Date(parto.part);
+                                      // Verificar si es una fecha válida
+                                      if (!isNaN(fecha.getTime())) {
+                                        // Formatear DD/MM/YYYY
+                                        return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                                      }
+                                      // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
+                                      if (new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(parto.part)) {
+                                        return parto.part;
+                                      }
+                                    }
+                                    return String(parto.part);
+                                  } catch (e) {
+                                    return 'Fecha incorrecta';
+                                  }
+                                })() 
+                                : 'N/A'
+                              }
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                               {parto.GenereT === 'M' ? 'Macho' : 

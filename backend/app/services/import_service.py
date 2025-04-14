@@ -30,6 +30,7 @@ async def import_animal_with_partos(data: Dict) -> Animal:
     Returns:
         Animal: El animal creado o actualizado.
     """
+    
     try:
         # Normalizar los nombres de los campos (sin espacios, minúsculas)
         normalized_data = {}
@@ -134,7 +135,7 @@ async def import_animal_with_partos(data: Dict) -> Animal:
         explotacio_nom = None
         if 'explotacio' in normalized_data and normalized_data['explotacio']:
             explotacio_nom = normalized_data['explotacio']
-        
+            
         # --- REGLA DE NEGOCIO PARA ALLETAR ---
         # REGLA: Los machos SIEMPRE tienen alletar="0", sin excepciones
         if animal_data['genere'] == 'M':
@@ -248,6 +249,7 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                     parto_data['EstadoT'] = 'DEF'
                 else:
                     parto_data['EstadoT'] = 'OK'
+                
         # Usar transacción para asegurar consistencia
         async with in_transaction():
             # Buscar o crear animal
@@ -270,6 +272,7 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                     
                     # Procesar la fecha del parto - Versión robusta para CSV
                     fecha_parto = None
+                    
                     if parto_data.get('part'):
                         try:
                             # Intentar el parser normal primero
@@ -311,8 +314,8 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                     else:
                         print("ERROR - No hay fecha de parto válida")
                         return animal
-                    
-                    # Crear el parto directamente en la base de datos
+            
+                        # Crear el parto directamente en la base de datos
                     # Calcular número de parto
                     try:
                         num_partos = await Part.filter(animal_id=animal.id).count()
@@ -406,7 +409,7 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
     if 'genere' in clean_data and clean_data['genere'].upper() == 'M':
         print(f"DEBUG_ALLETAR - Animal {clean_data.get('nom', 'desconocido')} es MACHO, valor alletar antes: {clean_data.get('alletar', 'no definido')}")
         clean_data['alletar'] = '0'
-        print(f"DEBUG_ALLETAR - Forzando alletar=0 para macho {clean_data.get('nom', 'desconocido')}")
+        print(f"DEBUG_ALLETAR - Forzando alletar=0 para macho: {clean_data.get('nom', 'desconocido')}")
     
     # IMPORTANTE: No usar la tabla Explotacio ya que no existe en la BD
     # En lugar de eso, guardar directamente el valor en el campo explotacio del animal
@@ -531,7 +534,10 @@ async def get_or_create_animal(data: Dict, explotacio: str = None, original_data
             # No es necesario hacer nada, el valor ya está en clean_data
         
         # Crear el animal con los datos proporcionados
-        animal = await Animal.create(**clean_data)
+        try:
+            animal = await Animal.create(**clean_data)
+        except Exception as e:
+            raise
         
         # Log correcto según el género del animal
         if animal.genere == 'M':

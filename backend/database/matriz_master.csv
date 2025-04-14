@@ -1,7 +1,7 @@
 alletar;explotacio;nom;genere;pare;mare;quadra;cod;num_serie;dob;estado;part;GenereT;EstadoT
 ;Gurans;1;M;;;Riera;7892;ES07090513;31/01/2020;OK;;;
-0;Gurans;20-36;F;Xero;11-mar;;6350;ES02090513;02/03/2020;OK;19/12/2022;M;DEF
-0;Gurans;20-36;F;Xero;11-mar;;6350;ES02090513;02/03/2020;OK;17/11/2023;M;OK
+0;Gurans;20-36;F;Xero;11-03;;6350;ES020905131;02/03/2020;OK;19/12/2022;M;DEF
+0;Gurans;20-36;F;Xero;11-03;;6350;ES020905131;02/03/2020;OK;17/11/2023;M;OK
 0;Gurans;20-50;F;Xero;83;;8461;ES04090513;24/01/2020;OK;28/02/2023;F;OK
 0;Gurans;20-50;F;Xero;83;;8461;ES04090513;24/01/2020;OK;23/02/2024;M;OK
 0;Gurans;20-50;F;Xero;83;;8461;ES04090513;24/01/2020;OK;23/02/2024;M;OK
@@ -25,12 +25,12 @@ alletar;explotacio;nom;genere;pare;mare;quadra;cod;num_serie;dob;estado;part;Gen
 0;Gurans;47;F;;;;;;26/02/2018;OK;;;
 0;Gurans;21-17;F;;;;;;27/02/2018;OK;;;
 0;Gurans;21-19;F;;;;;;28/02/2018;OK;;;
-0;Gurans;21-sep;F;;;;;;01/03/2018;OK;;;
+0;Gurans;21-09;F;;;;;;01/03/2018;OK;;;
 0;Gurans;21-31;F;;;;;;02/03/2018;OK;;;
 0;Gurans;21-28;F;;;;;;03/03/2018;OK;;;
 0;Gurans;21-29;F;;;;;;04/03/2018;OK;;;
-0;Gurans;23-sep;F;;;;;;05/03/2018;OK;;;
-0;Gurans;23-abr;F;;;;;;;OK;;;
+0;Gurans;23-09;F;;;;;;05/03/2018;OK;;;
+0;Gurans;23-04;F;;;;;;;OK;;;
 1;Gurans;50;F;;;;;;;OK;;;
 1;Gurans;52;F;;;;;;;OK;;;
 1;Gurans;E5;F;;;;;;;OK;;;
@@ -39,7 +39,6 @@ alletar;explotacio;nom;genere;pare;mare;quadra;cod;num_serie;dob;estado;part;Gen
 ;Guadalajara;Pablo;M;alfonso;Emma;Martinez;4785;es1123456987;09/03/1977;DEF;;;
 ;Prueba 2;Mario;M;Mario;Elisa;Martinez;4865;Es1452365489662;14/08/1976;OK;;;
 0;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4945;Es4587963211456;30/06/1977;OK;18/02/2012;F;OK
-0;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4945;Es4587963211456;30/06/1977;OK;;;
 0;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4945;Es4587963211456;30/06/1977;OK;08/01/2010;M;OK
 ;Guadalajara;Felipe;M;Alfredo;marialuis;VIejo;5185;es123654789;01/05/1978;OK;;;
 0;Gaudalajara;Emma;F;Constantino;Pilar;Gallegos;5265;es456321;29/11/1950;OK;;;
