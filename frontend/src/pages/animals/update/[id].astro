@@ -2,6 +2,7 @@
 // Importar el layout y componentes
 import MainLayout from '../../../components/layout/MainLayout.astro';
 import animalService from '../../../services/animalService';
+import explotacioService from '../../../services/explotacioService';
 
 // Obtener el ID del animal de los parámetros de la URL
 const { id } = Astro.params;
@@ -35,7 +36,7 @@ try {
   
   // Cargar datos adicionales necesarios para el formulario
   try {
-    explotaciones = await animalService.getAllExplotaciones();
+    explotaciones = await explotacioService.getAllExplotacions();
     
     if (animal) {
       potentialFathers = await animalService.getPotentialFathers(animal.explotacio_id);

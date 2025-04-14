@@ -82,30 +82,67 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
   if (filters.search !== undefined && filters.search !== '') {
     const searchLower = filters.search.toLowerCase().trim();
     console.log(`Filtrando por término de búsqueda: "${searchLower}"`);
-    filteredAnimals = filteredAnimals.filter(a => {
+    
+    // Primero obtenemos todos los animales que coinciden con el término de búsqueda
+    const matchingAnimals = filteredAnimals.filter(a => {
       // Búsqueda por nom (principal)
-      if (a.nom.toLowerCase().includes(searchLower)) {
-        return true;
-      }
+      const matchesNom = a.nom.toLowerCase().includes(searchLower);
       
       // Búsqueda por código identificativo
-      if (a.cod && a.cod.toLowerCase().includes(searchLower)) {
-        return true;
-      }
+      const matchesCod = a.cod && a.cod.toLowerCase().includes(searchLower);
       
       // Búsqueda por número de serie
-      if (a.num_serie && a.num_serie.toLowerCase().includes(searchLower)) {
-        return true;
-      }
+      const matchesNumSerie = a.num_serie && a.num_serie.toLowerCase().includes(searchLower);
       
       // Búsqueda por explotación 
-      if (a.explotacio.toLowerCase().includes(searchLower)) {
-        return true;
-      }
+      const matchesExplotacio = a.explotacio.toLowerCase().includes(searchLower);
       
-      return false;
+      // Búsqueda por padre o madre
+      const matchesPare = a.pare && a.pare.toLowerCase().includes(searchLower);
+      const matchesMare = a.mare && a.mare.toLowerCase().includes(searchLower);
+      
+      // Animal coincide si cualquiera de los campos coincide
+      return matchesNom || matchesCod || matchesNumSerie || matchesExplotacio || matchesPare || matchesMare;
     });
-    console.log(`Se encontraron ${filteredAnimals.length} animales que coinciden con la búsqueda`);
+    
+    // Segundo, ordenamos los resultados para priorizar coincidencias en el campo 'nom'
+    matchingAnimals.sort((a, b) => {
+      // Prioridad 1: Coincidencia exacta en nom
+      const aExactNomMatch = a.nom.toLowerCase() === searchLower;
+      const bExactNomMatch = b.nom.toLowerCase() === searchLower;
+      if (aExactNomMatch && !bExactNomMatch) return -1;
+      if (!aExactNomMatch && bExactNomMatch) return 1;
+      
+      // Prioridad 2: Coincidencia parcial en nom
+      const aNomMatch = a.nom.toLowerCase().includes(searchLower);
+      const bNomMatch = b.nom.toLowerCase().includes(searchLower);
+      if (aNomMatch && !bNomMatch) return -1;
+      if (!aNomMatch && bNomMatch) return 1;
+      
+      // Prioridad 3: Por fecha de actualización (los más recientes primero)
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+    
+    // Tercero, consolidamos registros duplicados basados en el mismo animal
+    // Consideramos que dos animales son el mismo si tienen el mismo nombre y código
+    const uniqueAnimals: Animal[] = [];
+    const processedKeys = new Set<string>();
+    
+    matchingAnimals.forEach(animal => {
+      // Creamos una clave única basada en nombre y código para identificar registros duplicados
+      // Si el código contiene un timestamp, lo eliminamos para considerar todas las versiones como un mismo animal
+      const baseCode = animal.cod ? animal.cod.split('_')[0] : '';
+      const uniqueKey = `${animal.nom.toLowerCase()}_${baseCode}`.trim();
+      
+      // Si no hemos procesado este animal antes, lo agregamos a la lista de únicos
+      if (!processedKeys.has(uniqueKey)) {
+        processedKeys.add(uniqueKey);
+        uniqueAnimals.push(animal);
+      }
+    });
+    
+    filteredAnimals = uniqueAnimals;
+    console.log(`Se encontraron ${filteredAnimals.length} animales únicos que coinciden con la búsqueda`);
   }
   
   return filteredAnimals;
@@ -257,9 +294,20 @@ const animalService = {
   async getAnimalById(id: number): Promise<Animal> {
     try {
       console.log(`Intentando cargar animal con ID: ${id}`);
-      const response = await get<Animal>(`/animals/${id}`);
+      const response = await get<any>(`/animals/${id}`);
       console.log('Animal cargado:', response);
-      return response;
+      
+      // Comprobamos si la respuesta tiene el formato esperado {status, data}
+      if (response && response.status === 'success' && response.data) {
+        return response.data as Animal;
+      } 
+      
+      // Si la respuesta es directamente el animal
+      if (response && response.id) {
+        return response as Animal;
+      }
+      
+      throw new Error('Formato de respuesta inválido');
     } catch (error: any) {
       console.error(`Error al obtener animal con ID ${id}:`, error);
       
@@ -541,26 +589,8 @@ const animalService = {
     return 'Desconocido';
   },
   
-  // Obtiene todas las explotaciones para selectores
-  async getAllExplotaciones(): Promise<{id: number, descripcion: string, explotacio: string}[]> {
-    try {
-      const response = await get<any[]>('/explotacions?limit=1000');
-      return response.map(explotacion => ({
-        id: explotacion.id,
-        descripcion: explotacion.descripcion || 'Sin nombre', 
-        explotacio: explotacion.explotacio || '-'     
-      }));
-    } catch (error) {
-      console.error('Error al obtener explotaciones:', error);
-      
-      // Usar datos simulados en caso de error
-      return mockExplotacions.map(explotacion => ({
-        id: explotacion.id,
-        descripcion: explotacion.descripcion || 'Sin nombre', 
-        explotacio: explotacion.explotacio || '-'     
-      }));
-    }
-  }
+  // Esta función se ha movido a explotacioService.ts
+  // Ya no está disponible en animalService
 };
 
 export default animalService;

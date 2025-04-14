@@ -5,27 +5,14 @@ import { mockExplotacions, mockAnimals } from './mockData';
 // Interfaces
 export interface Explotacio {
   id: number;
-  nom: string;  
-  explotaci?: string;  
-  direccion?: string;
-  responsable?: string;
-  telefono?: string;
-  email?: string;
-  animal_count?: number;
-  region?: string;
-  activa?: boolean;  
+  explotacio: string;  // Identificador único de la explotación
+  animal_count?: number; // Contador de animales en esta explotación
   created_at: string;
   updated_at: string;
 }
 
 export interface ExplotacioCreateDto {
-  nom: string;  
-  explotaci?: string;  
-  direccion?: string;
-  responsable?: string;
-  telefono?: string;
-  email?: string;
-  activa?: boolean;  
+  explotacio: string;  // Identificador único de la explotación
 }
 
 export interface ExplotacioUpdateDto extends Partial<ExplotacioCreateDto> {}
@@ -133,7 +120,7 @@ export async function getExplotacions(filters: ExplotacioFilters = {}): Promise<
       throw innerError;
     }
   } catch (error: any) {
-    console.error('🔍 [Explotacio] Error en petición GET /explotacions:', error);
+    console.error('🔍 [Explotacio] Error en petición GET /dashboard/explotacions:', error);
     
     // Si es un error de red o cualquier otro error, usar datos simulados como fallback
     console.warn('🔍 [Explotacio] Usando datos simulados para explotaciones debido a error en el backend');
@@ -143,9 +130,8 @@ export async function getExplotacions(filters: ExplotacioFilters = {}): Promise<
     if (filters.search && filters.search.trim() !== '') {
       const searchLower = filters.search.toLowerCase();
       filteredExplotacions = filteredExplotacions.filter(e => 
-        e.nom.toLowerCase().includes(searchLower) || 
-        (e.explotaci && e.explotaci.toLowerCase().includes(searchLower)) ||
-        (e.responsable && e.responsable.toLowerCase().includes(searchLower))
+        // Filtrar únicamente por el identificador de explotación
+        e.explotacio.toLowerCase().includes(searchLower)
       );
     }
     
@@ -174,13 +160,13 @@ export async function getAllExplotacions(): Promise<Explotacio[]> {
     console.log('Obteniendo todas las explotaciones para selector');
     try {
       // Primero intentamos obtener como respuesta paginada
-      const response = await get<PaginatedResponse<Explotacio>>('/explotacions?limit=1000');
+      const response = await get<PaginatedResponse<Explotacio>>('/api/v1/dashboard/explotacions?limit=1000');
       console.log('Respuesta de todas las explotaciones recibida (paginada):', response);
       return response.items;
     } catch (innerError) {
       // Si falla, intentamos obtener como array
       console.log('Intentando obtener todas las explotaciones como array...');
-      const items = await get<Explotacio[]>('/explotacions?limit=1000');
+      const items = await get<Explotacio[]>('/api/v1/dashboard/explotacions?limit=1000');
       console.log('Respuesta de todas las explotaciones recibida (array):', items);
       
       if (Array.isArray(items)) {
@@ -191,7 +177,7 @@ export async function getAllExplotacions(): Promise<Explotacio[]> {
       throw innerError;
     }
   } catch (error: any) {
-    console.error('Error en petición GET /explotacions (all):', error);
+    console.error('Error en petición GET /dashboard/explotacions (all):', error);
     
     // Si es un error de red o cualquier otro error, usar datos simulados como fallback
     if (error.code === 'NETWORK_ERROR' || error.code === 'DB_COLUMN_ERROR' || 
@@ -213,11 +199,21 @@ const explotacioService = {
   // Obtiene todas las explotaciones para selectores
   getAllExplotacions,
   
+  // Alias para mantener compatibilidad con código existente
+  async getAllExplotaciones(): Promise<{id: number, explotacio: string}[]> {
+    console.log('Función getAllExplotaciones llamada - redirigiendo a getAllExplotacions');
+    const explotacions = await getAllExplotacions();
+    return explotacions.map(exp => ({
+      id: exp.id,
+      explotacio: exp.explotacio
+    }));
+  },
+  
   // Obtiene una explotación por su ID
   async getExplotacioById(id: number): Promise<Explotacio> {
     try {
       console.log(`Intentando cargar explotación con ID: ${id}`);
-      const response = await get<Explotacio>(`/explotacions/${id}`);
+      const response = await get<Explotacio>(`/api/v1/dashboard/explotacions/${id}`);
       console.log('Explotación cargada:', response);
       return response;
     } catch (error: any) {
@@ -246,7 +242,9 @@ const explotacioService = {
   async createExplotacio(explotacioData: ExplotacioCreateDto): Promise<Explotacio> {
     try {
       console.log('Creando nueva explotación:', explotacioData);
-      const response = await post<Explotacio>('/explotacions', explotacioData);
+      // NOTA: Ya no es posible crear explotaciones directamente, ahora se crean a través de animales
+  // Usando endpoint simulado para mantener compatibilidad
+  const response = await post<Explotacio>('/api/v1/dashboard/explotacions', explotacioData);
       console.log('Explotación creada:', response);
       return response;
     } catch (error: any) {
@@ -263,13 +261,7 @@ const explotacioService = {
         
         const newExplotacio: Explotacio = {
           id: newId,
-          nom: explotacioData.nom,
-          explotaci: explotacioData.explotaci,
-          direccion: explotacioData.direccion,
-          responsable: explotacioData.responsable,
-          telefono: explotacioData.telefono,
-          email: explotacioData.email,
-          activa: explotacioData.activa !== undefined ? explotacioData.activa : true,
+          explotacio: explotacioData.explotacio,
           animal_count: 0,
           created_at: now,
           updated_at: now
@@ -290,7 +282,9 @@ const explotacioService = {
   async updateExplotacio(id: number, explotacioData: ExplotacioUpdateDto): Promise<Explotacio> {
     try {
       console.log(`Actualizando explotación con ID ${id}:`, explotacioData);
-      const response = await put<Explotacio>(`/explotacions/${id}`, explotacioData);
+      // NOTA: Ya no es posible actualizar explotaciones directamente, ahora se modifican a través de animales
+  // Usando endpoint simulado para mantener compatibilidad
+  const response = await put<Explotacio>(`/api/v1/dashboard/explotacions/${id}`, explotacioData);
       console.log('Explotación actualizada:', response);
       return response;
     } catch (error: any) {
@@ -327,7 +321,9 @@ const explotacioService = {
   async deleteExplotacio(id: number): Promise<void> {
     try {
       console.log(`Eliminando explotación con ID ${id}`);
-      await del(`/explotacions/${id}`);
+      // NOTA: Ya no es posible eliminar explotaciones directamente
+  // Usando endpoint simulado para mantener compatibilidad
+  await del(`/api/v1/dashboard/explotacions/${id}`);
       console.log(`Explotación con ID ${id} eliminada correctamente`);
     } catch (error: any) {
       console.error(`Error al eliminar explotación con ID ${id}:`, error);
@@ -354,17 +350,19 @@ const explotacioService = {
   },
   
   // Obtiene lista simple de explotaciones para select/dropdown
-  async getExplotacionsDropdown(): Promise<Pick<Explotacio, 'id' | 'nom'>[]> {
+  async getExplotacionsDropdown(): Promise<Pick<Explotacio, 'id' | 'explotacio'>[]> {
     try {
       console.log('Obteniendo explotaciones para dropdown');
-      const response = await get<PaginatedResponse<Explotacio>>('/explotacions?limit=1000');
+      const response = await get<PaginatedResponse<Explotacio>>('/api/v1/dashboard/explotacions?limit=1000');
       console.log('Explotaciones para dropdown cargadas:', response);
       
       // Mapear solo los campos necesarios
-      return response.items.map(explotacio => ({
-        id: explotacio.id,
-        nom: explotacio.nom
-      }));
+      return response.items.map(explotacion => {
+        return {
+          id: explotacion.id,
+          explotacio: explotacion.explotacio
+        };
+      });
     } catch (error: any) {
       console.error('Error al obtener explotaciones para dropdown:', error);
       
@@ -372,9 +370,9 @@ const explotacioService = {
       if (error.code === 'NETWORK_ERROR' || error.code === 'DB_COLUMN_ERROR') {
         console.warn('Usando datos simulados para dropdown de explotaciones debido a error en el backend');
         
-        return mockExplotacions.map(explotacio => ({
-          id: explotacio.id,
-          nom: explotacio.nom
+        return mockExplotacions.map(explotacion => ({
+          id: explotacion.id || 1,
+          explotacio: explotacion.explotacio || '-'
         }));
       }
       

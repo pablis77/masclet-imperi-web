@@ -3,6 +3,7 @@
 import MainLayout from '../../components/layout/MainLayout.astro';
 import AnimalForm from '../../components/animals/AnimalForm';
 import animalService from '../../services/animalService';
+import explotacioService from '../../services/explotacioService';
 
 // EN DESARROLLO: No realizamos verificaciones de permisos
 // Simulamos siempre estar autenticados como administrador
@@ -15,7 +16,7 @@ let error = null;
 
 try {
   // Obtener listado de explotaciones para el selector
-  explotaciones = await animalService.getAllExplotaciones();
+  explotaciones = await explotacioService.getAllExplotacions();
 } catch (err) {
   console.error('Error al obtener explotaciones:', err);
   // Simulamos datos para desarrollo

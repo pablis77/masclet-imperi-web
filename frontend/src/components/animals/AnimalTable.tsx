@@ -138,6 +138,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     };
 
     document.addEventListener('refresh-animals', handleRefreshAnimals);
+    document.addEventListener('reload-animals', handleRefreshAnimals); // Añadir listener para el nuevo evento
     document.addEventListener('search-completed', handleSearchCompleted as EventListener);
 
     const rootElement = document.getElementById(id || '');
@@ -149,6 +150,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
 
     return () => {
       document.removeEventListener('refresh-animals', handleRefreshAnimals);
+      document.removeEventListener('reload-animals', handleRefreshAnimals); // Eliminar listener al desmontar
       document.removeEventListener('search-completed', handleSearchCompleted as EventListener);
       if (rootElement) {
         rootElement.removeEventListener('apply-filters', handleApplyFilters as EventListener);
@@ -441,7 +443,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Exp. {animal.explotacio}
+                            {animal.explotacio}
                           </span>
                         </div>
                       </div>

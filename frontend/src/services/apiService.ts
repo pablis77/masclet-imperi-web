@@ -6,6 +6,35 @@ import * as mockData from './mockData';
 // Verificar si estamos en un entorno de navegador
 const isBrowser = typeof window !== 'undefined';
 
+// Funciones seguras para localStorage que verifican si estamos en un navegador
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    if (!isBrowser) return null;
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Error al acceder a localStorage.getItem:', error);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (!isBrowser) return;
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Error al acceder a localStorage.setItem:', error);
+    }
+  },
+  removeItem: (key: string): void => {
+    if (!isBrowser) return;
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error al acceder a localStorage.removeItem:', error);
+    }
+  }
+};
+
 // API URL desde variables de entorno o valor por defecto
 const API_URL = isBrowser && import.meta.env.VITE_API_URL ? 
   import.meta.env.VITE_API_URL : 
@@ -79,7 +108,7 @@ if (typeof window !== 'undefined') {
 
 // Inicializar token desde localStorage solo si estamos en el navegador
 if (isBrowser) {
-  const storedToken = localStorage.getItem('token');
+  const storedToken = safeStorage.getItem('token');
   if (storedToken) {
     try {
       // Verificar si el token es válido antes de usarlo
@@ -92,7 +121,7 @@ if (isBrowser) {
         logMessage('log', 'Token de autenticación configurado desde localStorage');
       } else {
         // Token expirado, eliminarlo
-        localStorage.removeItem('token');
+        safeStorage.removeItem('token');
         logMessage('warn', 'Token de autenticación expirado, eliminado de localStorage');
       }
     } catch (error) {
@@ -110,7 +139,7 @@ api.interceptors.request.use(
   (config) => {
     // Verificar si hay token en localStorage en cada petición
     if (isBrowser) {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
@@ -143,7 +172,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Token inválido o expirado
       if (isBrowser) {
-        localStorage.removeItem('token');
+        safeStorage.removeItem('token');
         // Redirigir a login si es necesario
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
@@ -202,8 +231,8 @@ api.interceptors.response.use(
         logMessage('error', 'Error de autenticación:', error.response.data);
         // Si estamos en el navegador, eliminar credenciales
         if (isBrowser) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          safeStorage.removeItem('token');
+          safeStorage.removeItem('user');
         }
         return Promise.reject(new Error('Sesión expirada. Por favor, inicia sesión nuevamente.'));
       
@@ -402,7 +431,7 @@ export async function fetchData<T = any>(endpoint: string, params: Record<string
       };
 
       // Obtener el token de autenticación
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       if (token && axiosConfig.headers) {
         axiosConfig.headers['Authorization'] = `Bearer ${token}`;
       }
@@ -423,7 +452,7 @@ export async function fetchData<T = any>(endpoint: string, params: Record<string
       };
       
       // Añadir el token de autenticación si existe
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -571,7 +600,7 @@ export async function post<T = any>(endpoint: string, data: any): Promise<T> {
     console.log(`📨 [API] Datos a enviar:`, data);
     
     // Obtener el token de autenticación
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -650,7 +679,7 @@ export async function put<T = any>(endpoint: string, data: any): Promise<T> {
     console.log(`🔄 [API] Datos a enviar:`, data);
     
     // Obtener el token de autenticación
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -727,7 +756,7 @@ export async function del<T = any>(endpoint: string): Promise<T> {
     console.log(`🗑️ [API] Iniciando DELETE a: ${url}`);
     
     // Obtener el token de autenticación
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -800,7 +829,7 @@ function handleApiError(error: AxiosError) {
       logMessage('error', 'Error de autenticación:', error.response.data);
       // Si estamos en el navegador, eliminar credenciales
       if (isBrowser) {
-        localStorage.removeItem('token');
+        safeStorage.removeItem('token');
         localStorage.removeItem('user');
       }
       break;
@@ -852,7 +881,7 @@ export const login = async (username: string, password: string): Promise<any> =>
     
     // Guardar token en localStorage
     if (data.access_token) {
-      localStorage.setItem('token', data.access_token);
+      safeStorage.setItem('token', data.access_token);
       
       // Decodificar token para obtener información del usuario
       try {
@@ -868,7 +897,7 @@ export const login = async (username: string, password: string): Promise<any> =>
             is_active: true
           };
           
-          localStorage.setItem('user', JSON.stringify(user));
+          safeStorage.setItem('user', JSON.stringify(user));
           console.log(`✅ [apiService] Información de usuario guardada: ${user.username} (${user.role})`);
         }
       } catch (error) {
@@ -885,14 +914,14 @@ export const login = async (username: string, password: string): Promise<any> =>
 
 // Función para cerrar sesión
 export const logout = (): void => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  safeStorage.removeItem('token');
+  safeStorage.removeItem('user');
   console.log('🔒 [apiService] Sesión cerrada');
 };
 
 // Función para verificar si el usuario está autenticado
 export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem('token');
+  const token = safeStorage.getItem('token');
   if (!token) return false;
   
   try {
@@ -915,12 +944,12 @@ export const isAuthenticated = (): boolean => {
 
 // Función para obtener el token
 export const getToken = (): string | null => {
-  return localStorage.getItem('token');
+  return safeStorage.getItem('token');
 };
 
 // Función para obtener información del usuario
 export const getUserInfo = (): any => {
-  const userStr = localStorage.getItem('user');
+  const userStr = safeStorage.getItem('user');
   if (!userStr) return null;
   
   try {

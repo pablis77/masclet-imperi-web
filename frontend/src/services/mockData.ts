@@ -23,15 +23,7 @@ export interface Animal {
 
 export interface Explotacio {
   id: number;
-  descripcion: string;  // Nombre descriptivo de la explotación
   explotacio: string;   // Identificador único de la explotación
-  direccion?: string;
-  municipio?: string;
-  provincia?: string;
-  cp?: string;
-  telefono?: string;
-  email?: string;
-  responsable?: string;
   animal_count?: number; // Cantidad de animales en la explotación
   created_at: string;
   updated_at: string;
@@ -152,12 +144,12 @@ export const mockAnimals: Animal[] = [
   {
     id: 5,
     nom: 'Trueno',
-    explotacio_id: 1,
+    explotacio: 'EXP001',
     genere: 'M',
-    estat: 'ACT',
-    alletar: 'NO',
-    pare_id: null,
-    mare_id: null,
+    estado: 'OK',
+    alletar: '0',
+    pare: null,
+    mare: null,
     quadra: 'Q1',
     cod: 'A005',
     num_serie: 'SN005',
@@ -170,75 +162,35 @@ export const mockAnimals: Animal[] = [
 export const mockExplotacions: Explotacio[] = [
   {
     id: 1,
-    descripcion: 'Granja Los Olivos',
     explotacio: 'EXP001',
-    direccion: 'Camino de los Olivos, 23',
-    municipio: 'Valencia',
-    provincia: 'Valencia',
-    cp: '46010',
-    responsable: 'Juan Martínez',
-    telefono: '655123456',
-    email: 'olivos@ejemplo.com',
     animal_count: 25,
     created_at: '2022-10-01T09:00:00Z',
     updated_at: '2023-01-05T14:30:00Z'
   },
   {
     id: 2,
-    descripcion: 'Explotación Sur',
     explotacio: 'EXP002',
-    direccion: 'Carretera de Valencia, km 12',
-    municipio: 'Alicante',
-    provincia: 'Alicante',
-    cp: '03002',
-    responsable: 'María Gómez',
-    telefono: '678456321',
-    email: 'sur@ejemplo.com',
     animal_count: 20,
     created_at: '2022-11-01T10:00:00Z',
     updated_at: '2023-01-10T10:00:00Z'
   },
   {
     id: 3,
-    descripcion: 'Granja El Amanecer',
     explotacio: 'EXP003',
-    direccion: 'Partida La Vall, s/n',
-    municipio: 'Castellón',
-    provincia: 'Castellón',
-    cp: '12001',
-    responsable: 'Pedro Sánchez',
-    telefono: '612345678',
-    email: 'amanecer@ejemplo.com',
     animal_count: 15,
     created_at: '2022-12-01T11:00:00Z',
     updated_at: '2023-01-15T11:00:00Z'
   },
   {
     id: 4,
-    descripcion: 'Ganadería Occidental',
     explotacio: 'EXP004',
-    direccion: 'Calle Mayor, 45',
-    municipio: 'Murcia',
-    provincia: 'Murcia',
-    cp: '30001',
-    responsable: 'Ana López',
-    telefono: '698765432',
-    email: 'occidental@ejemplo.com',
     animal_count: 10,
     created_at: '2023-01-01T12:00:00Z',
     updated_at: '2023-01-20T12:00:00Z'
   },
   {
     id: 5,
-    descripcion: 'Gurans',
     explotacio: 'EXP005',
-    direccion: 'Carretera del Norte, km 5',
-    municipio: 'Barcelona',
-    provincia: 'Barcelona',
-    cp: '08001',
-    responsable: 'Carlos Rodríguez',
-    telefono: '634567890',
-    email: 'gurans@ejemplo.com',
     animal_count: 5,
     created_at: '2023-01-05T13:00:00Z',
     updated_at: '2023-01-25T13:00:00Z'

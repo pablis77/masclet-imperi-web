@@ -1,0 +1,252 @@
+#!/usr/bin/env python
+"""
+Script oficial para importar CSV de manera forzada y con depuración.
+Este script utiliza la forma correcta de importar los módulos y configurar Tortoise ORM.
+"""
+import os
+import sys
+import csv
+import json
+import logging
+import shutil
+import asyncio
+from datetime import datetime
+
+# Configurar logging con nivel DEBUG
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+logger = logging.getLogger(__name__)
+
+# Agregar la ruta al path (correctamente)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# URL de la base de datos
+DB_URL = "postgres://postgres:1234@localhost:5432/masclet_imperi"
+# Carpeta de uploads
+UPLOADS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'uploads')
+
+async def main():
+    """Función principal que ejecuta todo el proceso"""
+    if len(sys.argv) < 3:
+        print("Uso: python importar_oficial.py <ruta_archivo_csv> <descripcion>")
+        os.makedirs(UPLOADS_DIR)
+    
+    # Preparar para importación
+    from tortoise import Tortoise
+    
+    try:
+        # Analizar el CSV
+        logger.info(f"Analizando archivo: {ruta_archivo}")
+        animales_unicos = {}
+        
+        with open(ruta_archivo, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for i, fila in enumerate(reader, 1):
+                nom = fila.get('nom', '').strip()
+                explotacio = fila.get('explotacio', '').strip()
+                clave = f"{nom}_{explotacio}"
+                
+                if clave not in animales_unicos:
+                    animales_unicos[clave] = []
+                animales_unicos[clave].append(i)
+        
+        logger.info(f"CSV contiene {len(animales_unicos)} animales únicos")
+        for clave, filas in animales_unicos.items():
+            if len(filas) > 1:
+                logger.info(f"Animal {clave}: {len(filas)} registros en filas {filas}")
+                
+        # Copiar archivo a uploads
+        nombre_archivo = os.path.basename(ruta_archivo)
+        ruta_destino = os.path.join(UPLOADS_DIR, nombre_archivo)
+        logger.info(f"Copiando archivo de {ruta_archivo} a {ruta_destino}")
+        shutil.copy2(ruta_archivo, ruta_destino)
+        
+        # Inicializar la base de datos
+        logger.info(f"Conectando a: {DB_URL}")
+        await Tortoise.init(
+            db_url=DB_URL,
+            modules={"models": ["app.models"]}
+        )
+        logger.info("Conexión a base de datos inicializada")
+        
+        # Ya podemos importar los modelos
+        from app.models.animal import Animal, Part
+        from app.models.import_model import Import
+        from app.services import csv_import_service
+        
+        # Crear registro de importación
+        logger.info("Creando registro de importación")
+        import_obj = await Import.create(
+            file_name=nombre_archivo,
+            file_size=os.path.getsize(ruta_archivo),
+            file_type="text/csv",
+            status="PENDING",
+            description=descripcion
+        )
+        
+        logger.info(f"Creado registro de importación con ID: {import_obj.id}")
+        
+        # Importamos las funciones directamente desde import_service
+        from app.services.import_service import get_or_create_animal, add_parto
+        
+        # Crear función mejorada para importar animales y sus partos
+        async def debug_import_animal(registro, ignore_parto=False, existing_animal=None):
+            nom = registro.get('nom', 'SIN_NOMBRE')
+            explotacio = registro.get('explotacio', 'SIN_EXPLOTACION')
+            logger.debug(f">>> PROCESANDO ANIMAL: '{nom}' en '{explotacio}'")
+            logger.debug(f"    Datos: {json.dumps(registro, ensure_ascii=False)}")
+            
+            # MEJORA: Asegurarse de que el campo explotacio siempre tenga valor
+            if not registro.get('explotacio') or registro['explotacio'] == 'None':
+                logger.warning(f"    [CORREGIDO] Campo explotacio vacío o 'None' para animal '{nom}', asignando 'SIN_EXPLOTACION'")
+                registro['explotacio'] = 'SIN_EXPLOTACION'
+            
+            try:
+                # Primero creamos o actualizamos el animal
+                animal = await get_or_create_animal(registro)
+                
+                # Luego, si hay datos de parto y no estamos ignorando los partos, lo procesamos
+                if not ignore_parto and registro.get('part') and animal.genere == 'F':
+                    # Preparar datos del parto
+                    parto_data = {
+                        'part': registro.get('part'),
+                        'GenereT': registro.get('GenereT'),
+                        'EstadoT': registro.get('EstadoT')
+                    }
+                    
+                    # Registrar el parto
+                    await add_parto(animal, parto_data)
+                    logger.debug(f"    Parto registrado: {registro.get('part')}")
+                
+                if animal:
+                    logger.debug(f"<<< ÉXITO procesando '{nom}': ID={animal.id}")
+                else:
+                    logger.debug(f"<<< ERROR procesando '{nom}'")
+                
+                return animal
+            except Exception as e:
+                logger.error(f"ERROR al procesar animal '{nom}': {str(e)}")
+                import traceback
+                trace = traceback.format_exc()
+                logger.error(trace)
+                
+                # MEJORA: Intentar crear el animal de forma básica en caso de error
+                # Esto permitirá que al menos el animal se cree en la base de datos
+                # aunque no se procesen correctamente todos sus datos
+                try:
+                    logger.warning(f"Intentando crear animal '{nom}' de forma básica (recuperación de error)...")
+                    # Datos mínimos requeridos para crear un animal
+                    datos_minimos = {
+                        'nom': registro.get('nom', 'ERROR_SIN_NOMBRE'),
+                        'explotacio': registro.get('explotacio', 'SIN_EXPLOTACION'),
+                        'genere': registro.get('genere', 'F'),  # Valor por defecto
+                        'estado': registro.get('estado', 'OK')  # Valor por defecto
+                    }
+                    
+                    from app.models.animal import Animal
+                    animal_basico = await Animal.create(**datos_minimos)
+                    logger.info(f"RECUPERACIÓN: Animal '{nom}' creado con datos básicos, ID={animal_basico.id}")
+                    
+                    # Guardar detalle del error en algún lugar para revisión posterior
+                    animal_basico.notas = f"CREADO POR RECUPERACIÓN DE ERROR: {str(e)}"
+                    await animal_basico.save()
+                    
+                    return animal_basico
+                    
+                except Exception as recovery_e:
+                    logger.error(f"RECUPERACIÓN FALLIDA para '{nom}': {str(recovery_e)}")
+                    return None
+        
+        # Reemplazar la función original
+        csv_import_service.import_animal_with_partos = debug_import_animal
+        
+        # Ejecutar importación
+        logger.info("=== INICIANDO IMPORTACIÓN EN MODO DEBUG ===")
+        try:
+            import_result = await csv_import_service.process_csv_file(
+                nombre_archivo,
+                str(import_obj.id),
+                prevent_duplicates=True
+            )
+            
+            # Restaurar función original
+            csv_import_service.import_animal_with_partos = original_import_animal
+            
+            # Verificar resultado final
+            logger.info("=== RESULTADO DE LA IMPORTACIÓN ===")
+            logger.info(json.dumps(import_result, indent=2, ensure_ascii=False))
+            
+        except Exception as e:
+            logger.error(f"Error en process_csv_file: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+        
+        # Verificar animales específicos
+        logger.info("=== VERIFICANDO ANIMALES ESPECÍFICOS ===")
+        animales_a_verificar = ['20-36', '20-50', '20-51', '20-64', 'R-32', 'Marta']
+        
+        for nombre in animales_a_verificar:
+            animales = await Animal.filter(nom=nombre)
+            if animales:
+                for animal in animales:
+                    partos = await Part.filter(animal=animal)
+                    logger.info(f"Animal '{nombre}' (ID: {animal.id}) en explotación '{animal.explotacio}' - Partos: {len(partos)}")
+                    for parto in partos:
+                        logger.info(f"  - Parto: Fecha={parto.part}, Género={parto.GenereT}, Estado={parto.EstadoT}")
+            else:
+                logger.error(f"¡ANIMAL NO ENCONTRADO!: '{nombre}'")
+                
+        # Comprobar específicamente el animal 20-36
+        logger.info("=== COMPROBACIÓN ESPECÍFICA DEL ANIMAL 20-36 ===")
+        animal_20_36 = await Animal.filter(nom="20-36").first()
+        if animal_20_36:
+            logger.info(f"Animal 20-36 encontrado con ID: {animal_20_36.id}")
+            logger.info(f"Detalles: explotacio={animal_20_36.explotacio}, genere={animal_20_36.genere}, estado={animal_20_36.estado}")
+            
+            # Ver los partos de este animal
+            partos = await Part.filter(animal=animal_20_36)
+            logger.info(f"Partos del animal 20-36: {len(partos)}")
+            for parto in partos:
+                logger.info(f"  - Parto: Fecha={parto.part}, Género={parto.GenereT}, Estado={parto.EstadoT}")
+        else:
+            logger.error("¡ANIMAL 20-36 NO ENCONTRADO! Buscando por código...")
+            
+            # Buscar por código
+            animal_por_codigo = await Animal.filter(cod="6350").first()
+            if animal_por_codigo:
+                logger.info(f"Encontrado animal con código 6350: {animal_por_codigo.nom} (ID: {animal_por_codigo.id})")
+            else:
+                logger.error("No se encontró ningún animal con código 6350")
+                
+            # Buscar por número de serie
+            animal_por_serie = await Animal.filter(num_serie="ES02090513").first()
+            if animal_por_serie:
+                logger.info(f"Encontrado animal con número de serie ES02090513: {animal_por_serie.nom} (ID: {animal_por_serie.id})")
+            else:
+                logger.error("No se encontró ningún animal con número de serie ES02090513")
+                
+            # Buscar animales con nombres parecidos a "20-36"
+            animales_similares = await Animal.filter(nom__contains="20-3").all()
+            if animales_similares:
+                logger.info(f"Se encontraron animales con nombres similares a 20-36:")
+                for a in animales_similares:
+                    logger.info(f"  - {a.nom} (ID: {a.id}) en explotación {a.explotacio}")
+            
+        # Limpiar
+        if os.path.exists(ruta_destino):
+            logger.info(f"Eliminando archivo temporal: {ruta_destino}")
+            os.remove(ruta_destino)
+            
+    except Exception as e:
+        logger.error(f"Error general: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+    finally:
+        # Siempre cerramos conexiones
+        await Tortoise.close_connections()
+        logger.info("Conexión a base de datos cerrada")
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -40,28 +40,148 @@ class DateConverter:
         if isinstance(date_str, datetime):
             return date_str.date()
             
-        # Si no es un string, lanzar error
+        # Si no es un string, intentar convertirlo
         if not isinstance(date_str, str):
-            raise ValueError(f"Valor no es un string, date o datetime: {type(date_str)}")
-            
-        formats = [
-            DATE_FORMAT_ES,
-            DATE_FORMAT_DB,
-            DATE_FORMAT_ISO,
-            DATE_FORMAT_ALT1,
-            DATE_FORMAT_ALT2
-        ]
-        
-        for fmt in formats:
             try:
-                return datetime.strptime(date_str, fmt).date()
-            except ValueError:
-                continue
+                date_str = str(date_str)
+            except Exception as e:
+                raise ValueError(f"No se pudo convertir a string: {type(date_str)}. Error: {str(e)}")
+        
+        # SOLUCIÓN MANUAL ROBUSTA
+        try:
+            # Primero limpiamos la cadena
+            clean_date = date_str.strip()
+            
+            # Detectar el separador
+            separator = None
+            for sep in ['/', '-', '.']:
+                if sep in clean_date:
+                    separator = sep
+                    break
+                    
+            if not separator:
+                # Si no hay separador, intentar formato ISO sin separadores (YYYYMMDD)
+                if len(clean_date) == 8 and clean_date.isdigit():
+                    year = int(clean_date[0:4])
+                    month = int(clean_date[4:6])
+                    day = int(clean_date[6:8])
+                    return date(year, month, day)
+                raise ValueError(f"No se encontró separador en '{clean_date}'")
                 
-        raise ValueError(
-            f"Formato de fecha no válido. Formatos soportados: "
-            f"{DATE_FORMAT_ES}, {DATE_FORMAT_DB}, {DATE_FORMAT_ALT1}, {DATE_FORMAT_ALT2}"
-        )
+            # Dividir la fecha según el separador
+            parts = clean_date.split(separator)
+            if len(parts) != 3:
+                raise ValueError(f"La fecha debe tener 3 partes, tiene {len(parts)}: '{clean_date}'")
+                
+            # Detectar y convertir formato DD/MM/YYYY o YYYY/MM/DD
+            first, second, third = parts
+            
+            # Determinar tipo de formato (por longitud del primer y último componente)
+            # El día puede tener 1 o 2 caracteres, el mes 1 o 2, y el año 2 o 4
+            is_dmy_format = (len(first) <= 2 or first.isdigit()) and len(third) == 4 and int(first) <= 31
+            is_ymd_format = len(first) == 4 and (len(third) <= 2 or third.isdigit()) and int(first) >= 1900
+            
+            if is_dmy_format:  # DD/MM/YYYY
+                day = int(first)
+                month = int(second)
+                year = int(third)
+            elif is_ymd_format:  # YYYY/MM/DD
+                year = int(first)
+                month = int(second)
+                day = int(third)
+            else:
+                # Intentar determinar por rango de valores y contexto
+                first_val = int(first)
+                third_val = int(third)
+                
+                # Si el primer valor es >31, debe ser año
+                if first_val > 31 and first_val >= 1900:
+                    # Formato YYYY/MM/DD
+                    year = first_val
+                    month = int(second)
+                    day = third_val
+                # Si el tercer valor es >31 y >= 1900, debe ser año
+                elif third_val > 31 and third_val >= 1900:
+                    # Formato DD/MM/YYYY - el más común en España
+                    day = first_val
+                    month = int(second)
+                    year = third_val
+                # Si el primer valor es <= 12 y el tercero <= 12, asumir DD/MM/YYYY
+                elif first_val <= 31 and third_val >= 1900:
+                    # Preferir formato DD/MM/YYYY para este caso
+                    day = first_val
+                    month = int(second)
+                    year = third_val
+                else:
+                    # Último recurso: tratar como formato europeo DD/MM/YYYY
+                    day = first_val
+                    month = int(second)
+                    year = third_val
+            
+            # Validar cada componente
+            if not (1 <= month <= 12):
+                raise ValueError(f"Mes inválido: {month}")
+            
+            if not (1 <= day <= 31):
+                raise ValueError(f"Día inválido: {day}")
+                
+            # Más validaciones para fechas válidas
+            if month in [4, 6, 9, 11] and day > 30:
+                raise ValueError(f"El mes {month} no puede tener más de 30 días")
+                
+            if month == 2:
+                is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+                max_days = 29 if is_leap else 28
+                if day > max_days:
+                    raise ValueError(f"Febrero del año {year} no puede tener más de {max_days} días")
+            
+            # Crear objeto date
+            return date(year, month, day)
+            
+        except Exception as manual_error:
+            print(f"DEBUG_DATE - Error en método manual para '{date_str}': {str(manual_error)}")
+            
+            # COMO FALLBACK, INTENTAR MÉTODO TRADICIONAL
+            try:
+                # Limpiar la cadena de fecha
+                clean_date_str = date_str.strip()
+                
+                formats = [
+                    DATE_FORMAT_ES,
+                    DATE_FORMAT_DB,
+                    DATE_FORMAT_ISO,
+                    DATE_FORMAT_ALT1,
+                    DATE_FORMAT_ALT2
+                ]
+                
+                # Intentar parsear con cada formato soportado
+                for fmt in formats:
+                    try:
+                        return datetime.strptime(clean_date_str, fmt).date()
+                    except ValueError:
+                        continue
+                        
+                # Si llegamos aquí, ningún método funcionó
+                raise ValueError(f"No se pudo parsear la fecha: '{date_str}'")
+                
+            except Exception as fallback_error:
+                print(f"DEBUG_DATE - Error también en fallback para '{date_str}': {str(fallback_error)}")
+                # Último intento directo para fechas en formato estándar español DD/MM/YYYY
+                try:
+                    if separator and len(parts) == 3:
+                        # Asumir formato español DD/MM/YYYY
+                        day = int(parts[0])
+                        month = int(parts[1])
+                        year = int(parts[2])
+                        
+                        # Validaciones rápidas
+                        if 1 <= day <= 31 and 1 <= month <= 12 and year >= 1900:
+                            return date(year, month, day)
+                except Exception as last_error:
+                    print(f"DEBUG_DATE - Último intento fallido para '{date_str}': {str(last_error)}")
+                
+                # Si todo falló, lanzar error general
+                raise ValueError(f"Unable to parse date string '{date_str}'")
     
     @staticmethod
     def to_db_format(date_val: Optional[Union[str, date, datetime]]) -> Optional[str]:

@@ -77,10 +77,58 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                 animal_data['estado'] = 'OK'  # Valor por defecto
         
         # Campos opcionales del animal
-        optional_fields = ['pare', 'mare', 'quadra', 'cod', 'num_serie', 'dob', 'causa_baixa', 'data_baixa', 'explotacio']
+        optional_fields = ['pare', 'mare', 'quadra', 'cod', 'num_serie', 'causa_baixa', 'data_baixa', 'explotacio']
         for field in optional_fields:
             if field in normalized_data and normalized_data[field]:
                 animal_data[field] = normalized_data[field]
+                
+        # Proceso especial para la fecha de nacimiento (dob)
+        if 'dob' in normalized_data and normalized_data['dob']:
+            try:
+                # Intentar el parser normal primero
+                fecha_nacimiento = DateConverter.parse_date(normalized_data['dob'])
+                animal_data['dob'] = fecha_nacimiento
+                print(f"DEBUG - Fecha de nacimiento parseada: {fecha_nacimiento} de original: {normalized_data['dob']}")
+            except Exception as date_error:
+                print(f"ADVERTENCIA - Primer intento de parsear fecha de nacimiento falló: {str(date_error)}")
+                # Si falla, intentar un enfoque específico para formato DD/MM/YYYY
+                try:
+                    fecha_str = normalized_data['dob'].strip()
+                    # Asumir formato DD/MM/YYYY con cualquier separador
+                    separadores = ['/', '-', '.']
+                    sep = None
+                    for s in separadores:
+                        if s in fecha_str:
+                            sep = s
+                            break
+                            
+                    if sep:
+                        partes = fecha_str.split(sep)
+                        if len(partes) == 3:
+                            # Asumir DD/MM/YYYY
+                            dia = int(partes[0])
+                            mes = int(partes[1])
+                            anio = int(partes[2])
+                            
+                            from datetime import date
+                            fecha_nacimiento = date(anio, mes, dia)
+                            animal_data['dob'] = fecha_nacimiento
+                            print(f"DEBUG - Fecha de nacimiento parseada manualmente: {fecha_nacimiento} de original: {normalized_data['dob']}")
+                        else:
+                            print(f"ERROR - Formato de fecha de nacimiento incorrecto (no tiene 3 partes): {fecha_str}")
+                            # No incluir la fecha en los datos del animal
+                            if 'dob' in animal_data:
+                                del animal_data['dob']
+                    else:
+                        print(f"ERROR - No se identificó separador en la fecha de nacimiento: {fecha_str}")
+                        # No incluir la fecha en los datos del animal
+                        if 'dob' in animal_data:
+                            del animal_data['dob']
+                except Exception as manual_error:
+                    print(f"ERROR en import_animal_with_partos: {str(manual_error)}")
+                    # No incluir la fecha en los datos del animal
+                    if 'dob' in animal_data:
+                        del animal_data['dob']
         
         # Obtener explotación si está presente
         explotacio_nom = None
@@ -220,15 +268,46 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                     # Recordar que parto_data ya fue construido anteriormente con todos los datos
                     print(f"DEBUG_PARTO - Creando parto para hembra: {animal.nom} con datos: {parto_data}")
                     
-                    # Procesar la fecha del parto
+                    # Procesar la fecha del parto - Versión robusta para CSV
                     fecha_parto = None
                     if parto_data.get('part'):
                         try:
+                            # Intentar el parser normal primero
                             fecha_parto = DateConverter.parse_date(parto_data['part'])
                             print(f"DEBUG_PARTO - Fecha de parto parseada: {fecha_parto} de original: {parto_data['part']}")
                         except Exception as date_error:
-                            print(f"ERROR - Error al parsear fecha de parto: {str(date_error)}")
-                            return animal
+                            print(f"ADVERTENCIA - Primer intento de parsear fecha de parto falló: {str(date_error)}")
+                            # Si falla, intentar un enfoque específico para formato DD/MM/YYYY
+                            try:
+                                fecha_str = parto_data['part'].strip()
+                                # Asumir formato DD/MM/YYYY con cualquier separador
+                                separadores = ['/', '-', '.']
+                                sep = None
+                                for s in separadores:
+                                    if s in fecha_str:
+                                        sep = s
+                                        break
+                                        
+                                if sep:
+                                    partes = fecha_str.split(sep)
+                                    if len(partes) == 3:
+                                        # Asumir DD/MM/YYYY
+                                        dia = int(partes[0])
+                                        mes = int(partes[1])
+                                        anio = int(partes[2])
+                                        
+                                        from datetime import date
+                                        fecha_parto = date(anio, mes, dia)
+                                        print(f"DEBUG_PARTO - Fecha de parto parseada manualmente: {fecha_parto} de original: {parto_data['part']}")
+                                    else:
+                                        print(f"ERROR - Formato de fecha incorrecto (no tiene 3 partes): {fecha_str}")
+                                        return animal
+                                else:
+                                    print(f"ERROR - No se identificó separador en la fecha: {fecha_str}")
+                                    return animal
+                            except Exception as manual_error:
+                                print(f"ERROR - Error al parsear fecha de parto manualmente: {str(manual_error)}")
+                                return animal
                     else:
                         print("ERROR - No hay fecha de parto válida")
                         return animal
@@ -479,16 +558,49 @@ async def add_parto(animal: Animal, parto_data: Dict) -> Part:
         # Calcular número de parto usando el modelo Part:
         num_partos = await Part.filter(animal_id=animal.id).count()
 
-        # Procesar la fecha del parto usando DateConverter
+        # Procesar la fecha del parto - Versión robusta para CSV
         fecha_parto = None
         if 'part' in parto_data and parto_data['part']:
             try:
+                # Intentar el parser normal primero
                 fecha_parto = DateConverter.parse_date(parto_data['part'])
                 print(f"DEBUG - Fecha de parto parseada: {fecha_parto} de original: {parto_data['part']}")
-            except ValueError as e:
-                print(f"ERROR - No se pudo parsear la fecha de parto: {str(e)}")
-                # Si hay un error, usar la fecha actual
-                from datetime import datetime
+            except Exception as date_error:
+                print(f"ADVERTENCIA - Primer intento de parsear fecha de parto falló: {str(date_error)}")
+                # Si falla, intentar un enfoque específico para formato DD/MM/YYYY
+                try:
+                    fecha_str = parto_data['part'].strip()
+                    # Asumir formato DD/MM/YYYY con cualquier separador
+                    separadores = ['/', '-', '.']
+                    sep = None
+                    for s in separadores:
+                        if s in fecha_str:
+                            sep = s
+                            break
+                            
+                    if sep:
+                        partes = fecha_str.split(sep)
+                        if len(partes) == 3:
+                            # Asumir DD/MM/YYYY
+                            dia = int(partes[0])
+                            mes = int(partes[1])
+                            anio = int(partes[2])
+                            
+                            from datetime import date
+                            fecha_parto = date(anio, mes, dia)
+                            print(f"DEBUG - Fecha de parto parseada manualmente: {fecha_parto} de original: {parto_data['part']}")
+                        else:
+                            print(f"ERROR - Formato de fecha incorrecto (no tiene 3 partes): {fecha_str}")
+                            # Usar fecha actual como respaldo
+                            from datetime import datetime
+                    else:
+                        print(f"ERROR - No se identificó separador en la fecha: {fecha_str}")
+                        # Usar fecha actual como respaldo
+                        from datetime import datetime
+                except Exception as manual_error:
+                    print(f"ERROR - Error al parsear fecha de parto manualmente: {str(manual_error)}")
+                    # Usar fecha actual como respaldo
+                    from datetime import datetime
                 fecha_parto = datetime.now().date()
                 print(f"DEBUG - Usando fecha actual como fallback: {fecha_parto}")
         else:
