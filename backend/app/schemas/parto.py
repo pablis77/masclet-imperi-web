@@ -35,9 +35,22 @@ class PartoBase(BaseModel):
 
 class PartoCreate(PartoBase):
     """Schema para crear partos"""
-    animal_id: int = Field(..., description="ID del animal (madre)")
-    numero_part: int = Field(..., description="Número de parto")
+    animal_id: Optional[int] = Field(None, description="ID del animal (madre)")
+    animal_nom: Optional[str] = Field(None, description="Nombre del animal (madre)")
+    numero_part: Optional[int] = Field(None, description="Número de parto")
     observacions: Optional[str] = Field(None, description="Observaciones sobre el parto")
+    
+    @validator('animal_id', 'animal_nom')
+    def validate_animal_ref(cls, v, values, **kwargs):
+        # Asegurar que se proporcionó al menos animal_id o animal_nom
+        field = kwargs.get('field')
+        if field.name == 'animal_id' and not v:
+            if 'animal_nom' not in values or not values['animal_nom']:
+                raise ValueError('Se debe proporcionar al menos animal_id o animal_nom')
+        elif field.name == 'animal_nom' and not v:
+            if 'animal_id' not in values or not values['animal_id']:
+                raise ValueError('Se debe proporcionar al menos animal_id o animal_nom')
+        return v
 
 class PartoUpdate(BaseModel):
     """Schema para actualizar partos"""

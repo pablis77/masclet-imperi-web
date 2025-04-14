@@ -2,6 +2,17 @@ import { get, post, put, del } from './apiService';
 import { mockAnimals, mockExplotacions } from './mockData';
 
 // Interfaces
+export interface Parto {
+  id?: number;
+  animal_id?: number;
+  animal_nom?: string;
+  part?: string | null;  // Fecha del parto (DD/MM/YYYY)
+  GenereT?: 'M' | 'F' | 'esforrada' | null;
+  EstadoT?: 'OK' | 'DEF' | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Animal {
   id: number;
   explotacio: string;
@@ -17,6 +28,9 @@ export interface Animal {
   dob?: string | null;
   created_at: string;
   updated_at: string;
+  partos?: Parto[] | { items: Parto[] };
+  parts?: Parto[];  // Soporte para nombre anterior (retrocompatibilidad)
+  estat?: 'OK' | 'DEF';  // Soporte para nombre anterior (retrocompatibilidad)
 }
 
 export interface AnimalCreateDto {
@@ -84,7 +98,7 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
     console.log(`Filtrando por término de búsqueda: "${searchLower}"`);
     
     // Primero obtenemos todos los animales que coinciden con el término de búsqueda
-    const matchingAnimals = filteredAnimals.filter(a => {
+    let matchingAnimals = filteredAnimals.filter(a => {
       // Búsqueda por nom (principal)
       const matchesNom = a.nom.toLowerCase().includes(searchLower);
       
@@ -105,23 +119,61 @@ const getFilteredAnimals = (filters: AnimalFilters): Animal[] => {
       return matchesNom || matchesCod || matchesNumSerie || matchesExplotacio || matchesPare || matchesMare;
     });
     
-    // Segundo, ordenamos los resultados para priorizar coincidencias en el campo 'nom'
-    matchingAnimals.sort((a, b) => {
-      // Prioridad 1: Coincidencia exacta en nom
-      const aExactNomMatch = a.nom.toLowerCase() === searchLower;
-      const bExactNomMatch = b.nom.toLowerCase() === searchLower;
-      if (aExactNomMatch && !bExactNomMatch) return -1;
-      if (!aExactNomMatch && bExactNomMatch) return 1;
+    // Vamos a asignar valores de prioridad a cada animal en función de dónde coincide el término
+    const animalScores = matchingAnimals.map(animal => {
+      let score = 0;
       
-      // Prioridad 2: Coincidencia parcial en nom
-      const aNomMatch = a.nom.toLowerCase().includes(searchLower);
-      const bNomMatch = b.nom.toLowerCase().includes(searchLower);
-      if (aNomMatch && !bNomMatch) return -1;
-      if (!aNomMatch && bNomMatch) return 1;
+      // Prioridad máxima: Coincidencia EXACTA en nom (mismo texto)
+      if (animal.nom.toLowerCase() === searchLower) {
+        score += 1000;
+      }
+      // Prioridad alta: Coincidencia al INICIO del nombre (empieza por)
+      else if (animal.nom.toLowerCase().startsWith(searchLower)) {
+        score += 800;
+      }
+      // Prioridad media-alta: Nombre CONTIENE el término de búsqueda
+      else if (animal.nom.toLowerCase().includes(searchLower)) {
+        score += 500;
+      }
       
-      // Prioridad 3: Por fecha de actualización (los más recientes primero)
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      // Prioridad media: Coincidencia en código o número de serie (identificadores)
+      if (animal.cod && animal.cod.toLowerCase().includes(searchLower)) {
+        score += 300;
+      }
+      if (animal.num_serie && animal.num_serie.toLowerCase().includes(searchLower)) {
+        score += 300;
+      }
+      
+      // Prioridad baja: Coincidencia en padres, madre, explotación (relaciones)
+      if (animal.pare && animal.pare.toLowerCase().includes(searchLower)) {
+        score += 100;
+      }
+      if (animal.mare && animal.mare.toLowerCase().includes(searchLower)) {
+        score += 100;
+      }
+      if (animal.explotacio && animal.explotacio.toLowerCase().includes(searchLower)) {
+        score += 50;
+      }
+      
+      return { animal, score };
     });
+    
+    // Ordenar por puntuación (mayor a menor) y luego por fecha de actualización
+    animalScores.sort((a, b) => {
+      // Primero por puntuación
+      if (a.score !== b.score) {
+        return b.score - a.score;
+      }
+      
+      // Si tienen la misma puntuación, ordenar por fecha de actualización (más reciente primero)
+      return new Date(b.animal.updated_at).getTime() - new Date(a.animal.updated_at).getTime();
+    });
+    
+    // Extraer solo los animales del array ordenado de puntuaciones
+    matchingAnimals = animalScores.map(item => item.animal);
+    
+    // Opcional: Mostrar en la consola para depuración
+    console.log('Animales ordenados por relevancia:', animalScores.map(item => `${item.animal.nom} (${item.score})`));
     
     // Tercero, consolidamos registros duplicados basados en el mismo animal
     // Consideramos que dos animales son el mismo si tienen el mismo nombre y código
@@ -297,17 +349,42 @@ const animalService = {
       const response = await get<any>(`/animals/${id}`);
       console.log('Animal cargado:', response);
       
+      let animalData: Animal;
+      
       // Comprobamos si la respuesta tiene el formato esperado {status, data}
       if (response && response.status === 'success' && response.data) {
-        return response.data as Animal;
+        animalData = response.data as Animal;
       } 
-      
       // Si la respuesta es directamente el animal
-      if (response && response.id) {
-        return response as Animal;
+      else if (response && response.id) {
+        animalData = response as Animal;
+      }
+      else {
+        throw new Error('Formato de respuesta inválido');
       }
       
-      throw new Error('Formato de respuesta inválido');
+      // Normalizar estructura de partos si existe
+      if (animalData) {
+        // Asegurarnos de que partos sea siempre un array
+        if (!animalData.partos) {
+          animalData.partos = [];
+        } else if (!Array.isArray(animalData.partos)) {
+          // Si no es un array, pero tiene items, usamos eso
+          if (animalData.partos.items && Array.isArray(animalData.partos.items)) {
+            animalData.partos = animalData.partos.items;
+          } else {
+            // Si no tiene formato esperado, inicializar como array vacío
+            animalData.partos = [];
+          }
+        }
+        
+        // Asegurarse de que existe 'estado' y no 'estat'
+        if (!animalData.estado && animalData['estat']) {
+          animalData.estado = animalData['estat'];
+        }
+      }
+      
+      return animalData;
     } catch (error: any) {
       console.error(`Error al obtener animal con ID ${id}:`, error);
       

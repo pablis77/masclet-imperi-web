@@ -43,7 +43,7 @@ const showPartosTab = animal && animal.genere === 'F'; // Solo mostrar pestaña 
 const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
 
 // Obtener la clase CSS para el estado del animal
-const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 'bg-gray-100 text-gray-800';
+const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) : 'bg-gray-100 text-gray-800';
 
 ---
 
@@ -275,24 +275,33 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
                   )}
                 </div>
               </div>
+              
+              <!-- Botón Volver al listado al final de la pestaña Información -->
+              <div class="mt-6 text-center">
+                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                  <span class="mr-2">←</span> Volver al listado de animales
+                </a>
+              </div>
             </div>
           </div>
 
           <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
-          {showPartosTab && (
-            <div id="content-partos" class="hidden">
-              <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos</h3>
-                <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
-              </div>
+          <div id="content-partos" class="hidden">
+            <div class="mb-4">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos</h3>
+              <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
+            </div>
+            {showPartosTab && (
               
               <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table id="tabla-partos" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Género</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-fecha">
+                        Fecha <span class="ml-1 sort-indicator">↑</span>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ficha Ternero</th>
                     </tr>
                   </thead>
@@ -313,6 +322,13 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
                       }
                       
                       if (partosArray.length > 0) {
+                        // Ordenar partos por fecha (de más antiguo a más reciente por defecto)
+                        partosArray.sort((a, b) => {
+                          const fechaA = a.part ? new Date(a.part) : new Date(0);
+                          const fechaB = b.part ? new Date(b.part) : new Date(0);
+                          return fechaA - fechaB; // Orden ascendente (más antiguo primero)
+                        });
+                        
                         return partosArray.map((parto) => (
                           <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
@@ -370,8 +386,20 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
                   </tbody>
                 </table>
               </div>
+            )}
+            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+              {!showPartosTab && (
+                <p>Este animal no tiene partos registrados</p>
+              )}
+              
+              <!-- Botón Volver al listado al final de la pestaña Partos -->
+              <div class="mt-6 text-center">
+                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                  <span class="mr-2">←</span> Volver al listado de animales
+                </a>
+              </div>
             </div>
-          )}
+          </div>
 
           <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
           <div id="content-changes" class="hidden">
@@ -382,6 +410,13 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
             
             <div class="p-6 text-center text-gray-500 dark:text-gray-400">
               <p>No hay datos históricos disponibles</p>
+            </div>
+            
+            <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
+            <div class="mt-6 text-center">
+              <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                <span class="mr-2">←</span> Volver al listado de animales
+              </a>
             </div>
           </div>
         </div>
@@ -400,6 +435,8 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
 <script>
   // Script para manejar interacciones de la página
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM completamente cargado y analizado');
+    
     // Botón de reintentar carga
     const retryButton = document.getElementById('retry-button');
     if (retryButton) {
@@ -408,57 +445,156 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estat) : 
       });
     }
     
-    // Obtenemos datos del animal pero NO activamos automáticamente pestañas
-    const animalData = document.getElementById('animal-data');
-    // Ya no necesitamos este flag porque siempre mostraremos Información Completa primero
-    let autoOpenPartos = false;
+    // Obtener todas las pestañas y contenidos
+    const tabs = document.querySelectorAll('#tab-info, #tab-partos, #tab-changes');
+    const contents = document.querySelectorAll('#content-info, #content-partos, #content-changes');
     
-    // Elementos de pestañas
-    const tabInfo = document.getElementById('tab-info');
-    const tabPartos = document.getElementById('tab-partos');
-    const tabChanges = document.getElementById('tab-changes');
+    console.log('Pestañas encontradas:', tabs.length);
+    console.log('Contenidos encontrados:', contents.length);
     
-    const contentInfo = document.getElementById('content-info');
-    const contentPartos = document.getElementById('content-partos');
-    const contentChanges = document.getElementById('content-changes');
-    
-    // Función para cambiar entre pestañas
-    function switchTab(activeTab, activeContent) {
-      // Desactivar todas las pestañas
-      [tabInfo, tabPartos, tabChanges].forEach(tab => {
-        if (tab) {
-          tab.classList.remove('text-primary', 'border-b-2', 'border-primary');
-          tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-        }
-      });
+    // Función para mostrar pestaña y ocultar las demás
+    const showTab = (tabId) => {
+      console.log('Cambiando a pestaña:', tabId);
       
       // Ocultar todos los contenidos
-      [contentInfo, contentPartos, contentChanges].forEach(content => {
-        if (content) {
-          content.classList.add('hidden');
-        }
+      contents.forEach(content => {
+        content.classList.add('hidden');
       });
       
-      // Activar la pestaña seleccionada
-      activeTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-      activeTab.classList.add('text-primary', 'border-b-2', 'border-primary');
+      // Resetear estilos de todas las pestañas
+      tabs.forEach(tab => {
+        tab.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+        tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+      });
       
-      // Mostrar el contenido seleccionado
-      activeContent.classList.remove('hidden');
-    }
+      // Activar pestaña seleccionada
+      const selectedTab = document.getElementById(tabId);
+      if (selectedTab) {
+        selectedTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        selectedTab.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+      }
+      
+      // Mostrar contenido correspondiente
+      const contentId = tabId.replace('tab-', 'content-');
+      const selectedContent = document.getElementById(contentId);
+      if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+      }
+    };
     
-    // Configurar eventos de clic para las pestañas
-    if (tabInfo) {
-      tabInfo.addEventListener('click', () => switchTab(tabInfo, contentInfo));
-    }
+    // Inicializar con la pestaña de información abierta
+    showTab('tab-info');
     
-    if (tabPartos) {
-      tabPartos.addEventListener('click', () => switchTab(tabPartos, contentPartos));
-      // Ya no mostramos automáticamente la pestaña de partos
-    }
-    
-    if (tabChanges) {
-      tabChanges.addEventListener('click', () => switchTab(tabChanges, contentChanges));
-    }
+    // Eventos de clic para pestañas
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        showTab(tab.id);
+        console.log('Clic en pestaña:', tab.id);
+      });
+    });
+
+    // Ordenación de la tabla de partos
+    const sortColumns = document.querySelectorAll('#sort-fecha, #sort-genero, #sort-estado');
+    let currentSortColumn = 'sort-fecha';
+    let currentSortDirection = 'asc';
+
+    // Función para ordenar la tabla
+    const sortTable = (columnId, direction) => {
+      const table = document.getElementById('tabla-partos');
+      if (!table) return;
+
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const sortedRows = [...rows];
+
+      // Obtener el índice de la columna según el ID del encabezado
+      let columnIndex = 0;
+      if (columnId === 'sort-genero') columnIndex = 1;
+      if (columnId === 'sort-estado') columnIndex = 2;
+
+      // Ordenar filas
+      sortedRows.sort((a, b) => {
+        const cellA = a.querySelectorAll('td')[columnIndex].textContent.trim();
+        const cellB = b.querySelectorAll('td')[columnIndex].textContent.trim();
+        
+        if (columnId === 'sort-fecha') {
+          // Para fechas, intentar convertir a objetos Date para comparación
+          const dateA = parseDate(cellA);
+          const dateB = parseDate(cellB);
+          
+          if (direction === 'asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
+        } else {
+          // Para texto, comparar strings
+          if (direction === 'asc') {
+            return cellA.localeCompare(cellB, 'es');
+          } else {
+            return cellB.localeCompare(cellA, 'es');
+          }
+        }
+      });
+
+      // Limpiar y reconstruir la tabla
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+
+      sortedRows.forEach(row => tbody.appendChild(row));
+
+      // Actualizar indicadores de ordenación
+      sortColumns.forEach(col => {
+        const indicator = col.querySelector('.sort-indicator');
+        if (indicator) {
+          indicator.textContent = '';
+        }
+      });
+
+      const activeHeader = document.getElementById(columnId);
+      const indicator = activeHeader.querySelector('.sort-indicator');
+      if (indicator) {
+        indicator.textContent = direction === 'asc' ? '↑' : '↓';
+      }
+    };
+
+    // Ayudante para convertir texto de fecha a objeto Date
+    const parseDate = (dateStr) => {
+      if (dateStr === 'N/A' || dateStr === 'Fecha incorrecta') {
+        return new Date(0); // Para valores no fechas, usar una fecha muy antigua
+      }
+      
+      // Intenta analizar la fecha en formato DD/MM/YYYY
+      const parts = dateStr.split(/[\/\-]/);
+      if (parts.length === 3) {
+        // Asumir formato DD/MM/YYYY
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      
+      // Como último recurso, intentar crear fecha directamente
+      return new Date(dateStr);
+    };
+
+    // Agregar eventos de clic a las columnas
+    sortColumns.forEach(col => {
+      col.addEventListener('click', () => {
+        // Si es la misma columna, cambiar dirección
+        if (col.id === currentSortColumn) {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          // Si es una nueva columna, establecer como ascendente
+          currentSortColumn = col.id;
+          currentSortDirection = 'asc';
+        }
+        
+        sortTable(currentSortColumn, currentSortDirection);
+      });
+    });
+
+    // Ordenar por fecha ascendente al cargar la página
+    sortTable('sort-fecha', 'asc');
   });
 </script>

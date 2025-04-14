@@ -53,7 +53,38 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
         limit: 10
       });
       
-      setAnimals(response.items);
+      // Aplicar priorización local adicional si hay término de búsqueda
+      let orderedAnimals = [...response.items];
+      if (filters.search && filters.search.trim() !== '') {
+        const searchTerm = filters.search.trim().toLowerCase();
+        // Ordenar los resultados localmente por nombre coincidente
+        orderedAnimals.sort((a, b) => {
+          // Coincidencia exacta de nombre (máxima prioridad)
+          const aExactMatch = a.nom.toLowerCase() === searchTerm;
+          const bExactMatch = b.nom.toLowerCase() === searchTerm;
+          if (aExactMatch && !bExactMatch) return -1;
+          if (!aExactMatch && bExactMatch) return 1;
+          
+          // Coincide al inicio del nombre (segunda prioridad)
+          const aStartsWith = a.nom.toLowerCase().startsWith(searchTerm);
+          const bStartsWith = b.nom.toLowerCase().startsWith(searchTerm);
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          
+          // Coincide en cualquier parte del nombre (tercera prioridad)
+          const aContains = a.nom.toLowerCase().includes(searchTerm);
+          const bContains = b.nom.toLowerCase().includes(searchTerm);
+          if (aContains && !bContains) return -1;
+          if (!aContains && bContains) return 1;
+          
+          // Si los criterios son iguales, mantener el orden original
+          return 0;
+        });
+        
+        console.log('Animales ordenados localmente:', orderedAnimals.map(a => a.nom));
+      }
+      
+      setAnimals(orderedAnimals);
       setTotalAnimals(response.total);
       setTotalPages(response.pages);
       
