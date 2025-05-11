@@ -29,64 +29,60 @@ try {
   // Configurar el título de la página
   title = `Detalle de ${animal.nom}`;
   
-  // Determinar si el animal tiene partos y es hembra para mostrar la pestaña
+  // Mostrar pestaña de partos solo para vacas
   showPartosTab = animal.genere === 'F';
-
+  
   loading = false;
-} catch (err) {
-  console.error('Error al cargar el animal:', err);
-  error = err.message || 'Error al cargar los datos del animal';
+} catch (e) {
+  console.error('Error al cargar el animal:', e);
+  error = e.message;
   loading = false;
-  title = 'Error al cargar animal';
 }
 ---
 
-<MainLayout title={title} userRole={userRole}>
-  {loading && (
-    <div class="flex justify-center items-center py-10">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-      <span class="ml-3">Cargando...</span>
-    </div>
-  )}
-
-  {error && (
-    <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          ⚠️
-        </div>
-        <div class="ml-3">
-          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error</h3>
-          <div class="mt-2 text-red-700 dark:text-red-200">
-            <p>{error}</p>
-          </div>
-          <div class="mt-4">
-            <button 
-              id="retry-button"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              ↻ Reintentar
-            </button>
-          </div>
+<MainLayout title={title} currentPath={`/animals/${id}`}>
+  <div class="container mx-auto px-4 py-6">
+    {loading && (
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )}
+    
+    {error && (
+      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <p class="font-bold">Error</p>
+        <p>{error}</p>
+        <button 
+          id="retry-button"
+          class="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm"
+        >
+          Reintentar
+        </button>
+      </div>
+    )}
+    
+    {animal && (
+      <div>
+        <AnimalDetails animal={animal} userRole={userRole} />
+        
+        <div class="mt-8">
+          <AnimalTabs showPartosTab={showPartosTab} id={id} />
         </div>
       </div>
-    </div>
-  )}
-
-  {animal && (
-    <>
-      <AnimalDetails animal={animal} id={id} />
-      <AnimalTabs animal={animal} showPartosTab={showPartosTab} />
-    </>
-  )}
+    )}
+  </div>
 </MainLayout>
 
 <script>
-  // Script principal para manejar eventos y funcionalidad
+  // Función para cargar partos
+  function cargarPartos() {
+    console.log('Cargando partos...');
+    // Esta función se implementa en id_part2.astro
+  }
+
+  // Esta función se ejecuta cuando el DOM está listo
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('Página de detalle de animal cargada');
-    
-    // Botón de reintento en caso de error
+    // Configurar botón de reintentar
     const retryButton = document.getElementById('retry-button');
     if (retryButton) {
       retryButton.addEventListener('click', function() {
@@ -174,3 +170,5 @@ try {
         if (contentPartos) contentPartos.classList.add('hidden');
       });
     }
+  });
+</script>

@@ -544,7 +544,7 @@ const animalService = {
       
       // Llamar al endpoint de eliminación (en realidad, marcar como DEF)
       // Usar la ruta correcta sin duplicar el prefijo /api/v1 que ya está en la URL base
-      const response = await apiService.delete(`/api/v1/animals/${id}`);
+      const response = await apiService.del(`/animals/${id}`);
       console.log(`Respuesta al eliminar animal con ID ${id}:`, response);
       
       return response;
