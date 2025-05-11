@@ -2,6 +2,7 @@
 Aplicación principal FastAPI
 """
 import logging
+import time
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -95,6 +96,17 @@ async def redirect_to_docs():
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
     )
+
+# Añadir un endpoint de health check directo en la raíz para Render
+@app.get("/health", include_in_schema=False)
+async def root_health_check():
+    """Endpoint de health check para Render."""
+    return {
+        "status": "ok",
+        "environment": settings.environment,
+        "version": getattr(settings, 'version', '1.0.0'),
+        "timestamp": time.time()
+    }
 
 # Conectar a la base de datos
 TORTOISE_ORM = {
