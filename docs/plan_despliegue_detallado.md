@@ -1,44 +1,108 @@
 # Plan de Despliegue Detallado para Masclet Imperi Web
 
+> NOTA: Este documento representa el plan original. El progreso real ha sido afectado por problemas técnicos y parte del trabajo se ha perdido. Se usará como guía para el despliegue.
+
 ## 1. Preparación del Proyecto para Producción
 
 ### 1.1. Configuración de Variables de Entorno
 - **Backend (FastAPI)**:
-  - Crear archivo `.env.example` con todas las variables necesarias (sin valores reales)
-  - Configurar manejo de archivo `.env` para desarrollo
-  - Implementar carga de variables desde entorno para producción
+
+  - ✅ Crear archivo `.env.example` con todas las variables necesarias (sin valores reales)
+    > **Estado**: Completado. Archivo creado en `backend/.env.example` con todas las variables necesarias
+    >
+  - ✅ Configurar manejo de archivo `.env` para desarrollo
+    > **Estado**: Completado. Sistema de carga de variables implementado en config.py
+    >
+  - ✅ Implementar carga de variables desde entorno para producción
+    > **Estado**: Completado. Configuración preparada para detección de entorno con fallback a valores por defecto
+    >
   - Variables críticas a configurar:
-    - `DATABASE_URL`: Conexión a la base de datos
-    - `SECRET_KEY`: Clave para firmar tokens JWT
-    - `ALLOWED_ORIGINS`: Dominios permitidos para CORS
-    - `LOG_LEVEL`: Nivel de logging en producción
-    - `BACKUP_DIR`: Directorio para backups automáticos
+    - ✅ `DATABASE_URL`: Conexión a la base de datos
+      > **Estado**: Completado. Configurada en `.env` con variable `POSTGRES_DB`, `POSTGRES_USER`, etc.
+      >
+    - ✅ `SECRET_KEY`: Clave para firmar tokens JWT
+      > **Estado**: Completado. Configurada en `.env` 
+      >
+    - ✅ `ALLOWED_ORIGINS`: Dominios permitidos para CORS
+      > **Estado**: Completado. Implementado como `CORS_ORIGINS` en config.py y `.env`
+      >
+    - ✅ `LOG_LEVEL`: Nivel de logging en producción
+      > **Estado**: Completado. Se controla mediante variable `DEBUG` en `.env`
+      >
+    - ✅ `BACKUP_DIR`: Directorio para backups automáticos
+      > **Estado**: Completado. Configurado en config.py y `.env`
+      >
 
 - **Frontend (React/Astro)**:
-  - Configurar `.env.production` y `.env.development`
+
+  - ✅ Configurar `.env.production` y `.env.development`
+    > **Estado**: Completado. Archivos creados en `frontend/` con configuración para cada entorno
+    >
   - Variables esenciales:
-    - `VITE_API_URL`: URL de la API en producción
-    - `VITE_ENVIRONMENT`: Entorno actual (prod/dev)
+    - ✅ `VITE_API_URL`: URL de la API en producción
+      > **Estado**: Completado. URL configurada según el entorno para conexión a la API
+      >
+    - ✅ `VITE_ENVIRONMENT`: Entorno actual (prod/dev)
+      > **Estado**: Completado. Variable implementada para ajustar comportamiento de la aplicación según entorno
+      >
 
 ### 1.2. Optimización de Código
 - **Frontend**:
-  - Ejecutar build de producción con optimizaciones
-  - Verificar bundle size y reducir si es necesario
-  - Eliminar código de depuración
-  - Configurar lazy loading de componentes grandes
+
+  - ⭕ Ejecutar build de producción con optimizaciones
+    > **Estado**: Pendiente (Build de producción con Astro para minimizar tamaño y optimizar carga)
+    >
+  - ⭕ Verificar bundle size y reducir si es necesario
+    > **Estado**: Pendiente (Análisis de tamaño de bundling y optimización si supera límites recomendados)
+    >
+  - ⭕ Eliminar código de depuración
+    > **Estado**: Pendiente (Remover console.log y código de prueba del proyecto)
+    >
+  - ⭕ Configurar lazy loading de componentes grandes
+    > **Estado**: Pendiente (Lazy loading para componentes pesados como ImportForm.tsx y el dashboard completo)
+    >
+  - ⭕ Optimizar archivos CSS
+    > **Estado**: Pendiente (Optimización de lemon-squeezy.css, global.css y main.css eliminando clases redundantes)
+    >
+  - ⭕ Reorganizar imágenes y recursos estáticos
+    > **Estado**: Pendiente (Estructura clara para assets: /assets/icons/animals/, /assets/images/logos/, etc.)
+    >
   
 - **Backend**:
-  - Optimizar consultas SQL críticas
-  - Configurar caché para endpoints frecuentes
-  - Ajustar configuración de workers/threads
-  - Eliminar endpoints de desarrollo/test
+
+  - ⭕ Optimizar consultas SQL críticas
+    > **Estado**: Pendiente (Creación de índices en tablas principales animals, part, imports, con índices compuestos para consultas del dashboard)
+    >
+  - ⭕ Configurar caché para endpoints frecuentes
+    > **Estado**: Pendiente (Sistema de caché en memoria para endpoints del dashboard con TTL de 5 minutos)
+    >
+  - ⭕ Ajustar configuración de workers/threads
+    > **Estado**: Pendiente (Sistema de configuración optimizada para Uvicorn adaptable según número de CPUs)
+    >
+  - ⭕ Eliminar endpoints de desarrollo/test
+    > **Estado**: Pendiente (Sistema para desactivar automáticamente endpoints de desarrollo en producción)
+    >
+  - ⭕ Corregir errores en endpoints del dashboard
+    > **Estado**: Pendiente (Implementación de endpoint faltante /api/v1/dashboard/explotacions/{explotacio}/stats)
+    >
 
 ### 1.3. Seguridad Previa al Despliegue
-- Eliminar cualquier credencial hardcodeada
-- Revisar tokens o claves expuestas en el código
-- Asegurar que no hay rutas de depuración habilitadas
-- Configurar rate limiting para APIs sensibles
-- Verificar headers de seguridad (HSTS, CSP, etc.)
+
+- ⭕ Eliminar cualquier credencial hardcodeada
+  > **Estado**: Pendiente (Revisar y eliminar todas las credenciales del código fuente)
+  >
+- ⭕ Revisar tokens o claves expuestas en el código
+  > **Estado**: Pendiente (Verificar que no hay tokens o claves en el código fuente)
+  >
+- ⭕ Asegurar que no hay rutas de depuración habilitadas
+  > **Estado**: Pendiente (Usar módulo disable_dev_endpoints.py para desactivar endpoints de desarrollo en producción)
+  >
+- ⭕ Configurar rate limiting para APIs sensibles
+  > **Estado**: Pendiente (Implementar middleware de rate limiting para endpoints sensibles como login, admin e imports)
+  >
+- ⭕ Verificar headers de seguridad (HSTS, CSP, etc.)
+  > **Estado**: Pendiente (Añadir middleware security_headers.py con cabeceras HSTS, CSP, X-Frame-Options, etc.)
+  >
 
 ## 2. Selección de Plataforma de Hosting
 
