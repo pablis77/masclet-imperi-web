@@ -2,10 +2,20 @@
  * Sistema de depuración global para Masclet Imperi
  * Este archivo proporciona funciones para registrar información de depuración
  * en un panel visible que persiste entre diferentes partes de la aplicación.
+ * 
+ * NOTA: Solo se activa en entorno de desarrollo (no producción)
  */
+
+// Determinar si estamos en producción
+const isProduction = import.meta.env.PROD || false;
 
 // Función para obtener o crear el panel de depuración
 function getDebugPanel() {
+    // No hacer nada en producción
+    if (isProduction) {
+        return { debugContent: null };
+    }
+    
     let debugInfo = document.getElementById('debug-info');
     let debugContent = document.getElementById('debug-content');
     
@@ -68,15 +78,15 @@ function getDebugPanel() {
  * @param {string} message - Mensaje a mostrar
  * @param {any} data - Datos adicionales (opcional)
  */
-export function debugLog(message, data = null) {
-    // Siempre registrar en consola
+function debugLog(message, data = null) {
+    // No hacer nada en producción
+    if (isProduction) return;
+    
+    // Siempre registrar en consola (sólo en desarrollo)
     console.log(message, data);
     
-    // Obtener o crear panel
-    const { panel, content } = getDebugPanel();
-    
-    // Asegurar que el panel esté visible
-    panel.style.display = 'block';
+    const { debugContent } = getDebugPanel();
+    if (!debugContent) return;
     
     // Formatear mensaje
     const timestamp = new Date().toLocaleTimeString();
@@ -132,8 +142,15 @@ export function debugLog(message, data = null) {
  * @param {string} title - Título del error
  * @param {Error} error - Objeto de error
  */
-export function debugError(title, error) {
+function debugError(title, error) {
+    // No hacer nada en producción
+    if (isProduction) return;
+    
+    // Siempre registrar errores en consola (sólo en desarrollo)
     console.error(title, error);
+    
+    const { debugContent } = getDebugPanel();
+    if (!debugContent) return;
     
     debugLog('⚠️ ' + title);
     
@@ -161,9 +178,14 @@ export function debugError(title, error) {
 /**
  * Limpia el contenido del panel de depuración
  */
-export function clearDebugPanel() {
-    const { content } = getDebugPanel();
-    content.innerHTML = '';
+function clearDebugPanel() {
+    // No hacer nada en producción
+    if (isProduction) return;
+    
+    const debugContent = document.getElementById('debug-content');
+    if (debugContent) {
+        debugContent.innerHTML = '';
+    }
 }
 
 // Exportar funciones

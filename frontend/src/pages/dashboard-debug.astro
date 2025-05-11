@@ -4,6 +4,14 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
 // La función getToken no existe, usamos nuestro servicio de autenticación
 import authService from '../services/authService';
 
+// Determinar si estamos en producción
+const isProd = import.meta.env.PROD || false;
+
+// Redireccionar al dashboard real en producción
+if (isProd) {
+  return Astro.redirect('/dashboard');
+}
+
 // IMPORTANTE: No acceder a localStorage durante el renderizado del servidor
 
 // En desarrollo, siempre considerar autenticado

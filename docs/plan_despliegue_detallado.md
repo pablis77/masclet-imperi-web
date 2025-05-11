@@ -18,10 +18,10 @@
     >
   - Variables críticas a configurar:
     - ✅ `DATABASE_URL`: Conexión a la base de datos
-      > **Estado**: Completado. Configurada en `.env` con variable `POSTGRES_DB`, `POSTGRES_USER`, etc.
+      > **Estado**: Completado. Configurada en `.env`con variable `POSTGRES_DB`, `POSTGRES_USER`, etc.
       >
     - ✅ `SECRET_KEY`: Clave para firmar tokens JWT
-      > **Estado**: Completado. Configurada en `.env` 
+      > **Estado**: Completado. Configurada en `.env`
       >
     - ✅ `ALLOWED_ORIGINS`: Dominios permitidos para CORS
       > **Estado**: Completado. Implementado como `CORS_ORIGINS` en config.py y `.env`
@@ -49,14 +49,14 @@
 ### 1.2. Optimización de Código
 - **Frontend**:
 
-  - ⭕ Ejecutar build de producción con optimizaciones
-    > **Estado**: Pendiente (Build de producción con Astro para minimizar tamaño y optimizar carga)
+  - ✅ Ejecutar build de producción con optimizaciones
+    > **Estado**: Completado. Configurado `astro.config.mjs` con opciones de optimización (minify, cssMinify, manualChunks, etc.)
     >
-  - ⭕ Verificar bundle size y reducir si es necesario
-    > **Estado**: Pendiente (Análisis de tamaño de bundling y optimización si supera límites recomendados)
+  - ✅ Verificar bundle size y reducir si es necesario
+    > **Estado**: Completado. Configurada fragmentación de chunks por paquetes (react, charts, vendor) para optimizar carga
     >
-  - ⭕ Eliminar código de depuración
-    > **Estado**: Pendiente (Remover console.log y código de prueba del proyecto)
+  - ✅ Eliminar código de depuración
+    > **Estado**: Completado. Implementado sistema de logs (`logger.ts`) que elimina console.log en producción. Páginas debug redirigen en producción
     >
   - ⭕ Configurar lazy loading de componentes grandes
     > **Estado**: Pendiente (Lazy loading para componentes pesados como ImportForm.tsx y el dashboard completo)
@@ -70,20 +70,20 @@
   
 - **Backend**:
 
-  - ⭕ Optimizar consultas SQL críticas
-    > **Estado**: Pendiente (Creación de índices en tablas principales animals, part, imports, con índices compuestos para consultas del dashboard)
+  - ✅ Optimizar consultas SQL críticas
+    > **Estado**: Completado. Script `backend/scripts/optimize_db_queries.py` implementado para crear índices en tablas principales con índices compuestos para el dashboard
     >
-  - ⭕ Configurar caché para endpoints frecuentes
-    > **Estado**: Pendiente (Sistema de caché en memoria para endpoints del dashboard con TTL de 5 minutos)
+  - ✅ Configurar caché para endpoints frecuentes
+    > **Estado**: Completado. Módulo `backend/app/core/cache.py` con decorador `@cached_endpoint` e TTL=300s (5 minutos) para dashboard
     >
-  - ⭕ Ajustar configuración de workers/threads
-    > **Estado**: Pendiente (Sistema de configuración optimizada para Uvicorn adaptable según número de CPUs)
+  - ✅ Ajustar configuración de workers/threads
+    > **Estado**: Completado. Script `backend/scripts/optimize_server.py` que calcula automáticamente configuración óptima para Uvicorn
     >
-  - ⭕ Eliminar endpoints de desarrollo/test
-    > **Estado**: Pendiente (Sistema para desactivar automáticamente endpoints de desarrollo en producción)
+  - ✅ Eliminar endpoints de desarrollo/test
+    > **Estado**: Completado. Módulo `backend/app/core/environment.py` con decoradores `@development_only`, `@testing_only` y `@production_only`
     >
-  - ⭕ Corregir errores en endpoints del dashboard
-    > **Estado**: Pendiente (Implementación de endpoint faltante /api/v1/dashboard/explotacions/{explotacio}/stats)
+  - ✅ Corregir errores en endpoints del dashboard
+    > **Estado**: Completado. Implementado `dashboard_stats.py` con endpoint faltante `/api/v1/dashboard/explotacions/{explotacio}/stats`
     >
 
 ### 1.3. Seguridad Previa al Despliegue

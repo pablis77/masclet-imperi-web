@@ -2,6 +2,12 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 from datetime import date
 
+class DashboardSummary(BaseModel):
+    """Resumen global para el dashboard principal"""
+    resumen: Dict[str, int]
+    top_explotaciones: List[Dict[str, Any]]
+    explotaciones: List[str]
+
 class AnimalStats(BaseModel):
     """Estadísticas básicas de animales"""
     total: int

@@ -1,5 +1,12 @@
 ---
 import DefaultLayout from '../layouts/DefaultLayout.astro';
+
+// Redireccionar a login en producción
+const isProd = import.meta.env.PROD || false;
+
+if (isProd) {
+  return Astro.redirect('/login');
+}
 ---
 
 <DefaultLayout title="Login Debug - Masclet Imperi">

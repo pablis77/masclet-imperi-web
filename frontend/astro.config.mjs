@@ -53,11 +53,29 @@ export default defineConfig({
       },
       // Excluir archivos de prueba
       build: {
+        // Optimizaciones para producción
+        minify: true,
+        cssMinify: true,
+        // Desactivar mapas de código fuente en producción
+        sourcemap: process.env.NODE_ENV !== 'production',
+        // Comprimir el output
+        assetsInlineLimit: 4096, // Inline assets menores a 4kb
         rollupOptions: {
           external: [
             // Excluir todos los archivos que comienzan con _test
             /\/src\/.*\/_test.*\.astro$/
-          ]
+          ],
+          output: {
+            // Fragmentar los chunks para mejor caching
+            manualChunks: (id) => {
+              // Todos los módulos de node_modules en un chunk separado
+              if (id.includes('node_modules')) {
+                if (id.includes('react')) return 'vendor-react';
+                if (id.includes('chart')) return 'vendor-charts';
+                return 'vendor';
+              }
+            }
+          }
         }
       }
     }
