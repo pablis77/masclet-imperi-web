@@ -1,3 +1,9 @@
+---
+// Este frontmatter se ejecuta solo en el servidor
+// Cualquier código que use APIs del navegador debe ir en un tag <script>
+---
+
+<script>
     // Configuración de botones de edición
     function setUpEditButtons() {
       const editButtons = document.querySelectorAll('.edit-parto-btn');
@@ -30,17 +36,15 @@
       const closeBtn = document.getElementById('edit-close-btn');
       const cancelBtn = document.getElementById('edit-cancel-btn');
       
-      // Establecer el ID del parto en el formulario
-      document.getElementById('parto-id').value = partoId;
+      // Mostrar modal
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
       
-      // Mostrar el modal
-      modal.classList.remove('hidden');
-      
-      // Obtener los datos del parto
+      // Obtener datos del parto desde la API
       const animalId = window.location.pathname.split('/').pop();
       
-      // Cargar los datos del parto
-      fetch(`${window.location.origin}/api/partos/${partoId}`)
+      fetch(`/api/v1/animals/${animalId}/partos/${partoId}`)
         .then(function(response) {
           if (!response.ok) {
             throw new Error('Error al cargar los datos del parto');
@@ -50,87 +54,89 @@
         .then(function(data) {
           const parto = data.data || data;
           
-          // Convertir la fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
-          let fechaInput = '';
+          // Llenar el formulario con los datos existentes
+          document.getElementById('parto-id').value = parto.id;
+          
+          // Formatear fecha a YYYY-MM-DD para input type date
           if (parto.part) {
-            if (typeof parto.part === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parto.part)) {
-              // Convertir de DD/MM/YYYY a YYYY-MM-DD
-              const parts = parto.part.split('/');
-              fechaInput = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-            } else if (typeof parto.part === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parto.part)) {
-              // Ya está en formato YYYY-MM-DD
-              fechaInput = parto.part;
-            } else {
-              // Intentar convertir cualquier formato de fecha a YYYY-MM-DD
-              try {
-                const fecha = new Date(parto.part);
-                if (!isNaN(fecha.getTime())) {
-                  fechaInput = fecha.toISOString().split('T')[0];
-                }
-              } catch (e) {
-                console.error('Error al formatear la fecha:', e);
-              }
+            const fecha = new Date(parto.part);
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const day = String(fecha.getDate()).padStart(2, '0');
+            document.getElementById('edit-fecha').value = `${year}-${month}-${day}`;
+          }
+          
+          // Establecer género
+          if (parto.genereT) {
+            const genero = parto.genereT.toLowerCase();
+            if (genero === 'm') {
+              document.getElementById('edit-genero-m').checked = true;
+            } else if (genero === 'f') {
+              document.getElementById('edit-genero-f').checked = true;
+            } else if (genero === 'esforrada') {
+              document.getElementById('edit-genero-e').checked = true;
             }
           }
           
-          // Rellenar el formulario
-          document.getElementById('parto-fecha').value = fechaInput;
-          document.getElementById('parto-genero').value = parto.GenereT || '';
-          document.getElementById('parto-estado').value = parto.EstadoT || 'OK';
-          document.getElementById('parto-observaciones').value = parto.observacions || '';
+          // Establecer estado
+          if (parto.estadoT) {
+            const estado = parto.estadoT.toLowerCase();
+            if (estado === 'ok') {
+              document.getElementById('edit-estado-ok').checked = true;
+            } else if (estado === 'def') {
+              document.getElementById('edit-estado-def').checked = true;
+            }
+          }
         })
         .catch(function(error) {
           console.error('Error:', error);
-          alert('Error al cargar los datos del parto: ' + error.message);
-          modal.classList.add('hidden');
+          alert('Error al cargar los datos: ' + error.message);
         });
       
-      // Configurar botones de cierre
-      closeBtn.addEventListener('click', function() {
+      // Configurar cierre del modal
+      function closeModal() {
         modal.classList.add('hidden');
-      });
+      }
       
-      cancelBtn.addEventListener('click', function() {
-        modal.classList.add('hidden');
-      });
+      closeBtn.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
       
-      // Manejar envío del formulario
+      // Configurar envío del formulario
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         
         // Obtener datos del formulario
         const partoId = document.getElementById('parto-id').value;
-        const fechaInput = document.getElementById('parto-fecha').value;
-        const genero = document.getElementById('parto-genero').value;
-        const estado = document.getElementById('parto-estado').value;
-        const observaciones = document.getElementById('parto-observaciones').value;
+        const fecha = document.getElementById('edit-fecha').value;
+        const generoM = document.getElementById('edit-genero-m').checked;
+        const generoF = document.getElementById('edit-genero-f').checked;
+        const generoE = document.getElementById('edit-genero-e').checked;
+        const estadoOK = document.getElementById('edit-estado-ok').checked;
+        const estadoDEF = document.getElementById('edit-estado-def').checked;
         
-        // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para la API
-        let fechaApi = '';
-        if (fechaInput) {
-          const partesFecha = fechaInput.split('-');
-          fechaApi = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
-        }
+        // Construir objeto de datos
+        let genero = '';
+        if (generoM) genero = 'M';
+        if (generoF) genero = 'F';
+        if (generoE) genero = 'esforrada';
         
-        // Preparar datos para la API
-        const partoData = {
-          part: fechaApi,
-          GenereT: genero,
-          EstadoT: estado,
-          observacions: observaciones
+        let estado = '';
+        if (estadoOK) estado = 'OK';
+        if (estadoDEF) estado = 'DEF';
+        
+        const data = {
+          part: fecha,
+          genereT: genero,
+          estadoT: estado
         };
         
-        // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
-        const token = localStorage.getItem('token') || 'admin123';
-        
         // Enviar datos a la API
-        fetch(`${window.location.origin}/api/partos/${partoId}`, {
-          method: 'PATCH',
+        fetch(`/api/v1/animals/${animalId}/partos/${partoId}`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(partoData)
+          body: JSON.stringify(data)
         })
         .then(function(response) {
           if (!response.ok) {
@@ -139,13 +145,13 @@
           return response.json();
         })
         .then(function(data) {
-          // Cerrar el modal
-          modal.classList.add('hidden');
-          
           // Mostrar mensaje de éxito
           showSuccessMessage('Parto actualizado correctamente');
           
-          // Recargar la lista de partos
+          // Cerrar modal
+          closeModal();
+          
+          // Recargar lista de partos
           cargarPartos();
         })
         .catch(function(error) {
@@ -159,38 +165,42 @@
     function openDeleteModal(partoId) {
       // Obtener el modal
       const modal = document.getElementById('delete-modal');
-      const confirmBtn = document.getElementById('delete-confirm-btn');
+      const form = document.getElementById('delete-form');
+      const closeBtn = document.getElementById('delete-close-btn');
       const cancelBtn = document.getElementById('delete-cancel-btn');
       
-      // Mostrar el modal
-      modal.classList.remove('hidden');
+      // Mostrar modal
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
       
-      // Configurar botón de cancelar
-      cancelBtn.addEventListener('click', function() {
-        modal.classList.add('hidden');
-      });
+      // Establecer el ID del parto en el formulario
+      document.getElementById('delete-parto-id').value = partoId;
       
-      // Configurar botón de confirmar
-      confirmBtn.addEventListener('click', function() {
-        // Ocultar el modal
+      // Configurar cierre del modal
+      function closeModal() {
         modal.classList.add('hidden');
+      }
+      
+      closeBtn.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      
+      // Configurar envío del formulario
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
-        const token = localStorage.getItem('token') || 'admin123';
+        // Obtener ID del parto a eliminar
+        const partoId = document.getElementById('delete-parto-id').value;
         
-        // Como no podemos eliminar realmente, marcamos el parto como ignorado
-        const partoData = {
-          observacions: "[REGISTRO DUPLICADO - IGNORAR] Este registro ha sido marcado como eliminado."
-        };
+        // Obtener ID del animal
+        const animalId = window.location.pathname.split('/').pop();
         
-        // Actualizar el parto en la API
-        fetch(`${window.location.origin}/api/partos/${partoId}`, {
-          method: 'PATCH',
+        // Enviar petición a la API
+        fetch(`/api/v1/animals/${animalId}/partos/${partoId}`, {
+          method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(partoData)
+          }
         })
         .then(function(response) {
           if (!response.ok) {
@@ -241,5 +251,10 @@
         alert.classList.add('hidden');
       }, 5000);
     }
-  });
+    
+    // Configurar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+      setUpEditButtons();
+      setUpDeleteButtons();
+    });
 </script>
