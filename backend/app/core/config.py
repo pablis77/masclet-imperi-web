@@ -126,10 +126,18 @@ class Settings(BaseModel):
         """
         Construir URL de conexión a la base de datos
         """
+        # Si DATABASE_URL está definido, usarlo directamente (prioridad para Render)
+        database_url_env = os.getenv("DATABASE_URL")
+        if database_url_env:
+            # Asegurarse de que sea compatible con Tortoise ORM
+            return database_url_env.replace("postgresql://", "postgres://")
+            
+        # Caso contrario, construir URL desde componentes individuales
         # Asegurarse de que el esquema sea postgres:// (no postgresql://)
         url = f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.db_host}:{self.db_port}/{self.postgres_db}"
         # Reemplazar postgresql:// por postgres:// para compatibilidad con Tortoise ORM
         url = url.replace("postgresql://", "postgres://")
+        print(f"Intentando conectar a la base de datos: {url}")
         return url
 
     @property
