@@ -1,4 +1,4 @@
-import apiService from './apiService';
+import * as apiService from './apiService';
 import { mockAnimals, mockExplotacions } from './mockData';
 import api from './api';
 
@@ -808,4 +808,8 @@ const animalService = {
   }
 };
 
+// Exportar funciones individuales para facilitar su uso
+export const getAnimalById = (id: number) => animalService.getAnimalById(id);
+
+// Exportar el objeto completo para uso avanzado
 export default animalService;
