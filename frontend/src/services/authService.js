@@ -41,6 +41,179 @@ const authService = {
   },
 
   /**
+   * Iniciar sesión
+   * @param {Object} credentials Credenciales del usuario
+   * @returns {Promise<Object>} Datos del usuario autenticado
+   */
+  async login(credentials) {
+    // Simulación de login para desarrollo
+    if (credentials.username === 'admin' && credentials.password === 'admin123') {
+      const user = {
+        id: 1,
+        username: 'admin',
+        role: 'administrador',
+        fullName: 'Administrador'
+      };
+      const token = 'token-simulado-admin-12345';
+      
+      this.saveToken(token);
+      this.saveUser(user);
+      
+      return { user, token };
+    }
+    
+    // En producción, usar llamada real a la API
+    // const response = await fetch(`${AUTH_URL}/login`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(credentials)
+    // });
+    // const data = await response.json();
+    // 
+    // if (!response.ok) {
+    //   throw new Error(data.detail || 'Error de autenticación');
+    // }
+    // 
+    // this.saveToken(data.token);
+    // this.saveUser(data.user);
+    // 
+    // return data;
+    
+    throw new Error('Credenciales inválidas');
+  },
+  
+  /**
+   * Cerrar sesión
+   */
+  logout() {
+    this.removeToken();
+    this.removeUser();
+  },
+  
+  /**
+   * Registrar un nuevo usuario
+   * @param {Object} userData Datos del nuevo usuario
+   * @returns {Promise<Object>} Datos del usuario creado
+   */
+  async register(userData) {
+    // En producción, usar llamada real a la API
+    // const response = await fetch(`${AUTH_URL}/register`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(userData)
+    // });
+    // return await response.json();
+    
+    // Simulación para desarrollo
+    return {
+      id: Date.now(),
+      ...userData,
+      created_at: new Date().toISOString()
+    };
+  },
+  
+  /**
+   * Actualizar datos de un usuario
+   * @param {number} userId ID del usuario
+   * @param {Object} userData Nuevos datos
+   * @returns {Promise<Object>} Datos actualizados
+   */
+  async updateUser(userId, userData) {
+    // En producción, usar llamada real a la API
+    // const response = await fetch(`${AUTH_URL}/users/${userId}`, {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Content-Type': 'application/json',
+    //     ...this.getAuthHeaders()
+    //   },
+    //   body: JSON.stringify(userData)
+    // });
+    // return await response.json();
+    
+    // Simulación para desarrollo
+    return {
+      id: userId,
+      ...userData,
+      updated_at: new Date().toISOString()
+    };
+  },
+  
+  /**
+   * Obtener usuario almacenado en localStorage
+   * @returns {Object|null} Datos del usuario o null
+   */
+  getStoredUser() {
+    if (isBrowser) {
+      try {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+      } catch (e) {
+        console.warn('Error obteniendo usuario de localStorage:', e);
+        return null;
+      }
+    }
+    return null;
+  },
+  
+  /**
+   * Guardar datos de usuario en localStorage
+   * @param {Object} user Datos del usuario
+   */
+  saveUser(user) {
+    if (isBrowser && user) {
+      try {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('userRole', user.role || 'usuario');
+      } catch (e) {
+        console.warn('Error guardando usuario en localStorage:', e);
+      }
+    }
+  },
+  
+  /**
+   * Eliminar datos de usuario de localStorage
+   */
+  removeUser() {
+    if (isBrowser) {
+      try {
+        localStorage.removeItem('user');
+        localStorage.removeItem('userRole');
+      } catch (e) {
+        console.warn('Error eliminando usuario de localStorage:', e);
+      }
+    }
+  },
+  
+  /**
+   * Obtener usuario actual (desde localStorage o API)
+   * @returns {Promise<Object|null>} Datos del usuario o null
+   */
+  async getCurrentUser() {
+    const storedUser = this.getStoredUser();
+    if (storedUser) {
+      return storedUser;
+    }
+    
+    // En una aplicación real, verificaríamos con la API
+    // if (this.isAuthenticated()) {
+    //   try {
+    //     const response = await fetch(`${AUTH_URL}/me`, {
+    //       headers: this.getAuthHeaders()
+    //     });
+    //     if (response.ok) {
+    //       const userData = await response.json();
+    //       this.saveUser(userData);
+    //       return userData;
+    //     }
+    //   } catch (e) {
+    //     console.error('Error obteniendo usuario actual:', e);
+    //   }
+    // }
+    
+    return null;
+  },
+
+  /**
    * Guardar token en localStorage
    * @param {string} token Token JWT
    */
@@ -50,7 +223,7 @@ const authService = {
       try {
         localStorage.setItem('token', token);
       } catch (e) {
-        console.warn('Error guardando en localStorage:', e);
+        console.warn('Error guardando token:', e);
       }
     }
   },
@@ -130,4 +303,18 @@ if (isBrowser) {
   }, 100);
 }
 
+// Exportar funciones individuales para compatibilidad con imports existentes
+export const isAuthenticated = () => authService.isAuthenticated();
+export const login = async (credentials) => authService.login(credentials);
+export const logout = () => authService.logout();
+export const register = async (userData) => authService.register(userData);
+export const updateUser = async (userId, userData) => authService.updateUser(userId, userData);
+export const getStoredUser = () => authService.getStoredUser();
+export const getCurrentUser = () => authService.getCurrentUser();
+export const getRedirectPathForUser = (user) => {
+  const role = user?.role || 'usuario';
+  return role === 'administrador' ? '/dashboard' : '/';
+};
+
+// Exportar el objeto completo para usos avanzados
 export default authService;
