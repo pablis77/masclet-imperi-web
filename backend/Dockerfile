@@ -43,9 +43,9 @@ COPY ./app /app/app
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser
 
-# Healthcheck
+# Healthcheck - Usando curl instalado en la imagen base
 HEALTHCHECK --interval=30s --timeout=30s --retries=3 \
-    CMD ["python", "-c", "import requests; requests.get('http://localhost:8000/api/v1/health')"]
+    CMD ["bash", "-c", "exec 3<>/dev/tcp/localhost/8000 && echo -e 'GET /api/v1/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q 'ok'"]
 
 # Comando de arranque
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
