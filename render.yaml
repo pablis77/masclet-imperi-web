@@ -1,0 +1,67 @@
+# Configuración para despliegue en Render
+services:
+  # Backend FastAPI
+  - type: web
+    name: masclet-imperi-api
+    runtime: docker
+    dockerfilePath: "./backend/Dockerfile"
+    dockerContext: "./backend"
+    plan: starter # Plan básico de Render ($7/mes)
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENVIRONMENT
+        value: prod
+      - key: POSTGRES_DB
+        sync: false # Valor manual en la consola de Render
+      - key: POSTGRES_USER
+        sync: false # Valor manual en la consola de Render
+      - key: POSTGRES_PASSWORD
+        sync: false # Valor manual en la consola de Render
+      - key: DB_HOST
+        fromDatabase:
+          name: masclet-imperi-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: masclet-imperi-db
+          property: port
+      - key: SECRET_KEY
+        generateValue: true # Genera una clave secreta aleatoria
+      - key: API_KEY
+        generateValue: true # Genera una API key aleatoria
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60 # 1 hora para entorno de producción
+      - key: ALGORITHM
+        value: HS256
+      - key: ENABLE_RATE_LIMIT
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS
+        value: 100
+      - key: RATE_LIMIT_WINDOW
+        value: 60
+      - key: DOMAIN
+        value: mascletimperi.com # Cambia esto por tu dominio real
+      - key: API_DOMAIN
+        value: api.mascletimperi.com # Cambia esto por tu dominio API
+
+  # Frontend Astro
+  - type: web
+    name: masclet-imperi-web
+    runtime: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview -- --host 0.0.0.0 --port $PORT
+    plan: starter # Plan básico de Render ($7/mes)
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: VITE_ENVIRONMENT
+        value: prod
+      - key: VITE_API_URL
+        value: https://api.mascletimperi.com # Cambia esto por tu dominio API real
+
+# Base de datos PostgreSQL
+databases:
+  - name: masclet-imperi-db
+    plan: starter # Starter plan PostgreSQL ($7/mes)
+    databaseName: masclet_imperi
+    user: masclet_admin

@@ -12,6 +12,7 @@ from app.api.endpoints.users import router as users_router
 from app.api.endpoints.admin import admin_router
 from app.api.endpoints.diagnostico import router as diagnostico_router
 from app.api.endpoints.explotacions import router as explotacions_router
+from app.api.endpoints.health import router as health_router
 
 # Crear router principal
 api_router = APIRouter()
@@ -84,4 +85,10 @@ api_router.include_router(
     dashboard_router,
     prefix="/dashboard",
     tags=["dashboard"]
+)
+
+# Rutas para health check (monitoreo)
+api_router.include_router(
+    health_router,
+    tags=["health"]
 )

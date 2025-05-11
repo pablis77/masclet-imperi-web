@@ -65,7 +65,15 @@
     > **Estado**: Completado. Creado script `optimize-css.js` que elimina reglas duplicadas, minimiza y combina archivos CSS para mejorar rendimiento y tiempo de carga.
     >
   - ✅ Reorganizar imágenes y recursos estáticos
-    > **Estado**: Completado. Implementado script `organize-assets.js` que reorganiza automáticamente los recursos en una estructura clara (/assets/icons/animals/, /assets/images/logos/, etc.) y genera mapa de assets para facilitar su uso en el código.
+    > **Estado**: Completado. Realizamos un análisis exhaustivo de las imágenes existentes, identificando su propósito y estandarizando su nomenclatura:
+    > - Eliminamos espacios en los nombres de archivos (ej: `vaca azul.png` → `vaca_azul.png`)
+    > - Categorizamos imágenes según su función:
+    >   - `toro.png`: Icono para animales machos en tablas y formularios
+    >   - `vaca_azul.png`: Icono para vacas activas/productivas
+    >   - `vaca_blanca.png`: Icono para vacas inactivas/en reposo
+    >   - `no_password.png`: Icono para indicar errores de autenticación
+    > - Reorganizamos los directorios en estructura lógica: `/assets/icons/animals/`, `/assets/images/auth/`, `/assets/logos/`, etc.
+    > - Implementamos un registro central de assets `asset-manifest.json` para facilitar referencias
     >
   
 - **Backend**:
@@ -150,24 +158,81 @@
 ## 3. Proceso de Despliegue Paso a Paso
 
 ### 3.1. Preparación del Repositorio
-1. Crear ramas específicas (`production`, `staging`)
-2. Configurar GitHub Actions o similar para CI/CD
-3. Crear archivo `Dockerfile` para el backend
-4. Optimizar `.gitignore` para producción
+
+- ✅ Crear ramas específicas (`production`, `staging`)
+  > **Estado**: Completado. Creadas dos ramas adicionales para gestionar el flujo de despliegue:
+  > - `staging`: Rama para pruebas previas a despliegue en producción
+  > - `production`: Rama para el código final que se despliega en producción
+  >
+  > **Propósito**: La separación en ramas permite un flujo de trabajo seguro donde podemos desarrollar en `main`, probar en `staging` y desplegar solo código verificado a `production`. Esto garantiza que nunca se despliegue código no probado y reduce el riesgo de errores en producción.
+  >
+  > **Proceso de trabajo**:
+  > 1. Desarrollo diario en rama `main`
+  > 2. Cuando una funcionalidad está lista, se hace merge a `staging` y se prueba completamente
+  > 3. Solo cuando todo funciona en `staging` se hace merge a `production` para el despliegue final
+  >
+
+- ✅ Crear archivo `Dockerfile` para el backend
+  > **Estado**: Completado. El archivo ya existía y lo hemos actualizado para usar el nuevo endpoint de health check en `/api/v1/health`.
+  >
+
+- ✅ Optimizar `.gitignore` para producción
+  > **Estado**: Completado. Ampliado el archivo `.gitignore` para:
+  > - Excluir múltiples tipos de archivos `.env` pero mantener `.env.example` como referencia
+  > - Añadir patrones para logs detallados y directorios de logs
+  > - Excluir archivos de seguridad, certificados y claves
+  > - Ignorar backups, volcados SQL y archivos temporales de producción
+  > - Evitar el rastreo de archivos de configuración específicos para producción
+  >
+
+- ⭕ Configurar GitHub Actions o similar para CI/CD
+  > **Estado**: Pendiente. Se implementará después de configurar los entornos en Render.
 
 ### 3.2. Configuración de la Base de Datos en Producción
-1. Crear instancia de base de datos en la plataforma elegida
-2. Configurar usuarios, contraseñas y accesos
-3. Implementar script de migración inicial
-4. Configurar backups automáticos
-5. Crear procedimiento de respaldo y recuperación
+
+- ✅ Configurar sistema de migraciones
+  > **Estado**: Completado. Creado script `prepare_db_migration.py` que:
+  > - Inicializa el sistema de migraciones usando Aerich
+  > - Genera la migración inicial para crear todas las tablas en producción
+  > - Configura la estructura completa de la base de datos para el primer despliegue
+  >
+
+- ✅ Establecer esquema de backups automáticos
+  > **Estado**: Completado. Implementado sistema completo de backups mediante script `backup_database.py`:
+  > - Realiza backups completos de PostgreSQL comprimidos (gzip)
+  > - Implementa política de retención configurable (30 días por defecto)
+  > - Nombra los archivos con timestamps para fácil identificación
+  > - Limpia automáticamente backups antiguos para optimizar espacio
+  >
+
+- ✅ Implementar sistema de restauración
+  > **Estado**: Completado. Creado script `restore_database.py` para recuperación de emergencia:
+  > - Permite restaurar cualquier backup existente
+  > - Ofrece opción para recrear la base de datos desde cero
+  > - Incluye interfaz interactiva para elegir el backup a usar
+  > - Implementa confirmaciones para prevenir restauraciones accidentales
+  >
+
+- ⭕ Crear instancia de base de datos en la plataforma elegida
+  > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
+  >
+
+- ⭕ Configurar seguridad (firewall, acceso restringido)
+  > **Estado**: Pendiente. Se implementará junto con la creación de la instancia en Render.
 
 ### 3.3. Despliegue del Backend
-1. Configurar variables de entorno en la plataforma
-2. Desplegar aplicación desde repositorio
-3. Configurar dominios y certificados SSL
-4. Implementar healthchecks y monitorización
-5. Realizar pruebas de carga y rendimiento
+
+- ⭕ Configurar variables de entorno en la plataforma
+  > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
+
+- ⭕ Desplegar servicio web API
+  > **Estado**: Pendiente. Se ejecutará una vez finalizadas todas las preparaciones.
+
+- ⭕ Verificar estado y logs
+  > **Estado**: Pendiente. Se verificará después del despliegue inicial.
+
+- ⭕ Configurar dominios y HTTPS
+  > **Estado**: Pendiente. Se configurará tras el despliegue exitoso del backend.
 
 ### 3.4. Despliegue del Frontend
 1. Configurar variables de entorno de producción

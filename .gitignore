@@ -23,6 +23,10 @@ wheels/
 
 # Environment
 .env
+.env.local
+.env.production
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -34,6 +38,12 @@ ENV/
 
 # Logs
 *.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.log/
 
 # Database
 *.sqlite3
@@ -48,6 +58,36 @@ yarn-error.log*
 # Build
 /build
 /dist
+frontend/dist/
+frontend/public/assets/css/masclet-bundle*.css
+
+# Archivos de seguridad y respaldo
+*.bak
+*.tmp
+*.swp
+*~
+.DS_Store
+ThumbsEE.db
+.directory
+*.dump
+*.sql
+*.zip
+*.tar
+*.gz
+
+# Archivos de configuración específicos de producción
+render.env
+security_audit_report.*
+
+# Archivos de certificados y claves
+*.pem
+*.key
+*.crt
+*.cer
+*.cert
+*.keystore
+*.p12
+*.pfx
 
 # misc
 .DS_Store
