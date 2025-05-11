@@ -1,3 +1,9 @@
+---
+// Este frontmatter se ejecuta solo en el servidor
+// Cualquier código que use APIs del navegador debe ir en un tag <script>
+---
+
+<script>
     // Función para cargar y mostrar los partos en la tabla
     function cargarPartos() {
       // Verificar si ya están cargados
@@ -238,3 +244,4 @@
         tbody.appendChild(row);
       });
     }
+</script>
