@@ -59,6 +59,7 @@ services:
     buildCommand: cd frontend && npm install && npm run build
     startCommand: cd frontend && npm run preview -- --host 0.0.0.0 --port $PORT
     plan: starter # Plan básico de Render ($7/mes)
+    healthCheckPath: /
     envVars:
       - key: NODE_VERSION
         value: 18.x
