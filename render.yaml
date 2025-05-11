@@ -56,8 +56,8 @@ services:
   - type: web
     name: masclet-imperi-web
     runtime: node
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run preview -- --host 0.0.0.0 --port $PORT
+    buildCommand: cd frontend && pnpm install --no-frozen-lockfile && pnpm run build
+    startCommand: cd frontend && pnpm run preview -- --host 0.0.0.0 --port $PORT
     plan: starter # Plan básico de Render ($7/mes)
     healthCheckPath: /
     envVars:
