@@ -42,12 +42,7 @@ export default defineConfig({
     ],
 
     // Configuración de build
-    output: 'server',  // Usando modo servidor para permitir rutas dinámicas
-    
-    // Adaptador para despliegue en Render
-    adapter: node({
-        mode: 'standalone'
-    }),
+    output: 'static',  // Cambiado a modo estático para evitar problemas con SSR
 
     // Configuración de vite (bundler usado por Astro)
     vite: {
