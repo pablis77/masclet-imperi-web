@@ -58,14 +58,14 @@
   - ✅ Eliminar código de depuración
     > **Estado**: Completado. Implementado sistema de logs (`logger.ts`) que elimina console.log en producción. Páginas debug redirigen en producción
     >
-  - ⭕ Configurar lazy loading de componentes grandes
-    > **Estado**: Pendiente (Lazy loading para componentes pesados como ImportForm.tsx y el dashboard completo)
+  - ✅ Configurar lazy loading de componentes grandes
+    > **Estado**: Completado. Implementado `LazyComponents.tsx` con carga perezosa para Dashboard, AnimalTable, AnimalForm, gráficos y secciones pesadas, junto con utilidad `lazyLoad.ts`.
     >
-  - ⭕ Optimizar archivos CSS
-    > **Estado**: Pendiente (Optimización de lemon-squeezy.css, global.css y main.css eliminando clases redundantes)
+  - ✅ Optimizar archivos CSS
+    > **Estado**: Completado. Creado script `optimize-css.js` que elimina reglas duplicadas, minimiza y combina archivos CSS para mejorar rendimiento y tiempo de carga.
     >
-  - ⭕ Reorganizar imágenes y recursos estáticos
-    > **Estado**: Pendiente (Estructura clara para assets: /assets/icons/animals/, /assets/images/logos/, etc.)
+  - ✅ Reorganizar imágenes y recursos estáticos
+    > **Estado**: Completado. Implementado script `organize-assets.js` que reorganiza automáticamente los recursos en una estructura clara (/assets/icons/animals/, /assets/images/logos/, etc.) y genera mapa de assets para facilitar su uso en el código.
     >
   
 - **Backend**:
@@ -88,20 +88,20 @@
 
 ### 1.3. Seguridad Previa al Despliegue
 
-- ⭕ Eliminar cualquier credencial hardcodeada
-  > **Estado**: Pendiente (Revisar y eliminar todas las credenciales del código fuente)
+- ✅ Eliminar cualquier credencial hardcodeada
+  > **Estado**: Completado. Creado script `security_audit.py` para detectar credenciales hardcodeadas y reemplazadas con placeholders seguras. Todas las credenciales ahora se cargan desde variables de entorno.
   >
-- ⭕ Revisar tokens o claves expuestas en el código
-  > **Estado**: Pendiente (Verificar que no hay tokens o claves en el código fuente)
+- ✅ Revisar tokens o claves expuestas en el código
+  > **Estado**: Completado. Script `generate_secure_keys.py` implementado para generar claves seguras aleatorias para el entorno de producción, con archivo `.env.example` para documentación sin valores reales.
   >
-- ⭕ Asegurar que no hay rutas de depuración habilitadas
-  > **Estado**: Pendiente (Usar módulo disable_dev_endpoints.py para desactivar endpoints de desarrollo en producción)
+- ✅ Asegurar que no hay rutas de depuración habilitadas
+  > **Estado**: Completado. Se ha implementado el script `secure_production.py` que identifica y deshabilita automáticamente páginas de depuración (`login-debug.astro` y `dashboard-debug.astro`) en producción mediante renombrado con extensión `.disabled`.
   >
-- ⭕ Configurar rate limiting para APIs sensibles
-  > **Estado**: Pendiente (Implementar middleware de rate limiting para endpoints sensibles como login, admin e imports)
+- ✅ Configurar rate limiting para APIs sensibles
+  > **Estado**: Completado. Implementado middleware `RateLimitMiddleware` en módulo `security.py` para limitar peticiones a endpoints sensibles, con configuración de diferentes límites según la ruta y protección contra ataques de fuerza bruta.
   >
-- ⭕ Verificar headers de seguridad (HSTS, CSP, etc.)
-  > **Estado**: Pendiente (Añadir middleware security_headers.py con cabeceras HSTS, CSP, X-Frame-Options, etc.)
+- ✅ Verificar headers de seguridad (HSTS, CSP, etc.)
+  > **Estado**: Completado. Implementado `SecurityHeadersMiddleware` que añade automáticamente cabeceras de seguridad como X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Content-Security-Policy, HSTS y Permissions-Policy.
   >
 
 ## 2. Selección de Plataforma de Hosting

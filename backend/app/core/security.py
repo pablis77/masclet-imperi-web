@@ -35,21 +35,40 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.last_cleanup = time.time()
         self.excluded_paths = excluded_paths or []
         # Límites específicos por ruta: {path: (requests, window)}
-        self.sensitive_paths = sensitive_paths or {
+        # Valores predeterminados para producción
+        default_limits = {
             "/api/v1/auth/login": (10, 60),  # 10 intentos por minuto
             "/api/v1/auth/register": (5, 60),  # 5 registros por minuto
             "/api/v1/admin/": (30, 60),  # 30 peticiones admin por minuto
             "/api/v1/imports/": (5, 60),  # 5 importaciones por minuto
         }
+        
+        # Valores más permisivos para desarrollo
+        dev_limits = {
+            "/api/v1/auth/login": (100, 60),  # 100 intentos por minuto
+            "/api/v1/auth/register": (50, 60),  # 50 registros por minuto
+            "/api/v1/admin/": (300, 60),  # 300 peticiones admin por minuto
+            "/api/v1/imports/": (100, 60),  # 100 importaciones por minuto
+        }
+        
+        # Usar límites según el entorno
+        self.sensitive_paths = sensitive_paths or (dev_limits if settings.environment in ("dev", "test") else default_limits)
     
     async def dispatch(self, request: Request, call_next):
         # No aplicar límites en modo desarrollo si está configurado así
         if settings.environment in ("dev", "test") and not settings.enable_rate_limit:
             return await call_next(request)
         
+        # Lista de IPs confiables (localhost, etc.) que nunca tendrán rate limiting
+        trusted_ips = ["127.0.0.1", "::1", "localhost"]
+        
         # Obtener la IP del cliente o un identificador único
         client_ip = self._get_client_ip(request)
         path = request.url.path
+        
+        # Nunca aplicar rate limiting a IPs confiables en desarrollo
+        if settings.environment in ("dev", "test") and client_ip in trusted_ips:
+            return await call_next(request)
         
         # Comprobar si la ruta está excluida
         if any(path.startswith(excluded) for excluded in self.excluded_paths):
