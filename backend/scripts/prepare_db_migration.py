@@ -94,11 +94,12 @@ async def create_superuser():
         admin = await User.filter(is_superuser=True).first()
         
         if not admin:
-            # Crear nuevo superusuario para producción
-            admin_password = os.environ.get('ADMIN_PASSWORD', 'admin_production_password')
+            # Crear nuevo superusuario con credenciales fijas para demostración (admin/admin123)
+            admin_username = "admin"
+            admin_password = "admin123"  # Credencial fija para demostración
             
             admin = User(
-                username="admin",
+                username=admin_username,
                 email="admin@mascletimperi.com",
                 full_name="Administrador",
                 password_hash=get_password_hash(admin_password),
@@ -108,11 +109,22 @@ async def create_superuser():
             
             await admin.save()
             logger.info("Usuario administrador creado correctamente para producción")
-            logger.info("Username: admin")
-            logger.info("Contraseña: (se ha utilizado la variable de entorno ADMIN_PASSWORD o el valor por defecto)")
-            logger.info("IMPORTANTE: Cambie la contraseña después del primer inicio de sesión!")
+            logger.info(f"Username: {admin_username}")
+            logger.info(f"Contraseña: {admin_password}")
+            logger.info("IMPORTANTE: Solo hay perfil administrador para demostración al cliente")
         else:
-            logger.info("Ya existe un superusuario en la base de datos")
+            # Si ya existe, asegurarse de que tenga las credenciales correctas
+            admin_password = "admin123"
+            admin.username = "admin"
+            admin.email = "admin@mascletimperi.com"
+            admin.full_name = "Administrador"
+            admin.password_hash = get_password_hash(admin_password)
+            admin.is_active = True
+            admin.is_superuser = True
+            await admin.save()
+            logger.info("Superusuario existente actualizado con credenciales fijas")
+            logger.info("Username: admin")
+            logger.info(f"Contraseña: {admin_password}")
             
     except Exception as e:
         logger.error(f"Error al crear el superusuario: {str(e)}")
