@@ -1,0 +1,60 @@
+---
+// Props que pueden ser pasados al componente
+interface Props {
+  userRole?: string;
+  currentPath?: string;
+  title?: string;
+}
+
+// Valores predeterminados para las props
+const { 
+  userRole: propsUserRole = "usuario",
+  currentPath = "/",
+  title = "Masclet Imperi"
+} = Astro.props;
+
+// En producción siempre mostramos como administrador
+const isProd = import.meta.env.PROD || import.meta.env.VITE_ENVIRONMENT === "prod";
+const userRole = isProd ? "administrador" : propsUserRole;
+
+// Menú de navegación según rol
+const menuItems = [
+  { name: "Dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Explotaciones", url: "/explotacions", icon: "🏡", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Animales", url: "/animals", icon: "🐄", roles: ["administrador", "gerente", "editor", "usuario"] },
+  { name: "Usuarios", url: "/users", icon: "👥", roles: ["administrador", "gerente"] },
+  { name: "Importación", url: "/imports", icon: "📥", roles: ["administrador"] },
+  { name: "Backup", url: "/backup", icon: "💾", roles: ["administrador"] },
+];
+
+// Filtrar menú según rol del usuario
+const filteredMenu = menuItems.filter(item => item.roles.includes(userRole));
+
+// Función para determinar si un elemento está activo
+const isActive = (itemUrl: string) => {
+  if (itemUrl === "/" && currentPath === "/") return true;
+  if (itemUrl !== "/" && currentPath.startsWith(itemUrl)) return true;
+  return false;
+};
+---
+
+<header class="bg-primary text-white shadow-md">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="font-bold text-xl">{title}</div>
+    
+    <nav class="flex space-x-4">
+      {filteredMenu.map(item => (
+        <a 
+          href={item.url} 
+          class={`px-3 py-2 rounded ${isActive(item.url) ? "bg-primary-dark" : "hover:bg-primary-light"}`}
+        >
+          <span>{item.icon}</span> {item.name}
+        </a>
+      ))}
+      
+      <span class="px-3 py-2 bg-primary-dark rounded">
+        {userRole}
+      </span>
+    </nav>
+  </div>
+</header>
