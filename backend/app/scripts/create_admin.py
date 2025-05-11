@@ -32,7 +32,7 @@ async def create_admin_user():
     # Datos del administrador
     admin_data = {
         "username": "admin",
-        "email": "admin@example.com",
+        "email": "pablomgallegos@gmail.com",
         "password": "admin123",
         "full_name": "Admin Usuario",
         "role": "administrador",

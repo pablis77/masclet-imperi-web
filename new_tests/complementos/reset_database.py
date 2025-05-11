@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Script para reiniciar completamente la base de datos y recargar datos desde el CSV.
+Script para limpiar completamente la base de datos.
 
 Este script realiza las siguientes operaciones:
 1. Borra TODOS los datos actuales de la base de datos (explotaciones, animales, partos, etc.)
-2. Recarga datos limpios desde el archivo matriz_master.csv original
-3. Asegura que los datos se carguen respetando las reglas de negocio correctas
+2. Mantiene la estructura de la base de datos intacta
+3. Crea un usuario administrador por defecto
 
 IMPORTANTE: Este script eliminará TODOS los datos actuales. Úselo con precaución.
 """
@@ -87,8 +87,8 @@ async def reset_database():
         await Animal.all().delete()
         logger.info("Borrados todos los registros de animales")
         
-        await Explotacio.all().delete()
-        logger.info("Borradas todas las explotaciones")
+        # Nota: El modelo Explotacio es abstracto y no tiene tabla real
+        # por lo tanto, no necesitamos borrar sus datos
         
         # No borramos usuarios para mantener la configuración
         
@@ -116,19 +116,14 @@ async def fix_database_schema():
     try:
         logger.info("=== CORRIGIENDO ESQUEMA DE BASE DE DATOS ===")
         
-        # 1. Hacer que 'nom' sea nullable en explotaciones
-        success = await execute_raw_sql(
-            "ALTER TABLE explotacions ALTER COLUMN nom DROP NOT NULL;"
-        )
-        if success:
-            logger.info("Columna 'nom' de explotaciones ahora permite valores NULL")
+        # Nota: Explotacio es un modelo abstracto y no tiene tabla real en la BD
+        # Por lo tanto, no necesitamos modificar ninguna tabla 'explotacions'
         
-        # 2. Hacer que 'explotacio' sea NOT NULL en explotaciones
-        success = await execute_raw_sql(
-            "ALTER TABLE explotacions ALTER COLUMN explotacio SET NOT NULL;"
-        )
-        if success:
-            logger.info("Columna 'explotacio' de explotaciones ahora es NOT NULL")
+        # Aquí se pueden agregar otras correcciones de esquema si son necesarias en el futuro
+        # Por ejemplo:
+        # success = await execute_raw_sql("ALTER TABLE animals ADD COLUMN new_field TEXT;")
+        # if success:
+        #     logger.info("Columna 'explotacio' de explotaciones ahora es NOT NULL")
         
         logger.info("Esquema de base de datos actualizado correctamente")
         return True
@@ -317,37 +312,42 @@ async def create_default_admin():
         logger.error(f"Error al crear administrador: {str(e)}", exc_info=True)
 
 async def main():
-    """Función principal"""
+    """
+    Función principal que ejecuta la secuencia de operaciones
+    """
+    logger.info("Iniciando proceso de limpieza de la base de datos")
+    
     try:
+        # Inicializar conexión a la base de datos
         await init_db()
         
-        # Preguntar confirmación
-        response = input("⚠️ ADVERTENCIA: Este script borrará TODOS los datos actuales de la base de datos. ¿Estás seguro? (s/N): ")
+        # Preguntar al usuario si está seguro
+        confirmation = input("\n\nADVERTENCIA: Este script borrará TODOS los datos de la base de datos.\n"
+                            "\u00bfEstá seguro de que desea continuar? (s/N): ")
         
-        if response.lower() != 's':
+        if confirmation.lower() != 's':
             logger.info("Operación cancelada por el usuario")
-            await close_db()
             return
         
-        # Ejecutar reinicio
+        # Borrar todos los datos existentes
         await reset_database()
         
-        # Corregir esquema de la base de datos
-        schema_fixed = await fix_database_schema()
-        if not schema_fixed:
-            logger.warning("No se pudo corregir el esquema de la base de datos. La importación puede fallar.")
+        # Corregir el esquema de la base de datos si es necesario
+        await fix_database_schema()
         
-        # Importar datos
-        await import_data_from_csv()
-        
-        # Crear admin por defecto
+        # Crear usuario admin por defecto
         await create_default_admin()
         
-        logger.info("=== OPERACIÓN COMPLETADA CON ÉXITO ===")
-        
+        logger.info("Limpieza de base de datos completada exitosamente")
+        logger.info("Ahora puede importar datos de prueba desde la interfaz de importación o mediante API")
+    
     except Exception as e:
-        logger.error(f"Error en la operación: {str(e)}", exc_info=True)
+        logger.error(f"Error durante el proceso: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+    
     finally:
+        # Cerrar conexión a la base de datos
         await close_db()
 
 if __name__ == "__main__":

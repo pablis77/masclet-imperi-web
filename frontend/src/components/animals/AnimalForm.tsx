@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import animalService from '../../services/animalService';
 import type { Animal, AnimalCreateDto, AnimalUpdateDto } from '../../services/animalService';
-import type { Explotacion } from '../../services/explotacionService';
+
+// Definición local del tipo Explotacion para mantener compatibilidad
+type Explotacion = {
+  id: number;
+  explotacio: string;
+  animal_count?: number;
+};
 
 interface AnimalFormProps {
   animalData?: Animal;
@@ -19,11 +25,11 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
   onCancel 
 }) => {
   const [formData, setFormData] = useState<AnimalCreateDto>({
-    explotacio_id: 0,
+    explotacio: '',
     nom: '',
     genere: 'M',
-    estat: 'ACT',
-    alletar: 'NO',
+    estado: 'OK',
+    alletar: '0',
   });
   
   const [potentialFathers, setPotentialFathers] = useState<Animal[]>([]);
@@ -42,13 +48,13 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
         if (isEditMode && animalData) {
           console.log(`Cargando datos para animal ID: ${animalData.id}`);
           setFormData({
-            explotacio_id: animalData.explotacio_id,
+            explotacio: animalData.explotacio,
             nom: animalData.nom,
             genere: animalData.genere,
-            estat: animalData.estat,
+            estado: animalData.estado,
             alletar: animalData.alletar,
-            pare_id: animalData.pare_id,
-            mare_id: animalData.mare_id,
+            pare: animalData.pare,
+            mare: animalData.mare,
             quadra: animalData.quadra,
             cod: animalData.cod,
             num_serie: animalData.num_serie,
@@ -57,10 +63,8 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
           
           // Cargar padres y madres potenciales
           try {
-            const [fathers, mothers] = await Promise.all([
-              animalService.getPotentialFathers(animalData.explotacio_id),
-              animalService.getPotentialMothers(animalData.explotacio_id)
-            ]);
+            const fathers = await animalService.getPotentialFathers(animalData?.explotacio);
+            const mothers = await animalService.getPotentialMothers(animalData?.explotacio);
             
             setPotentialFathers(fathers);
             setPotentialMothers(mothers);
@@ -223,16 +227,17 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Explotación *
             </label>
             <select
-              name="explotacio_id"
-              value={formData.explotacio_id || ''}
+              id="explotacio"
+              name="explotacio"
+              className="form-select"
+              value={formData.explotacio}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
             >
-              <option value="">Seleccione una explotación</option>
-              {explotaciones.map(explotacion => (
-                <option key={explotacion.id} value={explotacion.id}>
-                  {explotacion.nombre}
+              <option value="">Seleccionar explotación</option>
+              {explotaciones.map((explotacion) => (
+                <option key={explotacion.id} value={explotacion.explotacio}>
+                  {explotacion.explotacio}
                 </option>
               ))}
             </select>
@@ -276,13 +281,14 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Estado *
             </label>
             <select
-              name="estat"
-              value={formData.estat}
+              id="estado"
+              name="estado"
+              className="form-select"
+              value={formData.estado}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
             >
-              <option value="ACT">Activo</option>
+              <option value="OK">Activo</option>
               <option value="DEF">Baja</option>
             </select>
           </div>
@@ -349,15 +355,16 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Padre
             </label>
             <select
-              name="pare_id"
-              value={formData.pare_id || ''}
+              id="pare"
+              name="pare"
+              className="form-select"
+              value={formData.pare || ''}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
             >
               <option value="">Sin padre</option>
-              {potentialFathers.map(father => (
-                <option key={father.id} value={father.id}>
-                  {father.nom} {father.cod ? `(${father.cod})` : ''}
+              {potentialFathers.map((father) => (
+                <option key={father.id} value={father.nom}>
+                  {father.nom}
                 </option>
               ))}
             </select>
@@ -369,15 +376,16 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Madre
             </label>
             <select
-              name="mare_id"
-              value={formData.mare_id || ''}
+              id="mare"
+              name="mare"
+              className="form-select"
+              value={formData.mare || ''}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
             >
               <option value="">Sin madre</option>
-              {potentialMothers.map(mother => (
-                <option key={mother.id} value={mother.id}>
-                  {mother.nom} {mother.cod ? `(${mother.cod})` : ''}
+              {potentialMothers.map((mother) => (
+                <option key={mother.id} value={mother.nom}>
+                  {mother.nom}
                 </option>
               ))}
             </select>
@@ -391,14 +399,16 @@ const AnimalForm: React.FC<AnimalFormProps> = ({
               Amamantando
             </label>
             <select
+              id="alletar"
               name="alletar"
+              className="form-select"
               value={formData.alletar}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-dark-text"
+              disabled={formData.genere !== 'F'}
             >
-              <option value="NO">No</option>
-              <option value="1">Sí, 1</option>
-              <option value="2">Sí, 2</option>
+              <option value="0">No</option>
+              <option value="1">1 ternero</option>
+              <option value="2">2 terneros</option>
             </select>
           </div>
         )}

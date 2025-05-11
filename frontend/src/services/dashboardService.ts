@@ -111,7 +111,7 @@ export const getDashboardStats = async (params: DashboardParams = {}): Promise<D
     console.log(` [dashboardService] Parámetros de consulta: ${Object.fromEntries(queryParams.entries())}`);
     
     // Usar el endpoint correcto según la documentación
-    const endpoint = '/api/v1/dashboard/stats';
+    const endpoint = '/dashboard/stats';
     console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
     
     const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
@@ -142,7 +142,7 @@ export const getExplotacionStats = async (explotacionId: number, params: Dashboa
     
     console.log(` [Dashboard] Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, Object.fromEntries(queryParams.entries()));
     
-    const endpoint = `/api/v1/dashboard/explotacions/${explotacionId}`;
+    const endpoint = `/dashboard/explotacions/${explotacionId}`;
     console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<ExplotacionDetailResponse>(`${endpoint}?${queryParams.toString()}`);
@@ -179,7 +179,7 @@ export const getExplotaciones = async (_cache?: string): Promise<ExplotacionResp
     queryParams.append('_cache', cacheParam);
     
     // Usar el endpoint correcto según la documentación
-    const endpoint = '/api/v1/dashboard/explotacions';
+    const endpoint = '/dashboard/explotacions';
     console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
     
     const response = await get<ExplotacionResponse[]>(`${endpoint}?${queryParams.toString()}`);
@@ -206,7 +206,7 @@ export const getDashboardResumen = async (_cache?: string): Promise<DashboardRes
     
     console.log(' [Dashboard] Iniciando solicitud de resumen');
     
-    const endpoint = '/api/v1/dashboard/resumen';
+    const endpoint = '/dashboard/resumen';
     console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
@@ -248,7 +248,7 @@ export const getPartosStats = async (params: DashboardParams = {}): Promise<Part
     console.log(' [Dashboard] Iniciando solicitud de estadísticas de partos');
     console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
-    const endpoint = '/api/v1/dashboard/partos';
+    const endpoint = '/dashboard/partos';
     console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<PartosResponse>(`${endpoint}?${queryParams.toString()}`);
@@ -290,7 +290,7 @@ export const getCombinedDashboard = async (params: DashboardParams = {}): Promis
     console.log(' [Dashboard] Iniciando solicitud de dashboard combinado');
     console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
-    const endpoint = '/api/v1/dashboard/combined';
+    const endpoint = '/dashboard/combined';
     console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<CombinedDashboardResponse>(`${endpoint}?${queryParams.toString()}`);
@@ -330,7 +330,7 @@ export const getRecentActivities = async (_cache?: string, limit: number = 5): P
     console.log(' [Dashboard] Iniciando solicitud de actividades recientes');
     console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
-    const endpoint = '/api/v1/dashboard/recientes';
+    const endpoint = '/dashboard/recientes';
     console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<RecentActivityResponse>(`${endpoint}?${queryParams.toString()}`);

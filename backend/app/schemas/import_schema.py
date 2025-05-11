@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
+from pydantic import BaseModel
 
 class ImportStatus(str, Enum):
     """Estado de una importación"""
@@ -38,9 +39,22 @@ class ImportResponse(BaseModel):
     description: Optional[str] = None
     result: Optional[ImportResult] = None
 
+class ImportHistoryItem(BaseModel):
+    """Elemento individual del historial de importaciones"""
+    id: int
+    filename: str
+    created_at: datetime
+    status: str
+    user_id: Optional[int] = None
+    user_name: Optional[str] = None
+    total_records: int = 0
+    successful_records: int = 0
+    failed_records: int = 0
+
 class ImportListResponse(BaseModel):
     """Lista paginada de importaciones"""
-    items: List[ImportResponse]
+    items: List[ImportHistoryItem]
     total: int
     page: int
     size: int
+    totalPages: int

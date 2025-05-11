@@ -138,7 +138,10 @@ class AnimalUpdate(BaseModel):
                 "alletar": "0",
                 "dob": "01/01/2020"
             }
-        }
+        },
+        # Esto es clave para actualizaciones parciales
+        # Solo se incluirán en model_dump los campos que se enviaron explícitamente
+        exclude_unset=True
     )
 
     @validator('dob')

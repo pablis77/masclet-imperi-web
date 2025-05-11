@@ -1,0 +1,111 @@
+import axios from 'axios';
+
+// Configuración global
+let API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+let USE_MOCK_DATA = false;
+
+// Crear instancia de axios con configuración base
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Interceptor para añadir token de autenticación a todas las peticiones
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Función para configurar la API
+export function configureApi(baseUrl: string, useMockData: boolean = false) {
+  API_BASE_URL = baseUrl;
+  USE_MOCK_DATA = useMockData;
+  api.defaults.baseURL = baseUrl;
+  
+  console.log(`API configurada con URL base: ${baseUrl}`);
+  console.log(`Uso de datos simulados: ${useMockData ? 'SÍ' : 'NO'}`);
+}
+
+// Función para realizar peticiones GET
+export async function get<T = any>(endpoint: string): Promise<T> {
+  try {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await api.get<T>(normalizedEndpoint);
+    return response.data;
+  } catch (error) {
+    console.error(`Error en petición GET a ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Función para realizar peticiones POST
+export async function post<T = any>(endpoint: string, data: any): Promise<T> {
+  try {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await api.post<T>(normalizedEndpoint, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error en petición POST a ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Función para realizar peticiones PUT
+export async function put<T = any>(endpoint: string, data: any): Promise<T> {
+  try {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await api.put<T>(normalizedEndpoint, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error en petición PUT a ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Función para realizar peticiones PATCH
+export async function patch<T = any>(endpoint: string, data: any): Promise<T> {
+  try {
+    // Normalizar endpoint
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    console.log(`Realizando petición PATCH a ${API_BASE_URL}${normalizedEndpoint}`);
+    console.log('Datos enviados:', data);
+    
+    // Realizar petición
+    const response = await api.patch<T>(normalizedEndpoint, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error en petición PATCH a ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Función para realizar peticiones DELETE
+export async function del<T = any>(endpoint: string): Promise<T> {
+  try {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await api.delete<T>(normalizedEndpoint);
+    return response.data;
+  } catch (error) {
+    console.error(`Error en petición DELETE a ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+export default {
+  get,
+  post,
+  put,
+  patch,
+  delete: del,
+  configureApi
+};

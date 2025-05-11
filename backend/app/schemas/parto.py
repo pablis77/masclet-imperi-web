@@ -42,14 +42,7 @@ class PartoCreate(PartoBase):
     
     @validator('animal_id', 'animal_nom')
     def validate_animal_ref(cls, v, values, **kwargs):
-        # Asegurar que se proporcionó al menos animal_id o animal_nom
-        field = kwargs.get('field')
-        if field.name == 'animal_id' and not v:
-            if 'animal_nom' not in values or not values['animal_nom']:
-                raise ValueError('Se debe proporcionar al menos animal_id o animal_nom')
-        elif field.name == 'animal_nom' and not v:
-            if 'animal_id' not in values or not values['animal_id']:
-                raise ValueError('Se debe proporcionar al menos animal_id o animal_nom')
+        # Simplemente devolver el valor, la validación se hará en el endpoint
         return v
 
 class PartoUpdate(BaseModel):
@@ -58,6 +51,7 @@ class PartoUpdate(BaseModel):
     GenereT: Optional[Genere] = None
     EstadoT: Optional[Estado] = None
     numero_part: Optional[int] = None
+    observacions: Optional[str] = Field(None, description="Observaciones sobre el parto")
 
     @validator('part')
     def validate_part(cls, v):
@@ -83,11 +77,25 @@ class PartoData(BaseModel):
     id: int
     animal_id: int
     part: str
-    GenereT: Genere
-    EstadoT: Estado
+    GenereT: str  # Cambiado de Genere (enum) a str para mejor compatibilidad
+    EstadoT: str  # Cambiado de Estado (enum) a str para mejor compatibilidad
     numero_part: int
     created_at: str
     observacions: Optional[str] = None
+    
+    @validator('GenereT')
+    def validate_genere(cls, v):
+        # Validar y convertir GenereT a string si es un enum
+        if hasattr(v, 'value'):
+            return v.value
+        return v
+    
+    @validator('EstadoT')
+    def validate_estado(cls, v):
+        # Validar y convertir EstadoT a string si es un enum
+        if hasattr(v, 'value'):
+            return v.value
+        return v
 
     @validator('part', pre=True)
     def format_part(cls, v):

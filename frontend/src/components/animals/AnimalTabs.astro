@@ -1,0 +1,177 @@
+---
+// AnimalTabs.astro - Componente para manejar el sistema de pestañas
+import AnimalInfoTab from './AnimalInfoTab.astro';
+import AnimalPartosTab from './AnimalPartosTab.astro';
+import AnimalChangesTab from './AnimalChangesTab.astro';
+import PartoModal from './PartoModal.astro';
+
+export interface Props {
+  animal: any;
+  showPartosTab: boolean;
+}
+
+const { animal, showPartosTab } = Astro.props;
+---
+
+<!-- Elemento oculto con datos del animal para el script -->
+<div id="animal-data" class="hidden" 
+  data-genere={animal.genere}
+  data-tiene-partos={
+    (animal.partos && animal.partos.items && animal.partos.items.length > 0) || 
+    (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) || 
+    (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) ? 'true' : 'false'
+  }
+></div>
+
+<!-- Pestañas de información detallada -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+  <!-- Pestañas de navegación -->
+  <div class="flex border-b border-gray-200 dark:border-gray-700">
+    <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
+      Información Completa
+    </button>
+    {showPartosTab && (
+      <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+        Historial de Partos
+      </button>
+    )}
+    <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+      Historial de Cambios
+    </button>
+  </div>
+
+  <!-- Contenido de pestañas -->
+  <div class="p-6">
+    <!-- Pestaña 1: Información Completa -->
+    <div id="content-info">
+      <AnimalInfoTab animal={animal} />
+    </div>
+
+    <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
+    {showPartosTab && (
+      <div id="content-partos" class="hidden">
+        <AnimalPartosTab animal={animal} />
+      </div>
+    )}
+
+    <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
+    <div id="content-changes" class="hidden">
+      <AnimalChangesTab animal={animal} />
+    </div>
+  </div>
+</div>
+
+<!-- Modales para edición/eliminación de partos -->
+{showPartosTab && <PartoModal />}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Variable para controlar la activación de la pestaña de partos
+    let partosTabActivated = false;
+    let loadingPartos = false;
+    
+    // Pestañas
+    const tabInfo = document.getElementById('tab-info');
+    const tabPartos = document.getElementById('tab-partos');
+    const tabChanges = document.getElementById('tab-changes');
+    
+    const contentInfo = document.getElementById('content-info');
+    const contentPartos = document.getElementById('content-partos');
+    const contentChanges = document.getElementById('content-changes');
+    
+    if (tabInfo && contentInfo) {
+      tabInfo.addEventListener('click', function() {
+        // Activar esta pestaña
+        tabInfo.classList.add('text-primary', 'border-b-2', 'border-primary');
+        tabInfo.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        
+        // Desactivar otras pestañas
+        if (tabPartos) {
+          tabPartos.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabPartos.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        if (tabChanges) {
+          tabChanges.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabChanges.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        
+        // Mostrar este contenido y ocultar otros
+        contentInfo.classList.remove('hidden');
+        if (contentPartos) contentPartos.classList.add('hidden');
+        if (contentChanges) contentChanges.classList.add('hidden');
+      });
+    }
+    
+    if (tabPartos && contentPartos) {
+      tabPartos.addEventListener('click', function() {
+        // Prevenir clics rápidos repetidos o si ya está cargando
+        if (loadingPartos) {
+          console.log('Carga de partos en proceso, evitando duplicación');
+          return;
+        }
+        
+        // Activar esta pestaña
+        tabPartos.classList.add('text-primary', 'border-b-2', 'border-primary');
+        tabPartos.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        
+        // Desactivar otras pestañas
+        if (tabInfo) {
+          tabInfo.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabInfo.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        if (tabChanges) {
+          tabChanges.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabChanges.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        
+        // Mostrar este contenido y ocultar otros
+        contentPartos.classList.remove('hidden');
+        if (contentInfo) contentInfo.classList.add('hidden');
+        if (contentChanges) contentChanges.classList.add('hidden');
+        
+        // Marcar que estamos cargando para evitar duplicados
+        loadingPartos = true;
+        
+        // Disparar evento solo si no se ha activado antes o si es necesario recargar
+        if (!partosTabActivated) {
+          partosTabActivated = true;
+          console.log('Primera activación de pestaña de partos');
+          const event = new CustomEvent('tabPartosActivated');
+          window.dispatchEvent(event);
+        } else {
+          console.log('Recarga manual de partos');
+          const event = new CustomEvent('tabPartosActivated', { detail: { reload: true } });
+          window.dispatchEvent(event);
+        }
+        
+        // Restablecer el flag de carga después de un breve retraso
+        setTimeout(() => {
+          loadingPartos = false;
+        }, 2000);
+      });
+    }
+    
+    if (tabChanges && contentChanges) {
+      tabChanges.addEventListener('click', function() {
+        // Activar esta pestaña
+        tabChanges.classList.add('text-primary', 'border-b-2', 'border-primary');
+        tabChanges.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        
+        // Desactivar otras pestañas
+        if (tabInfo) {
+          tabInfo.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabInfo.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        if (tabPartos) {
+          tabPartos.classList.remove('text-primary', 'border-b-2', 'border-primary');
+          tabPartos.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        }
+        
+        // Mostrar este contenido y ocultar otros
+        contentChanges.classList.remove('hidden');
+        if (contentInfo) contentInfo.classList.add('hidden');
+        if (contentPartos) contentPartos.classList.add('hidden');
+      });
+    }
+  });
+</script>

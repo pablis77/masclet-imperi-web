@@ -159,11 +159,13 @@ La aplicación utiliza las siguientes tablas:
 | GET     | /api/v1/animals/{animal_id}/partos/list        | list_animal_partos | Listar partos de un animal (paginado) |
 | PUT     | /api/v1/animals/{animal_id}/partos/{parto_id}  | update_parto       | Actualizar parto (completo)           |
 | PATCH   | /api/v1/animals/{animal_id}/partos/{parto_id}  | patch_parto        | Actualizar parto (parcial)            |
+| DELETE  | /api/v1/animals/{animal_id}/partos/{parto_id}  | delete_parto       | Eliminar parto                        | 
 | GET     | /api/v1/animals/{animal_id}/partos/{parto_id}/ | get_parto          | Obtener detalle de un parto           |
 | POST    | /api/v1/partos                                 | create_parto       | Crear parto (general)                 |
 | GET     | /api/v1/partos                                 | list_partos        | Listar todos los partos               |
 | GET     | /api/v1/partos/{parto_id}                      | get_parto          | Obtener detalle de parto              |
 | PATCH   | /api/v1/partos/{parto_id}                      | update_parto       | Actualizar parto                      |
+| DELETE  | /api/v1/partos/{parto_id}                      | delete_parto       | Eliminar parto                        |
 
 ### Otros Endpoints
 

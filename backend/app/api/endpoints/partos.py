@@ -7,6 +7,10 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 import logging
 
+from app.core.auth import get_current_user, verify_user_role
+from app.core.config import UserRole
+from app.core.date_utils import DateConverter
+
 from app.models.animal import Animal, Part, Genere, Estado, EstadoAlletar
 from app.schemas.parto import (
     PartoCreate,
@@ -58,9 +62,14 @@ def validate_parto_date(parto_date_str: str, animal_dob: date) -> None:
 async def create_parto(
     animal_id: int,
     parto_data: PartoCreate,
+    request: Request
 ):
     """Registrar un nuevo parto"""
     try:
+        # Registrar la petición para diagnóstico
+        client_host = request.client.host if request.client else "unknown"
+        logger.info(f"Solicitud de creación de parto recibida desde {client_host} para animal_id={animal_id}")
+        
         # Validar el animal usando el ID de la URL
         animal = await validate_animal(animal_id)
         
@@ -76,18 +85,231 @@ async def create_parto(
         # Validar fecha del parto
         if animal.dob:
             validate_parto_date(parto_data.part, animal.dob)
+            
+        # Sistema de protección basado en marca de tiempo para evitar duplicados
+        # Verificar si ya se procesó una petición similar recientemente
+        import time
+        import uuid
+        from app.core.config import settings
+        
+        # Verificamos si hay un token de envío en los datos
+        submission_token = None
+        if hasattr(parto_data, 'submission_token') and parto_data.submission_token:
+            submission_token = parto_data.submission_token
+            logger.info(f"Petición con token de envío: {submission_token}")
+        else:
+            # Generar un ID de petición si no se proporcionó uno
+            submission_token = str(uuid.uuid4())
+            logger.info(f"Generado token de petición: {submission_token}")
+            
+        # Definir una clave única para esta operación (animal + fecha + token)
+        operation_key = f"parto_{animal_id}_{parto_data.part}_{submission_token}"
+        
+        # Simular un semaforo simple en memoria
+        # Esto es sólo para debugging, en producción se debería usar Redis o similar
+        import threading
+        
+        # Bloqueo global para sincronización
+        if not hasattr(settings, 'operation_semaphore'):
+            settings.operation_semaphore = {}
+            settings.operation_lock = threading.Lock()
+        
+        # Verificar si la operación ya está en proceso o se completó recientemente
+        with settings.operation_lock:
+            current_time = time.time()
+            if operation_key in settings.operation_semaphore:
+                last_time = settings.operation_semaphore[operation_key]
+                # Si la operación se procesó en los últimos 5 segundos, considerarla duplicada
+                if current_time - last_time < 5:  # 5 segundos de ventana
+                    logger.warning(f"PETICIÓN DUPLICADA DETECTADA: {operation_key} - procesada hace {current_time - last_time:.2f} segundos")
+                    return {
+                        "status": "error",
+                        "message": "Se detectó una petición duplicada. Por favor, espere antes de intentar nuevamente."
+                    }
+            
+            # Registrar esta operación con marca de tiempo actual
+            settings.operation_semaphore[operation_key] = current_time
+            logger.info(f"Registrando operación {operation_key} con marca de tiempo {current_time}")
+            
+        # Limpiar entradas antiguas (más de 60 segundos)
+        with settings.operation_lock:
+            keys_to_remove = []
+            for key, timestamp in settings.operation_semaphore.items():
+                if current_time - timestamp > 60:  # 60 segundos de retención
+                    keys_to_remove.append(key)
+            
+            for key in keys_to_remove:
+                del settings.operation_semaphore[key]
+                
+            if keys_to_remove:
+                logger.info(f"Limpiadas {len(keys_to_remove)} entradas antiguas del semáforo")
+                
+        # SISTEMA DE BLOQUEO DE DUPLICADOS BASADO EN RESTRICCIÓN DE BASE DE DATOS
+        # 1. Primero convertimos la fecha al formato de base de datos para comparación uniforme
+        db_date = DateConverter.to_db_format(parto_data.part)
+        
+        # 2. Crear una clave única para este animal y esta fecha
+        unique_key = f"animal_{animal_id}_date_{db_date}"
+        logger.info(f"Verificando duplicación con clave única: {unique_key}")
+        
+        # 3. Triple verificación de seguridad para detectar duplicados
+        # a) Usar SQL directo con bloqueo explícito para evitar condiciones de carrera
+        from tortoise.transactions import in_transaction
+        
+        # Capturar cualquier error durante la transacción
+        try:
+            # Realizar búsqueda dentro de una transacción con bloqueo
+            async with in_transaction() as connection:
+                # Verificar si existe con bloqueo explícito
+                existing_lock_query = f"""
+                SELECT id, animal_id, part, "GenereT", "EstadoT", numero_part, observacions, created_at
+                FROM part 
+                WHERE animal_id = {animal_id} AND part = '{db_date}'
+                FOR UPDATE
+                """
+                result = await connection.execute_query(existing_lock_query)
+                
+                if result and len(result[1]) > 0:
+                    # Existe un registro con el mismo animal y fecha
+                    row = result[1][0]
+                    logger.warning(f"BLOQUEO DE DUPLICADO: animal_id={animal_id}, fecha={db_date}, parto_id={row[0]}")
+                    existing_parto = {
+                        "id": row[0],
+                        "animal_id": row[1],
+                        "part": row[2].strftime("%d/%m/%Y") if row[2] else None,
+                        "GenereT": row[3],
+                        "EstadoT": row[4],
+                        "numero_part": row[5],
+                        "observacions": row[6],
+                        "created_at": row[7].strftime("%d/%m/%Y %H:%M:%S") if row[7] else datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    }
+                    return {
+                        "status": "warning",
+                        "message": "Ya existe un parto registrado con esta fecha para este animal",
+                        "data": existing_parto
+                    }
+        except Exception as e:
+            logger.error(f"Error en verificación de duplicados con bloqueo: {str(e)}")
+            # Continuar con otras verificaciones como respaldo
+        
+        # b) Verificación por ORM estándar (respaldo) - CORREGIDO: usar animal__id en lugar de animal_id
+        try:
+            # La sintaxis correcta es animal__id, no animal_id
+            existing_parto_orm = await Part.filter(animal__id=animal_id, part=db_date).first()
+            if existing_parto_orm:
+                logger.warning(f"DUPLICADO detectado (ORM): animal_id={animal_id}, fecha={db_date}, parto_id={existing_parto_orm.id}")
+        except Exception as e:
+            logger.error(f"Error en verificación ORM: {str(e)}")
+            existing_parto_orm = None
+        
+        # c) Solución simplificada: obtener todos los partos del animal y filtrar por fecha
+        # Evitamos completamente los problemas de conversión de tipos en SQL
+        try:
+            # Primero obtenemos todos los partos de este animal sin filtros de fecha
+            query = """SELECT id, animal_id, part, "GenereT", "EstadoT", numero_part, observacions, created_at 
+                      FROM part WHERE animal_id = $1 ORDER BY id DESC"""
+            
+            # Ejecutar consulta con un solo parámetro (el ID del animal)
+            result = await connections.get('default').execute_query(query, [animal_id])
+            
+            # Registrar información de resultados para depuración
+            if result and len(result[1]) > 0:
+                logger.info(f"Encontrados {len(result[1])} partos para animal_id={animal_id}")
+            else:
+                logger.info(f"No se encontraron partos previos para animal_id={animal_id}")
+            
+            # Ahora filtramos manualmente los resultados buscando coincidencias de fecha
+            filtered_rows = []
+            if result and len(result[1]) > 0:
+                for row in result[1]:
+                    try:
+                        # La fecha en la BD es un objeto date, convertirlo a string
+                        fecha_bd = row[2].strftime('%Y-%m-%d') if row[2] else ''
+                        fecha_solicitud = db_date
+                        
+                        # Comparar como strings para evitar problemas de tipo
+                        if fecha_bd == fecha_solicitud:
+                            logger.warning(f"COINCIDENCIA EXACTA: Parto con ID={row[0]} tiene misma fecha {fecha_bd}")
+                            filtered_rows.append(row)
+                        else:
+                            # Registro de depuración para ver fechas
+                            logger.info(f"Fecha en BD: {fecha_bd}, Fecha solicitada: {fecha_solicitud} - No coinciden")
+                    except Exception as e:
+                        logger.error(f"Error al comparar fechas: {str(e)}")
+                
+                # Actualizar resultado con las filas filtradas
+                result = (result[0], filtered_rows)
+                
+                if filtered_rows:
+                    logger.warning(f"DUPLICADO DETECTADO: Se encontraron {len(filtered_rows)} coincidencias de fecha exacta")
+        except Exception as e:
+            # Si hay algún error, registrarlo detalladamente
+            logger.error(f"Error en verificación SQL simplificada: {str(e)}")
+            result = (None, [])
+        
+        # 4. Consolidar resultados de las verificaciones
+        existing_parto = None
+        
+        if existing_parto_orm:
+            # Convertir el objeto ORM a diccionario para la respuesta
+            logger.warning(f"DUPLICADO detectado (ORM): animal_id={animal_id}, fecha={db_date}, parto_id={existing_parto_orm.id}")
+            existing_parto = {
+                "id": existing_parto_orm.id,
+                "animal_id": existing_parto_orm.animal_id,
+                "part": existing_parto_orm.part.strftime("%d/%m/%Y") if existing_parto_orm.part else None,
+                "GenereT": existing_parto_orm.GenereT,
+                "EstadoT": existing_parto_orm.EstadoT, 
+                "numero_part": existing_parto_orm.numero_part,
+                "created_at": existing_parto_orm.created_at.strftime("%d/%m/%Y %H:%M:%S") if existing_parto_orm.created_at else None,
+                "observacions": existing_parto_orm.observacions
+            }
+        elif result and len(result[1]) > 0:
+            # Si la verificación SQL encontró un resultado pero el ORM no
+            row = result[1][0]
+            logger.warning(f"DUPLICADO detectado (SQL): animal_id={animal_id}, fecha={db_date}, parto_id={row[0]}")
+            existing_parto = {
+                "id": row[0],
+                "animal_id": row[1],
+                "part": row[2].strftime("%d/%m/%Y") if row[2] else None,
+                "GenereT": row[3],
+                "EstadoT": row[4],
+                "numero_part": row[5],
+                "observacions": row[6],
+                "created_at": row[7].strftime("%d/%m/%Y %H:%M:%S") if row[7] else datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            }
+        
+        if existing_parto:
+            # Si existe, devolver información sobre el parto existente en lugar de crear uno nuevo
+            logger.warning(f"Intento de creación duplicada de parto para animal_id={animal_id} con fecha={parto_data.part}")
+            
+            # Mostrar información detallada sobre el parto existente para depuración
+            logger.info(f"Datos del parto existente: ID={existing_parto['id']}, Fecha={existing_parto['part']}, Género={existing_parto['GenereT']}, Estado={existing_parto['EstadoT']}")
+            
+            # Usar directamente el diccionario que ya construimos
+            parto_dict = existing_parto
+            
+            return {
+                "status": "warning",
+                "message": "Ya existe un parto registrado con esta fecha para este animal",
+                "data": parto_dict
+            }
         
         # Contar partos existentes para asignar número secuencial automáticamente
         num_partos = await Part.filter(animal_id=animal.id).count()
         
         # Crear nuevo parto
+        # Asegurarse de que observacions sea None o string para evitar errores
+        observacions = None
+        if hasattr(parto_data, 'observacions') and parto_data.observacions is not None:
+            observacions = str(parto_data.observacions)
+            
         parto = await Part.create(
             animal_id=animal.id,
             part=DateConverter.to_db_format(parto_data.part),
             GenereT=parto_data.GenereT,
             EstadoT=parto_data.EstadoT,
             numero_part=num_partos + 1,
-            observacions=parto_data.observacions
+            observacions=observacions
         )
         
         # Actualizar estado de amamantamiento si es necesario
@@ -95,20 +317,40 @@ async def create_parto(
             animal.alletar = 1
             await animal.save()
         
-        # Preparar la respuesta usando el esquema PartoData (que ahora espera animal_id)
-        parto_dict = await parto.to_dict()
-        response_data = PartoData(**parto_dict)
-
-        return {
-            "status": "success",
-            "data": response_data
-        }
+        # Preparar la respuesta usando el esquema PartoData
+        try:
+            # Convertir manualmente para evitar errores con valores None
+            parto_dict = {
+                "id": parto.id,
+                "animal_id": parto.animal_id,
+                "part": parto.part.strftime("%d/%m/%Y") if parto.part else None,
+                "GenereT": parto.GenereT,
+                "EstadoT": parto.EstadoT, 
+                "numero_part": parto.numero_part,
+                "created_at": parto.created_at.strftime("%d/%m/%Y %H:%M:%S") if parto.created_at else None,
+                "observacions": parto.observacions if parto.observacions else None
+            }
+            
+            # Retornar directamente los datos sin crear un objeto PartoData
+            # Esto evita problemas con la conversión de Pydantic
+            
+            return {
+                "status": "success",
+                "data": parto_dict
+            }
+        except Exception as e:
+            logger.error(f"Error preparando la respuesta del parto: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error preparando la respuesta: {str(e)}")
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creando parto para animal ID {animal_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_traceback = traceback.format_exc()
+        logger.error(f"Error creando parto para animal ID {animal_id}: {str(e)}\nTraceback: {error_traceback}")
+        # Devolver el error completo con la traza en la respuesta
+        error_detail = f"Error interno del servidor: {str(e)}\nTraceback: {error_traceback}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 @router.get("/animals/{animal_id}/partos", response_model=List[PartoData], summary="Lista los partos de un animal", status_code=status.HTTP_200_OK, tags=["partos"])
 async def get_partos(animal_id: int):
@@ -247,18 +489,200 @@ async def update_parto(
         content={"detail": "Los partos son registros históricos inmutables y no pueden ser modificados"}
     )
 
-@router.patch("/animals/{animal_id}/partos/{parto_id}", response_model=PartoData)
+@router.patch("/animals/{animal_id}/partos/{parto_id}", response_model=PartoResponse)
 async def patch_parto(
     animal_id: int,
     parto_id: int,
     parto_update: PartoUpdate,
+    current_user = Depends(get_current_user)
 ):
-    """Los partos son registros históricos inmutables y no pueden ser actualizados"""
-    # Los partos son registros históricos inmutables
-    return JSONResponse(
-        status_code=405,
-        content={"detail": "Los partos son registros históricos inmutables y no pueden ser modificados"}
-    )
+    """
+    Actualizar parcialmente un parto existente
+    
+    Args:
+        animal_id: ID del animal
+        parto_id: ID del parto
+        parto_update: Datos de actualización
+        current_user: Usuario actual
+    
+    Returns:
+        Parto actualizado
+    """
+    # Verificar que el animal existe
+    animal = await validate_animal(animal_id, check_female=True)
+    
+    # Usar conexión directa a la base de datos para evitar problemas con ORM
+    conn = Part._meta.db
+    
+    try:
+        # 1. Primero, verificar que el parto existe y pertenece al animal correcto
+        query_verify = f"""SELECT id, animal_id, part, "GenereT", "EstadoT", observacions, numero_part, created_at, updated_at 
+                      FROM part WHERE id = {parto_id}"""
+        result = await conn.execute_query(query_verify)
+        
+        if not result[1] or len(result[1]) == 0:
+            raise HTTPException(status_code=404, detail=f"Parto con ID {parto_id} no encontrado")
+        
+        # Obtener el primer (y único) resultado
+        parto_data = result[1][0]
+        db_animal_id = parto_data[1]  # El índice 1 es animal_id según la consulta
+        
+        # Verificar que el parto pertenece al animal especificado
+        if int(db_animal_id) != int(animal_id):
+            raise HTTPException(status_code=400, detail="El parto no pertenece al animal especificado")
+            
+        # Preparar los campos para actualizar
+        campos_actualizados = []
+        valores_actualizados = []
+        
+        # Si se proporciona fecha, validar y convertir
+        if parto_update.part:
+            try:
+                fecha_valida = DateConverter.parse_date(parto_update.part)
+                campos_actualizados.append("part")
+                valores_actualizados.append(f"'{fecha_valida}'")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use DD/MM/YYYY")
+        
+        # Género de la cría
+        if parto_update.GenereT is not None:
+            # Obtener solo el valor real del enum (M o F)
+            if hasattr(parto_update.GenereT, 'value'):
+                # Si es un objeto Enum, extraer su valor
+                genere_value = parto_update.GenereT.value
+            else:
+                # Si ya es un string, validarlo
+                genere_value = str(parto_update.GenereT)
+                
+            # Validar que sea un valor permitido
+            if genere_value not in ["M", "F"]:
+                genere_value = "F"
+                logger.warning(f"Valor de GenereT no válido: {parto_update.GenereT}. Usando 'F' por defecto.")
+            
+            campos_actualizados.append("\"GenereT\"")
+            valores_actualizados.append(f"'{genere_value}'")
+        
+        # Estado de la cría
+        if parto_update.EstadoT is not None:
+            # Obtener solo el valor real del enum (OK o DEF)
+            if hasattr(parto_update.EstadoT, 'value'):
+                # Si es un objeto Enum, extraer su valor
+                estado_value = parto_update.EstadoT.value
+            else:
+                # Si ya es un string, validarlo
+                estado_value = str(parto_update.EstadoT)
+                
+            # Validar que sea un valor permitido
+            if estado_value not in ["OK", "DEF"]:
+                estado_value = "OK"
+                logger.warning(f"Valor de EstadoT no válido: {parto_update.EstadoT}. Usando 'OK' por defecto.")
+                
+            campos_actualizados.append("\"EstadoT\"")
+            valores_actualizados.append(f"'{estado_value}'")
+        
+        # Observaciones
+        if parto_update.observacions is not None:
+            # Comprobar si la columna observacions existe en la tabla
+            try:
+                campos_actualizados.append("observacions")
+                # Escapar comillas simples en las observaciones
+                obs_escapado = parto_update.observacions.replace("'", "''")
+                # Limitar longitud para evitar errores
+                obs_escapado = obs_escapado[:255]  # Limitar a 255 caracteres por seguridad
+                valores_actualizados.append(f"'{obs_escapado}'")
+            except Exception as e:
+                logger.warning(f"Error al procesar observaciones: {str(e)}")
+                # No incluir este campo si hay algún problema
+        
+        # Fecha de actualización
+        campos_actualizados.append("updated_at")
+        valores_actualizados.append("CURRENT_TIMESTAMP")
+        
+        # Si no hay campos para actualizar, no hacemos nada
+        if not campos_actualizados:
+            raise HTTPException(status_code=400, detail="No se proporcionaron campos para actualizar")
+        
+        # Log detallado para debugging
+        for campo, valor in zip(campos_actualizados, valores_actualizados):
+            logger.info(f"Campo: {campo}, Valor: {valor}")
+            
+        # Construir la consulta de actualización
+        sets = [f"{campo} = {valor}" for campo, valor in zip(campos_actualizados, valores_actualizados)]
+        update_query = f"UPDATE part SET {', '.join(sets)} WHERE id = {parto_id}"
+        
+        # Log completo de la consulta SQL
+        logger.info(f"Consulta SQL: {update_query}")
+        
+        # Ejecutar la actualización
+        await conn.execute_query(update_query)
+        
+        # Obtener el parto actualizado
+        query_get_updated = f"""SELECT id, animal_id, part, "GenereT", "EstadoT", observacions, numero_part, created_at, updated_at 
+                           FROM part WHERE id = {parto_id}"""
+        updated_result = await conn.execute_query(query_get_updated)
+        
+        if not updated_result[1] or len(updated_result[1]) == 0:
+            raise HTTPException(status_code=500, detail="Error al recuperar el parto actualizado")
+        
+        updated_parto = updated_result[1][0]
+        
+        # Formatear las fechas
+        fecha_part = updated_parto[2]
+        fecha_formateada = None
+        if fecha_part:
+            if isinstance(fecha_part, date):
+                fecha_formateada = fecha_part.strftime("%d/%m/%Y")
+            else:
+                try:
+                    fecha_dt = datetime.strptime(str(fecha_part), "%Y-%m-%d")
+                    fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+                except ValueError:
+                    fecha_formateada = str(fecha_part)
+        
+        # Formatear fechas de created_at y updated_at
+        created_at = datetime.now().strftime("%d/%m/%Y") 
+        updated_at = datetime.now().strftime("%d/%m/%Y")
+        
+        if len(updated_parto) > 7 and updated_parto[7]:
+            if isinstance(updated_parto[7], datetime):
+                created_at = updated_parto[7].strftime("%d/%m/%Y")
+            else:
+                created_at = str(updated_parto[7])
+                
+        if len(updated_parto) > 8 and updated_parto[8]:
+            if isinstance(updated_parto[8], datetime):
+                updated_at = updated_parto[8].strftime("%d/%m/%Y")
+            else:
+                updated_at = str(updated_parto[8])
+        
+        # Preparar la respuesta
+        parto_dict = {
+            "id": updated_parto[0],
+            "animal_id": updated_parto[1],
+            "part": fecha_formateada,
+            "GenereT": updated_parto[3],
+            "EstadoT": updated_parto[4],
+            "observacions": updated_parto[5],
+            "numero_part": updated_parto[6],
+            "created_at": created_at,
+            "updated_at": updated_at
+        }
+        
+        # Registrar la acción
+        logger.info(f"Parto {parto_id} actualizado para el animal {animal_id} ({animal.nom})")
+        
+        return PartoResponse(
+            status="success",
+            message="Parto actualizado correctamente",
+            data=parto_dict
+        )
+        
+    except HTTPException:
+        # Re-lanzar excepciones HTTP que ya hemos generado
+        raise
+    except Exception as e:
+        logger.error(f"Error al actualizar parto: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el parto: {str(e)}")
 
 @router.get("/animals/{animal_id}/partos/{parto_id}/", response_model=PartoResponse)
 async def get_parto(
@@ -484,7 +908,130 @@ async def list_animal_partos(
         logger.error(f"Error listando partos para animal ID {animal_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# NOTA: La eliminación de partos está deshabilitada permanentemente.
+# NOTA: La eliminación de partos está permitida SOLO para administradores.
 # Los partos son registros históricos fundamentales para la trazabilidad del ganado
-# y deben mantenerse incluso si contienen errores. Las correcciones deben hacerse
-# mediante actualizaciones que mantengan el historial.
+# y deben mantenerse incluso si contienen errores. Sin embargo, en casos excepcionales
+# como registros duplicados, los administradores pueden eliminar partos.
+
+@router.delete("/animals/{animal_id}/partos/{parto_id}", response_model=PartoResponse)
+async def delete_parto(animal_id: int, parto_id: int, current_user = Depends(get_current_user)):
+    """
+    Eliminar un parto.
+    
+    Esta funcionalidad está restringida SOLO a usuarios con rol de administrador y 
+    debe usarse únicamente en casos excepcionales como registros duplicados.
+    
+    Args:
+        animal_id: ID del animal
+        parto_id: ID del parto a eliminar
+        current_user: Usuario actual (debe ser administrador)
+    
+    Returns:
+        El parto eliminado
+    
+    Raises:
+        HTTPException: Si el usuario no es administrador, o si el parto o animal no existen
+    """
+    # Verificar que el usuario es administrador
+    if not verify_user_role(current_user, [UserRole.ADMIN]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los administradores pueden eliminar partos"
+        )
+    
+    # Verificar que el animal existe
+    animal = await validate_animal(animal_id, check_female=False)
+    
+    # Usar conexión directa a la base de datos para evitar problemas con ORM
+    conn = Part._meta.db
+    
+    try:
+        # 1. Primero, verificar que el parto existe y pertenece al animal correcto
+        query_verify = f"""SELECT id, animal_id, part, "GenereT", "EstadoT", observacions, numero_part, created_at, updated_at 
+                      FROM part WHERE id = {parto_id}"""
+        result = await conn.execute_query(query_verify)
+        
+        if not result[1] or len(result[1]) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Parto con ID {parto_id} no encontrado"
+            )
+        
+        # Obtener el primer (y único) resultado
+        parto_data = result[1][0]
+        db_animal_id = parto_data[1]  # El índice 1 es animal_id según la consulta
+        
+        # Verificar que el parto pertenece al animal especificado
+        if int(db_animal_id) != int(animal_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El parto con ID {parto_id} no pertenece al animal con ID {animal_id}"
+            )
+        
+        # Preparar datos del parto para devolver
+        fecha_part = parto_data[2]
+        fecha_formateada = None
+        if fecha_part:
+            if isinstance(fecha_part, date):
+                fecha_formateada = fecha_part.strftime("%d/%m/%Y")
+            else:
+                try:
+                    fecha_dt = datetime.strptime(str(fecha_part), "%Y-%m-%d")
+                    fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+                except ValueError:
+                    # Si hay algún error, devolver la fecha tal cual
+                    fecha_formateada = str(fecha_part)
+        
+        # Formatear fechas de created_at y updated_at (índices 7 y 8)
+        created_at = datetime.now().strftime("%d/%m/%Y") 
+        updated_at = datetime.now().strftime("%d/%m/%Y")
+        
+        if len(parto_data) > 7 and parto_data[7]:
+            if isinstance(parto_data[7], datetime):
+                created_at = parto_data[7].strftime("%d/%m/%Y")
+            else:
+                created_at = str(parto_data[7])
+                
+        if len(parto_data) > 8 and parto_data[8]:
+            if isinstance(parto_data[8], datetime):
+                updated_at = parto_data[8].strftime("%d/%m/%Y")
+            else:
+                updated_at = str(parto_data[8])
+        
+        parto_dict = {
+            "id": parto_data[0],
+            "animal_id": parto_data[1],
+            "part": fecha_formateada,
+            "GenereT": parto_data[3],
+            "EstadoT": parto_data[4],
+            "observacions": parto_data[5],
+            "numero_part": parto_data[6],
+            "created_at": created_at,
+            "updated_at": updated_at
+        }
+        
+        # 2. Ejecutar la eliminación directamente con SQL
+        query_delete = f"DELETE FROM part WHERE id = {parto_id}"
+        await conn.execute_query(query_delete)
+        
+        # Registrar la acción en logs
+        logger.warning(
+            f"PARTO ELIMINADO (SQL directo) - ID: {parto_id}, Animal: {animal_id} ({animal.nom}) - "
+            f"Usuario: {current_user.username} (ID: {current_user.id})"
+        )
+        
+        return PartoResponse(
+            status="success", 
+            message=f"Parto ID {parto_id} eliminado correctamente",
+            data=parto_dict
+        )
+        
+    except HTTPException:
+        # Re-lanzar excepciones HTTP que ya hemos generado
+        raise
+    except Exception as e:
+        logger.error(f"Error al eliminar parto: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar el parto: {str(e)}"
+        )

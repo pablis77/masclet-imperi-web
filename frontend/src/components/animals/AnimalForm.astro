@@ -1,0 +1,202 @@
+---
+/**
+ * Formulario general para actualización de datos de animales
+ */
+interface Props {
+  animal: any;
+}
+
+const { animal } = Astro.props;
+
+// Función para convertir fecha de cualquier formato a YYYY-MM-DD para inputs HTML
+function formatDateForInput(dob) {
+  if (!dob || typeof dob !== 'string') return '';
+  
+  // Si ya está en formato YYYY-MM-DD, devolverlo tal cual
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    return dob;
+  }
+  
+  // Si está en formato DD/MM/YYYY, convertirlo a YYYY-MM-DD
+  const match = dob.match(/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/);
+  if (match) {
+    return `${match[3]}-${match[2]}-${match[1]}`;
+  }
+  
+  // Intentar parsear como fecha
+  try {
+    const fecha = new Date(dob);
+    if (!isNaN(fecha.getTime())) {
+      const year = fecha.getFullYear();
+      const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const day = fecha.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {
+    console.error('Error al parsear fecha:', e);
+  }
+  
+  // Si no coincide con ningún formato conocido, devolver cadena vacía
+  return '';
+}
+---
+
+<form id="form-general" class="space-y-6" data-id={animal.id}>
+  <div class="flex justify-end mb-4">
+    <button id="show-debug" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded" type="button" style="display: none;">Mostrar debug</button>
+  </div>
+  <!-- Panel de depuración oculto -->
+  <div id="debug-info" class="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-lg text-xs sticky top-0 z-50 overflow-auto" style="display: none;">
+    <div class="flex justify-between items-center mb-2">
+      <p class="font-bold text-red-700">MODO DEPURACIÓN</p>
+      <button id="clear-debug" class="text-xs bg-red-200 hover:bg-red-300 text-red-800 px-2 py-1 rounded" type="button">Limpiar</button>
+    </div>
+    <div id="debug-content" class="whitespace-pre-wrap overflow-auto h-60 border border-yellow-300 p-2 bg-white"></div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Columna 1 -->
+    <div class="space-y-4">
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+        <input 
+          type="text" 
+          id="nombre" 
+          name="nombre" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.nom || ''} 
+          data-original-value={animal.nom || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="genere" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género</label>
+        <select 
+          id="genere" 
+          name="genere" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          data-original-value={animal.genere || ''}
+          onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+          <option value="M" selected={animal.genere === 'M'}>Macho</option>
+          <option value="F" selected={animal.genere === 'F'}>Hembra</option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de nacimiento</label>
+        <input 
+          type="date" 
+          id="dob" 
+          name="dob" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={formatDateForInput(animal.dob)} 
+          data-original-value={formatDateForInput(animal.dob)}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="codigo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código</label>
+        <input 
+          type="text" 
+          id="codigo" 
+          name="codigo" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.cod || ''} 
+          data-original-value={animal.cod || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="num_serie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de serie</label>
+        <input 
+          type="text" 
+          id="num_serie" 
+          name="num_serie" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.num_serie || ''} 
+          data-original-value={animal.num_serie || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+    </div>
+    
+    <!-- Columna 2 -->
+    <div class="space-y-4">
+      <div>
+        <label for="explotacio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Explotación</label>
+        <input 
+          type="text" 
+          id="explotacio" 
+          name="explotacio" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.explotacio || ''} 
+          data-original-value={animal.explotacio || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="quadra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cuadra</label>
+        <input 
+          type="text" 
+          id="quadra" 
+          name="quadra" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.quadra || ''} 
+          data-original-value={animal.quadra || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="pare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padre</label>
+        <input 
+          type="text" 
+          id="pare" 
+          name="pare" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.pare || ''} 
+          data-original-value={animal.pare || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+      </div>
+      
+      <div>
+        <label for="mare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Madre</label>
+        <input 
+          type="text" 
+          id="mare" 
+          name="mare" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          value={animal.mare || ''} 
+          data-original-value={animal.mare || ''}
+          oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+        >
+        <div class="text-xs text-gray-500 mt-1">(Usa el botón "Guardar Cambios" al final del formulario para actualizar este campo)</div>
+      </div>
+      
+
+    </div>
+  </div>
+  
+  <div class="flex justify-between items-center">
+    <div class="flex space-x-2">
+      <a href="/animals" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center">
+        <span class="mr-1">←</span> Volver
+      </a>
+      <a href={`/animals/${animal.id}`} class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+        Ver Detalle
+      </a>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+      Guardar Cambios
+    </button>
+  </div>
+</form>
+
+<script>
+  // El script se carga desde el archivo principal [id].astro
+</script>

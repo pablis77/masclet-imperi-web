@@ -23,18 +23,54 @@ logger = logging.getLogger(__name__)
 @router.get("/", response_model=ImportListResponse)
 async def get_imports(
     page: int = Query(1, ge=1, description="Página a mostrar"),
-    size: int = Query(10, ge=1, le=100, description="Número de items por página")
+    limit: int = Query(10, ge=1, le=100, description="Número de items por página"),
+    status: Optional[str] = Query(None, description="Filtrar por estado")
 ):
     """
     Obtiene la lista de importaciones realizadas
     """
-    # En una implementación completa, esto buscaría en la base de datos
-    # Por ahora, devolvemos una estructura de ejemplo
+    # Calcular offset para paginación
+    offset = (page - 1) * limit
+    
+    # Construir la consulta base
+    query = Import.all()
+    
+    # Aplicar filtro de estado si se proporciona
+    if status:
+        query = query.filter(status=status)
+    
+    # Obtener el total de registros para la paginación
+    total = await query.count()
+    
+    # Obtener los registros para la página actual
+    imports = await query.order_by('-created_at').offset(offset).limit(limit).all()
+    
+    # Convertir los objetos a diccionarios para la respuesta
+    items = []
+    for import_record in imports:
+        # Extraer contadores del resultado
+        result = import_record.result or {}
+        items.append({
+            "id": import_record.id,
+            "filename": import_record.file_name,
+            "created_at": import_record.created_at,
+            "status": import_record.status,
+            "user_id": None,  # El modelo no tiene user_id actualmente
+            "user_name": "Admin",  # Valor por defecto
+            "total_records": result.get("total", 0),
+            "successful_records": result.get("success", 0),
+            "failed_records": result.get("errors", 0)
+        })
+    
+    # Calcular el número total de páginas
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+    
     return {
-        "items": [],
-        "total": 0,
+        "items": items,
+        "total": total,
         "page": page,
-        "size": size
+        "size": limit,
+        "totalPages": total_pages
     }
 
 @router.post("/csv", response_model=ImportResponse)
@@ -253,15 +289,23 @@ async def import_csv(
                 errors.append(str(row_error))
         
         # Actualizar el estado de la importación
-        import_record.total_rows = total_rows
-        import_record.imported_rows = imported_rows
-        import_record.errors = errors
+        # Crear el objeto de resultado
+        result_data = {
+            "total": total_rows,
+            "success": imported_rows,
+            "errors": len(errors),
+            "error_details": [{'message': error} for error in errors] if errors else None
+        }
+        
+        # Actualizar el registro de importación
+        import_record.result = result_data
         
         if errors:
             import_record.status = "completed_err"
         else:
             import_record.status = "completed"
-            
+        
+        import_record.completed_at = datetime.now()
         await import_record.save()
         
         # Devolver una respuesta completa con todos los campos requeridos

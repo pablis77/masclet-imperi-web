@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { mockImportHistory } from '../../services/mockData';
-import type { ImportHistoryItem, ImportHistoryFilters } from '../../services/importService';
+import importService, { ImportStatus } from '../../services/importService';
+import type { ImportHistoryItem, ImportHistoryFilters, ImportHistoryResponse } from '../../services/importService';
 
 interface ImportHistoryProps {
   className?: string;
@@ -28,29 +28,22 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     setError(null);
     
     try {
-      // SIMPLIFICADO: Usamos directamente los datos de mockImportHistory para evitar errores
-      // hasta que se implemente completamente la API de historial
+      // Crear objeto de filtros con la paginación actual
+      const apiFilters: ImportHistoryFilters = {
+        ...filters,
+        page: currentPage,
+        limit: limit
+      };
       
-      // Filtrado simple
-      let filteredHistory = [...mockImportHistory];
+      // Llamar al servicio real para obtener el historial
+      const response = await importService.getImportHistory(apiFilters);
       
-      // Aplicar filtros si hay
-      if (filters.status) {
-        filteredHistory = filteredHistory.filter(item => item.status === filters.status);
-      }
+      // Actualizar estado con los datos recibidos
+      setHistory(response.items);
+      setTotalItems(response.total);
+      setTotalPages(response.totalPages);
       
-      // Paginación
-      const start = (currentPage - 1) * limit;
-      const end = currentPage * limit;
-      const paginatedItems = filteredHistory.slice(start, end);
-      const totalPages = Math.ceil(filteredHistory.length / limit);
-      
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      setHistory(paginatedItems);
-      setTotalItems(filteredHistory.length);
-      setTotalPages(totalPages);
+      console.log('Historial de importaciones cargado:', response);
     } catch (err) {
       console.error('Error al cargar el historial de importaciones:', err);
       setError('No se pudo cargar el historial de importaciones');
@@ -64,9 +57,11 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     loadHistory();
   }, [filters, currentPage, refreshTrigger]);
 
-  // Cambiar página
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  // Manejar cambio de página
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    // Recargar datos al cambiar de página
+    loadHistory();
   };
 
   // Formatear fecha
@@ -168,6 +163,73 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
         </div>
       )}
       
+      {/* Filtros */}
+      <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filtrar por estado</h3>
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => {
+                    setFilters({...filters, status: undefined});
+                    setCurrentPage(1);
+                    loadHistory();
+                  }}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${!filters.status ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                >
+                  Todos
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setFilters({...filters, status: ImportStatus.COMPLETED});
+                    setCurrentPage(1);
+                    loadHistory();
+                  }}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.COMPLETED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                >
+                  Completados
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setFilters({...filters, status: ImportStatus.FAILED});
+                    setCurrentPage(1);
+                    loadHistory();
+                  }}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.FAILED ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                >
+                  Fallidos
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setFilters({...filters, status: ImportStatus.PROCESSING});
+                    setCurrentPage(1);
+                    loadHistory();
+                  }}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.PROCESSING ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                >
+                  En proceso
+                </button>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => {
+                setFilters({});
+                setCurrentPage(1);
+                loadHistory();
+              }}
+              className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
       {isLoading && history.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>

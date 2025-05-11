@@ -1,0 +1,245 @@
+    // Configuración de botones de edición
+    function setUpEditButtons() {
+      const editButtons = document.querySelectorAll('.edit-parto-btn');
+      
+      editButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          const partoId = this.getAttribute('data-parto-id');
+          openEditModal(partoId);
+        });
+      });
+    }
+    
+    // Configuración de botones de eliminación
+    function setUpDeleteButtons() {
+      const deleteButtons = document.querySelectorAll('.delete-parto-btn');
+      
+      deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          const partoId = this.getAttribute('data-parto-id');
+          openDeleteModal(partoId);
+        });
+      });
+    }
+    
+    // Función para abrir el modal de edición
+    function openEditModal(partoId) {
+      // Obtener el modal
+      const modal = document.getElementById('edit-modal');
+      const form = document.getElementById('edit-form');
+      const closeBtn = document.getElementById('edit-close-btn');
+      const cancelBtn = document.getElementById('edit-cancel-btn');
+      
+      // Establecer el ID del parto en el formulario
+      document.getElementById('parto-id').value = partoId;
+      
+      // Mostrar el modal
+      modal.classList.remove('hidden');
+      
+      // Obtener los datos del parto
+      const animalId = window.location.pathname.split('/').pop();
+      
+      // Cargar los datos del parto
+      fetch(`${window.location.origin}/api/partos/${partoId}`)
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Error al cargar los datos del parto');
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          const parto = data.data || data;
+          
+          // Convertir la fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
+          let fechaInput = '';
+          if (parto.part) {
+            if (typeof parto.part === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parto.part)) {
+              // Convertir de DD/MM/YYYY a YYYY-MM-DD
+              const parts = parto.part.split('/');
+              fechaInput = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            } else if (typeof parto.part === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parto.part)) {
+              // Ya está en formato YYYY-MM-DD
+              fechaInput = parto.part;
+            } else {
+              // Intentar convertir cualquier formato de fecha a YYYY-MM-DD
+              try {
+                const fecha = new Date(parto.part);
+                if (!isNaN(fecha.getTime())) {
+                  fechaInput = fecha.toISOString().split('T')[0];
+                }
+              } catch (e) {
+                console.error('Error al formatear la fecha:', e);
+              }
+            }
+          }
+          
+          // Rellenar el formulario
+          document.getElementById('parto-fecha').value = fechaInput;
+          document.getElementById('parto-genero').value = parto.GenereT || '';
+          document.getElementById('parto-estado').value = parto.EstadoT || 'OK';
+          document.getElementById('parto-observaciones').value = parto.observacions || '';
+        })
+        .catch(function(error) {
+          console.error('Error:', error);
+          alert('Error al cargar los datos del parto: ' + error.message);
+          modal.classList.add('hidden');
+        });
+      
+      // Configurar botones de cierre
+      closeBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
+      });
+      
+      cancelBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
+      });
+      
+      // Manejar envío del formulario
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener datos del formulario
+        const partoId = document.getElementById('parto-id').value;
+        const fechaInput = document.getElementById('parto-fecha').value;
+        const genero = document.getElementById('parto-genero').value;
+        const estado = document.getElementById('parto-estado').value;
+        const observaciones = document.getElementById('parto-observaciones').value;
+        
+        // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para la API
+        let fechaApi = '';
+        if (fechaInput) {
+          const partesFecha = fechaInput.split('-');
+          fechaApi = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+        }
+        
+        // Preparar datos para la API
+        const partoData = {
+          part: fechaApi,
+          GenereT: genero,
+          EstadoT: estado,
+          observacions: observaciones
+        };
+        
+        // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
+        const token = localStorage.getItem('token') || 'admin123';
+        
+        // Enviar datos a la API
+        fetch(`${window.location.origin}/api/partos/${partoId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(partoData)
+        })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Error al actualizar el parto');
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          // Cerrar el modal
+          modal.classList.add('hidden');
+          
+          // Mostrar mensaje de éxito
+          showSuccessMessage('Parto actualizado correctamente');
+          
+          // Recargar la lista de partos
+          cargarPartos();
+        })
+        .catch(function(error) {
+          console.error('Error:', error);
+          alert('Error al actualizar el parto: ' + error.message);
+        });
+      });
+    }
+    
+    // Función para abrir el modal de eliminación
+    function openDeleteModal(partoId) {
+      // Obtener el modal
+      const modal = document.getElementById('delete-modal');
+      const confirmBtn = document.getElementById('delete-confirm-btn');
+      const cancelBtn = document.getElementById('delete-cancel-btn');
+      
+      // Mostrar el modal
+      modal.classList.remove('hidden');
+      
+      // Configurar botón de cancelar
+      cancelBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
+      });
+      
+      // Configurar botón de confirmar
+      confirmBtn.addEventListener('click', function() {
+        // Ocultar el modal
+        modal.classList.add('hidden');
+        
+        // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
+        const token = localStorage.getItem('token') || 'admin123';
+        
+        // Como no podemos eliminar realmente, marcamos el parto como ignorado
+        const partoData = {
+          observacions: "[REGISTRO DUPLICADO - IGNORAR] Este registro ha sido marcado como eliminado."
+        };
+        
+        // Actualizar el parto en la API
+        fetch(`${window.location.origin}/api/partos/${partoId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(partoData)
+        })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Error al marcar el parto como eliminado');
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          // Guardar ID en localStorage para ocultar en futuras cargas
+          const partosOcultos = JSON.parse(localStorage.getItem('partosOcultos') || '[]');
+          if (!partosOcultos.includes(partoId)) {
+            partosOcultos.push(partoId);
+            localStorage.setItem('partosOcultos', JSON.stringify(partosOcultos));
+          }
+          
+          // Mostrar mensaje de éxito
+          showSuccessMessage('Parto eliminado correctamente');
+          
+          // Recargar la lista de partos
+          cargarPartos();
+        })
+        .catch(function(error) {
+          console.error('Error:', error);
+          alert('Error al eliminar el parto: ' + error.message);
+        });
+      });
+    }
+    
+    // Función para mostrar mensaje de éxito
+    function showSuccessMessage(message) {
+      const alert = document.getElementById('success-alert');
+      const messageEl = document.getElementById('success-message');
+      const closeBtn = document.getElementById('close-success');
+      
+      // Establecer mensaje
+      messageEl.textContent = message;
+      
+      // Mostrar alerta
+      alert.classList.remove('hidden');
+      
+      // Configurar cierre
+      closeBtn.addEventListener('click', function() {
+        alert.classList.add('hidden');
+      });
+      
+      // Ocultar automáticamente después de 5 segundos
+      setTimeout(function() {
+        alert.classList.add('hidden');
+      }, 5000);
+    }
+  });
+</script>

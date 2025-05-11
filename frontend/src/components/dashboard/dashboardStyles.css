@@ -1,0 +1,319 @@
+/* Dashboard Styles - Sistema de temas para Masclet Imperi */
+
+/* Contenedor principal - respeta barra lateral */
+.dashboard-container {
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Estilos de contenedor según tema */
+.theme-dark.dashboard-container {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.theme-light.dashboard-container {
+  background-color: #f8f9fa;
+  color: #111827;
+}
+
+/* Temas */
+.theme-dark {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.theme-light {
+  background-color: #f8f9fa;
+  color: #111827;
+}
+
+/* Tarjetas de Dashboard */
+.dashboard-card {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+/* Asegurar visibilidad en tema oscuro */
+.theme-dark .dashboard-card {
+  background-color: #1f2937;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos de tarjetas según tema */
+.theme-dark .dashboard-card {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #f3f4f6;
+}
+
+.theme-light .dashboard-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+@media (max-width: 640px) {
+  .dashboard-card {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Tarjetas estadísticas */
+.stat-card {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Mantener colores específicos para tarjetas estadísticas */
+.bg-blue-500 {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.bg-green-500 {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.bg-teal-500 {
+  background-color: #14b8a6 !important;
+  color: white !important;
+}
+
+.bg-indigo-500 {
+  background-color: #6366f1 !important;
+  color: white !important;
+}
+
+.bg-purple-500 {
+  background-color: #8b5cf6 !important;
+  color: white !important;
+}
+
+.bg-orange-500 {
+  background-color: #f97316 !important;
+  color: white !important;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-card p {
+  font-size: 1.75rem;
+  margin: 0;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .stat-card {
+    padding: 0.5rem;
+    width: 100%;
+  }
+  
+  .stat-card p {
+    font-size: 1.5rem;
+  }
+}
+
+/* Título de sección - Modo oscuro */
+.section-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0.5rem 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.section-heading {
+  color: #f9fafb !important; /* Texto claro para modo oscuro */
+}
+
+.section-number {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+}
+
+.section-number span {
+  font-weight: 700;
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937 !important;
+}
+
+/* Log container - Siempre oscuro */
+.log-container {
+  background-color: #1f2937 !important;
+  color: white !important;
+  padding: 0.75rem;
+  margin: 0.25rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  border: 1px solid #374151 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Rejillas con diseño responsive */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Para pantallas pequeñas sin barra lateral - ocupa todo el ancho */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.25rem;
+    width: 100%;
+  }
+  
+  .dashboard-container {
+    padding: 0;
+  }
+}
+
+/* Para pantallas con barra lateral - respeta el espacio */
+@media (min-width: 769px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stats-grid-md {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .stats-grid-md {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stats-grid-lg {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .stats-grid-lg {
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+.exploitaciones-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .exploitaciones-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.combined-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .combined-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Utilitarios específicos */
+.lg-col-span-4 {
+  grid-column: span 4;
+}
+
+.lg-col-span-6 {
+  grid-column: span 6;
+}
+
+.lg-col-span-8 {
+  grid-column: span 8;
+}
+
+/* Elementos internos de tarjeta - Modo claro forzado */
+.card-divider {
+  border-bottom-width: 1px;
+  padding-bottom: 0.5rem;
+  border-color: #e5e7eb !important;
+}
+
+.card-label {
+  font-size: 0.875rem;
+  color: #4b5563 !important;
+}
+
+.card-text {
+  margin-bottom: 0.25rem;
+  color: #374151 !important;
+}

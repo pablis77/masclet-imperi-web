@@ -168,8 +168,7 @@ import MainLayout from '../../components/layout/MainLayout.astro';
 </MainLayout>
 
 <script>
-  import { getExplotacioById } from '../../services/explotacioService';
-  import { getAnimalsByExplotacion } from '../../services/animalService';
+  import animalService from '../../services/animalService';
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Obtener ID de la explotación de la URL
@@ -182,19 +181,20 @@ import MainLayout from '../../components/layout/MainLayout.astro';
     
     try {
       // Cargar datos de la explotación
-      const explotacion = await getExplotacioById(explotacionId);
+      const explotaciones = await animalService.getExplotacions();
+      const explotacion = explotaciones.find(e => e.id === explotacionId) || { explotacio: 'Desconocida' };
       
       // Actualizar título y código
-      document.getElementById('explotacion-title').textContent = explotacion.nom || 'Sin nombre';
-      document.getElementById('explotacion-codigo').textContent = explotacion.explotaci ? `Código: ${explotacion.explotaci}` : '';
+      document.getElementById('explotacion-title').textContent = explotacion.explotacio || 'Sin nombre';
+      document.getElementById('explotacion-codigo').textContent = explotacion.explotacio ? `Código: ${explotacion.explotacio}` : '';
       
-      // Actualizar detalles
-      document.getElementById('explotacion-responsable').textContent = explotacion.responsable || '-';
-      document.getElementById('explotacion-telefono').textContent = explotacion.telefono || '-';
-      document.getElementById('explotacion-email').textContent = explotacion.email || '-';
-      document.getElementById('explotacion-direccion').textContent = explotacion.direccion || '-';
-      document.getElementById('explotacion-region').textContent = explotacion.region ? explotacion.region.charAt(0).toUpperCase() + explotacion.region.slice(1) : '-';
-      document.getElementById('explotacion-estado').textContent = explotacion.activa ? 'Activa' : 'Inactiva';
+      // Simplificar detalles ya que ahora las explotaciones son solo un atributo
+      document.getElementById('explotacion-responsable').textContent = '-';
+      document.getElementById('explotacion-telefono').textContent = '-';
+      document.getElementById('explotacion-email').textContent = '-';
+      document.getElementById('explotacion-direccion').textContent = '-';
+      document.getElementById('explotacion-region').textContent = '-';
+      document.getElementById('explotacion-estado').textContent = 'Activa';
       
       // Ocultar skeleton y mostrar detalles
       document.getElementById('explotacion-skeleton').classList.add('hidden');
@@ -225,7 +225,7 @@ import MainLayout from '../../components/layout/MainLayout.astro';
       
       // Cargar animales
       try {
-        const animales = await getAnimalsByExplotacion(explotacionId);
+        const animales = await animalService.getAnimalsByExplotacion(explotacion.explotacio);
         
         // Ocultar skeleton
         document.getElementById('animals-skeleton').classList.add('hidden');

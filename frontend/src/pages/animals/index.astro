@@ -1,9 +1,9 @@
 ---
 // Importar el layout y componentes
 import MainLayout from '../../components/layout/MainLayout.astro';
-import AnimalTableFixed from '../../components/animals/AnimalTableFixed';
+import AnimalTable from '../../components/animals/AnimalTable';
 import AnimalFilters from '../../components/animals/AnimalFilters';
-import { isAuthenticated, getCurrentUserRole } from '../../services/authService';
+import authService from '../../services/authService';
 
 // Comprobar autenticación pero sin verificar permisos
 const isLoggedIn = true; // Forzamos a true durante el desarrollo
@@ -21,49 +21,37 @@ const canCreateAnimals = true;
 
 // Definir título y rol de usuario
 const title = "Gestión de Animales";
-const userRole = getCurrentUserRole(); // Obtener rol de usuario actual
+// En modo desarrollo, usamos un rol fijo
+const userRole = 'admin';
 
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
-  <div class="container-fluid mx-auto px-0 sm:px-1 md:px-2 py-1 sm:py-2 md:py-3 w-full max-w-full">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-3 gap-2">
-      <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+  <div class="container mx-auto px-4 py-4 sm:py-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
         {title}
       </h1>
-      <div class="flex flex-wrap gap-1 sm:gap-2">
-        <a href="/animals/new" class="btn btn-primary flex items-center text-sm sm:text-base px-2 py-1 sm:px-3 sm:py-2">
+      <div class="flex flex-wrap gap-2">
+        <a href="/animals/new" class="btn btn-primary flex items-center">
           <span class="mr-1">+</span>
-          <span class="hidden xs:inline">Nuevo Animal</span>
-          <span class="xs:hidden">Nuevo</span>
+          Nuevo Animal
         </a>
-        <button id="refreshBtn" class="btn btn-secondary flex items-center text-sm sm:text-base px-2 py-1 sm:px-3 sm:py-2">
+        <button id="refreshBtn" class="btn btn-secondary flex items-center">
           <span class="mr-1">↻</span>
-          <span class="hidden xs:inline">Actualizar</span>
-          <span class="xs:hidden">Refrescar</span>
+          Actualizar
         </button>
       </div>
     </div>
 
     <!-- Card de búsqueda y filtros -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-3 md:p-4 mb-2 sm:mb-3 md:mb-4 overflow-hidden">
-      <style>
-        /* Agregar breakpoint personalizado */
-        @media (min-width: 400px) {
-          .xs\:inline { display: inline; }
-          .xs\:hidden { display: none; }
-        }
-        @media (max-width: 399px) {
-          .xs\:inline { display: none; }
-          .xs\:hidden { display: inline; }
-        }
-      </style>
-      <div class="mb-2 sm:mb-3">
-        <h2 class="text-sm sm:text-base md:text-lg font-medium text-gray-900 dark:text-white mb-1 sm:mb-2">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
+      <div class="mb-3 sm:mb-4">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
           Búsqueda y Filtros
         </h2>
-        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 sm:mb-3">
-          Filtra por explotación, género, estado y más
+        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
+          Utiliza los filtros para encontrar animales específicos. Puedes filtrar por explotación, género, estado y más.
         </p>
       </div>
       
@@ -71,10 +59,10 @@ const userRole = getCurrentUserRole(); // Obtener rol de usuario actual
       <AnimalFilters id="animal-filters" client:load />
     </div>
 
-    <!-- Card de listado optimizada para móviles -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-      <div class="p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col xs:flex-row justify-between xs:items-center">
-        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">
+    <!-- Tabla de animales -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
+      <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-0">
           Listado de Animales
         </h2>
         <div id="totalAnimalsContainer" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -82,7 +70,7 @@ const userRole = getCurrentUserRole(); // Obtener rol de usuario actual
         </div>
       </div>
       <div class="overflow-x-auto">
-        <AnimalTableFixed 
+        <AnimalTable 
           client:load 
           canEdit={canEditAnimals}
           canCreate={canCreateAnimals}

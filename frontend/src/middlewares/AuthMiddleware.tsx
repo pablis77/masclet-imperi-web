@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
-import { isAuthenticated, getCurrentUser } from '../services/authService';
-import { hasAccessToRoute } from './authUtils';
-import type { UserRole } from '../services/authService';
+import React, { useState, useEffect } from 'react';
 
 interface AuthMiddlewareProps {
   children: React.ReactNode;
@@ -10,16 +7,28 @@ interface AuthMiddlewareProps {
 
 /**
  * Middleware de autenticación para proteger rutas
- * Verifica si el usuario está autenticado y tiene permisos para acceder a la ruta actual
- * NOTA: Durante desarrollo, se ha simplificado para permitir acceso a todas las rutas
+ * VERSION SIMPLIFICADA: En desarrollo, todos los usuarios tienen acceso completo
+ * Las verificaciones de roles se han desactivado temporalmente
  */
 const AuthMiddleware: React.FC<AuthMiddlewareProps> = ({ children }) => {
   const [authorized, setAuthorized] = useState(true); // Siempre autorizado en modo desarrollo
-  const [loading, setLoading] = useState(false); // No mostrar carga en modo desarrollo
 
   useEffect(() => {
-    // MODO DESARROLLO: Permitir acceso a todas las rutas sin verificaciones
-    console.log('Modo desarrollo: Acceso permitido a todas las rutas');
+    // Versión simplificada para desarrollo
+    try {
+      // Si no hay token, crear uno temporal para desarrollo
+      if (!localStorage.getItem('token')) {
+        localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+        console.log('Token JWT de desarrollo generado automáticamente');
+      }
+      
+      // En desarrollo siempre estamos autorizados
+      setAuthorized(true);
+    } catch (error) {
+      console.error('Error en AuthMiddleware:', error);
+      // En desarrollo, permitir acceso incluso si hay errores
+      setAuthorized(true);
+    }
     
     /* El código de verificación se deja comentado para implementarlo más adelante
     // Obtener la ruta actual
@@ -54,8 +63,32 @@ const AuthMiddleware: React.FC<AuthMiddlewareProps> = ({ children }) => {
     */
   }, []);
 
-  // En modo desarrollo, siempre mostrar el contenido sin espera
+  // En modo desarrollo, siempre retornamos los hijos (authorized es siempre true)
   return <>{children}</>;
+  
+  /* La siguiente lógica se implementará cuando se active la validación de roles
+  return (
+    <>
+      {!authorized ? (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+          <h3 className="text-xl font-bold text-red-700 mb-2">Acceso no autorizado</h3>
+          <p className="text-red-600 mb-4">No tienes permiso para acceder a esta página.</p>
+          <button 
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+            onClick={() => {
+              localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+              window.location.reload();
+            }}
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      ) : (
+        children
+      )}
+    </>
+  );
+  */
 };
 
 export default AuthMiddleware;

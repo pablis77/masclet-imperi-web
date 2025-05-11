@@ -49,7 +49,7 @@ export interface LoginResponse {
     email?: string;
     is_active: boolean;
     is_superuser?: boolean;
-    role?: string; 
+    role?: string;
   };
 }
 
@@ -93,118 +93,71 @@ export interface PaginatedUsers {
 }
 
 /**
- * Autentica un usuario con credenciales
- * @param credentials Credenciales del usuario
- * @returns Respuesta con token y datos de usuario
+ * Obtiene los datos del usuario actual
+ * @returns Datos del usuario o null si no está autenticado
  */
-export const login = async ({ username, password }: { username: string; password: string }): Promise<LoginResponse> => {
+export function getCurrentUser(): LoginResponse['user'] | null {
+  if (typeof window === 'undefined') {
+    return null; // No hay usuario en el servidor
+  }
+  
   try {
-    console.log('Iniciando proceso de login para usuario:', username);
-    
-    // Enviar solicitud al proxy de autenticación
-    const response = await fetch('/api/auth-proxy', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-    
-    console.log('Respuesta recibida del servidor con status:', response.status);
-    
-    // Para facilitar la depuración, primero obtenemos la respuesta como texto
-    const responseText = await response.text();
-    console.log('Respuesta como texto:', responseText);
-    
-    // Verificar que la respuesta no esté vacía
-    if (!responseText) {
-      throw new Error('La respuesta del servidor está vacía');
+    const userJson = localStorage.getItem('user');
+    if (!userJson) {
+      return null;
     }
     
-    // Intentar parsear la respuesta como JSON
-    let data: LoginResponse;
-    try {
-      data = JSON.parse(responseText) as LoginResponse;
-      console.log('Respuesta parseada como JSON:', JSON.stringify(data, null, 2));
-    } catch (e) {
-      console.error('Error al parsear la respuesta como JSON:', e);
-      throw new Error('Error al procesar la respuesta del servidor: ' + e);
-    }
-    
-    // Verificar que tengamos un token de acceso
-    if (!data.access_token) {
-      console.error('La respuesta no contiene un token de acceso:', data);
-      throw new Error('La respuesta no contiene un token de acceso');
-    }
-    
-    // Verificar que tengamos información del usuario
-    if (!data.user) {
-      console.error('La respuesta no contiene información del usuario:', data);
-      
-      // Intentar construir un objeto de usuario si falta
-      if (username === 'admin') {
-        console.log('Creando un objeto de usuario para el administrador');
-        data.user = {
-          id: 1,
-          username: username,
-          is_active: true,
-          is_superuser: true,
-          role: 'administrador'
-        };
-      } else {
-        throw new Error('La respuesta no contiene información del usuario');
-      }
-    }
-    
-    // Mostrar datos importantes de la respuesta (sin el token completo)
-    console.log('Datos de la respuesta: token_type =', data.token_type);
-    console.log('Usuario:', {
-      id: data.user.id,
-      username: data.user.username,
-      role: data.user.role || 'No especificado',
-      is_superuser: data.user.is_superuser
-    });
-    
-    // Asignar el rol basado en los atributos del usuario si no viene en la respuesta
-    if (!data.user.role) {
-      if (data.user.is_superuser) {
-        data.user.role = 'administrador';
-      } else if (data.user.username === 'gerente') {
-        data.user.role = 'gerente';
-      } else if (data.user.username.includes('editor')) {
-        data.user.role = 'editor';
-      } else {
-        data.user.role = 'usuario';
-      }
-      console.log('Rol asignado:', data.user.role);
-    } else {
-      // Convertir el formato "UserRole.XXXX" a nuestro formato interno
-      const roleString = data.user.role.toString();
-      if (roleString.includes('ADMIN')) {
-        data.user.role = 'administrador';
-      } else if (roleString.includes('GERENTE')) {
-        data.user.role = 'gerente';
-      } else if (roleString.includes('EDITOR')) {
-        data.user.role = 'editor';
-      } else if (roleString.includes('USUARIO')) {
-        data.user.role = 'usuario';
-      }
-      console.log('Rol convertido de:', roleString, 'a:', data.user.role);
-    }
-    
-    // Guardar token (solo en navegador)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', data.access_token);
-      console.log('Token guardado en localStorage');
-      // También guardar datos del usuario
-      localStorage.setItem('user', JSON.stringify(data.user));
-      console.log('Datos de usuario guardados en localStorage');
-    }
-    
-    return data;
+    const user = JSON.parse(userJson);
+    return user;
   } catch (error) {
-    console.error('Error durante el proceso de login:', error);
-    throw error;
+    console.error('Error al obtener el usuario actual:', error);
+    return null;
+  }
+}
+
+/**
+ * Obtiene el token de autenticación
+ * @returns Token de autenticación o null si no está autenticado
+ */
+export const getToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Si no hay token, no estamos autenticados
+    if (!token) {
+      return null;
+    }
+    
+    // Verificar si el token ha expirado
+    try {
+      // Un token JWT tiene 3 partes separadas por puntos
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.warn('Token con formato inválido');
+        return null;
+      }
+      
+      // Decodificar la parte de payload (la segunda parte)
+      const payload = JSON.parse(atob(parts[1]));
+      
+      // Verificar si el token ha expirado
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        console.warn('Token expirado');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error al verificar el token:', error);
+      return token; // Devolver el token aunque no se pueda verificar
+    }
+    
+    return token;
+  } catch (e) {
+    console.warn('Error al acceder a localStorage:', e);
+    return null;
   }
 };
 
@@ -222,114 +175,22 @@ export const isAuthenticated = (): boolean => {
 };
 
 /**
- * Obtiene el token de autenticación
- * @returns Token de autenticación o null si no está autenticado
- */
-export const getToken = (): string | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
-  const token = localStorage.getItem('token');
-  
-  // Si no hay token, no estamos autenticados
-  if (!token) {
-    return null;
-  }
-  
-  try {
-    // Verificar si el token ha expirado
-    // Un token JWT tiene 3 partes separadas por puntos
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      console.error('Token inválido: no tiene el formato JWT esperado');
-      localStorage.removeItem('token');
-      return null;
-    }
-    
-    // Decodificar la parte de payload (segunda parte)
-    const payload = JSON.parse(atob(parts[1]));
-    
-    // Verificar si el token ha expirado
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      console.error('Token expirado');
-      localStorage.removeItem('token');
-      return null;
-    }
-    
-    return token;
-  } catch (error) {
-    console.error('Error al verificar el token:', error);
-    return token; // Devolver el token aunque no se pueda verificar
-  }
-};
-
-/**
- * Obtiene los datos del usuario actual
- * @returns Datos del usuario o null si no está autenticado
- */
-export function getCurrentUser(): LoginResponse['user'] | null {
-  try {
-    if (!isBrowser) return null;
-    
-    // Primero intentar obtener de 'user' (donde se guarda en login)
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (e) {
-        console.error('Error al parsear datos de usuario:', e);
-      }
-    }
-    
-    // Intentar con 'userData' como fallback (compatibilidad)
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      try {
-        const userData = JSON.parse(userDataStr);
-        return userData?.user || null;
-      } catch (e) {
-        console.error('Error al parsear userData:', e);
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error al obtener el usuario actual:', error);
-    return null;
-  }
-}
-
-/**
- * Obtiene el usuario almacenado en localStorage
+ * Obtiene el objeto de usuario completo
  * @returns El objeto de usuario completo o null si no existe
  */
 export function getStoredUser(): User | null {
+  if (typeof window === 'undefined') {
+    return null; // No hay usuario en el servidor
+  }
+  
   try {
-    if (!isBrowser) return null;
-    
-    // Primero intentar obtener de 'user' (donde se guarda en login)
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (e) {
-        console.error('Error al parsear datos de usuario:', e);
-      }
+    const userJson = localStorage.getItem('user');
+    if (!userJson) {
+      return null;
     }
     
-    // Intentar con 'userData' como fallback (compatibilidad)
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      try {
-        const userData = JSON.parse(userDataStr);
-        return userData?.user || null;
-      } catch (e) {
-        console.error('Error al parsear userData:', e);
-      }
-    }
-    
-    return null;
+    const user = JSON.parse(userJson);
+    return user;
   } catch (error) {
     console.error('Error al obtener el usuario almacenado:', error);
     return null;
@@ -378,14 +239,18 @@ export const getCurrentUserRole = (): UserRole => {
  * Cierra la sesión del usuario
  */
 export const logout = (): void => {
-  if (typeof window === 'undefined') {
-    return;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      
+      // Redirigir a la página de login
+      window.location.href = '/login';
+    } catch (e) {
+      console.warn('Error al acceder a localStorage durante logout:', e);
+    }
   }
-  
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  // Redirigir a la página de login
-  window.location.href = '/login';
 };
 
 /**
@@ -395,18 +260,95 @@ export const logout = (): void => {
 export const getRedirectPathForUser = (): string => {
   const userRole = getCurrentUserRole();
   
-  console.log('Rol actual para redirección:', userRole);
-  
-  // Definir rutas por defecto según rol
   switch (userRole) {
     case 'administrador':
+      return '/dashboard';
     case 'gerente':
       return '/dashboard';
     case 'editor':
-    case 'usuario':
       return '/animals';
     default:
-      return '/login';
+      return '/animals';
+  }
+};
+
+/**
+ * Autentica un usuario con credenciales
+ * @param credentials Credenciales del usuario
+ * @returns Respuesta con token y datos de usuario
+ */
+export const login = async ({ username, password }: LoginRequest): Promise<LoginResponse> => {
+  try {
+    if (!username || !password) {
+      throw new Error('Usuario y contraseña son obligatorios');
+    }
+    
+    console.log(`Intentando iniciar sesión con usuario: ${username}`);
+    
+    // Crear los datos en formato URLEncoded como espera el backend OAuth2
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('grant_type', 'password');
+    
+    // Configurar cabeceras para enviar datos en formato correcto
+    const config = {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    };
+    
+    // Realizar la petición de login al endpoint OAuth2 correcto
+    const response = await axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, formData, config);
+    const data = response.data;
+    
+    // Si llegamos aquí, la autenticación fue exitosa
+    console.log('Inicio de sesión exitoso:', data);
+    
+    // Guardar el token en localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('token', data.access_token);
+        
+        // Guardar datos del usuario
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+      } catch (e) {
+        console.warn('Error al guardar datos en localStorage:', e);
+      }
+    }
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error durante el inicio de sesión:', error);
+    
+    // Construir mensaje de error más descriptivo
+    let errorMessage = 'Error al iniciar sesión';
+    
+    if (error.response) {
+      // Error de respuesta del servidor
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      if (status === 401) {
+        errorMessage = 'Credenciales incorrectas';
+      } else if (status === 403) {
+        errorMessage = 'No tiene permisos para acceder';
+      } else if (status === 404) {
+        errorMessage = 'Servicio de autenticación no disponible';
+      } else if (data && data.detail) {
+        errorMessage = data.detail;
+      }
+    } else if (error.request) {
+      // Error de red (no se recibió respuesta)
+      errorMessage = 'No se pudo conectar con el servidor. Verifique su conexión a internet.';
+    } else if (error.message) {
+      // Error de configuración de la petición
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -416,7 +358,7 @@ export const getRedirectPathForUser = (): string => {
  * @returns Datos del usuario creado
  */
 export const register = async (userData: RegisterRequest): Promise<User> => {
-  return await post<User>('/auth/register', userData);
+  return await post<User>('/users', userData);
 };
 
 /**
@@ -426,8 +368,13 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
  * @returns true si la operación fue exitosa
  */
 export const updatePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
-  await post('/auth/update-password', { old_password: oldPassword, new_password: newPassword });
-  return true;
+  try {
+    await post('/users/me/change-password', { old_password: oldPassword, new_password: newPassword });
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar contraseña:', error);
+    throw error;
+  }
 };
 
 /**
@@ -435,12 +382,10 @@ export const updatePassword = async (oldPassword: string, newPassword: string): 
  */
 export const getCurrentUserProfile = async (): Promise<User> => {
   try {
-    // Primero intenta con la nueva ruta
     return await get<User>('/users/me');
   } catch (error) {
-    console.log('Error al obtener perfil desde /users/me, intentando con /auth/me');
-    // Si falla, intenta con la ruta anterior
-    return await get<User>('/auth/me');
+    console.error('Error al obtener perfil de usuario:', error);
+    throw error;
   }
 };
 
@@ -448,47 +393,49 @@ export const getCurrentUserProfile = async (): Promise<User> => {
  * Obtiene una lista paginada de usuarios (solo para administradores)
  */
 export const getUsers = async (filters: UserFilter = {}): Promise<PaginatedUsers> => {
-  // Construir query params
-  const queryParams = new URLSearchParams();
-  
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined) {
-      queryParams.append(key, String(value));
-    }
-  });
-  
-  const queryString = queryParams.toString();
-  const endpoint = `/users${queryString ? `?${queryString}` : ''}`;
-  
-  return get<PaginatedUsers>(endpoint);
+  try {
+    // Construir parámetros de consulta
+    const params = new URLSearchParams();
+    if (filters.role) params.append('role', filters.role);
+    if (filters.is_active !== undefined) params.append('is_active', String(filters.is_active));
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    return await get<PaginatedUsers>(`/users${queryString}`);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    throw error;
+  }
 };
 
 /**
  * Obtiene un usuario por su ID (solo para administradores)
  */
 export const getUserById = async (id: number): Promise<User> => {
-  return get<User>(`/users/${id}`);
+  return await get<User>(`/users/${id}`);
 };
 
 /**
  * Actualiza un usuario (solo para administradores)
  */
 export const updateUser = async (id: number, userData: Partial<User>): Promise<User> => {
-  return post<User>(`/users/${id}`, userData);
+  return await post<User>(`/users/${id}`, userData);
 };
 
 /**
  * Elimina un usuario por su ID (solo para administradores)
  */
 export const deleteUser = async (id: number): Promise<void> => {
-  return post<void>(`/users/${id}/delete`, {});
+  return await post<void>(`/users/${id}/delete`, {});
 };
 
 /**
  * Cambia la contraseña del usuario actual
  */
 export const changePassword = async (oldPassword: string, newPassword: string): Promise<{ message: string }> => {
-  return post<{ message: string }>('/auth/change-password', {
+  return await post<{ message: string }>('/users/me/change-password', {
     old_password: oldPassword,
     new_password: newPassword
   });
@@ -498,18 +445,19 @@ export const changePassword = async (oldPassword: string, newPassword: string): 
 const authService = {
   login,
   logout,
-  register,
-  getCurrentUser,
-  getRedirectPathForUser,
   isAuthenticated,
   getToken,
+  getCurrentUser,
+  getCurrentUserRole,
+  getRedirectPathForUser,
+  register,
+  updatePassword,
   getCurrentUserProfile,
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
-  updatePassword,
-  getStoredUser
+  changePassword
 };
 
 export default authService;

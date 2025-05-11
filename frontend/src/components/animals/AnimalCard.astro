@@ -1,0 +1,113 @@
+---
+/**
+ * Tarjeta para mostrar la información básica de un animal
+ */
+import type { Animal } from '../../types/types';
+import { formatDateForDisplay } from '../../utils/dateHelpers';
+
+interface Props {
+  animal: Animal;
+  showActions?: boolean;
+  compact?: boolean;
+}
+
+const { animal, showActions = true, compact = false } = Astro.props;
+
+// Obtener el icono del animal según su género
+const icon = animal.genere === 'M' ? '🐂' : '🐄';
+
+// Obtener la clase CSS para el estado del animal
+const estadoClass = animal.estado === 'OK' 
+  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+
+// Obtener el texto para el estado de amamantamiento
+const getAlletarText = (alletar: string | null) => {
+  if (alletar === null || alletar === undefined) return 'No disponible';
+  switch (alletar) {
+    case '0': return 'No amamanta';
+    case '1': return 'Un ternero';
+    case '2': return 'Dos terneros';
+    default: return 'No disponible';
+  }
+};
+
+// Formatear fecha de nacimiento
+const fechaNacimiento = animal.dob ? formatDateForDisplay(animal.dob) : 'No disponible';
+---
+
+<div class={`animal-card bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'}`}>
+  <div class="flex flex-col md:flex-row gap-4">
+    <!-- Icono y estado -->
+    <div class="flex flex-col items-center md:items-start">
+      <div class={`text-${compact ? '4xl' : '6xl'} mb-2`}>{icon}</div>
+      <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
+        {animal.estado === 'OK' ? 'Activo' : 'Fallecido'}
+      </span>
+    </div>
+    
+    <!-- Información básica -->
+    <div class="flex-grow">
+      <h2 class={`${compact ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white mb-2`}>
+        {animal.nom || 'Sin nombre'}
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
+          <p class="font-medium">{animal.cod || 'No disponible'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+          <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
+          <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+          <p class="font-medium">{fechaNacimiento}</p>
+        </div>
+        {animal.genere === 'F' && (
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Amamantamiento</p>
+            <p class="font-medium">{getAlletarText(animal.alletar)}</p>
+          </div>
+        )}
+        {!compact && (
+          <>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
+              <p class="font-medium">{animal.quadra || 'No disponible'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Padre</p>
+              <p class="font-medium">{animal.pare || 'No disponible'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Madre</p>
+              <p class="font-medium">{animal.mare || 'No disponible'}</p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+  
+  {showActions && (
+    <div class="flex justify-end mt-4 space-x-2">
+      <a 
+        href={`/animals/${animal.id}`} 
+        class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md text-sm font-medium transition-colors"
+      >
+        Ver detalle
+      </a>
+      <a 
+        href={`/animals/update/${animal.id}`} 
+        class="px-3 py-1.5 bg-primary hover:bg-primary-dark text-white rounded-md text-sm font-medium transition-colors"
+      >
+        Editar
+      </a>
+    </div>
+  )}
+</div>

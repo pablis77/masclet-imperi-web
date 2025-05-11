@@ -4,16 +4,60 @@ export async function POST({ request }) {
     // URL del backend con la ruta correcta para la autenticación
     const backendUrl = 'http://127.0.0.1:8000/api/v1/auth/login';
     
-    // Obtener los datos JSON del cuerpo de la solicitud
-    const data = await request.json();
+    // Determinar el tipo de contenido
+    const contentType = request.headers.get('content-type') || '';
+    
+    let username, password;
+    
+    // Procesar según el tipo de contenido
+    if (contentType.includes('application/json')) {
+      // Obtener los datos JSON del cuerpo de la solicitud
+      const data = await request.json();
+      username = data.username;
+      password = data.password;
+    } else if (contentType.includes('multipart/form-data')) {
+      // Obtener los datos del formulario
+      const formData = await request.formData();
+      username = formData.get('username');
+      password = formData.get('password');
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      // Obtener los datos del formulario codificado
+      const formData = await request.formData();
+      username = formData.get('username');
+      password = formData.get('password');
+    } else {
+      // Tipo de contenido no soportado
+      return new Response(
+        JSON.stringify({ error: 'Tipo de contenido no soportado' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    // Verificar que tenemos los datos necesarios
+    if (!username || !password) {
+      return new Response(
+        JSON.stringify({ error: 'Falta usuario o contraseña' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
     
     // Preparar datos para la autenticación en el formato correcto para FastAPI
     const formData = new URLSearchParams();
-    formData.append('username', data.username);
-    formData.append('password', data.password);
+    formData.append('username', username);
+    formData.append('password', password);
     
     console.log('Enviando solicitud a:', backendUrl);
-    console.log('Con datos:', { username: data.username, password: '***********' });
+    console.log('Con datos:', { username: username, password: '***********' });
     
     // Realizar la solicitud al backend
     const response = await fetch(backendUrl, {

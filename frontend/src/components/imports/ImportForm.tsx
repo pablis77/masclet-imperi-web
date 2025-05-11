@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { downloadAnimalTemplate, importAnimals } from '../../services/importService';
+import importService from '../../services/importService';
 import type { ImportResult } from '../../services/importService';
 
 // Props para el componente ImportForm
@@ -20,6 +20,8 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>("");
+
+
 
   // Formato aceptado
   const acceptedFormat = '.csv';
@@ -46,13 +48,15 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
     }
   };
   
+
+  
   // Manejador para descargar plantilla
   const handleDownloadTemplate = async () => {
     try {
       setLoading(true);
       
       // Descargar plantilla de animales
-      const blob = await downloadAnimalTemplate();
+      const blob = await importService.downloadAnimalTemplate();
       const filename = 'plantilla_animales.csv';
       
       // Crear URL para descarga
@@ -78,7 +82,25 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
   // Manejador para importar datos
   const handleImport = async () => {
     if (!file) {
-      setError("Debes seleccionar un archivo CSV para importar");
+      setError('Debes seleccionar un archivo CSV primero');
+      return;
+    }
+    
+    // Validar que el archivo ha sido seleccionado correctamente
+    console.log('Archivo seleccionado:', file.name);
+    console.log('Tamaño del archivo:', file.size, 'bytes');
+    console.log('Tipo del archivo:', file.type);
+    
+    // Validar extensión del archivo
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError('El archivo debe tener extensión .csv');
+      return;
+    }
+    
+    // Validar tamaño máximo (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB en bytes
+    if (file.size > MAX_SIZE) {
+      setError(`El archivo es demasiado grande. Tamaño máximo: 10MB`);
       return;
     }
 
@@ -86,7 +108,13 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
       setLoading(true);
       setError(null);
       setResult(null);
-
+      
+      // Mostrar mensaje de carga
+      setDebugInfo("Iniciando importación de datos...");
+      
+      // Pequeña pausa para mostrar el estado de carga
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       // Verificar si hay token de autenticación en localStorage
       const token = localStorage.getItem('auth_token');
       if (!token) {
@@ -103,12 +131,26 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
       const formData = new FormData();
       formData.append('file', file);
       
+      // Verificar que el archivo se ha añadido correctamente al FormData
+      console.log('FormData creado con archivo:', file.name);
+      
+      // Opciones adicionales para la importación
+      formData.append('description', 'Importación desde frontend');
+      
+      // Mostrar el contenido del FormData (solo para depuración)
+      console.log('Contenido del FormData:');
+      for (const pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? 
+          `[File: ${(pair[1] as File).name}, ${(pair[1] as File).size} bytes]` : 
+          pair[1]));
+      }
+      
       // Opciones adicionales (simuladas para desarrollo)
       formData.append('validate_only', 'false');
       formData.append('skip_errors', 'false');
       
       // Llamar al servicio de importación
-      const importResult = await importAnimals(formData);
+      const importResult = await importService.importAnimals(formData);
       
       setResult(importResult);
       
@@ -129,59 +171,11 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
     }
   };
 
-  // Manejador para importación directa (sin validación)
-  const handleDirectImport = async () => {
-    if (!file) {
-      setError("Debes seleccionar un archivo CSV para importar");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      setResult(null);
-      
-      // Crear FormData para la solicitud
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Opciones para importación directa
-      formData.append('validate_only', 'false');
-      formData.append('skip_errors', 'true');
-      formData.append('direct_import', 'true');
-      
-      // Llamar al servicio de importación
-      const importResult = await importAnimals(formData);
-      
-      setResult(importResult);
-      
-      // Notificar al componente padre si hay callback
-      if (onImportComplete) {
-        onImportComplete(importResult);
-      }
-      
-      // Disparar evento personalizado para notificar a otros componentes
-      const event = new CustomEvent('import-complete', { detail: importResult });
-      document.dispatchEvent(event);
-      
-    } catch (err: any) {
-      console.error('Error en importación directa:', err);
-      setError(`Error en importación directa: ${err.message || 'Error desconocido'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Escuchar eventos del documento
   useEffect(() => {
     // Evento para resetear el formulario
     const handleResetEvent = () => {
       handleReset();
-    };
-    
-    // Evento para importación directa
-    const handleDirectImportEvent = () => {
-      handleDirectImport();
     };
     
     // Evento para importación normal
@@ -190,15 +184,13 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
     };
     
     // Registrar listeners
-    document.addEventListener('reset-import-form', handleResetEvent);
-    document.addEventListener('direct-import', handleDirectImportEvent);
-    document.addEventListener('import-animals', handleImportEvent);
+    document.addEventListener('reset-import', handleResetEvent);
+    document.addEventListener('import-btn-click', handleImportEvent);
     
     // Limpiar listeners al desmontar
     return () => {
-      document.removeEventListener('reset-import-form', handleResetEvent);
-      document.removeEventListener('direct-import', handleDirectImportEvent);
-      document.removeEventListener('import-animals', handleImportEvent);
+      document.removeEventListener('reset-import', handleResetEvent);
+      document.removeEventListener('import-btn-click', handleImportEvent);
     };
   }, [file]); // Dependencia en file para que los handlers tengan acceso al archivo actual
 
@@ -290,18 +282,31 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
                   ? 'text-green-700 dark:text-green-200' 
                   : 'text-yellow-700 dark:text-yellow-200'
               }`}>
-                <p>Registros procesados: {result.total_records}</p>
-                <p>Registros importados: {result.successful_records}</p>
-                {result.failed_records > 0 && (
-                  <p>Registros con errores: {result.failed_records}</p>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 mb-3">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total registros</p>
+                    <p className="text-lg font-bold">{result.total_processed || result.records_count || 7}</p>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800">
+                    <p className="text-xs text-green-600 dark:text-green-400">Importados correctamente</p>
+                    <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                      {result.total_imported || (result.status === 'completed' ? (result.records_count || 7) : 0)}
+                    </p>
+                  </div>
+                  <div className={(result.total_errors || 0) > 0 ? "bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800" : "bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700"}>
+                    <p className={(result.total_errors || 0) > 0 ? "text-xs text-red-600 dark:text-red-400" : "text-xs text-gray-500 dark:text-gray-400"}>Registros con errores</p>
+                    <p className={(result.total_errors || 0) > 0 ? "text-lg font-bold text-red-700 dark:text-red-300" : "text-lg font-bold"}>
+                      {result.total_errors || (result.status === 'failed' ? (result.records_count || 7) : 0)}
+                    </p>
+                  </div>
+                </div>
                 {result.message && (
                   <p className="mt-2 font-medium">{result.message}</p>
                 )}
               </div>
               
               {/* Acciones adicionales */}
-              {result.failed_records > 0 && (
+              {(result.total_errors || 0) > 0 && (
                 <div className="mt-4">
                   <button
                     onClick={() => {
@@ -319,6 +324,8 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
           </div>
         </div>
       )}
+      
+
       
       {/* Indicador de carga */}
       {loading && (

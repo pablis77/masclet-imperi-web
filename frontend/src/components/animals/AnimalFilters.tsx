@@ -14,6 +14,7 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
 }) => {
   const [filters, setFilters] = useState<AnimalFiltersType>(initialFilters);
 
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -62,41 +63,41 @@ const AnimalFilters: React.FC<AnimalFiltersProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-2" id={id}>
-      {/* Búsqueda optimizada para móviles */}
-      <div className="mb-2">
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <div className="grid grid-cols-1 gap-4" id={id}>
+      {/* Búsqueda consolidada */}
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Buscar
         </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-            <span className="text-gray-500 dark:text-gray-400 text-xs">🔍</span>
-          </div>
           <input
             type="text"
             name="search"
             value={filters.search || ''}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Nombre, código, explotación..."
-            className="w-full px-2 py-1 pl-7 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+            placeholder="Buscar por nombre, explotación, código..."
+            className="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
           />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-500 dark:text-gray-400">🔍</span>
+          </div>
         </div>
       </div>
 
-      {/* Botones optimizados para móviles */}
-      <div className="flex justify-end space-x-1 mt-1">
+      {/* Botones */}
+      <div className="flex justify-end space-x-2 mt-2">
         <button
           type="button"
           onClick={handleClearFilters}
-          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           Limpiar
         </button>
         <button
           type="button"
           onClick={handleApplyFilters}
-          className="px-3 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           BUSCAR
         </button>

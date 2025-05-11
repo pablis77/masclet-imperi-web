@@ -45,22 +45,13 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
         }
       }, 10000); // 10 segundos de timeout
       
-      // Pequeña pausa para asegurar que la UI se actualice correctamente
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log(`Cargando animales - Página: ${currentPage}, Filtros:`, {...filters});
-      
-      // Asegurarnos de usar siempre la página correcta en los parámetros
-      const pageParams = {
+      const response = await animalService.getAnimals({
         ...filters,
-        page: currentPage,
-        limit: 10
-      };
-      
-      console.log('Parámetros enviados al API:', pageParams);
-      
-      // Llamada al API con los parámetros completos
-      const response = await animalService.getAnimals(pageParams);
+        page: 1, // Siempre cargar la primera página
+        limit: 100 // Usar un límite que el backend pueda manejar
+      });
       
       // Aplicar priorización local adicional si hay término de búsqueda
       let orderedAnimals = [...response.items];
@@ -128,9 +119,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     }
   };
 
-  // Cargar datos iniciales
   useEffect(() => {
-    console.log('Cargando datos iniciales...');
     loadAnimals();
     
     return () => {
@@ -140,10 +129,10 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     };
   }, []);
 
-  // Recargar datos cuando cambia la página o los filtros
   useEffect(() => {
-    console.log('Cambiando a página:', currentPage, 'con filtros:', filters);
-    loadAnimals();
+    if (currentPage > 1 || Object.keys(filters).length > 0) {
+      loadAnimals();
+    }
   }, [filters, currentPage]);
 
   useEffect(() => {
@@ -240,30 +229,8 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     }
   }, [totalAnimals, loading, searchInfo, useMockData]);
 
-  // Función mejorada para cambiar de página
   const handlePageChange = (page: number) => {
-    if (page === currentPage) return; // Evitar recargas innecesarias
-    
-    console.log(`Cambiando de página ${currentPage} a ${page}`);
-    
-    // Actualizar estado
     setCurrentPage(page);
-    
-    // Pequeña pausa para asegurar que el estado se actualiza antes de cargar
-    setTimeout(() => {
-      // Preservar los filtros existentes incluyendo términos de búsqueda
-      const paginationParams = {
-        ...filters,
-        page: page
-      };
-      
-      console.log('Cargando página con parámetros:', paginationParams);
-      
-      // Usar la función loadAnimals para mantener toda la lógica existente
-      loadAnimals();
-    }, 100);
-    
-    // Scroll hasta la tabla
     if (tableRef.current) {
       tableRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -279,66 +246,10 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     }
   };
 
-  // Paginación que respeta el tema oscuro y es más intuitiva
-  const renderNavigation = () => {
-    if (totalPages <= 1) return null;
-    
-    return (
-      <div className="mt-4 bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-        <div className="text-center mb-2 text-gray-800 dark:text-gray-200">
-          <span className="font-semibold">Página {currentPage} de {totalPages}</span> 
-          <span className="ml-2 text-gray-600 dark:text-gray-400">(Total: {totalAnimals} animales)</span>
-        </div>
-        
-        <div className="flex justify-center gap-2">
-          {/* Primera página */}
-          <button
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Ir a primera página"
-          >
-            <span aria-hidden="true">«</span>
-          </button>
-          
-          {/* Página anterior */}
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Página anterior"
-          >
-            Anterior
-          </button>
-          
-          {/* Página actual */}
-          <span className="px-3 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded border border-gray-300 dark:border-gray-600">
-            {currentPage}
-          </span>
-          
-          {/* Página siguiente */}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Página siguiente"
-          >
-            Siguiente
-          </button>
-          
-          {/* Última página */}
-          <button
-            onClick={() => handlePageChange(totalPages)}
-            disabled={currentPage >= totalPages}
-            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Ir a última página"
-          >
-            <span aria-hidden="true">»</span>
-          </button>
-        </div>
-      </div>
-    );
-  };
+  // Paginación desactivada para mostrar todos los animales de una vez
+  const renderPagination = () => {
+    // No mostrar los controles de paginación
+    return null;
   };
 
   const getAnimalIcon = (animal: Animal) => {
@@ -421,71 +332,89 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto w-full">
-            <table className="min-w-full w-full divide-y divide-gray-200 dark:divide-gray-700 border-collapse table-fixed">
+          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th scope="col" className="w-[12%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
-                  <th scope="col" className="w-[25%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-                  <th scope="col" className="w-[21%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Código</th>
-                  <th scope="col" className="w-[15%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">Explotación</th>
-                  <th scope="col" className="w-[12%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="w-[15%] px-1 sm:px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Nombre
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Código
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Explotación
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
                 {animals.map((animal) => (
                   <tr key={animal.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap text-center w-[12%]">
-                      <span className="text-xl sm:text-2xl" title={animal.alletar === '0' ? 'No amamantando' : animal.alletar === '1' ? 'Amamantando 1 ternero' : 'Amamantando 2 terneros'}>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <span className="text-2xl" title={animal.alletar === '0' ? 'No amamantando' : animal.alletar === '1' ? 'Amamantando 1 ternero' : 'Amamantando 2 terneros'}>
                         {getAnimalIcon(animal)}
                       </span>
                     </td>
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap w-[25%]">
-                      <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-200">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-200">
                         {animal.nom}
                       </div>
-                      {animal.genere && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {animal.genere === 'M' ? 'Macho' : 'Hembra'}
-                        </div>
-                      )}
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {animal.genere === 'M' ? 'Macho' : 'Hembra'}
+                      </div>
                     </td>
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap w-[21%]">
-                      <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-200">{animal.cod || '-'}</div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 dark:text-gray-200">
+                        {animal.cod || '-'}
+                      </div>
                       {animal.num_serie && (
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           Serie: {animal.num_serie}
                         </div>
                       )}
                     </td>
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap w-[15%] hidden sm:table-cell">
-                      <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-200">{animal.explotacio || '-'}</div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {animal.explotacio}
+                          </span>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap w-[12%]">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {renderStatusBadge(animal)}
                     </td>
-                    <td className="px-1 sm:px-2 py-2 whitespace-nowrap text-right w-[15%]">
-                      <div className="flex justify-end space-x-1 sm:space-x-2">
-                        <a
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <a 
                           href={`/animals/${animal.id}`}
-                          className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
-                          title="Ver detalles"
+                          className="inline-flex items-center px-2 py-1 bg-primary text-white rounded hover:bg-primary/80"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
+                          Ver
                         </a>
                         {canEdit && animal.estado === 'OK' && (
                           <a 
                             href={`/animals/update/${animal.id}`}
-                            className="inline-flex items-center px-1 py-1 text-xs sm:text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            <span className="hidden xs:inline">Editar</span>
+                            Actualizar
                           </a>
                         )}
                       </div>
@@ -495,7 +424,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
               </tbody>
             </table>
           </div>
-          {renderNavigation()}
+          {renderPagination()}
         </>
       )}
     </div>

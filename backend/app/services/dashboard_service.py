@@ -1,11 +1,13 @@
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import date, datetime, timedelta
-from tortoise.functions import Count
-from tortoise.expressions import Q
-from app.models.animal import Animal, Genere, Estado, EstadoAlletar
-from app.models.animal import Part
-from calendar import month_name
 import logging
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Optional, Union, Any
+
+from tortoise.functions import Sum, Count
+from tortoise.expressions import F
+
+from app.models import Animal, Part, Import
+from app.models.enums import ImportStatus
+from app.models.animal import Genere, EstadoAlletar
 
 logger = logging.getLogger(__name__)
 
@@ -23,425 +25,61 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
     Returns:
         Dict: Diccionario con las estadísticas
     """
-    # Si no se especifican fechas, usar el último año
-    if not end_date:
-        end_date = date.today()
-    if not start_date:
-        start_date = end_date - timedelta(days=365)
-    
-    # Filtro base para todos los queries
-    base_filter = {}
-    explotacio_name = None
-    
-    if explotacio:
-        base_filter["explotacio"] = explotacio
-        explotacio_name = explotacio  # El nombre de la explotación es el mismo valor del campo
-    
-    # Estadísticas de animales
-    animal_fecha_filter = {}
-    # Para consultas con fechas futuras, no debe contar ningún animal
-    if start_date > date.today():
-        # Si la fecha de inicio es futura, no debería haber animales
-        animal_fecha_filter["dob__lt"] = date(1900, 1, 1)  # Filtro imposible
-
-    total_animales = await Animal.filter(**base_filter, **animal_fecha_filter).count()
-    total_machos = await Animal.filter(**base_filter, **animal_fecha_filter, genere="M").count()
-    total_hembras = await Animal.filter(**base_filter, **animal_fecha_filter, genere="F").count()
-    
-    # Ratio machos/hembras (evitar división por cero)
-    # Asegurarse de que si no hay hembras, el ratio es 0.0
-    # Verificar explícitamente que total_hembras sea 0 para evitar problemas con los mocks
-    # Usar un valor seguro para evitar problemas con los mocks
-    total_hembras_safe = total_hembras if total_hembras is not None else 0
-    
-    if total_hembras_safe == 0:
-        ratio = 0.0
-    else:
-        ratio = total_machos / total_hembras_safe
-    
-    # Distribución por estado
-    por_estado = {}
-    estados = ["OK", "DEF"]  # Añadir otros estados si existen
-    for estado in estados:
-        count = await Animal.filter(**base_filter, estado=estado).count()
-        por_estado[estado] = count
-    
-    # Distribución por alletar (amamantamiento)
-    por_alletar = {}
-    alletar_values = [EstadoAlletar.NO_ALLETAR, EstadoAlletar.UN_TERNERO, EstadoAlletar.DOS_TERNEROS]
-    for alletar_value in alletar_values:
-        count = await Animal.filter(**base_filter, alletar=alletar_value).count()
-        por_alletar[alletar_value] = count
-    
-    # Calcular el número total de terneros (basado en el estado de amamantamiento)
-    total_terneros = 0
-    # Vacas con 1 ternero
-    total_terneros += por_alletar.get(EstadoAlletar.UN_TERNERO, 0)
-    # Vacas con 2 terneros (cada una cuenta como 2)
-    total_terneros += por_alletar.get(EstadoAlletar.DOS_TERNEROS, 0) * 2
-    
-    # Distribución por cuadra
-    cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
-    por_quadra = {}
-    for cuadra in cuadras:
-        if cuadra:  # Ignorar valores nulos
-            count = await Animal.filter(**base_filter, quadra=cuadra).count()
-            por_quadra[cuadra] = count
-    
-    # Distribución por edades
-    today = date.today()
-    edades = {
-        "menos_1_año": await Animal.filter(**base_filter, dob__gte=today - timedelta(days=365)).count(),
-        "1_2_años": await Animal.filter(
-            **base_filter, 
-            dob__lt=today - timedelta(days=365),
-            dob__gte=today - timedelta(days=365*2)
-        ).count(),
-        "2_5_años": await Animal.filter(
-            **base_filter, 
-            dob__lt=today - timedelta(days=365*2),
-            dob__gte=today - timedelta(days=365*5)
-        ).count(),
-        "mas_5_años": await Animal.filter(
-            **base_filter, 
-            dob__lt=today - timedelta(days=365*5)
-        ).count()
-    }
-    
-    # Estadísticas de partos
-    parto_filter = {}
-    if explotacio:
-        # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
-        animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
-        if animal_ids:
-            parto_filter["animal_id__in"] = list(animal_ids)  # Convertir a lista para evitar problemas con los mocks
-        else:
-            # Si no hay animales en esta explotación, forzar que no se devuelvan resultados
-            parto_filter["animal_id"] = -1  # ID inexistente
-
-    # Aplicar filtro de fechas a los partos
-    fecha_filter = {
-        "part__gte": start_date,
-        "part__lte": end_date
-    }
-    
-    total_partos = await Part.filter(**parto_filter, **fecha_filter).count()
-    
-    # Partos en el último mes
-    un_mes_atras = end_date - timedelta(days=30)
-    partos_ultimo_mes = await Part.filter(
-        **parto_filter,
-        part__gte=un_mes_atras,
-        part__lte=end_date
-    ).count()
-    
-    # Partos en el último año
-    partos_ultimo_año = await Part.filter(
-        **parto_filter,
-        part__gte=start_date,
-        part__lte=end_date
-    ).count()
-    
-    # Promedio mensual
-    meses_periodo = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-    if meses_periodo <= 0:
-        meses_periodo = 1  # Evitar división por cero
-    promedio_mensual = partos_ultimo_año / meses_periodo
-    
-    # Distribución de partos por mes
-    partos_por_mes = {}
-    current_date = start_date
-    while current_date <= end_date:
-        month_key = f"{current_date.year}-{current_date.month:02d}"
-        month_start = date(current_date.year, current_date.month, 1)
-        
-        # Calcular el último día del mes
-        if current_date.month == 12:
-            next_month = date(current_date.year + 1, 1, 1)
-        else:
-            next_month = date(current_date.year, current_date.month + 1, 1)
-        month_end = next_month - timedelta(days=1)
-        
-        # Contar partos en este mes
-        count = await Part.filter(
-            **parto_filter,
-            part__gte=month_start,
-            part__lte=month_end
-        ).count()
-        
-        partos_por_mes[month_key] = count
-        
-        # Avanzar al siguiente mes
-        if current_date.month == 12:
-            current_date = date(current_date.year + 1, 1, 1)
-        else:
-            current_date = date(current_date.year, current_date.month + 1, 1)
-    
-    # Distribucion por género de la cría
-    por_genero_cria = {
-        "M": await Part.filter(**parto_filter, GenereT="M").count(),
-        "F": await Part.filter(**parto_filter, GenereT="F").count()
-    }
-    
-    # Tasa de supervivencia de crías
-    total_crias = await Part.filter(**parto_filter).count()
-    crias_ok = await Part.filter(**parto_filter, EstadoT="OK").count()
-    tasa_supervivencia = 0.0 if total_crias == 0 else crias_ok / total_crias
-    
-    # Distribución anual de partos
-    distribucion_anual = {}
-    for year in range(start_date.year, end_date.year + 1):
-        year_start = date(year, 1, 1)
-        year_end = date(year, 12, 31)
-        
-        year_filter = {
-            **parto_filter,
-            "part__gte": year_start,
-            "part__lte": year_end
-        }
-        count = await Part.filter(**year_filter).count()
-        distribucion_anual[str(year)] = count
-    
-    # Estadísticas de explotaciones (solo si no se filtra por explotación)
-    explotaciones_stats = None
-    if not explotacio:
-        # Obtener lista de explotaciones únicas
-        explotaciones_valores = await Animal.all().distinct().values_list('explotacio', flat=True)
-        total_explotaciones = len(explotaciones_valores)
-        explotaciones_activas = total_explotaciones
-        explotaciones_inactivas = 0
-        
-        # Eliminamos la distribución por provincia ya que el campo no existe en el modelo
-        por_provincia = {}
-        
-        # Ranking de explotaciones por número de animales
-        ranking_animales = []
-        for explotacion_valor in explotaciones_valores:
-            count = await Animal.filter(explotacio=explotacion_valor).count()
-            ranking_animales.append({
-                "explotacio": explotacion_valor,
-                "nombre": explotacion_valor,
-                "animales": count
-            })
-        ranking_animales.sort(key=lambda x: x["animales"], reverse=True)
-        ranking_animales = ranking_animales[:5]  # Top 5
-        
-        # Ranking de explotaciones por número de partos
-        ranking_partos = []
-        for explotacion_valor in explotaciones_valores:
-            animal_ids = await Animal.filter(explotacio=explotacion_valor).values_list('id', flat=True)
-            if animal_ids:
-                count = await Part.filter(animal_id__in=animal_ids).count()
-            else:
-                count = 0
-            ranking_partos.append({
-                "explotacio": explotacion_valor,
-                "nombre": explotacion_valor,
-                "partos": count
-            })
-        ranking_partos.sort(key=lambda x: x["partos"], reverse=True)
-        ranking_partos = ranking_partos[:5]  # Top 5
-        
-        explotaciones_stats = {
-            "total": total_explotaciones,
-            "activas": explotaciones_activas,
-            "inactivas": explotaciones_inactivas,
-            "por_provincia": por_provincia,
-            "ranking_animales": ranking_animales,
-            "ranking_partos": ranking_partos
-        }
-    
-    # Estadísticas comparativas (tendencias)
-    mes_actual_start = date(end_date.year, end_date.month, 1)
-    if end_date.month == 1:
-        mes_anterior_start = date(end_date.year - 1, 12, 1)
-        mes_anterior_end = date(end_date.year, 1, 1) - timedelta(days=1)
-    else:
-        mes_anterior_start = date(end_date.year, end_date.month - 1, 1)
-        mes_anterior_end = mes_actual_start - timedelta(days=1)
-    
-    # Partos del mes actual vs mes anterior
-    partos_mes_actual = await Part.filter(
-        **parto_filter,
-        part__gte=mes_actual_start,
-        part__lte=end_date
-    ).count()
-    
-    partos_mes_anterior = await Part.filter(
-        **parto_filter,
-        part__gte=mes_anterior_start,
-        part__lte=mes_anterior_end
-    ).count()
-    
-    # Variación porcentual de partos (evitar división por cero)
-    variacion_partos_mensual = 0.0
-    if partos_mes_anterior > 0:
-        variacion_partos_mensual = ((partos_mes_actual - partos_mes_anterior) / partos_mes_anterior) * 100
-    
-    # Animales creados en el mes actual vs mes anterior
-    animales_mes_actual = await Animal.filter(
-        **base_filter,
-        created_at__gte=mes_actual_start,
-        created_at__lte=end_date
-    ).count()
-    
-    animales_mes_anterior = await Animal.filter(
-        **base_filter,
-        created_at__gte=mes_anterior_start,
-        created_at__lte=mes_anterior_end
-    ).count()
-    
-    # Variación porcentual de animales (evitar división por cero)
-    variacion_animales_mensual = 0.0
-    if animales_mes_anterior > 0:
-        variacion_animales_mensual = ((animales_mes_actual - animales_mes_anterior) / animales_mes_anterior) * 100
-    
-    # Comparativa año actual vs año anterior
-    año_actual_start = date(end_date.year, 1, 1)
-    año_anterior_start = date(end_date.year - 1, 1, 1)
-    año_anterior_end = date(end_date.year - 1, 12, 31)
-    
-    partos_año_actual = await Part.filter(
-        **parto_filter,
-        part__gte=año_actual_start,
-        part__lte=end_date
-    ).count()
-    
-    partos_año_anterior = await Part.filter(
-        **parto_filter,
-        part__gte=año_anterior_start,
-        part__lte=año_anterior_end
-    ).count()
-    
-    # Variación porcentual de partos anual
-    variacion_partos_anual = 0.0
-    if partos_año_anterior > 0:
-        variacion_partos_anual = ((partos_año_actual - partos_año_anterior) / partos_año_anterior) * 100
-    
-    # Comparativas
-    comparativas = {
-        "mes_actual_vs_anterior": {
-            "partos_actual": partos_mes_actual,
-            "partos_anterior": partos_mes_anterior,
-            "variacion_partos": variacion_partos_mensual,
-            "animales_actual": animales_mes_actual,
-            "animales_anterior": animales_mes_anterior,
-            "variacion_animales": variacion_animales_mensual
-        },
-        "año_actual_vs_anterior": {
-            "partos_actual": partos_año_actual,
-            "partos_anterior": partos_año_anterior,
-            "variacion_partos": variacion_partos_anual
-        },
-        "tendencia_partos": calculate_tendencia(partos_por_mes, 3),  # Tendencia últimos 3 meses
-        "tendencia_animales": await calculate_tendencia_animales(base_filter, end_date, 3)  # Tendencia últimos 3 meses
-    }
-    
-    # Crear el diccionario de respuesta
-    stats = {
-        "animales": {
-            "total": total_animales,
-            "machos": total_machos,
-            "hembras": total_hembras,
-            "ratio_m_h": round(ratio, 3),
-            "por_estado": por_estado,
-            "por_alletar": por_alletar,
-            "por_quadra": por_quadra,
-            "edades": edades,
-            "total_terneros": total_terneros
-        },
-        "partos": {
-            "total": total_partos,
-            "ultimo_mes": partos_ultimo_mes,
-            "ultimo_año": partos_ultimo_año,
-            "promedio_mensual": promedio_mensual,
-            "por_mes": partos_por_mes,
-            "por_genero_cria": por_genero_cria,
-            "tasa_supervivencia": tasa_supervivencia,
-            "distribucion_anual": distribucion_anual
-        },
-        "explotacio": explotacio,
-        "nombre_explotacio": explotacio_name,
-        "periodo": {
-            "inicio": start_date,
-            "fin": end_date
-        },
-        "comparativas": comparativas
-    }
-    
-    # Añadir estadísticas de explotaciones solo si no se filtra por explotación
-    if explotaciones_stats:
-        stats["explotaciones"] = explotaciones_stats
-    
-    return stats
-
-async def get_explotacio_dashboard(explotacio_value: str,
-                                   start_date: Optional[date] = None,
-                                   end_date: Optional[date] = None) -> Dict:
-    """
-    Obtiene estadísticas específicas para una explotación usando su valor.
-    
-    Args:
-        explotacio_value: Valor del campo explotacio para filtrar
-        start_date: Fecha de inicio para el periodo de análisis (opcional)
-        end_date: Fecha de fin para el periodo de análisis (opcional)
-        
-    Returns:
-        Dict: Diccionario con las estadísticas de la explotación
-    """
+    logger.info(f"Iniciando get_dashboard_stats: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
     try:
-        # Verificar que la explotación existe
-        exists = await Animal.filter(explotacio=explotacio_value).exists()
-        if not exists:
-            raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
-        
-        # Si no se especifican fechas, usar el último año
+        # Si no se especifican fechas, usar desde 2010 hasta hoy
         if not end_date:
             end_date = date.today()
         if not start_date:
-            start_date = end_date - timedelta(days=365)
+            # Usar 2010 como fecha de inicio para todos los datos históricos
+            start_date = date(2010, 1, 1)
         
         # Filtro base para todos los queries
-        base_filter = {"explotacio": explotacio_value}
+        base_filter = {}
+        nombre_explotacio = None
+        
+        if explotacio:
+            base_filter["explotacio"] = explotacio
+            nombre_explotacio = explotacio  # El nombre de la explotación es el mismo valor del campo
         
         # Estadísticas de animales
-        animal_fecha_filter = {}
-        # Para consultas con fechas futuras, no debe contar ningún animal
-        if start_date > date.today():
-            # Si la fecha de inicio es futura, no debería haber animales
-            animal_fecha_filter["dob__lt"] = date(1900, 1, 1)  # Filtro imposible
-
-        total_animales = await Animal.filter(**base_filter, **animal_fecha_filter).count()
-        total_machos = await Animal.filter(**base_filter, **animal_fecha_filter, genere="M").count()
-        total_hembras = await Animal.filter(**base_filter, **animal_fecha_filter, genere="F").count()
+        total_animales = await Animal.filter(**base_filter).count()
+        total_machos = await Animal.filter(**base_filter, genere="M").count()
+        total_hembras = await Animal.filter(**base_filter, genere="F").count()
         
         # Ratio machos/hembras (evitar división por cero)
-        ratio = 0.0 if total_hembras == 0 else total_machos / total_hembras
+        ratio = 0.0
+        if total_hembras > 0:
+            ratio = total_machos / total_hembras
         
-        # Distribución por estado
-        por_estado = {}
-        estados = ["OK", "DEF"]  # Añadir otros estados si existen
-        for estado in estados:
-            count = await Animal.filter(**base_filter, estado=estado).count()
-            por_estado[estado] = count
+        # Estadísticas por estado
+        total_activos = await Animal.filter(**base_filter, estado="OK").count()
+        total_bajas = await Animal.filter(**base_filter, estado="DEF").count()
         
-        # Distribución por alletar (amamantamiento)
-        por_alletar = {}
-        alletar_values = [EstadoAlletar.NO_ALLETAR, EstadoAlletar.UN_TERNERO, EstadoAlletar.DOS_TERNEROS]
-        for alletar_value in alletar_values:
-            count = await Animal.filter(**base_filter, alletar=alletar_value).count()
-            por_alletar[alletar_value] = count
+        # Porcentajes por estado
+        por_estado = {
+            "OK": total_activos,
+            "DEF": total_bajas
+        }
         
-        # Calcular el número total de terneros (basado en el estado de amamantamiento)
-        total_terneros = 0
-        # Vacas con 1 ternero
-        total_terneros += por_alletar.get(EstadoAlletar.UN_TERNERO, 0)
-        # Vacas con 2 terneros (cada una cuenta como 2)
-        total_terneros += por_alletar.get(EstadoAlletar.DOS_TERNEROS, 0) * 2
+        # Estadísticas por estado de amamantamiento (solo para hembras)
+        no_alletar = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.NO_ALLETAR).count()
+        un_ternero = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.UN_TERNERO).count()
+        dos_terneros = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.DOS_TERNEROS).count()
         
-        # Distribución por cuadra
-        cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
+        por_alletar = {
+            EstadoAlletar.NO_ALLETAR: no_alletar,
+            EstadoAlletar.UN_TERNERO: un_ternero,
+            EstadoAlletar.DOS_TERNEROS: dos_terneros
+        }
+        
+        # Total de terneros: cada vaca con un ternero cuenta como 1, cada vaca con dos terneros cuenta como 2
+        total_terneros = un_ternero + (dos_terneros * 2)
+        
+        logger.info("Calculando distribución por quadra")
         por_quadra = {}
+        cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
+        
         for cuadra in cuadras:
             if cuadra:  # Ignorar valores nulos
                 count = await Animal.filter(**base_filter, quadra=cuadra).count()
@@ -449,59 +87,88 @@ async def get_explotacio_dashboard(explotacio_value: str,
         
         # Distribución por edades
         today = date.today()
+        
         edades = {
-            "menos_1_año": await Animal.filter(**base_filter, dob__gte=today - timedelta(days=365)).count(),
+            "menos_1_año": await Animal.filter(
+                **base_filter,
+                dob__gte=today - timedelta(days=365)
+            ).count(),
             "1_2_años": await Animal.filter(
-                **base_filter, 
+                **base_filter,
                 dob__lt=today - timedelta(days=365),
                 dob__gte=today - timedelta(days=365*2)
             ).count(),
             "2_5_años": await Animal.filter(
-                **base_filter, 
+                **base_filter,
                 dob__lt=today - timedelta(days=365*2),
                 dob__gte=today - timedelta(days=365*5)
             ).count(),
             "mas_5_años": await Animal.filter(
-                **base_filter, 
+                **base_filter,
                 dob__lt=today - timedelta(days=365*5)
             ).count()
         }
         
-        # Estadísticas de partos
-        parto_filter = {"animal__explotacio": explotacio_value}
-
-        # Aplicar filtro de fechas a los partos
+        # Filtro para consultas de partos
+        parto_filter = {}
+        
+        if explotacio:
+            # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
+            animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+            if animal_ids:
+                parto_filter["animal_id__in"] = animal_ids
+        
+        # Filtrar partos por fecha
         fecha_filter = {
             "part__gte": start_date,
             "part__lte": end_date
         }
         
-        total_partos = await Part.filter(**parto_filter, **fecha_filter).count()
+        logger.info("Calculando estadísticas de partos")
         
-        # Partos en el último mes
-        un_mes_atras = end_date - timedelta(days=30)
-        partos_ultimo_mes = await Part.filter(
-            **parto_filter,
-            part__gte=un_mes_atras,
-            part__lte=end_date
-        ).count()
+        # Obtener partos históricos (sin filtro de fecha)
+        total_partos_historicos = await Part.filter(**parto_filter).count()
+        # Definimos total_partos como el número histórico de partos para que esté disponible en la respuesta
+        total_partos = total_partos_historicos
+        logger.info(f"Total partos históricos: {total_partos_historicos}")
         
-        # Partos en el último año
-        partos_ultimo_año = await Part.filter(
+        # Obtener partos en el período seleccionado
+        partos_periodo = await Part.filter(
             **parto_filter,
             part__gte=start_date,
             part__lte=end_date
         ).count()
+        logger.info(f"Total partos en período: {partos_periodo}")
         
-        # Promedio mensual
-        meses_periodo = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-        if meses_periodo <= 0:
-            meses_periodo = 1  # Evitar división por cero
-        promedio_mensual = partos_ultimo_año / meses_periodo
+        # Distribución por género de la cría (para el período)
+        por_genero_cria = {}
+        for genero in ["M", "F", "esforrada"]:
+            count = await Part.filter(**parto_filter, **fecha_filter, GenereT=genero).count()
+            por_genero_cria[genero] = count
+            
+        # Calcular totales de partos
+        total_partos_historicos = await Part.filter(**parto_filter).count()
+        total_partos_periodo = total_partos_historicos  # Por ahora, mostramos el histórico siempre
         
-        # Distribución de partos por mes
+        # Log para depuración
+        logger.info(f"Conteo de partos para explotación '{explotacio}':")
+        logger.info(f"  - Total histórico: {total_partos_historicos}")
+        logger.info(f"  - Periodo seleccionado: {total_partos_periodo}")
+        logger.info(f"  - Total animales: {total_animales}")
+        
+        # Tasa de supervivencia (basada en TODOS los partos históricos)
+        supervivientes = await Part.filter(**parto_filter, EstadoT="OK").count()
+        tasa_supervivencia = 0.0
+        if total_partos_historicos > 0:
+            tasa_supervivencia = supervivientes / total_partos_historicos
+            logger.info(f"Tasa supervivencia: {tasa_supervivencia:.2f} ({supervivientes}/{total_partos_historicos})")
+        else:
+            logger.info("No hay partos históricos para calcular tasa de supervivencia")
+        
+        logger.info("Calculando distribución de partos por mes")
         partos_por_mes = {}
         current_date = start_date
+        
         while current_date <= end_date:
             month_key = f"{current_date.year}-{current_date.month:02d}"
             month_start = date(current_date.year, current_date.month, 1)
@@ -528,6 +195,367 @@ async def get_explotacio_dashboard(explotacio_value: str,
             else:
                 current_date = date(current_date.year, current_date.month + 1, 1)
         
+        logger.info("Calculando distribución de partos por año")
+        distribucion_anual = {}
+        
+        # Obtener IDs de animales para filtrar partos
+        animal_ids = []
+        if explotacio:
+            # Si filtramos por explotación, obtener solo esos IDs
+            animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+        else:
+            # Sin filtro, obtener todos los IDs
+            animal_ids = await Animal.all().values_list('id', flat=True)
+        
+        # Crear filtro básico para partos
+        parto_filter = {}
+        if animal_ids:
+            parto_filter["animal_id__in"] = list(animal_ids)
+        
+        # Calcular distribución por año
+        for year in range(start_date.year, end_date.year + 1):
+            # Contar partos por año
+            year_start = date(year, 1, 1)
+            year_end = date(year, 12, 31)
+            
+            # Construir filtro con fechas
+            year_filter = dict(parto_filter)
+            year_filter["part__gte"] = year_start
+            year_filter["part__lte"] = year_end
+            
+            # Contar partos en este año
+            year_count = await Part.filter(**year_filter).count()
+            distribucion_anual[str(year)] = year_count
+        
+        logger.info("Calculando ranking de partos por animal")
+        ranking_partos = []
+        if animal_ids:
+            # Consulta para contar partos por animal
+            animal_partos = []
+            for animal_id in animal_ids:
+                count = await Part.filter(animal_id=animal_id).count()
+                if count > 0:  # Solo incluir animales con partos
+                    # Obtener información básica del animal
+                    animal = await Animal.filter(id=animal_id).first()
+                    if animal:
+                        animal_partos.append({
+                            "id": animal_id,
+                            "nom": animal.nom,
+                            "total_partos": count
+                        })
+            
+            # Ordenar por número de partos (descendente)
+            animal_partos.sort(key=lambda x: x["total_partos"], reverse=True)
+            
+            # Tomar los top 5
+            ranking_partos = animal_partos[:5]
+        
+        # Calcular partos en último mes
+        hoy = date.today()
+        un_anio_atras = hoy - timedelta(days=365)  
+        un_mes_atras = hoy - timedelta(days=30)
+        partos_ultimo_mes = await Part.filter(
+            **parto_filter,
+            part__gte=un_mes_atras,
+            part__lte=hoy
+        ).count()
+        
+        # Partos en último año
+        partos_ultimo_anio = await Part.filter(
+            **parto_filter,
+            part__gte=un_anio_atras,
+            part__lte=hoy
+        ).count()
+        
+        # Partos en último mes
+        un_mes_atras = end_date - timedelta(days=30)
+        partos_ultimo_mes = await Part.filter(
+            **parto_filter,
+            part__gte=un_mes_atras,
+            part__lte=end_date
+        ).count()
+        
+        # Partos en último año
+        partos_ultimo_anio = await Part.filter(
+            **parto_filter,
+            part__gte=un_anio_atras,
+            part__lte=hoy
+        ).count()
+        
+        # Estadísticas comparativas (tendencias)
+        logger.info("Calculando comparativas temporales")
+        mes_actual_start = date(end_date.year, end_date.month, 1)
+        if end_date.month == 1:
+            mes_anterior_start = date(end_date.year - 1, 12, 1)
+            mes_anterior_end = date(end_date.year, 1, 1) - timedelta(days=1)
+        else:
+            mes_anterior_start = date(end_date.year, end_date.month - 1, 1)
+            mes_anterior_end = mes_actual_start - timedelta(days=1)
+        
+        # Partos del mes actual vs mes anterior
+        partos_mes_actual = await Part.filter(
+            **parto_filter,
+            part__gte=mes_actual_start,
+            part__lte=end_date
+        ).count()
+        
+        partos_mes_anterior = await Part.filter(
+            **parto_filter,
+            part__gte=mes_anterior_start,
+            part__lte=mes_anterior_end
+        ).count()
+        
+        # Variación porcentual de partos (evitar división por cero)
+        variacion_partos_mensual = 0.0
+        if partos_mes_anterior > 0:
+            variacion_partos_mensual = ((partos_mes_actual - partos_mes_anterior) / partos_mes_anterior) * 100
+        
+        # Animales creados en el mes actual vs mes anterior
+        animales_mes_actual = await Animal.filter(
+            **base_filter,
+            created_at__gte=mes_actual_start,
+            created_at__lte=end_date
+        ).count()
+        
+        animales_mes_anterior = await Animal.filter(
+            **base_filter,
+            created_at__gte=mes_anterior_start,
+            created_at__lte=mes_anterior_end
+        ).count()
+        
+        # Variación porcentual de animales (evitar división por cero)
+        variacion_animales_mensual = 0.0
+        if animales_mes_anterior > 0:
+            variacion_animales_mensual = ((animales_mes_actual - animales_mes_anterior) / animales_mes_anterior) * 100
+        
+        # Comparativa año actual vs año anterior
+        logger.info("Calculando comparativa anual")
+        año_actual_start = date(end_date.year, 1, 1)
+        año_anterior_start = date(end_date.year - 1, 1, 1)
+        año_anterior_end = date(end_date.year - 1, 12, 31)
+        logger.info(f"Año actual: {año_actual_start}, Año anterior: {año_anterior_start}-{año_anterior_end}")
+        
+        partos_año_actual = await Part.filter(
+            **parto_filter,
+            part__gte=año_actual_start,
+            part__lte=end_date
+        ).count()
+        
+        partos_año_anterior = await Part.filter(
+            **parto_filter,
+            part__gte=año_anterior_start,
+            part__lte=año_anterior_end
+        ).count()
+        
+        # Variación porcentual anual (evitar división por cero)
+        variacion_partos_anual = 0.0
+        if partos_año_anterior > 0:
+            variacion_partos_anual = ((partos_año_actual - partos_año_anterior) / partos_año_anterior) * 100
+        
+        # Calcular promedio mensual para partos (meses con datos)
+        logger.info("Calculando promedio mensual de partos")
+        meses_con_partos = sum(1 for count in partos_por_mes.values() if count > 0)
+        promedio_mensual = total_partos / max(1, meses_con_partos) if meses_con_partos > 0 else 0.0
+        logger.info(f"Meses con partos: {meses_con_partos}, Promedio mensual: {promedio_mensual}")
+        
+        # Estructura de respuesta completa
+        logger.info("Generando estructura de respuesta final")
+        return {
+            "animales": {
+                "total": total_animales,
+                "machos": total_machos,
+                "hembras": total_hembras,
+                "ratio_m_h": round(ratio, 3),
+                "por_estado": por_estado,
+                "por_alletar": por_alletar,
+                "por_quadra": por_quadra,
+                "por_edad": edades,
+                "terneros": total_terneros
+            },
+            "partos": {
+                "total": total_partos,
+                "ultimo_mes": partos_ultimo_mes,
+                "ultimo_anio": partos_ultimo_anio,
+                "promedio_mensual": round(promedio_mensual, 2),  # Campo requerido
+                "por_mes": partos_por_mes,
+                "por_genero_cria": por_genero_cria,
+                "tasa_supervivencia": round(tasa_supervivencia, 2),
+                "distribucion_anual": distribucion_anual,
+                "ranking_partos": ranking_partos
+            },
+            "comparativas": {
+                "mes_actual_vs_anterior": {
+                    "partos": round(variacion_partos_mensual, 2),  # Valor directo en lugar de objeto
+                    "animales": round(variacion_animales_mensual, 2)  # Valor directo en lugar de objeto
+                },
+                "año_actual_vs_anterior": {
+                    "partos": round(variacion_partos_anual, 2)  # Valor directo en lugar de objeto
+                }
+            },
+            "periodo": {
+                "inicio": start_date,
+                "fin": end_date
+            },
+            "explotacio": explotacio,
+            "nombre_explotacio": nombre_explotacio
+        }
+    except Exception as e:
+        logger.error(f"Error en get_dashboard_stats: {str(e)}", exc_info=True)
+        # Si ocurre cualquier error, devolver una estructura de respuesta vacía
+        return {
+            "animales": {
+                "total": 0,
+                "machos": 0,
+                "hembras": 0,
+                "ratio_m_h": 0.0,
+                "por_estado": {"OK": 0, "DEF": 0},
+                "por_alletar": {
+                    EstadoAlletar.NO_ALLETAR: 0,
+                    EstadoAlletar.UN_TERNERO: 0,
+                    EstadoAlletar.DOS_TERNEROS: 0
+                },
+                "por_quadra": {},
+                "por_edad": {
+                    "menos_1_año": 0,
+                    "1_2_años": 0,
+                    "2_5_años": 0,
+                    "mas_5_años": 0
+                },
+                "terneros": 0
+            },
+            "partos": {
+                "total": 0,
+                "ultimo_mes": 0,
+                "ultimo_anio": 0,
+                "promedio_mensual": 0.0,  # Campo requerido
+                "por_mes": {},
+                "por_genero_cria": {"M": 0, "F": 0},
+                "tasa_supervivencia": 0.0,
+                "distribucion_anual": {},
+                "ranking_partos": []
+            },
+            "comparativas": {
+                "mes_actual_vs_anterior": {
+                    "partos": 0.0,  # Valor directo en lugar de objeto
+                    "animales": 0.0  # Valor directo en lugar de objeto
+                },
+                "año_actual_vs_anterior": {
+                    "partos": 0.0  # Valor directo en lugar de objeto
+                }
+            },
+            "periodo": {
+                "inicio": start_date if start_date else date.today() - timedelta(days=365),
+                "fin": end_date if end_date else date.today()
+            },
+            "explotacio": explotacio,
+            "nombre_explotacio": nombre_explotacio
+        }
+
+async def crear_respuesta_vacia_partos(start_date, end_date, explotacio=None):
+    """
+    Crea una estructura de respuesta vacía para get_partos_dashboard cuando hay errores.
+    """
+    return {
+        "total": 0,
+        "por_mes": {},
+        "por_genero_cria": {"M": 0, "F": 0, "esforrada": 0},
+        "tasa_supervivencia": 0.0,
+        "distribucion_anual": {},
+        "tendencia": {"mensual": 0.0, "anual": 0.0},
+        "ranking_partos": [],
+        "ultimo_mes": 0,
+        "ultimo_año": 0,  # Cambiado de ultimo_anio a ultimo_año para que coincida con el frontend
+        "promedio_mensual": 0.0,
+        "explotacio": explotacio,
+        "periodo": {
+            "inicio": start_date if start_date else date.today() - timedelta(days=365),
+            "fin": end_date if end_date else date.today()
+        }
+    }
+
+async def get_explotacio_dashboard(explotacio_value: str,
+                                  start_date: Optional[date] = None,
+                                  end_date: Optional[date] = None) -> Dict:
+    """
+    Obtiene estadísticas específicas para una explotación usando su valor.
+    
+    Args:
+        explotacio_value: Valor del campo explotacio para filtrar
+        start_date: Fecha de inicio para el periodo de análisis (opcional)
+        end_date: Fecha de fin para el periodo de análisis (opcional)
+        
+    Returns:
+        Dict: Diccionario con las estadísticas de la explotación
+    """
+    try:
+        # Verificar que la explotación existe
+        exists = await Animal.filter(explotacio=explotacio_value).exists()
+        if not exists:
+            raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
+        
+        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            # Usar 2010 como fecha de inicio para todos los datos históricos
+            start_date = date(2010, 1, 1)
+        
+        # Filtro base para todos los queries
+        base_filter = {"explotacio": explotacio_value}
+        
+        # Estadísticas de animales
+        total_animales = await Animal.filter(**base_filter).count()
+        total_machos = await Animal.filter(**base_filter, genere="M").count()
+        total_hembras = await Animal.filter(**base_filter, genere="F").count()
+        
+        # Ratio machos/hembras (evitar división por cero)
+        ratio = 0.0 if total_hembras == 0 else total_machos / total_hembras
+        
+        # Distribución por estado
+        por_estado = {}
+        estados = ["OK", "DEF"]  # Añadir otros estados si existen
+        for estado in estados:
+            count = await Animal.filter(**base_filter, estado=estado).count()
+            por_estado[estado] = count
+        
+        # Distribución por alletar (amamantamiento)
+        por_alletar = {}
+        alletar_values = [EstadoAlletar.NO_ALLETAR, EstadoAlletar.UN_TERNERO, EstadoAlletar.DOS_TERNEROS]
+        for alletar_value in alletar_values:
+            count = await Animal.filter(**base_filter, alletar=alletar_value).count()
+            por_alletar[alletar_value] = count
+        
+        # Calcular el número total de terneros
+        total_terneros = 0
+        # Vacas con 1 ternero
+        total_terneros += por_alletar.get(EstadoAlletar.UN_TERNERO, 0)
+        # Vacas con 2 terneros (cada una cuenta como 2)
+        total_terneros += por_alletar.get(EstadoAlletar.DOS_TERNEROS, 0) * 2
+        
+        # Estadísticas de partos
+        parto_filter = {}
+        animal_ids = await Animal.filter(explotacio=explotacio_value).values_list('id', flat=True)
+        if animal_ids:
+            parto_filter["animal_id__in"] = animal_ids
+        
+        # Aplicar filtro de fechas a los partos
+        fecha_filter = {
+            "part__gte": start_date,
+            "part__lte": end_date
+        }
+        logger.info(f"Filtro de fechas para partos: {fecha_filter}")
+        
+        total_partos = await Part.filter(**parto_filter, **fecha_filter).count()
+        logger.info(f"Total partos: {total_partos}")
+        
+        # Partos en el último mes
+        un_mes_atras = end_date - timedelta(days=30)
+        partos_ultimo_mes = await Part.filter(
+            **parto_filter,
+            part__gte=un_mes_atras,
+            part__lte=end_date
+        ).count()
+        
         # Construir el resultado
         return {
             # Incluimos el campo explotacio directamente en la raíz
@@ -548,21 +576,372 @@ async def get_explotacio_dashboard(explotacio_value: str,
                 "ratio_m_h": round(ratio, 3),
                 "por_estado": por_estado,
                 "por_alletar": por_alletar,
-                "por_quadra": por_quadra,
-                "por_edad": edades,
                 "terneros": total_terneros
             },
             "partos": {
                 "total": total_partos,
-                "ultimo_mes": partos_ultimo_mes,
-                "ultimo_año": partos_ultimo_año,
-                "promedio_mensual": round(promedio_mensual, 2),
-                "por_mes": partos_por_mes
+                "ultimo_mes": partos_ultimo_mes
             }
         }
     except Exception as e:
         logger.error(f"Error en get_explotacio_dashboard: {str(e)}", exc_info=True)
         raise
+
+async def get_dashboard_resumen(explotacio: Optional[str] = None,
+                               start_date: Optional[date] = None,
+                               end_date: Optional[date] = None) -> Dict:
+    """
+    Obtiene un resumen general para el dashboard.
+    
+    Args:
+        explotacio: Valor del campo explotacio para filtrar (opcional)
+        start_date: Fecha de inicio para el periodo de análisis (opcional)
+        end_date: Fecha de fin para el periodo de análisis (opcional)
+        
+    Returns:
+        Dict: Resumen con estadísticas clave
+    """
+    try:
+        # Si no se proporcionan fechas, usar desde 2010 hasta hoy
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            # Usar 2010 como fecha de inicio para incluir todos los datos históricos
+            start_date = date(2010, 1, 1)
+            
+        logger.info(f"Dashboard resumen: usando rango ampliado {start_date} a {end_date}")
+        
+        # Filtro base para consultas
+        base_filter = {}
+        nombre_explotacio = None
+        
+        if explotacio:
+            base_filter["explotacio"] = explotacio
+            nombre_explotacio = explotacio
+        
+        # Estadísticas de animales
+        total_animales = await Animal.filter(**base_filter).count()
+        total_machos = await Animal.filter(**base_filter, genere="M").count()
+        total_hembras = await Animal.filter(**base_filter, genere="F").count()
+        
+        # Cálculo correcto de terneros basado en el estado de amamantamiento
+        alletar_filter = dict(base_filter)
+        alletar_filter["alletar"] = EstadoAlletar.UN_TERNERO  # Vacas con 1 ternero
+        vacas_con_un_ternero = await Animal.filter(**alletar_filter).count()
+        
+        alletar_filter = dict(base_filter)  # Reiniciar el filtro
+        alletar_filter["alletar"] = EstadoAlletar.DOS_TERNEROS  # Vacas con 2 terneros
+        vacas_con_dos_terneros = await Animal.filter(**alletar_filter).count()
+        
+        # El total de terneros es: (1 × número de vacas con alletar=1) + (2 × número de vacas con alletar=2)
+        total_terneros = vacas_con_un_ternero + (vacas_con_dos_terneros * 2)
+        
+        # Estadísticas de partos
+        # Obtener IDs de animales para filtrar los partos
+        animal_ids = []
+        if explotacio:
+            # Si se está filtrando por explotación, obtener solo los IDs de esa explotación
+            animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+        else:
+            # Si no hay filtro de explotación, obtener todos los IDs de animales
+            animal_ids = await Animal.all().values_list('id', flat=True)
+        
+        # Conteo de partos - TOTAL HISTÓRICO (sin filtro de fechas)
+        total_partos_historicos = 0
+        # Conteo de partos - PERIODO SELECCIONADO (con filtro de fechas)
+        total_partos_periodo = 0
+        
+        if animal_ids:  # Verificar que hay animales antes de consultar partos
+            # Contar TODOS los partos históricos sin filtro de fecha
+            total_partos_historicos = await Part.filter(animal_id__in=list(animal_ids)).count()
+            
+            # Aplicar filtros de fecha para el periodo seleccionado
+            fecha_filter = {}
+            if start_date:
+                fecha_filter["part__gte"] = start_date
+            if end_date:
+                fecha_filter["part__lte"] = end_date
+                
+            # Consultar partos DEL PERIODO que pertenecen a los animales filtrados
+            total_partos_periodo = await Part.filter(animal_id__in=list(animal_ids), **fecha_filter).count()
+            
+            # Agregar logging para depuración
+            logger.info(f"Conteo de partos para explotación '{explotacio}':")
+            logger.info(f"  - Total histórico: {total_partos_historicos}")
+            logger.info(f"  - Periodo seleccionado: {total_partos_periodo}")
+            logger.info(f"  - Total animales: {len(animal_ids)}")
+            
+            # Contar partos del último mes y desde 2010 (datos históricos)
+            un_mes_atras = date.today() - timedelta(days=30)
+            un_anio_atras = date.today() - timedelta(days=365)  # Definimos la variable aquí
+            # Usar 2010 como fecha de inicio para datos históricos
+            fecha_inicio_historica = date(2010, 1, 1)
+            
+            partos_ultimo_mes = await Part.filter(
+                animal_id__in=list(animal_ids),
+                part__gte=un_mes_atras
+            ).count()
+            
+            partos_ultimo_anio = await Part.filter(
+                animal_id__in=list(animal_ids),
+                part__gte=un_anio_atras
+            ).count()
+            
+            # Calcular tasa de supervivencia (partos con EstadoT='OK' dividido por total)
+            total_partos_ok = await Part.filter(
+                animal_id__in=list(animal_ids),
+                EstadoT="OK"
+            ).count()
+            
+            tasa_supervivencia = 0.0
+            if total_partos_historicos > 0:
+                tasa_supervivencia = total_partos_ok / total_partos_historicos
+        
+        # Inicializar variables que podrían no estar definidas
+        partos_ultimo_mes = 0
+        partos_ultimo_anio = 0
+        tasa_supervivencia = 0.0
+        
+        # Si hay animales, calcular últimos partos y supervivencia
+        if animal_ids and len(animal_ids) > 0:
+            # Si hay animales, calcular partos último mes
+            un_mes_atras = date.today() - timedelta(days=30)
+            partos_ultimo_mes = await Part.filter(
+                animal_id__in=list(animal_ids),
+                part__gte=un_mes_atras
+            ).count()
+            
+            # Si hay animales, calcular partos último año
+            un_anio_atras = date(2010, 1, 1)  # Usar fecha inicio 2010
+            partos_ultimo_anio = await Part.filter(
+                animal_id__in=list(animal_ids),
+                part__gte=un_anio_atras
+            ).count()
+            
+            # Si hay partos, calcular tasa de supervivencia
+            if total_partos_historicos > 0:
+                # Calcular tasa de supervivencia (partos con EstadoT='OK' dividido por total)
+                total_partos_ok = await Part.filter(
+                    animal_id__in=list(animal_ids),
+                    EstadoT="OK"
+                ).count()
+                tasa_supervivencia = total_partos_ok / total_partos_historicos
+        
+        # Estructura final
+        return {
+            "total_animales": total_animales,
+            "total_partos": total_partos_historicos,
+            "total_terneros": total_terneros,
+            "ratio_partos_animal": round(total_partos_historicos / total_animales, 2) if total_animales > 0 else 0,
+            "explotacio": explotacio,
+            "nombre_explotacio": nombre_explotacio,
+            "tendencias": {
+                "partos_mes_anterior": partos_ultimo_mes,
+                "partos_actual": total_partos_periodo,
+                "nacimientos_promedio": round(total_partos_historicos / 12, 1) if total_partos_historicos > 0 else 0
+            },
+            "tasa_supervivencia": round(tasa_supervivencia * 100, 1),
+            "partos": {
+                "total": total_partos_historicos,
+                "ultimo_mes": partos_ultimo_mes,
+                "ultimo_anio": partos_ultimo_anio
+            },
+            "periodo": {
+                "inicio": start_date,
+                "fin": end_date
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error en get_dashboard_resumen: {str(e)}", exc_info=True)
+        return crear_respuesta_vacia_resumen(start_date, end_date, explotacio, nombre_explotacio)
+
+def crear_respuesta_vacia_resumen(start_date, end_date, explotacio=None, nombre_explotacio=None):
+    """
+    Crea una estructura de respuesta vacía para el resumen cuando no hay datos.
+    """
+    return {
+        "total_animales": 0,
+        "total_partos": 0,
+        "total_terneros": 0,
+        "ratio_partos_animal": 0,
+        "explotacio": explotacio,
+        "nombre_explotacio": nombre_explotacio,
+        "periodo": {
+            "inicio": start_date if start_date else date.today() - timedelta(days=365),
+            "fin": end_date if end_date else date.today()
+        }
+    }
+
+async def get_combined_dashboard(explotacio: Optional[str] = None,
+                                start_date: Optional[date] = None,
+                                end_date: Optional[date] = None) -> Dict:
+    """
+    Obtiene una vista combinada de todas las estadísticas para el dashboard.
+    
+    Args:
+        explotacio: Valor del campo explotacio para filtrar (opcional)
+        start_date: Fecha de inicio para el periodo de análisis (opcional)
+        end_date: Fecha de fin para el periodo de análisis (opcional)
+        
+    Returns:
+        Dict: Diccionario con estadísticas combinadas
+    """
+    try:
+        logger.info(f"Iniciando get_combined_dashboard: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
+        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            # Usar 2010 como fecha de inicio para todos los datos históricos
+            start_date = date(2010, 1, 1)
+        
+        # Obtener estadísticas básicas
+        stats = await get_dashboard_stats(explotacio, start_date, end_date)
+        
+        # Verificar si stats es None y crear una estructura predeterminada si es necesario
+        if stats is None:
+            logger.warning("No se encontraron estadísticas básicas")
+            return crear_respuesta_vacia_combined(start_date, end_date, explotacio)
+            
+        # Añadir los campos adicionales requeridos para CombinedDashboardResponse
+        
+        # 1. por_quadra (estadísticas por cuadra)
+        por_quadra = {}
+        if 'animales' in stats and 'por_quadra' in stats['animales']:
+            # Usar las estadísticas por cuadra ya existentes
+            quadras = stats['animales']['por_quadra']
+            for quadra, count in quadras.items():
+                # Para cada cuadra, crear un objeto con estadísticas resumidas
+                por_quadra[quadra] = {
+                    "animales": count,
+                    "partos": 0,  # Se podría calcular con más detalle si es necesario
+                    "ratio_partos": 0.0
+                }
+        
+        # 2. rendimiento_partos (rendimiento de partos por periodo)
+        rendimiento_partos = {
+            "anual": 0.0,
+            "mensual": 0.0,
+            "semanal": 0.0
+        }
+        
+        # Calcular el rendimiento de partos (partos por vaca por periodo)
+        if 'partos' in stats and 'total' in stats['partos'] and 'animales' in stats and 'hembras' in stats['animales']:
+            total_partos = stats['partos']['total']
+            total_hembras = stats['animales']['hembras']
+            if total_hembras > 0:
+                # Calcular partos por vaca por año
+                dias_periodo = (end_date - start_date).days
+                if dias_periodo > 0:
+                    # Anualizado
+                    rendimiento_partos["anual"] = (total_partos / total_hembras) * (365 / dias_periodo)
+                    # Mensualizado
+                    rendimiento_partos["mensual"] = rendimiento_partos["anual"] / 12
+                    # Semanal
+                    rendimiento_partos["semanal"] = rendimiento_partos["anual"] / 52
+        
+        # 3. tendencias (tendencias temporales)
+        tendencias = {
+            "partos": {
+                "ultimo_mes": 0.0,
+                "ultimo_anio": 0.0
+            },
+            "animales": {
+                "ultimo_mes": 0.0,
+                "ultimo_anio": 0.0
+            }
+        }
+        
+        # Usar los datos de comparativas si existen
+        if 'comparativas' in stats:
+            comparativas = stats['comparativas']
+            if 'mes_actual_vs_anterior' in comparativas:
+                mes = comparativas['mes_actual_vs_anterior']
+                if 'partos' in mes:
+                    tendencias["partos"]["ultimo_mes"] = mes['partos']
+                if 'animales' in mes:
+                    tendencias["animales"]["ultimo_mes"] = mes['animales']
+            
+            if 'año_actual_vs_anterior' in comparativas:
+                anio = comparativas['año_actual_vs_anterior']
+                if 'partos' in anio:
+                    tendencias["partos"]["ultimo_anio"] = anio['partos']
+        
+        # Construir la respuesta completa con los campos adicionales
+        combined_stats = {
+            **stats,  # Incluir todas las estadísticas básicas
+            "por_quadra": por_quadra,
+            "rendimiento_partos": rendimiento_partos,
+            "tendencias": tendencias
+        }
+        
+        return combined_stats
+    except Exception as e:
+        logger.error(f"Error en get_combined_dashboard: {str(e)}", exc_info=True)
+        return crear_respuesta_vacia_combined(start_date, end_date, explotacio)
+
+def crear_respuesta_vacia_combined(start_date, end_date, explotacio=None):
+    """
+    Crea una estructura de respuesta vacía para el dashboard combinado cuando no hay datos o hay errores.
+    
+    Args:
+        start_date: Fecha de inicio del periodo analizado
+        end_date: Fecha de fin del periodo analizado
+        explotacio: Valor del campo explotacio si se filtró por explotación
+        
+    Returns:
+        Dict: Estructura predeterminada para CombinedDashboardResponse
+    """
+    logger.info(f"Creando respuesta vacía para dashboard combinado: explotacio={explotacio}")
+    
+    # Crear estructura básica que coincida con lo que usa nuestro frontend
+    return {
+        "animales": {
+            "total": 0,
+            "machos": 0,
+            "hembras": 0,
+            "ratio_m_h": 0.0,
+            "por_estado": {
+                "OK": 0,
+                "DEF": 0
+            },
+            "por_alletar": {
+                "0": 0,
+                "1": 0,
+                "2": 0
+            },
+            "terneros": 0,
+            "por_quadra": {},
+            "edades": {
+                "menos_1_año": 0,
+                "1_2_años": 0,
+                "2_5_años": 0,
+                "mas_5_años": 0
+            }
+        },
+        "partos": {
+            "total": 0,
+            "en_periodo": 0,
+            "por_genero": {
+                "M": 0,
+                "F": 0,
+                "esforrada": 0
+            },
+            "por_estado": {
+                "OK": 0,
+                "DEF": 0
+            },
+            "tasa_supervivencia": 0.0,
+            "distribucion_mensual": {},
+            "distribucion_anual": {},
+            "por_animal": []
+        },
+        "explotacio": explotacio,
+        "periodo": {
+            "inicio": start_date,
+            "fin": end_date if end_date else date.today()
+        }
+    }
 
 async def get_partos_dashboard(explotacio: Optional[str] = None,
                               animal_id: Optional[int] = None,
@@ -580,247 +959,294 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
     Returns:
         Dict: Diccionario con estadísticas detalladas de partos
     """
-    # Si no se especifican fechas, usar el último año
-    if not end_date:
-        end_date = date.today()
-    if not start_date:
-        start_date = end_date - timedelta(days=365)
-    
     try:
-        # Creamos filtros simples (sin relaciones)
-        date_filter = {}
-        if start_date:
-            date_filter["part__gte"] = start_date
-        if end_date:
-            date_filter["part__lte"] = end_date
+        logger.info(f"Iniciando get_partos_dashboard: explotacio={explotacio}, animal_id={animal_id}, start_date={start_date}, end_date={end_date}")
         
-        # Filtro por animal_id si se especifica
+        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            # Usar 2010 como fecha de inicio para todos los datos históricos
+            start_date = date(2010, 1, 1)
+        
+        # Inicializar el filtro de partos
+        parto_filter = {}
+        
+        # Filtrar por animal_id si se proporciona
         if animal_id:
-            animal_filter = {"animal_id": animal_id}
-        else:
-            animal_filter = {}
+            parto_filter["animal_id"] = animal_id
         
-        # Lista para almacenar animal_ids cuando filtramos por explotación
-        animals_in_explotacion = []
-        
-        # Para filtrar por explotación, necesitamos obtener primero los animales de esa explotación
+        # Si se especifica una explotación, filtrar por animales de esa explotación
         if explotacio:
-            animals_in_explotacion = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
-            if not animal_id:
-                if animals_in_explotacion:
-                    animal_filter["animal_id__in"] = list(animals_in_explotacion)  # Convertir a lista para evitar problemas con los mocks
-                else:
-                    # Si no hay animales en esta explotación, forzar que no se devuelvan resultados
-                    animal_filter["animal_id"] = -1  # ID inexistente
-        
-        # Combinar filtros simples iniciales (solo después de procesar la explotación)
-        combined_filter = {**animal_filter}
-        
-        # ======= ESTADÍSTICAS BÁSICAS =======
-        
-        # Contar total de partos - Primero aplicamos los filtros de animal
-        query = Part.filter(**animal_filter)
-        
-        # Luego aplicamos los filtros de fecha por separado para evitar el error
-        if start_date:
-            query = query.filter(part__gte=start_date)
-        if end_date:
-            query = query.filter(part__lte=end_date)
-            
-        total_partos = await query.count()
-        
-        # Si no hay partos, devolver valores predeterminados
-        if total_partos == 0:
-            return crear_respuesta_vacia_partos(start_date, end_date, explotacio)
-    
-        # ======= ANÁLISIS POR MES =======
-        
-        por_mes = {}
-        current_date = start_date.replace(day=1)
-        while current_date <= end_date:
-            month_key = current_date.strftime("%Y-%m")
-            
-            # Aplicar filtros para este mes
-            month_start = current_date
-            if current_date.month == 12:
-                next_month = current_date.replace(year=current_date.year + 1, month=1)
+            animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+            if animal_ids:
+                parto_filter["animal_id__in"] = animal_ids
             else:
-                next_month = current_date.replace(month=current_date.month + 1)
-            month_end = next_month - timedelta(days=1)
-            
-            # Filtrar por mes
-            month_query = Part.filter(**animal_filter)
-            month_query = month_query.filter(part__gte=month_start, part__lte=month_end)
-            count = await month_query.count()
-            
-            por_mes[month_key] = count
-            
-            # Avanzar al siguiente mes
-            current_date = next_month
+                # Si no hay animales en la explotación, devolver una respuesta vacía
+                return await crear_respuesta_vacia_partos(start_date, end_date, explotacio)
         
-        # ======= ANÁLISIS POR GÉNERO Y ESTADO =======
-        
-        # Para evitar el problema de filtrado por relaciones, consultamos todos los partos necesarios
-        # aplicando los filtros de forma separada
-        query = Part.filter(**animal_filter)
-        if start_date:
-            query = query.filter(part__gte=start_date)
-        if end_date:
-            query = query.filter(part__lte=end_date)
-            
-        partos_list = await query.all()
-        
-        # Conteo por género de la cría
-        por_genero_cria = {"M": 0, "F": 0}
-        crias_ok = 0
-        
-        for parto in partos_list:
-            # Contar por género
-            genero = parto.GenereT
-            if genero and genero in por_genero_cria:
-                por_genero_cria[genero] += 1
-                
-            # Contar supervivencia
-            if parto.EstadoT == "OK":
-                crias_ok += 1
-        
-        # Calcular tasa de supervivencia
-        total_crias = sum(por_genero_cria.values())
-        tasa_supervivencia = crias_ok / total_crias if total_crias > 0 else 0
-        
-        # ======= ANÁLISIS POR AÑO =======
-        
-        distribucion_anual = {}
-        for year in range(start_date.year, end_date.year + 1):
-            year_start = date(year, 1, 1)
-            year_end = date(year, 12, 31)
-            
-            year_filter = {
-                **animal_filter,
-                "part__gte": year_start,
-                "part__lte": year_end
-            }
-            count = await Part.filter(**year_filter).count()
-            distribucion_anual[str(year)] = count
-        
-        # ======= ANÁLISIS POR ANIMAL =======
-        
-        por_animal = []
-        
-        if total_partos > 0 and not animal_id:
-            # Si estamos filtrando por explotación, ya tenemos los IDs de animales
-            if explotacio and animals_in_explotacion:
-                animal_ids_to_check = animals_in_explotacion
-            else:
-                # Si no filtramos por explotación, extraer IDs únicos de animales
-                # de la lista de partos que ya tenemos en memoria
-                animal_ids_to_check = list(set(p.animal_id for p in partos_list if p.animal_id))
-            
-            # Conteo de partos por animal
-            conteo_por_animal = {}
-            
-            # Para cada animal, contar sus partos dentro del filtro
-            for aid in animal_ids_to_check:
-                # Aplicar filtros de forma separada
-                animal_query = Part.filter(animal_id=aid)
-                if start_date:
-                    animal_query = animal_query.filter(part__gte=start_date)
-                if end_date:
-                    animal_query = animal_query.filter(part__lte=end_date)
-                
-                count = await animal_query.count()
-                if count > 0:
-                    conteo_por_animal[aid] = count
-            
-            # Ordenar por cantidad de partos (descendente)
-            sorted_animals = sorted(
-                conteo_por_animal.keys(),
-                key=lambda k: conteo_por_animal[k],
-                reverse=True
-            )[:10]  # Limitar a 10
-            
-            # Obtener información de esos animales
-            for aid in sorted_animals:
-                animal = await Animal.get_or_none(id=aid)
-                if animal:
-                    por_animal.append({
-                        "id": aid,
-                        "nombre": animal.nom,
-                        "partos": conteo_por_animal[aid]
-                    })
-        
-        # ======= MÉTRICAS TEMPORALES =======
-        
-        # Último mes (para comparativas)
-        ultimo_mes_start = end_date - timedelta(days=30)
-        
-        # Aplicar filtros de forma separada
-        ultimo_mes_query = Part.filter(**animal_filter)
-        ultimo_mes_query = ultimo_mes_query.filter(part__gte=ultimo_mes_start, part__lte=end_date)
-        
-        partos_ultimo_mes = await ultimo_mes_query.count()
-        
-        # Promedio mensual
-        months_between = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-        if months_between == 0:
-            months_between = 1  # Evitar división por cero
-        promedio_mensual = total_partos / months_between
-        
-        # Tendencia (para gráfico)
-        # Últimos 3 meses
-        today = end_date
-        month_values = []
-        for i in range(3, 0, -1):
-            month_start = today.replace(day=1) - timedelta(days=i*30)
-            month_end = today.replace(day=1) - timedelta(days=(i-1)*30) - timedelta(days=1)
-            
-            # Aplicar filtros de forma separada
-            month_query = Part.filter(**animal_filter)
-            month_query = month_query.filter(part__gte=month_start, part__lte=month_end)
-            count = await month_query.count()
-            
-            month_values.append(count)
-        
-        # Calcular cambio porcentual
-        if month_values[0] > 0:
-            cambio = ((month_values[-1] - month_values[0]) / month_values[0]) * 100
-        else:
-            cambio = 0
-            
-        tendencia = {
-            "valores": float(sum(month_values) / len(month_values)),  # Promedio
-            "cambio_porcentual": float(cambio)
+        # Aplicar filtro de fechas
+        fecha_filter = {
+            "part__gte": start_date,
+            "part__lte": end_date
         }
         
-        # ======= CONSTRUIR RESPUESTA =======
+        # Obtener total de partos históricos (sin filtro de fecha)
+        total_partos_historicos = await Part.filter(**parto_filter).count()
         
-        # Obtener nombre de explotación si corresponde
-        nombre_explotacio = None
-        if explotacio:
-            nombre_explotacio = explotacio
+        # Obtener total de partos en el periodo seleccionado
+        total_partos_periodo = await Part.filter(**parto_filter, **fecha_filter).count()
         
-        # Nombre del animal si corresponde
-        nombre_animal = None
-        if animal_id:
-            animal = await Animal.get_or_none(id=animal_id)
-            if animal:
-                nombre_animal = animal.nom
+        # Usamos el total histórico para el campo total
+        total_partos = total_partos_historicos
         
+        # Si no hay partos históricos, devolver una respuesta vacía
+        if total_partos_historicos == 0:
+            return await crear_respuesta_vacia_partos(start_date, end_date, explotacio)
+            
+        # Distribución por género
+        por_genero_cria = {}
+        for genere in ["M", "F", "esforrada"]:
+            count = await Part.filter(
+                **parto_filter,
+                GenereT=genere  # Quitamos el filtro de fecha para obtener todos los valores históricos
+            ).count()
+            por_genero_cria[genere] = count
+            logger.info(f"Género de crías '{genere}': {count} (filtros: {parto_filter})")
+        
+        logger.info(f"Distribución por género completa: {por_genero_cria}")
+                
+        # Distribución por estado en el período filtrado
+        por_estado = {}
+        for estado in ["OK", "DEF"]:
+            por_estado[estado] = await Part.filter(
+                **parto_filter,
+                **fecha_filter,
+                EstadoT=estado
+            ).count()
+        
+        # Calcular el estado para TODOS los partos históricos (sin filtro de fecha)
+        por_estado_historico = {}
+        for estado in ["OK", "DEF"]:
+            por_estado_historico[estado] = await Part.filter(
+                **parto_filter,
+                EstadoT=estado
+            ).count()
+        
+        # Calcular tasa de supervivencia basada en TODOS los partos (histórico)
+        total_ok_historico = por_estado_historico.get("OK", 0)
+        tasa_supervivencia = 0.0
+        
+        if total_partos_historicos > 0:
+            # Calculamos la tasa pero nos aseguramos de que no sea más del 100%
+            tasa_supervivencia = min(100.0, (total_ok_historico / total_partos_historicos) * 100)
+        
+        # Distribución mensual (por_mes en el esquema) - agrupar por mes independientemente del año
+        # Nombres de meses en español
+        nombres_meses = {
+            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
+            7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+        }
+        
+        # Inicializar todos los meses con 0 partos
+        por_mes = {nombre: 0 for nombre in nombres_meses.values()}
+        
+        # Usar SQL nativo para evitar problemas con el ORM
+        try:
+            # Consulta SQL directa para obtener partos
+            from tortoise import connections
+            connection = connections.get('default')
+            
+            # Consulta SQL básica para obtener todos los partos
+            # PostgreSQL requiere comillas dobles para preservar las mayúsculas
+            query = "SELECT id, part, \"GenereT\", \"EstadoT\" FROM part"
+            
+            # Ejecutar la consulta
+            results = await connection.execute_query(query)
+            
+            # Convertir resultados a formato de diccionario
+            partos = []
+            for row in results[1]:  # results[1] contiene las filas de resultados
+                partos.append({
+                    'id': row[0],
+                    'part': row[1],  # Esto será un string en formato 'YYYY-MM-DD'
+                    'GenereT': row[2],
+                    'EstadoT': row[3]
+                })
+                
+            logger.info(f"Se encontraron {len(partos)} partos mediante SQL directo")
+            
+            # Convertir las fechas de string a objetos date
+            import datetime
+            for parto in partos:
+                if parto['part'] and isinstance(parto['part'], str):
+                    try:
+                        # Intentar convertir de formato ISO (YYYY-MM-DD)
+                        fecha = datetime.date.fromisoformat(parto['part'])
+                        parto['part'] = fecha
+                        logger.info(f"Fecha convertida: {parto['part']} (Tipo: {type(parto['part'])})")
+                    except Exception as e:
+                        try:
+                            # Intentar convertir desde DD/MM/YYYY
+                            dia, mes, anio = parto['part'].split('/')
+                            fecha = datetime.date(int(anio), int(mes), int(dia))
+                            parto['part'] = fecha
+                            logger.info(f"Fecha convertida desde DD/MM/YYYY: {parto['part']}")
+                        except Exception as e2:
+                            logger.error(f"No se pudo convertir la fecha: {parto['part']} - Error: {e2}")
+            
+            # Imprimir las fechas para depuración
+            for i, p in enumerate(partos[:5]):  # Solo los primeros 5 para no llenar el log
+                logger.info(f"Parto #{i+1}: ID={p['id']}, Fecha={p['part']}, Tipo={type(p['part'])}")
+                
+        except Exception as e:
+            logger.error(f"Error al ejecutar consulta SQL para partos: {str(e)}")
+            logger.exception("Detalles completos:")
+            partos = []  # Si todo falla, inicializar como lista vacía
+        
+        # Contar partos por mes (ignorando el año)
+        for parto in partos:
+            if parto['part']:  # Verificar que la fecha no sea None
+                mes_numero = parto['part'].month
+                mes_nombre = nombres_meses[mes_numero]
+                por_mes[mes_nombre] += 1
+                
+        logger.info(f"Distribución mensual de partos: {por_mes}")
+        
+        # Distribución anual - mostrar todos los años desde 2010 hasta el presente
+        # Inicializar la distribución anual con años desde 2010 hasta el presente
+        anio_actual = date.today().year
+        anio_inicio = 2010
+        distribucion_anual = {str(anio): 0 for anio in range(anio_inicio, anio_actual + 1)}
+        
+        # NO usar la consulta ORM que está dando error
+        # En su lugar, usar los partos que ya obtuvimos con SQL directo
+        
+        # Si ya tenemos los partos de la consulta SQL directa anterior, los usamos
+        # Sino, distribución anual se queda con ceros
+        try:
+            # Usar los partos que encontramos antes con SQL directo
+            # Contar partos por año
+            for parto in partos:
+                if parto.get('part'):  # Verificar que la fecha no sea None
+                    # Convertir a string para usar como clave
+                    anio = str(parto['part'].year)
+                    if anio in distribucion_anual:
+                        distribucion_anual[anio] += 1
+                    else:
+                        # Si el año es anterior a 2010 o posterior al año actual, lo agregamos
+                        distribucion_anual[anio] = 1
+        except Exception as e:
+            logger.error(f"Error al procesar la distribución anual: {e}")
+            # Si ocurre un error, dejamos distribucion_anual con los valores por defecto (ceros)
+        
+        # Ordenar la distribución por año
+        distribucion_anual = {k: distribucion_anual[k] for k in sorted(distribucion_anual.keys())}
+        
+        logger.info(f"Distribución anual de partos: {distribucion_anual}")
+        
+        # Calcular tendencia (variación mes a mes y año a año)
+        tendencia = {
+            "mensual": 0.0,
+            "anual": 0.0
+        }
+        
+        # Mes actual y anterior
+        mes_actual = date(end_date.year, end_date.month, 1)
+        if mes_actual.month == 1:
+            mes_anterior = date(mes_actual.year - 1, 12, 1)
+        else:
+            mes_anterior = date(mes_actual.year, mes_actual.month - 1, 1)
+        
+        mes_actual_end = end_date
+        mes_anterior_end = mes_actual - timedelta(days=1)
+        
+        partos_mes_actual = await Part.filter(
+            **parto_filter,
+            part__gte=mes_actual,
+            part__lte=mes_actual_end
+        ).count()
+        
+        partos_mes_anterior = await Part.filter(
+            **parto_filter,
+            part__gte=mes_anterior,
+            part__lte=mes_anterior_end
+        ).count()
+        
+        if partos_mes_anterior > 0:
+            tendencia["mensual"] = ((partos_mes_actual - partos_mes_anterior) / partos_mes_anterior) * 100
+        
+        # Año actual y anterior
+        año_actual = date(end_date.year, 1, 1)
+        año_anterior = date(end_date.year - 1, 1, 1)
+        año_anterior_end = date(end_date.year - 1, 12, 31)
+        
+        partos_año_actual = await Part.filter(
+            **parto_filter,
+            part__gte=año_actual,
+            part__lte=end_date
+        ).count()
+        
+        partos_año_anterior = await Part.filter(
+            **parto_filter,
+            part__gte=año_anterior,
+            part__lte=año_anterior_end
+        ).count()
+        
+        if partos_año_anterior > 0:
+            tendencia["anual"] = ((partos_año_actual - partos_año_anterior) / partos_año_anterior) * 100
+        
+        # Obtener partos del último mes y año para el esquema
+        un_mes_atras = end_date - timedelta(days=30)
+        ultimo_mes = await Part.filter(
+            **parto_filter,
+            part__gte=un_mes_atras,
+            part__lte=end_date
+        ).count()
+        
+        un_año_atras = end_date - timedelta(days=365)
+        ultimo_anio = await Part.filter(
+            **parto_filter,
+            part__gte=un_año_atras,
+            part__lte=end_date
+        ).count()
+        
+        # Calcular promedio mensual
+        meses_con_partos = sum(1 for count in por_mes.values() if count > 0)
+        promedio_mensual = total_partos / max(1, meses_con_partos) if meses_con_partos > 0 else 0.0
+        
+        # Ranking de animales por número de partos (top 5)
+        ranking_partos = []
+        if not animal_id:  # Solo si no estamos ya filtrando por un animal específico
+            # Enfoque alternativo: hacemos una consulta distinta que es compatible con Tortoise ORM
+            # Primero agrupamos y contamos
+            query = Part.filter(**parto_filter, **fecha_filter)
+            # Usamos .group_by para la agregación
+            result = await query.group_by('animal_id').annotate(total=Count('id')).order_by('-total').limit(5).values('animal_id', 'total')
+            
+            # Procesamos el resultado
+            for item in result:
+                animal = await Animal.filter(id=item['animal_id']).first()
+                if animal:
+                    ranking_partos.append({
+                        "id": animal.id,
+                        "nom": animal.nom,
+                        "total_partos": item['total']
+                    })
+        
+        # Construir la respuesta completa según el esquema PartosResponse
         return {
-            "total": total_partos,
+            "total": total_partos_historicos,  # Usar el total histórico sin filtro de fecha
             "por_mes": por_mes,
             "por_genero_cria": por_genero_cria,
             "tasa_supervivencia": tasa_supervivencia,
             "distribucion_anual": distribucion_anual,
             "tendencia": tendencia,
-            "por_animal": por_animal,
-            "ultimo_mes": partos_ultimo_mes,
-            "ultimo_año": total_partos,  # Esto es un alias para total
-            "promedio_mensual": promedio_mensual,
+            "ranking_partos": ranking_partos,
+            "ultimo_mes": ultimo_mes,
+            "ultimo_año": ultimo_anio,  # Usando el nombre que espera el frontend (con ñ)
+            "promedio_mensual": round(total_partos_historicos / 12, 2) if total_partos_historicos > 0 else 0.0,
             "explotacio": explotacio,
-            "nombre_explotacio": nombre_explotacio,
-            "animal_id": animal_id,
-            "nombre_animal": nombre_animal,
             "periodo": {
                 "inicio": start_date,
                 "fin": end_date
@@ -828,461 +1254,4 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
         }
     except Exception as e:
         logger.error(f"Error en get_partos_dashboard: {str(e)}", exc_info=True)
-        return crear_respuesta_vacia_partos(start_date, end_date, explotacio)
-
-async def get_combined_dashboard(explotacio: Optional[str] = None,
-                                start_date: Optional[date] = None,
-                                end_date: Optional[date] = None) -> Dict:
-    """
-    Obtiene una vista combinada de todas las estadísticas para el dashboard.
-    
-    Args:
-        explotacio: Valor del campo explotacio para filtrar (opcional)
-        start_date: Fecha de inicio para el periodo de análisis (opcional)
-        end_date: Fecha de fin para el periodo de análisis (opcional)
-        
-    Returns:
-        Dict: Diccionario con estadísticas combinadas
-    """
-    # Si no se especifican fechas, usar el último año
-    if not end_date:
-        end_date = date.today()
-    if not start_date:
-        start_date = end_date - timedelta(days=365)
-    
-    # Obtener estadísticas básicas
-    stats = await get_dashboard_stats(explotacio, start_date, end_date)
-    
-    # Filtro base para todos los queries
-    base_filter = {}
-    nombre_explotacio = None
-    
-    if explotacio:
-        base_filter["explotacio"] = explotacio
-        nombre_explotacio = explotacio
-    
-    # Estadísticas por cuadra con detalles (animales y partos)
-    por_quadra = {}
-    cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
-    
-    for cuadra in cuadras:
-        if cuadra:  # Ignorar valores nulos
-            # Animales en esta cuadra
-            total_animales_cuadra = await Animal.filter(**base_filter, quadra=cuadra).count()
-            
-            # Distribución por género en la cuadra
-            machos_cuadra = await Animal.filter(**base_filter, quadra=cuadra, genere="M").count()
-            hembras_cuadra = await Animal.filter(**base_filter, quadra=cuadra, genere="F").count()
-            
-            # Animales en esta cuadra que han tenido partos
-            animal_ids = await Animal.filter(**base_filter, quadra=cuadra).values_list('id', flat=True)
-            
-            parto_filter = {"animal_id__in": animal_ids}
-            total_partos_cuadra = await Part.filter(**parto_filter).count()
-            
-            # Partos en el periodo especificado
-            partos_periodo_cuadra = await Part.filter(
-                **parto_filter,
-                part__gte=start_date,
-                part__lte=end_date
-            ).count()
-            
-            por_quadra[cuadra] = {
-                "total_animales": total_animales_cuadra,
-                "machos": machos_cuadra,
-                "hembras": hembras_cuadra,
-                "total_partos": total_partos_cuadra,
-                "partos_periodo": partos_periodo_cuadra
-            }
-    
-    # Rendimiento de partos (indicadores clave)
-    rendimiento_partos = {
-        "promedio_partos_por_hembra": 0.0,
-        "partos_por_animal": 0.0,
-        "eficiencia_reproductiva": 0.0
-    }
-    
-    # Calcular indicadores solo si hay animales
-    if stats["animales"]["total"] > 0:
-        # Promedio de partos por hembra
-        if stats["animales"]["hembras"] > 0:
-            rendimiento_partos["promedio_partos_por_hembra"] = stats["partos"]["total"] / stats["animales"]["hembras"]
-        
-        # Partos por animal (general)
-        rendimiento_partos["partos_por_animal"] = stats["partos"]["total"] / stats["animales"]["total"]
-        
-        # Eficiencia reproductiva (partos en el último año / hembras adultas)
-        hembras_adultas = await Animal.filter(
-            **base_filter,
-            genere="F",
-            dob__lt=end_date - timedelta(days=365*2)  # Hembras de más de 2 años
-        ).count()
-        
-        if hembras_adultas > 0:
-            rendimiento_partos["eficiencia_reproductiva"] = stats["partos"]["ultimo_año"] / hembras_adultas
-    
-    # Tendencias para diferentes métricas
-    # Utilizamos las funciones corregidas para obtener tendencias en el formato correcto
-    tendencias = {
-        "partos": calculate_tendencia(stats["partos"]["por_mes"], 6),
-        "animales": await calculate_tendencia_animales(base_filter, end_date, 6)  # Tendencia últimos 6 meses
-    }
-    
-    return {
-        "animales": stats["animales"],
-        "partos": stats["partos"],
-        "explotaciones": stats.get("explotaciones"),
-        "comparativas": stats["comparativas"] if "comparativas" in stats else {},
-        "por_quadra": por_quadra,
-        "rendimiento_partos": rendimiento_partos,
-        "tendencias": tendencias,
-        "explotacio": explotacio,
-        "nombre_explotacio": nombre_explotacio,
-        "periodo": {
-            "inicio": start_date,
-            "fin": end_date
-        }
-    }
-
-# Función para crear respuesta vacía para partos (reemplaza a generar_datos_simulados)
-def crear_respuesta_vacia_partos(start_date, end_date, explotacio=None):
-    """
-    Crea una estructura de respuesta vacía para cuando no hay datos de partos.
-    
-    Args:
-        start_date: Fecha de inicio del periodo
-        end_date: Fecha de fin del periodo
-        explotacio: Valor del campo explotacio para filtrar (opcional)
-        
-    Returns:
-        Dict: Estructura de respuesta vacía
-    """
-    # Preparar por_mes vacío
-    por_mes = {}
-    current_date = start_date.replace(day=1)
-    while current_date <= end_date:
-        month_key = current_date.strftime("%Y-%m")
-        por_mes[month_key] = 0
-        
-        # Avanzar al siguiente mes
-        if current_date.month == 12:
-            next_month = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            next_month = current_date.replace(month=current_date.month + 1)
-        current_date = next_month
-    
-    # Preparar por_año vacío
-    distribucion_anual = {}
-    for year in range(start_date.year, end_date.year + 1):
-        distribucion_anual[str(year)] = 0
-    
-    # Obtener nombre de explotación si corresponde
-    nombre_explotacio = None
-    if explotacio:
-        nombre_explotacio = explotacio
-    
-    return {
-        "total": 0,
-        "por_mes": por_mes,
-        "por_genero_cria": {"M": 0, "F": 0},
-        "tasa_supervivencia": 0.0,
-        "distribucion_anual": distribucion_anual,
-        "tendencia": {
-            "valores": 0.0,
-            "cambio_porcentual": 0.0
-        },
-        "por_animal": [],
-        "ultimo_mes": 0,
-        "ultimo_año": 0,
-        "promedio_mensual": 0.0,
-        "explotacio": explotacio,
-        "nombre_explotacio": nombre_explotacio,
-        "periodo": {
-            "inicio": start_date,
-            "fin": end_date
-        }
-    }
-
-async def get_dashboard_resumen(explotacio: Optional[str] = None,
-                              start_date: Optional[date] = None,
-                              end_date: Optional[date] = None) -> Dict[str, Any]:
-    """
-    Obtiene un resumen general para el dashboard.
-    
-    Args:
-        explotacio: Valor del campo explotacio para filtrar (opcional)
-        start_date: Fecha de inicio para el periodo de análisis (opcional)
-        end_date: Fecha de fin para el periodo de análisis (opcional)
-        
-    Returns:
-        Dict: Resumen con estadísticas clave
-    """
-    try:
-        # Si no se proporcionan fechas, usar últimos 12 meses
-        if not end_date:
-            end_date = date.today()
-        if not start_date:
-            start_date = end_date - timedelta(days=365)
-        
-        # Filtro base para consultas
-        base_filter = {}
-        nombre_explotacio = None
-        
-        if explotacio:
-            # Usar directamente el valor de explotación
-            base_filter["explotacio"] = explotacio
-            nombre_explotacio = explotacio
-        
-        # Estadísticas de animales
-        total_animales = await Animal.filter(**base_filter).count()
-        
-        # Cálculo correcto de terneros basado en el estado de amamantamiento
-        # Cada vaca con estado de amamantamiento 1 = 1 ternero
-        # Cada vaca con estado de amamantamiento 2 = 2 terneros
-        alletar_filter = dict(base_filter)
-        alletar_filter["alletar"] = EstadoAlletar.UN_TERNERO  # Vacas con 1 ternero
-        vacas_con_un_ternero = await Animal.filter(**alletar_filter).count()
-        
-        alletar_filter["alletar"] = EstadoAlletar.DOS_TERNEROS  # Vacas con 2 terneros
-        vacas_con_dos_terneros = await Animal.filter(**alletar_filter).count()
-        
-        # El total de terneros es: (1 × número de vacas con alletar=1) + (2 × número de vacas con alletar=2)
-        total_terneros = vacas_con_un_ternero + (vacas_con_dos_terneros * 2)
-        
-        # Estadísticas de partos - aplicando filtros por separado
-        parto_query = Part
-        if explotacio and nombre_explotacio:
-            # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
-            animal_ids = await Animal.filter(explotacio=nombre_explotacio).values_list('id', flat=True)
-            if animal_ids:
-                parto_query = parto_query.filter(animal_id__in=animal_ids)
-            else:
-                # Si no hay animales en esta explotación, no habrá partos
-                return crear_respuesta_vacia_resumen(start_date, end_date, explotacio, nombre_explotacio)
-        
-        # Aplicar filtros de fecha por separado
-        if start_date:
-            parto_query = parto_query.filter(part__gte=start_date)
-        if end_date:
-            parto_query = parto_query.filter(part__lte=end_date)
-            
-        total_partos = await parto_query.count()
-        
-        # Si no hay datos, devolver respuesta vacía
-        if total_animales == 0 and total_partos == 0:
-            return crear_respuesta_vacia_resumen(start_date, end_date, explotacio_id, nombre_explotacio)
-        
-        # Tendencias para los últimos meses
-        # Utilizamos las funciones corregidas para obtener tendencias en el formato correcto
-        tendencias = {
-            "partos": calculate_tendencia(await obtener_datos_por_mes(parto_query, start_date, end_date), 6),
-            "animales": await calculate_tendencia_animales(base_filter, end_date, 6)  # Tendencia últimos 6 meses
-        }
-        
-        return {
-            "total_animales": total_animales,
-            "total_partos": total_partos,
-            "total_terneros": total_terneros,  # Nuevo campo con el recuento correcto de terneros
-            "ratio_partos_animal": round(total_partos / total_animales, 2) if total_animales > 0 else 0,
-            "promedio_partos_mensual": round(total_partos / max(1, (end_date.month - start_date.month + 12 * (end_date.year - start_date.year))), 2),
-            "tendencias": tendencias,
-            "explotacio": explotacio,
-            "nombre_explotacio": nombre_explotacio,
-            "periodo": {
-                "inicio": start_date,
-                "fin": end_date
-            }
-        }
-    except Exception as e:
-        logger.error(f"Error en get_dashboard_resumen: {str(e)}", exc_info=True)
-        return crear_respuesta_vacia_resumen(start_date, end_date, explotacio, nombre_explotacio)
-
-# Función para crear respuesta vacía para el resumen del dashboard
-def crear_respuesta_vacia_resumen(start_date, end_date, explotacio=None, nombre_explotacio=None):
-    """
-    Crea una estructura de respuesta vacía para el resumen cuando no hay datos.
-    
-    Args:
-        start_date: Fecha de inicio del periodo
-        end_date: Fecha de fin del periodo
-        explotacio: Identificador de la explotación (opcional)
-        nombre_explotacio: Nombre de la explotación (opcional)
-        
-    Returns:
-        Dict: Estructura de respuesta vacía para el resumen
-    """
-    return {
-        "total_animales": 0,
-        "total_partos": 0,
-        "total_terneros": 0,  # Nuevo campo con el recuento correcto de terneros
-        "ratio_partos_animal": 0,
-        "promedio_partos_mensual": 0,
-        "tendencias": {
-            "partos": {
-                "tendencia": 0.0,
-                "promedio": 0.0,
-                "valores": 0.0
-            },
-            "animales": {
-                "tendencia": 0.0,
-                "promedio": 0.0,
-                "valores": 0.0
-            }
-        },
-        "explotacio": explotacio,
-        "nombre_explotacio": nombre_explotacio,
-        "periodo": {
-            "inicio": start_date,
-            "fin": end_date
-        }
-    }
-
-# Función auxiliar para obtener datos por mes de una consulta
-async def obtener_datos_por_mes(query, start_date, end_date):
-    """
-    Obtiene los datos agrupados por mes de una consulta.
-    
-    Args:
-        query: Consulta base (QuerySet)
-        start_date: Fecha de inicio
-        end_date: Fecha de fin
-        
-    Returns:
-        Dict: Datos por mes en formato {YYYY-MM: valor}
-    """
-    result = {}
-    current_date = start_date.replace(day=1)
-    
-    while current_date <= end_date:
-        month_key = current_date.strftime("%Y-%m")
-        
-        # Definir rango del mes
-        if current_date.month == 12:
-            next_month = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            next_month = current_date.replace(month=current_date.month + 1)
-            
-        month_end = next_month - timedelta(days=1)
-        
-        # Filtrar por mes
-        month_query = query.filter(part__gte=current_date, part__lte=month_end)
-        count = await month_query.count()
-        
-        result[month_key] = count
-        current_date = next_month
-        
-    return result
-
-async def calculate_tendencia_animales(base_filter: Dict, end_date: date, meses: int = 3) -> Dict[str, float]:
-    """
-    Calcula la tendencia de animales de los últimos meses.
-    
-    Args:
-        base_filter: Filtro base para consultas
-        end_date: Fecha de fin
-        meses: Número de meses para calcular la tendencia
-        
-    Returns:
-        Dict: Diccionario con las tendencias
-    """
-    tendencia_dict = {}
-    valores = []
-    
-    for i in range(meses):
-        mes_actual = end_date.month - i
-        año_actual = end_date.year
-        while mes_actual <= 0:
-            mes_actual += 12
-            año_actual -= 1
-        
-        # Calcular primer día del mes
-        primer_dia = date(año_actual, mes_actual, 1)
-        
-        # Calcular último día del mes
-        if mes_actual == 12:
-            ultimo_dia = date(año_actual + 1, 1, 1) - timedelta(days=1)
-        else:
-            ultimo_dia = date(año_actual, mes_actual + 1, 1) - timedelta(days=1)
-        
-        # Contar animales nacidos en este mes
-        count = await Animal.filter(
-            **base_filter,
-            dob__gte=primer_dia,
-            dob__lte=ultimo_dia
-        ).count()
-        
-        # Guardamos el resultado para este mes
-        tendencia_dict[f"{año_actual}-{mes_actual:02d}"] = count
-        valores.append(count)
-    
-    # Si no hay suficientes datos, devolver valores por defecto
-    if len(valores) == 0:
-        return {
-            "tendencia": 0.0,
-            "promedio": 0.0,
-            "valores": 0.0
-        }
-    
-    # Calcular tendencia y promedio
-    if len(valores) < 2:
-        return {
-            "tendencia": 0.0,
-            "promedio": float(valores[0]),
-            "valores": float(valores[0])
-        }
-    
-    # Tendencia simple: diferencia entre último y primer valor
-    tendencia = valores[0] - valores[-1]  # Nota: valores[0] es el más reciente
-    promedio = sum(valores) / len(valores)
-    
-    # Para compatibilidad con el esquema, devolvemos valores como un float
-    valor_representativo = float(valores[0])  # Usamos el valor más reciente
-    
-    return {
-        "tendencia": float(tendencia),
-        "promedio": float(promedio),
-        "valores": valor_representativo
-    }
-
-def calculate_tendencia(datos_por_mes: Dict[str, int], meses: int = 3) -> Dict[str, float]:
-    """
-    Calcula la tendencia de los últimos meses.
-    
-    Args:
-        datos_por_mes: Diccionario con datos por mes
-        meses: Número de meses para calcular la tendencia
-        
-    Returns:
-        Dict: Diccionario con las tendencias
-    """
-    # Ordenar las claves para obtener los últimos meses
-    ordered_keys = sorted(datos_por_mes.keys())
-    
-    if len(ordered_keys) < meses:
-        return {"tendencia": 0.0, "promedio": 0.0, "valores": 0.0}
-    
-    # Obtener los últimos N meses
-    ultimos_meses = ordered_keys[-meses:]
-    valores = [datos_por_mes[key] for key in ultimos_meses]
-    
-    # Calcular promedios y tendencia
-    if len(valores) < 2:
-        return {
-            "tendencia": 0.0, 
-            "promedio": sum(valores) / len(valores) if valores else 0.0,
-            "valores": float(valores[0]) if valores else 0.0
-        }
-    
-    # Tendencia simple: diferencia entre último y primer valor
-    tendencia = valores[-1] - valores[0]
-    promedio = sum(valores) / len(valores)
-    
-    # Para compatibilidad con el esquema, devolvemos valores como un float
-    # (promedio de los valores o último valor)
-    valor_representativo = float(valores[-1])
-    
-    return {
-        "tendencia": float(tendencia),
-        "promedio": float(promedio),
-        "valores": valor_representativo
-    }
+        return await crear_respuesta_vacia_partos(start_date, end_date, explotacio)

@@ -9,6 +9,9 @@ from app.api.endpoints.dashboard import router as dashboard_router
 from app.api.endpoints.imports import router as imports_router
 from app.api.endpoints.auth import router as auth_router
 from app.api.endpoints.users import router as users_router
+from app.api.endpoints.admin import admin_router
+from app.api.endpoints.diagnostico import router as diagnostico_router
+from app.api.endpoints.explotacions import router as explotacions_router
 
 # Crear router principal
 api_router = APIRouter()
@@ -27,7 +30,13 @@ api_router.include_router(
     tags=["users"]
 )
 
-# Incluir sub-routers - Explotaciones eliminado
+# Incluir sub-routers
+# Rutas para explotaciones
+api_router.include_router(
+    explotacions_router,
+    prefix="/explotacions",
+    tags=["explotacions"]
+)
 
 # Rutas para animales
 api_router.include_router(
@@ -49,16 +58,30 @@ api_router.include_router(
     tags=["partos"]
 )
 
+# Rutas para importaciones
+api_router.include_router(
+    imports_router,
+    prefix="/imports",
+    tags=["imports"]
+)
+
+# Rutas para administración
+api_router.include_router(
+    admin_router,
+    prefix="/admin",
+    tags=["admin"]
+)
+
+# Rutas para diagnóstico (solo desarrollo)
+api_router.include_router(
+    diagnostico_router,
+    prefix="/diagnostico",
+    tags=["diagnostico"]
+)
+
 # Rutas para dashboard - IMPORTAR DIRECTAMENTE
 api_router.include_router(
     dashboard_router,
     prefix="/dashboard",
     tags=["dashboard"]
-)
-
-# Rutas para imports - IMPORTAR DIRECTAMENTE
-api_router.include_router(
-    imports_router,
-    prefix="/imports",
-    tags=["imports"]
 )

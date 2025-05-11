@@ -1,0 +1,87 @@
+---
+/**
+ * Componente de pestañas reutilizable
+ */
+interface Tab {
+  id: string;
+  label: string;
+  active?: boolean;
+}
+
+interface Props {
+  tabs: Tab[];
+  contentId: string;
+}
+
+const { tabs, contentId } = Astro.props;
+---
+
+<div class="border-b border-gray-200 dark:border-gray-700">
+  <div class="flex" id={`tabs-${contentId}`}>
+    {tabs.map((tab) => (
+      <button
+        id={`tab-${tab.id}`}
+        data-content={`content-${tab.id}`}
+        class={`tab px-6 py-3 ${tab.active 
+          ? 'bg-blue-500 text-white' 
+          : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} font-medium`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+</div>
+
+<script define:vars={{ contentId, tabs }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsContainer = document.getElementById(`tabs-${contentId}`);
+    if (!tabsContainer) return;
+    
+    // Función para cambiar entre pestañas
+    function switchTab(activeTab) {
+      // Obtener el ID del contenido asociado a esta pestaña
+      const contentId = activeTab.getAttribute('data-content');
+      if (!contentId) return;
+      
+      // Ocultar todos los contenidos
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        content.classList.add('hidden');
+      });
+      
+      // Desactivar todas las pestañas
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.classList.remove('bg-blue-500', 'text-white');
+        tab.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+      });
+      
+      // Activar la pestaña seleccionada
+      activeTab.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+      activeTab.classList.add('bg-blue-500', 'text-white');
+      
+      // Mostrar el contenido seleccionado
+      const activeContent = document.getElementById(contentId);
+      if (activeContent) {
+        activeContent.classList.remove('hidden');
+      }
+    }
+    
+    // Configurar eventos de clic para las pestañas
+    const tabButtons = tabsContainer.querySelectorAll('.tab');
+    tabButtons.forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab));
+    });
+    
+    // Inicializar la primera pestaña como activa si no hay ninguna activa
+    const activeTab = tabs.find(tab => tab.active);
+    if (activeTab) {
+      const tabElement = document.getElementById(`tab-${activeTab.id}`);
+      if (tabElement) {
+        switchTab(tabElement);
+      }
+    } else if (tabButtons.length > 0) {
+      switchTab(tabButtons[0]);
+    }
+  });
+</script>

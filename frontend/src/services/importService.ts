@@ -1,12 +1,8 @@
 // Servicio para gestionar las importaciones
-import { get, post, del } from './apiService';
-import { mockImportHistory } from './mockData';
 
-// URL base para las peticiones API utilizando el proxy configurado en Astro
-const API_PATH = '/api/v1';
-
-// Interfaces
+// Interfaces y tipos
 export interface ImportResult {
+  // Campos originales de la interfaz
   success: boolean;
   message: string;
   total_processed?: number;
@@ -14,8 +10,27 @@ export interface ImportResult {
   total_errors?: number;
   errors?: string[];
   imported_ids?: number[];
+  
+  // Campos adicionales que devuelve el backend
+  id?: number;
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  records_count?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
+// Estados posibles de una importación
+export enum ImportStatus {
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed"
+}
+
+// Interfaces para el historial de importaciones
 export interface ImportHistoryItem {
   id: number;
   filename: string;
@@ -30,62 +45,21 @@ export interface ImportHistoryItem {
   updated_at: string;
 }
 
-export interface ImportHistoryFilters {
-  status?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
-
-// Enumeración para estados de importación (debe coincidir con el backend)
-export enum ImportStatus {
-  PENDING = "pending",
-  PROCESSING = "processing",
-  COMPLETED = "completed",
-  FAILED = "failed"
-}
-
 /**
  * Verifica si el usuario está autenticado y tiene permisos para importar
  */
-export const checkAuthStatus = (): { isAuthenticated: boolean; canImport: boolean; message: string } => {
-  // Desactivamos verificaciones para desarrollo
+const checkAuthStatus = (): { isAuthenticated: boolean; canImport: boolean; message: string } => {
+  // En desarrollo asumimos que el usuario está autenticado y tiene permiso
   return { 
-    isAuthenticated: true, 
-    canImport: true, 
-    message: 'Usuario autenticado con permisos para importar.' 
+    isAuthenticated: true,
+    canImport: true,
+    message: ''
   };
 };
 
-// Función para crear un archivo CSV con datos
-export const createCsvFile = (data: any[], headers: string[]): Blob => {
-  // Crear contenido CSV con separador ;
-  let csvContent = headers.join(';') + '\n';
-  
-  // Añadir filas
-  data.forEach(row => {
-    const values = headers.map(header => {
-      const value = row[header] !== undefined ? row[header] : '';
-      // Escapar punto y coma y comillas
-      if (typeof value === 'string' && (value.includes(';') || value.includes('"'))) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    });
-    csvContent += values.join(';') + '\n';
-  });
-  
-  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-};
-
-// Obtener JWT token del localStorage
+/**
+ * Obtener token de autenticación
+ */
 const getAuthToken = (): string | null => {
   try {
     return localStorage.getItem('auth_token');
@@ -95,12 +69,113 @@ const getAuthToken = (): string | null => {
   }
 };
 
+// Interfaces para filtros de historial
+export interface ImportHistoryFilters {
+  status?: ImportStatus;
+  startDate?: string;
+  endDate?: string;
+  fileName?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Respuesta paginada del historial
+export interface ImportHistoryResponse {
+  items: ImportHistoryItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 // Servicio de importaciones
 const importService = {
   /**
-   * Importa animales desde un archivo CSV
+   * Obtiene el historial de importaciones con filtros opcionales
+   * @param filters Filtros a aplicar (opcionales)
    */
-  async importAnimals(file: File): Promise<ImportResult> {
+  async getImportHistory(filters: ImportHistoryFilters = {}): Promise<ImportHistoryResponse> {
+    try {
+      // URL del backend
+      const BACKEND_URL = 'http://localhost:8000';
+      
+      // Construir query string para los filtros
+      const queryParams = new URLSearchParams();
+      
+      if (filters.status) {
+        queryParams.append('status', filters.status);
+      }
+      
+      if (filters.startDate) {
+        queryParams.append('start_date', filters.startDate);
+      }
+      
+      if (filters.endDate) {
+        queryParams.append('end_date', filters.endDate);
+      }
+      
+      if (filters.fileName) {
+        queryParams.append('file_name', filters.fileName);
+      }
+      
+      // Paginación
+      const page = filters.page || 1;
+      const limit = filters.limit || 10;
+      queryParams.append('page', page.toString());
+      queryParams.append('limit', limit.toString());
+      
+      // Token de desarrollo
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer test_token_for_development'
+      };
+      
+      // Llamar al endpoint
+      const response = await fetch(`${BACKEND_URL}/api/v1/imports?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          items: data.items || [],
+          total: data.total || 0,
+          page: data.page || 1,
+          limit: data.limit || 10,
+          totalPages: data.total_pages || 1
+        };
+      }
+      
+      console.error('Error al obtener historial de importaciones:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+      
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      };
+    } catch (error: any) {
+      console.error('Error general al obtener historial de importaciones:', error);
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      };
+    }
+  },
+  
+  /**
+   * Importa animales desde un archivo CSV
+   * @param formData FormData con el archivo y parámetros adicionales
+   */
+  async importAnimals(formData: FormData): Promise<ImportResult> {
     try {
       // Verificar autenticación
       const authStatus = checkAuthStatus();
@@ -117,162 +192,144 @@ const importService = {
       
       // Obtener token de autenticación
       const token = getAuthToken();
-      console.log('Token de autenticación:', token ? `${token.substring(0, 10)}...` : 'No hay token');
+      console.log('Token de autenticación:', token ? 'Presente' : 'No hay token');
       
-      // Crear FormData para enviar el archivo
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('description', 'Importación de animales');
-      
-      // Realizar petición directamente con fetch para evitar problemas con axios
+      // Configurar headers con token de autenticación
       const headers: HeadersInit = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        // Para desarrollo, usar token de desarrollo
+        headers['Authorization'] = 'Bearer test_token_for_development';
+        console.log('Usando token de desarrollo para pruebas');
       }
       
-      console.log('Enviando petición al endpoint:', `${API_PATH}/imports/csv`);
-      console.log('Tamaño del archivo:', file.size, 'bytes');
-      console.log('Tipo del archivo:', file.type);
-      console.log('Nombre del archivo:', file.name);
-      console.log('Headers:', JSON.stringify(headers));
+      // Extraer información del archivo para depuración
+      let fileInfo = 'FormData sin archivo';
+      const fileEntry = formData.get('file');
+      if (fileEntry instanceof File) {
+        fileInfo = `Archivo: ${fileEntry.name}, ${fileEntry.size} bytes, tipo: ${fileEntry.type}`;
+      }
       
-      // Usamos la ruta relativa que pasará por el proxy configurado en Astro
-      const response = await fetch(`${API_PATH}/imports/csv`, {
-        method: 'POST',
-        body: formData,
-        headers
-      });
+      // URLs para intentar
+      const BACKEND_URL = 'http://localhost:8000';
+      console.log('Enviando petición directa al backend:', `${BACKEND_URL}/api/v1/imports/csv`);
+      console.log('Contenido del FormData:', fileInfo);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error en la respuesta HTTP:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
+      // Usar directamente la URL absoluta al backend en lugar de depender del proxy
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/v1/imports/csv`, {
+          method: 'POST',
+          body: formData,
+          headers: headers
         });
         
-        // Verificar si es un error de autenticación
-        if (response.status === 401 || response.status === 403) {
-          console.error('Error de autenticación. Puede ser necesario iniciar sesión de nuevo.');
-          // Intentar verificar si hay token en localStorage
-          try {
-            const storedToken = localStorage.getItem('auth_token');
-            console.log('Token en localStorage:', storedToken ? 'Presente' : 'No existe');
-          } catch (e) {
-            console.error('Error al acceder a localStorage:', e);
-          }
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Respuesta exitosa desde el backend:', data);
+          return data;
         }
         
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}. Detalle: ${errorText}`);
+        const errorText = await response.text();
+        console.error('Error en la petición al backend:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        
+        return {
+          success: false,
+          message: `Error HTTP ${response.status}: ${response.statusText}`,
+          total_processed: 0,
+          total_imported: 0,
+          total_errors: 1,
+          errors: [`Fallo al comunicarse con el backend: ${response.status}`]
+        };
+      } catch (fetchError: any) {
+        console.error('Error en la petición fetch:', fetchError);
+        return {
+          success: false,
+          message: `Error de red: ${fetchError.message}`,
+          total_processed: 0,
+          total_imported: 0,
+          total_errors: 1,
+          errors: ['Error de conexión con el servidor']
+        };
       }
-      
-      const data = await response.json();
-      console.log('Respuesta del servidor:', JSON.stringify(data, null, 2));
-      
-      // Transformar la respuesta al formato esperado por la interfaz
-      return {
-        success: data.status === ImportStatus.COMPLETED && data.result?.errors === 0,
-        message: data.result?.errors === 0 
-          ? `Importación completada con éxito. Se importaron ${data.result?.success} animales.` 
-          : `Importación completada con advertencias. Se importaron ${data.result?.success} animales, pero hubo ${data.result?.errors} errores.`,
-        total_processed: data.result?.total || 0,
-        total_imported: data.result?.success || 0,
-        total_errors: data.result?.errors || 0,
-        errors: data.result?.error_details?.map((detail: any) => 
-          `Fila ${detail.row}: ${detail.error}`
-        ) || [],
-      };
     } catch (error: any) {
-      console.error('Error al importar animales:', error);
-      
-      let errorMessage = 'Error desconocido';
-      let errorDetails: string[] = [];
-      
-      if (error instanceof Error) {
-        errorMessage = error.message || 'Error sin mensaje';
-        errorDetails = [error.stack || error.toString()];
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-        errorDetails = [error];
-      } else if (error && typeof error === 'object') {
-        try {
-          errorMessage = JSON.stringify(error);
-          errorDetails = Object.entries(error).map(([key, value]) => `${key}: ${value}`);
-        } catch (e) {
-          errorMessage = 'Error al serializar el objeto de error';
-          errorDetails = ['No se pudieron obtener detalles del error'];
-        }
-      }
-      
-      // Devolver un objeto de resultado con error
+      console.error('Error general al importar animales:', error);
       return {
         success: false,
-        message: `Error al importar: ${errorMessage}`,
+        message: error.message || 'Error desconocido al importar animales',
         total_processed: 0,
         total_imported: 0,
         total_errors: 1,
-        errors: errorDetails
+        errors: [error.message || 'Error desconocido']
       };
     }
   },
 
   /**
-   * Descarga la plantilla CSV para importación de animales
+   * Descarga la plantilla de animales
    */
   async downloadAnimalTemplate(): Promise<Blob> {
     try {
-      // Crear plantilla de ejemplo
-      const headers = ['nom', 'genere', 'estado', 'alletar', 'mare', 'pare', 'quadra', 'cod', 'num_serie', 'dob'];
+      // Datos de ejemplo para la plantilla
       const exampleData = [
-        {
-          nom: 'Ejemplo',
-          genere: 'M',
-          estado: 'VIVO',
-          alletar: '1',
-          mare: 'Madre Ejemplo',
-          pare: 'Padre Ejemplo',
-          quadra: 'A1',
-          cod: 'ABCD123',
-          num_serie: 'SN12345',
-          dob: '01/01/2020'
+        { 
+          nom: 'NOMBRE_ANIMAL', 
+          genere: 'F', 
+          estado: 'OK', 
+          alletar: '0',
+          mare: 'NOMBRE_MADRE',
+          pare: 'NOMBRE_PADRE',
+          quadra: 'NOMBRE_CUADRA',
+          cod: 'CODIGO',
+          num_serie: 'NUMERO_SERIE',
+          dob: 'DD/MM/YYYY'
         }
       ];
       
-      return createCsvFile(exampleData, headers);
-    } catch (error) {
-      console.error('Error al crear plantilla de animales:', error);
+      // Convertir a CSV
+      const headers = Object.keys(exampleData[0]).join(',');
+      const rows = exampleData.map(item => Object.values(item).join(','));
+      const csvContent = [headers, ...rows].join('\n');
+      
+      // Crear blob
+      return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    } catch (error: any) {
+      console.error('Error al generar plantilla:', error);
       throw error;
     }
   },
 
   /**
-   * Descarga la plantilla CSV para importación de partos
+   * Descarga la plantilla de partos
    */
   async downloadPartoTemplate(): Promise<Blob> {
     try {
-      // Crear plantilla de ejemplo
-      const headers = ['nom_animal', 'date_part', 'genere_t', 'estado_t'];
+      // Datos de ejemplo para la plantilla
       const exampleData = [
-        {
-          nom_animal: 'Nombre del Animal',
-          date_part: '01/01/2020',
-          genere_t: 'M',
-          estado_t: 'VIVO'
+        { 
+          nom_animal: 'NOMBRE_VACA', 
+          date_part: 'DD/MM/YYYY', 
+          genere_t: 'M', 
+          estado_t: 'OK'
         }
       ];
       
-      return createCsvFile(exampleData, headers);
-    } catch (error) {
-      console.error('Error al crear plantilla de partos:', error);
+      // Convertir a CSV
+      const headers = Object.keys(exampleData[0]).join(',');
+      const rows = exampleData.map(item => Object.values(item).join(','));
+      const csvContent = [headers, ...rows].join('\n');
+      
+      // Crear blob
+      return new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    } catch (error: any) {
+      console.error('Error al generar plantilla:', error);
       throw error;
     }
   }
 };
 
 export default importService;
-// Exportar funciones individuales para usar con componentes
-export const { 
-  importAnimals,
-  downloadAnimalTemplate,
-  downloadPartoTemplate
-} = importService;

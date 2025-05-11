@@ -1,8 +1,8 @@
 ---
 // Importar el layout
 import MainLayout from '../../components/layout/MainLayout.astro';
-import ImportForm from '../../components/imports/ImportForm';
-import ImportHistory from '../../components/imports/ImportHistory';
+import ImportContainer from '../../components/imports/ImportContainer';
+import ResetDatabaseButton from '../../components/admin/ResetDatabaseButton';
 
 // Definir título y rol de usuario
 const title = "Importación de Datos";
@@ -38,11 +38,6 @@ const userRole = "administrador"; // Simulación de rol
         
         <!-- Grupo de botones derecha -->
         <div class="flex flex-wrap gap-3">
-          <button id="direct-import" class="import-btn direct-btn">
-            <span class="icon">📤</span>
-            <span class="text">Importación Directa</span>
-          </button>
-          
           <button id="import-btn" class="import-btn import-action-btn">
             <span class="icon">✅</span>
             <span class="text">Importar</span>
@@ -50,15 +45,19 @@ const userRole = "administrador"; // Simulación de rol
         </div>
       </div>
       
-      <!-- Componente React para el formulario de importación -->
-      <ImportForm client:load />
+      <!-- Componente React para la importación y el historial -->
+      <ImportContainer client:load />
     </div>
   </div>
+  </div>
 
-  <!-- Historial de Importaciones -->
+  <!-- Sección de Administración -->
   <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
-    <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Historial de Importaciones</h2>
-    <ImportHistory client:load refreshTrigger={0} />
+    <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Opciones Avanzadas (Administrador)</h2>
+    <p class="text-sm md:text-base text-red-600 dark:text-red-400 mb-4">
+      ⚠️ Advertencia: Estas operaciones son irreversibles y solo deben ser usadas por administradores.
+    </p>
+    <ResetDatabaseButton client:load />
   </div>
 </MainLayout>
 
@@ -132,7 +131,6 @@ const userRole = "administrador"; // Simulación de rol
     
     // Botones de acción
     const resetBtn = document.getElementById('reset-import');
-    const directImportBtn = document.getElementById('direct-import');
     const importBtn = document.getElementById('import-btn');
     
     // Función para actualizar el historial
@@ -155,19 +153,13 @@ const userRole = "administrador"; // Simulación de rol
     // Conectar botones con el componente React
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('reset-import-form'));
-      });
-    }
-    
-    if (directImportBtn) {
-      directImportBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('direct-import'));
+        document.dispatchEvent(new CustomEvent('reset-import'));
       });
     }
     
     if (importBtn) {
       importBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('import-animals'));
+        document.dispatchEvent(new CustomEvent('import-btn-click'));
       });
     }
   });

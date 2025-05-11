@@ -169,6 +169,49 @@ export async function postData(endpoint: string, data: Record<string, any> = {},
 }
 
 /**
+ * Realiza una petición PATCH a la API a través del proxy local
+ * @param endpoint Endpoint de la API
+ * @param data Datos a enviar
+ * @returns Promesa con la respuesta
+ */
+export async function patchData(endpoint: string, data: Record<string, any> = {}): Promise<any> {
+  console.log(`Enviando petición PATCH a ${endpoint} con datos:`, data);
+  try {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`Error ${response.status} en PATCH ${endpoint}:`, errorData);
+      throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log(`Respuesta exitosa de PATCH ${endpoint}:`, responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error(`Error en patchData (${endpoint}):`, error);
+    throw {
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
+      status: error.status || 0,
+      code: error.code || 'NETWORK_ERROR'
+    };
+  }
+}
+
+/**
  * Realiza una petición PUT a la API a través del proxy local
  * @param endpoint Endpoint de la API
  * @param data Datos a enviar
@@ -212,5 +255,13 @@ api.postData = postData;
 api.putData = putData;
 api.deleteData = deleteData;
 api.handleApiError = handleApiError;
+
+// Agregar método PATCH
+declare module 'axios' {
+  interface AxiosInstance {
+    patchData: (endpoint: string, data?: Record<string, any>) => Promise<any>;
+  }
+}
+api.patchData = patchData;
 
 export default api;

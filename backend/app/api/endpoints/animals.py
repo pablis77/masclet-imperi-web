@@ -295,48 +295,60 @@ async def update_animal_patch(
             detail=f"Animal con ID {animal_id} no encontrado"
         )
     
-    # Recoger los datos del animal a actualizar
-    update_data = {}
+    # Log para depuración detallada
+    logger.info(f"Recibida solicitud PATCH para animal ID {animal_id}")
+    logger.info(f"Datos recibidos (raw): {animal_data}")
     
-    # Procesar fecha de nacimiento si está presente
-    if animal_data.dob:
-        try:
-            update_data["dob"] = DateConverter.to_db_format(animal_data.dob)
-        except ValueError as e:
-            raise HTTPException(
-                status_code=400,
-                detail=str(e)
-            )
+    # Obtener solo los campos que se enviaron explícitamente
+    # Asegurarnos de usar exclude_unset=True para que solo se incluyan los campos enviados
+    raw_data = animal_data.model_dump(exclude_unset=True)
+    logger.info(f"Datos procesados para actualización (dict): {raw_data}")
+    logger.info(f"Campos a actualizar: {list(raw_data.keys())}")
     
-    # Campos simples que no requieren procesamiento especial pero pueden ser null
-    for field in ["nom", "estado", "mare", "pare", "quadra", "cod", "num_serie", "part"]:
-        # Solo incluimos el campo si se especificó explícitamente en el request
-        # (hasattr no es suficiente, necesitamos saber si el campo no es None o se envió explícitamente)
-        if hasattr(animal_data, field) and getattr(animal_data, field) is not None:
-            update_data[field] = getattr(animal_data, field)
-    
-    # Campo alletar (con reglas de negocio)
-    if animal_data.alletar is not None:
-        # Si es macho, solo puede ser "0"
-        if animal.genere == Genere.MASCLE.value and animal_data.alletar != EstadoAlletar.NO_ALLETAR.value:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Los machos solo pueden tener estado de amamantamiento '{EstadoAlletar.NO_ALLETAR.value}' (sin amamantar)"
-            )
-        # Si es hembra, puede ser "0", "1" o "2"
-        update_data["alletar"] = animal_data.alletar
+    # Si no hay datos para actualizar, devolver el animal sin cambios
+    if not raw_data:
+        logger.warning(f"No se recibieron campos para actualizar el animal {animal_id}")
+        return {
+            "status": "success",
+            "data": await animal.to_dict()
+        }
     
     # Guardar valores anteriores para el historial
     valores_anteriores = {}
-    for campo in update_data.keys():
-        valores_anteriores[campo] = getattr(animal, campo)
     
-    # Actualizar el animal
-    if update_data:
-        await animal.update_from_dict(update_data).save()
+    try:
+        # Procesar fecha de nacimiento si está presente
+        if 'dob' in raw_data and raw_data['dob']:
+            try:
+                raw_data["dob"] = DateConverter.to_db_format(raw_data['dob'])
+                logger.info(f"Campo 'dob' convertido: {raw_data['dob']} -> {raw_data['dob']}")
+            except ValueError as e:
+                logger.error(f"Error al convertir fecha 'dob': {e}")
+                raise HTTPException(status_code=400, detail=str(e))
+        
+        # Validación especial para alletar
+        if "alletar" in raw_data and raw_data["alletar"] is not None:
+            # Si es macho, solo puede ser "0"
+            if animal.genere == Genere.MASCLE.value and raw_data["alletar"] != EstadoAlletar.NO_ALLETAR.value:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Los machos solo pueden tener estado de amamantamiento '{EstadoAlletar.NO_ALLETAR.value}' (sin amamantar)"
+                )
+        
+        # Guardar valores anteriores para todos los campos que se van a actualizar
+        for campo in raw_data.keys():
+            if hasattr(animal, campo):
+                valores_anteriores[campo] = getattr(animal, campo)
+        
+        # Actualización directa usando el método update() de Tortoise ORM
+        # Esto actualiza sólo los campos enviados sin validar los demás
+        await Animal.filter(id=animal_id).update(**raw_data)
+        
+        # Recargar el animal para tener los datos actualizados
+        animal = await Animal.get(id=animal_id)
         
         # Registrar los cambios en el historial
-        for campo, nuevo_valor in update_data.items():
+        for campo, nuevo_valor in raw_data.items():
             valor_anterior = valores_anteriores.get(campo)
             
             # Convertir fechas a formato legible
@@ -364,12 +376,18 @@ async def update_animal_patch(
                 valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
                 valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
             )
+            
+        return {
+            "status": "success",
+            "data": await animal.to_dict()
+        }
     
-    # Devolver el animal actualizado
-    return {
-        "status": "success",
-        "data": await animal.to_dict()
-    }
+    except Exception as e:
+        logger.error(f"Error al actualizar animal {animal_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al actualizar animal: {str(e)}"
+        )
 
 @router.put("/{animal_id}", response_model=AnimalResponse)
 async def update_animal(
@@ -391,35 +409,37 @@ async def update_animal(
     # Recoger los datos del animal a actualizar
     update_data = {}
     
+    # Asegurarnos de usar exclude_unset=True para que solo se incluyan los campos enviados
+    # Esto garantiza que solo se incluyan los campos que se enviaron explícitamente
+    raw_data = animal_data.model_dump(exclude_unset=True)
+    logger.info(f"PUT animal ID={animal_id}: Datos recibidos={raw_data}")
+    
     # Procesar fecha de nacimiento si está presente
-    if animal_data.dob:
+    if "dob" in raw_data and raw_data["dob"]:
         try:
-            update_data["dob"] = DateConverter.to_db_format(animal_data.dob)
+            update_data["dob"] = DateConverter.to_db_format(raw_data["dob"])
         except ValueError as e:
             raise HTTPException(
                 status_code=400,
                 detail=str(e)
             )
     
-    # Campos simples que no requieren procesamiento especial pero pueden ser null
-    for field in ["nom", "estado", "mare", "pare", "quadra", "cod", "num_serie", "part"]:
-        # Usamos hasattr para comprobar si el campo existe en el modelo
-        if hasattr(animal_data, field):
-            # Verificamos si el campo se envió en el request (podría ser None)
-            value = getattr(animal_data, field)
-            # Incluimos el campo en la actualización, incluso si es None
-            update_data[field] = value
+    # Campos simples que no requieren procesamiento especial
+    valid_fields = ["nom", "estado", "mare", "pare", "quadra", "cod", "num_serie", "part"]
+    for field in valid_fields:
+        if field in raw_data:
+            update_data[field] = raw_data[field]
     
     # Campo alletar (con reglas de negocio)
-    if animal_data.alletar is not None:
+    if "alletar" in raw_data and raw_data["alletar"] is not None:
         # Si es macho, solo puede ser "0"
-        if animal.genere == Genere.MASCLE.value and animal_data.alletar != EstadoAlletar.NO_ALLETAR.value:
+        if animal.genere == Genere.MASCLE.value and raw_data["alletar"] != EstadoAlletar.NO_ALLETAR.value:
             raise HTTPException(
                 status_code=422,
                 detail=f"Los machos solo pueden tener estado de amamantamiento '{EstadoAlletar.NO_ALLETAR.value}' (sin amamantar)"
             )
         # Si es hembra, puede ser "0", "1" o "2"
-        update_data["alletar"] = animal_data.alletar
+        update_data["alletar"] = raw_data["alletar"]
     
     # Guardar valores anteriores para el historial
     valores_anteriores = {}
@@ -427,11 +447,16 @@ async def update_animal(
         valores_anteriores[campo] = getattr(animal, campo)
     
     # Actualizar el animal
-    if update_data:
-        await animal.update_from_dict(update_data).save()
+    if raw_data:
+        # Actualización directa usando el método update() de Tortoise ORM
+        # Esto actualiza sólo los campos enviados sin validar los demás
+        await Animal.filter(id=animal_id).update(**update_data)
+        
+        # Recargar el animal para tener los datos actualizados
+        animal = await Animal.get(id=animal_id)
         
         # Registrar los cambios en el historial
-        for campo, nuevo_valor in update_data.items():
+        for campo, nuevo_valor in raw_data.items():
             valor_anterior = valores_anteriores.get(campo)
             
             # Convertir fechas a formato legible

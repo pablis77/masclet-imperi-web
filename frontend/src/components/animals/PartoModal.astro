@@ -1,0 +1,615 @@
+---
+// PartoModal.astro - Componente para los modales de edición y eliminación de partos
+---
+
+<!-- Modal de confirmación para eliminación -->
+<div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full">
+    <div class="flex flex-col space-y-4">
+      <h3 id="delete-modal-title" class="text-xl font-medium text-gray-900 dark:text-white">Confirmar ocultación</h3>
+      <p id="delete-modal-description" class="text-gray-600 dark:text-gray-400">¿Estás seguro de que deseas ocultar este registro de parto? El registro seguirá en la base de datos pero no se mostrará en la interfaz.</p>
+      
+      <div class="flex justify-end space-x-3">
+        <button id="delete-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+          Cancelar
+        </button>
+        <button id="delete-confirm-btn" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors">
+          Ocultar
+        </button>
+        <button id="delete-permanent-btn" class="hidden px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+          Eliminar permanentemente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de edición de parto -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800 w-full">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white">Editar Parto</h3>
+      <button id="edit-close-btn" class="text-gray-400 hover:text-gray-500">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <form id="edit-form" class="space-y-4">
+      <input type="hidden" id="parto-id" name="parto-id" value="" />
+      
+      <div>
+        <label for="parto-fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha del Parto</label>
+        <input type="date" id="parto-fecha" name="parto-fecha" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+      </div>
+      
+      <div>
+        <label for="parto-genero" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Género de la Cría</label>
+        <select id="parto-genero" name="parto-genero" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+          <option value="F">Hembra</option>
+          <option value="M">Macho</option>
+          <option value="esforrada">Esforrá</option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="parto-estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado de la Cría</label>
+        <select id="parto-estado" name="parto-estado" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+          <option value="OK">Vivo</option>
+          <option value="DEF">Fallecido</option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="parto-observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Observaciones</label>
+        <textarea id="parto-observaciones" name="parto-observaciones" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+      </div>
+      
+      <div class="flex justify-end">
+        <button type="button" id="edit-cancel-btn" class="mr-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-md">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-md">
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Alerta de éxito -->
+<div id="success-alert" class="hidden fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 shadow-md rounded">
+  <div class="flex">
+    <div class="py-1">
+      <svg class="h-6 w-6 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+    </div>
+    <div>
+      <p class="font-medium" id="success-message">Operación completada con éxito</p>
+    </div>
+    <div class="ml-auto">
+      <button id="close-success" class="text-green-500 hover:text-green-800">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Variable global para controlar peticiones en curso y evitar duplicados
+  let submittingForm = false;
+  let processingParto = false;
+  let lastSubmissionTime = 0;
+  
+  // Script para manejar los modales de edición y eliminación de partos
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Inicializando gestor de partos con protección anti-duplicados MEJORADA v2');
+    
+    // Escuchar el evento de carga de partos para configurar los botones
+    document.addEventListener('partosLoaded', function() {
+      setUpEditButtons();
+      setUpDeleteButtons();
+    });
+    
+    // Cerrar alertas de éxito
+    const closeSuccessBtn = document.getElementById('close-success');
+    if (closeSuccessBtn) {
+      closeSuccessBtn.addEventListener('click', function() {
+        document.getElementById('success-alert').classList.add('hidden');
+      });
+    }
+    
+    // Inicializar token de formulario una vez por sesión
+    if (!sessionStorage.getItem('formSubmissionToken')) {
+      const newToken = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem('formSubmissionToken', newToken);
+      console.log('Nuevo token de sesión generado:', newToken);
+    }
+    
+    // Prevenir clicks multiples en cualquier botón de envío
+    document.body.addEventListener('click', function(e) {
+      const target = e.target;
+      
+      // Comprobar si es un botón de envío o está dentro de uno
+      const submitButton = target.closest('button[type="submit"]');
+      if (submitButton) {
+        const currentTime = Date.now();
+        
+        // Prevenir clicks rápidos (menos de 1 segundo de diferencia)
+        if (currentTime - lastSubmissionTime < 1000) {
+          console.log('Evitando clicks rápidos en botón de envío');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        // Actualizar el tiempo del último click
+        lastSubmissionTime = currentTime;
+      }
+    }, true);
+    
+    // Triple protección: Bloquear submitForm globalmente
+    document.addEventListener('submit', function(e) {
+      // Si el formulario es de parto y ya hay un envío en curso o es un reenvío rápido, cancelar
+      if (e.target.id === 'edit-form') {
+        if (submittingForm) {
+          console.log('DETENIDO: Envío duplicado de formulario de parto');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        const currentTime = Date.now();
+        // Si ha pasado menos de 3 segundos desde el último envío
+        if (currentTime - lastSubmissionTime < 3000) {
+          console.log('DETENIDO: Reenvío muy rápido de formulario');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }
+    }, true);
+  });
+  
+  // Configuración de botones de edición
+  function setUpEditButtons() {
+    const editButtons = document.querySelectorAll('.edit-parto-btn');
+    
+    editButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const partoId = this.getAttribute('data-parto-id');
+        openEditModal(partoId);
+      });
+    });
+  }
+  
+  // Configuración de botones de eliminación
+  function setUpDeleteButtons() {
+    const deleteButtons = document.querySelectorAll('.delete-parto-btn');
+    
+    deleteButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const partoId = this.getAttribute('data-parto-id');
+        openDeleteModal(partoId);
+      });
+    });
+  }
+  
+  // Función para abrir el modal de edición
+  function openEditModal(partoId) {
+    // Obtener el modal
+    const modal = document.getElementById('edit-modal');
+    const form = document.getElementById('edit-form');
+    const closeBtn = document.getElementById('edit-close-btn');
+    const cancelBtn = document.getElementById('edit-cancel-btn');
+    
+    // Limpiar cualquier event listener anterior
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    // Establecer el ID del parto en el formulario
+    document.getElementById('parto-id').value = partoId;
+    
+    // Mostrar el modal
+    modal.classList.remove('hidden');
+    
+    // Obtener el ID del animal desde la URL
+    const animalId = window.location.pathname.split('/')[2];
+    
+    // Cargar los datos del parto con el ID del animal incluido en la ruta
+    console.log('Cargando datos de parto desde:', `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}/`);
+    fetch(`http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}/`)
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('Error al cargar los datos del parto');
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        const parto = data.data || data;
+        
+        // Convertir la fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
+        let fechaInput = '';
+        if (parto.part) {
+          if (typeof parto.part === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parto.part)) {
+            // Convertir de DD/MM/YYYY a YYYY-MM-DD
+            const parts = parto.part.split('/');
+            fechaInput = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          } else if (typeof parto.part === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parto.part)) {
+            // Ya está en formato YYYY-MM-DD
+            fechaInput = parto.part;
+          } else {
+            // Intentar convertir cualquier formato de fecha a YYYY-MM-DD
+            try {
+              const fecha = new Date(parto.part);
+              if (!isNaN(fecha.getTime())) {
+                fechaInput = fecha.toISOString().split('T')[0];
+              }
+            } catch (e) {
+              console.error('Error al formatear la fecha:', e);
+            }
+          }
+        }
+        
+        // Rellenar el formulario
+        document.getElementById('parto-fecha').value = fechaInput;
+        document.getElementById('parto-genero').value = parto.GenereT || '';
+        document.getElementById('parto-estado').value = parto.EstadoT || 'OK';
+        document.getElementById('parto-observaciones').value = parto.observacions || '';
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+        alert('Error al cargar los datos del parto: ' + error.message);
+        modal.classList.add('hidden');
+      });
+    
+    // Configurar botones de cierre
+    closeBtn.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+    
+    cancelBtn.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+    
+    // Manejar envío del formulario
+    // Eliminar el escuchador normal de submit y usar uno personalizado
+    newForm.onsubmit = null;
+    
+    // Obtener referencia al botón de submit
+    const submitButton = newForm.querySelector('button[type="submit"]');
+    
+    // Solución radical para prevenir duplicados
+    
+    // 1. SOBRESCRIBIR COMPLETAMENTE EL MANEJADOR DE FETCH
+    // Guardar la versión original del fetch
+    const originalFetch = window.fetch;
+    
+    // Crear un registro de peticiones recientes para evitar duplicados
+    if (!window._recentRequests) {
+      window._recentRequests = {};
+    }
+    
+    // Sobrescribir fetch para interceptar todas las peticiones
+    window.fetch = function(url, options) {
+      // Verificar si es una petición POST para crear o actualizar un parto
+      if (options && options.method === 'POST' && typeof url === 'string' && url.includes('/partos')) {
+        const requestKey = `${url}_${JSON.stringify(options.body)}`;
+        const now = Date.now();
+        
+        // Comprobar si esta misma petición se ha hecho recientemente (10 segundos)
+        if (window._recentRequests[requestKey] && (now - window._recentRequests[requestKey] < 10000)) {
+          console.error('BLOQUEADA: Petición duplicada detectada y bloqueada por interceptor', url);
+          return Promise.resolve(new Response(JSON.stringify({
+            status: 'error',
+            message: 'Petición duplicada bloqueada por el cliente'
+          }), {
+            status: 200,
+            headers: {'Content-Type': 'application/json'}
+          }));
+        }
+        
+        // Registrar esta petición
+        window._recentRequests[requestKey] = now;
+        console.log('INTERCEPTADA y PERMITIDA: petición a', url);
+        
+        // Limpiar peticiones antiguas (más de 30 segundos)
+        Object.keys(window._recentRequests).forEach(key => {
+          if (now - window._recentRequests[key] > 30000) {
+            delete window._recentRequests[key];
+          }
+        });
+      }
+      
+      // Continuar con la petición original
+      return originalFetch.apply(window, arguments);
+    };
+    
+    // 2. También mantener la protección a nivel de botón
+    submitButton.onclick = async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentTime = Date.now();
+      
+      // Sistema de triple verificación
+      if (submittingForm) {
+        console.log('RECHAZADO: Ya hay un envío de parto en curso');
+        return false;
+      }
+      
+      if (submitButton.disabled) {
+        console.log('RECHAZADO: Botón deshabilitado');
+        return false;
+      }
+      
+      if (currentTime - lastSubmissionTime < 5000) {
+        console.log('RECHAZADO: Intento demasiado rápido');
+        return false;
+      }
+      
+      // Iniciar bloqueo
+      submittingForm = true;
+      lastSubmissionTime = currentTime;
+      submitButton.disabled = true;
+      submitButton.innerHTML = 'Procesando...';
+      
+      // Programar la liberación del bloqueo después de 20 segundos como precaución
+      setTimeout(() => {
+        if (submittingForm) {
+          console.log('Liberando bloqueo de formulario por tiempo de espera');
+          submittingForm = false;
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Guardar Cambios';
+        }
+      }, 20000);
+      
+      // Obtener token único de la sesión actual
+      const submissionToken = sessionStorage.getItem('formSubmissionToken');
+      
+      // Obtener datos del formulario
+      const partoId = document.getElementById('parto-id').value;
+      const fechaInput = document.getElementById('parto-fecha').value;
+      const genero = document.getElementById('parto-genero').value;
+      const estado = document.getElementById('parto-estado').value;
+      const observaciones = document.getElementById('parto-observaciones').value;
+      
+      // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para la API
+      let fechaApi = '';
+      if (fechaInput) {
+        const partesFecha = fechaInput.split('-');
+        fechaApi = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+      }
+      
+      // Preparar datos para la API
+      const partoData = {
+        part: fechaApi,
+        GenereT: genero,
+        EstadoT: estado,
+        observacions: observaciones,
+        submission_token: submissionToken // Agregar token para detectar duplicados en el backend
+      };
+      
+      // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
+      const token = localStorage.getItem('token') || 'admin123';
+      
+      // Obtener el ID del animal desde la URL
+      const animalId = window.location.pathname.split('/')[2];
+      
+      // Enviar datos a la API usando PATCH
+      console.log('Actualizando parto en:', `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, partoData);
+      fetch(`http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, {
+        method: 'PATCH', // Cambiado de PATCH a PUT según los endpoints disponibles
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(partoData)
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('Error al actualizar el parto');
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        // Cerrar el modal
+        modal.classList.add('hidden');
+        
+        // Mostrar mensaje de éxito
+        showSuccessMessage('Parto actualizado correctamente');
+        
+        // Disparar evento para recargar los partos
+        window.dispatchEvent(new CustomEvent('tabPartosActivated'));
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+        alert('Error al actualizar el parto: ' + error.message);
+      })
+      .finally(function() {
+        // Re-habilitar botón y liberar bloqueo global después de completar la operación
+        setTimeout(function() {
+          // Liberar bloqueo global
+          submittingForm = false;
+          console.log('Liberando bloqueo de envío de formulario');
+          
+          // Re-habilitar botón
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Guardar Cambios';
+        }, 2000); // Esperar 2 segundos antes de re-habilitar
+      });
+    }
+  }
+  
+  // Función para abrir el modal de eliminación
+  function openDeleteModal(partoId) {
+    // Obtener el modal
+    const modal = document.getElementById('delete-modal');
+    const confirmBtn = document.getElementById('delete-confirm-btn');
+    const cancelBtn = document.getElementById('delete-cancel-btn');
+    const permanentBtn = document.getElementById('delete-permanent-btn');
+    const modalTitle = document.getElementById('delete-modal-title');
+    const modalDescription = document.getElementById('delete-modal-description');
+    
+    // Determinar si el usuario es administrador
+    // Para desarrollo, siempre permitimos acceso de administrador (luego se verificará en el backend)
+    const token = localStorage.getItem('token') || 'admin123';
+    const isAdmin = true; // En entorno de producción, esto debería verificarse adecuadamente
+    
+    // Configurar el modal según el rol del usuario
+    if (isAdmin) {
+      modalTitle.textContent = 'Opciones de eliminación';
+      modalDescription.textContent = 'Puedes ocultar este registro (seguirá en la base de datos) o eliminarlo permanentemente (sólo administradores).';
+      permanentBtn.classList.remove('hidden');
+    } else {
+      modalTitle.textContent = 'Confirmar ocultación';
+      modalDescription.textContent = '¿Estás seguro de que deseas ocultar este registro de parto? El registro seguirá en la base de datos pero no se mostrará en la interfaz.';
+      permanentBtn.classList.add('hidden');
+    }
+    
+    // Limpiar cualquier event listener anterior
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    const newPermanentBtn = permanentBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    permanentBtn.parentNode.replaceChild(newPermanentBtn, permanentBtn);
+    
+    // Mostrar el modal
+    modal.classList.remove('hidden');
+    
+    // Configurar botón de cancelar
+    newCancelBtn.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+    
+    // Configurar botón de ocultación (para todos los usuarios)
+    newConfirmBtn.addEventListener('click', function() {
+      // Ocultar el modal
+      modal.classList.add('hidden');
+      
+      // Token de autenticación (en producción debería obtenerse del almacenamiento seguro)
+      const token = localStorage.getItem('token') || 'admin123';
+      
+      // Como no podemos eliminar realmente, marcamos el parto como ignorado
+      const partoData = {
+        observacions: "[REGISTRO DUPLICADO - IGNORAR] Este registro ha sido marcado como eliminado."
+      };
+      
+      // Obtener el ID del animal desde la URL
+      const animalId = window.location.pathname.split('/')[2];
+      
+      // Actualizar el parto en la API usando PATCH
+      console.log('Ocultando parto usando API:', `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`);
+      fetch(`http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(partoData)
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('Error al marcar el parto como oculto');
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        // Guardar ID en localStorage para ocultar en futuras cargas
+        const partosOcultos = JSON.parse(localStorage.getItem('partosOcultos') || '[]');
+        if (!partosOcultos.includes(partoId)) {
+          partosOcultos.push(partoId);
+          localStorage.setItem('partosOcultos', JSON.stringify(partosOcultos));
+        }
+        
+        // Mostrar mensaje de éxito
+        showSuccessMessage('Parto ocultado correctamente');
+        
+        // Disparar evento para recargar los partos
+        window.dispatchEvent(new CustomEvent('tabPartosActivated'));
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+        alert('Error al ocultar el parto: ' + error.message);
+      });
+    });
+    
+    // Configurar botón de eliminación permanente (solo para administradores)
+    newPermanentBtn.addEventListener('click', function() {
+      if (confirm('ATENCIÓN: Estás a punto de ELIMINAR PERMANENTEMENTE este registro de parto. Esta acción NO SE PUEDE DESHACER. ¿Estás completamente seguro?')) {
+        // Ocultar el modal
+        modal.classList.add('hidden');
+        
+        // Token de autenticación
+        const token = localStorage.getItem('token') || 'admin123';
+        
+        // Obtener el ID del animal desde la URL
+        const animalId = window.location.pathname.split('/')[2];
+        
+        // Eliminar permanentemente el parto usando DELETE
+        console.log('Eliminando permanentemente el parto:', `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`);
+        fetch(`http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(function(response) {
+          if (!response.ok) {
+            if (response.status === 403) {
+              throw new Error('No tienes permisos para eliminar permanentemente este parto. Solo administradores pueden realizar esta acción.');
+            } else if (response.status === 404) {
+              throw new Error('El parto no se encuentra en la base de datos.');
+            } else {
+              throw new Error('Error al eliminar permanentemente el parto. Código: ' + response.status);
+            }
+          }
+          return response.json();
+        })
+        .then(function(data) {          
+          // Mostrar mensaje de éxito con información de la respuesta
+          const mensaje = data.message || 'Parto eliminado permanentemente';
+          showSuccessMessage(mensaje);
+          
+          // Si el parto estaba en la lista de ocultos, quitarlo
+          const partosOcultos = JSON.parse(localStorage.getItem('partosOcultos') || '[]');
+          const index = partosOcultos.indexOf(partoId);
+          if (index > -1) {
+            partosOcultos.splice(index, 1);
+            localStorage.setItem('partosOcultos', JSON.stringify(partosOcultos));
+          }
+          
+          // Disparar evento para recargar los partos
+          window.dispatchEvent(new CustomEvent('tabPartosActivated'));
+        })
+        .catch(function(error) {
+          console.error('Error:', error);
+          alert('Error al eliminar permanentemente el parto: ' + error.message);
+        });
+      }
+    });
+  }
+  
+  // Función para mostrar mensaje de éxito
+  function showSuccessMessage(message) {
+    const alert = document.getElementById('success-alert');
+    const messageEl = document.getElementById('success-message');
+    
+    // Establecer mensaje
+    messageEl.textContent = message;
+    
+    // Mostrar alerta
+    alert.classList.remove('hidden');
+    
+    // Ocultar automáticamente después de 5 segundos
+    setTimeout(function() {
+      alert.classList.add('hidden');
+    }, 5000);
+  }
+</script>

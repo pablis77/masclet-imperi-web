@@ -10,8 +10,17 @@ export default defineConfig({
     // Configuración del servidor de desarrollo
     server: {
         port: 3000,
-        host: true,
-        // No usamos proxy para evitar problemas de acceso desde dispositivos externos
+        host: '0.0.0.0',
+        // Configuración del proxy para comunicación con backend
+        proxy: {
+            '/api/v1': {
+                target: 'http://localhost:8000',
+                changeOrigin: true,
+                secure: false,
+                // No reescribir la ruta, mantener tal cual
+                rewrite: (path) => path
+            }
+        }
     },
 
     // Integraciones
@@ -32,7 +41,7 @@ export default defineConfig({
     ],
 
     // Configuración de build
-    output: 'server',  // Cambiar de 'static' a 'server' para habilitar API routes
+    output: 'server',  // Usando modo servidor para permitir rutas dinámicas
 
     // Configuración de vite (bundler usado por Astro)
     vite: {
@@ -41,6 +50,15 @@ export default defineConfig({
           watch: {
               usePolling: true
           }
+      },
+      // Excluir archivos de prueba
+      build: {
+        rollupOptions: {
+          external: [
+            // Excluir todos los archivos que comienzan con _test
+            /\/src\/.*\/_test.*\.astro$/
+          ]
+        }
       }
     }
 });

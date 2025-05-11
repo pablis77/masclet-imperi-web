@@ -1,625 +1,562 @@
 ---
-// Importar el layout y componentes
 import MainLayout from '../../../components/layout/MainLayout.astro';
+import AnimalForm from '../../../components/animals/AnimalForm.astro';
+import HabitualesForm from '../../../components/animals/HabitualesForm.astro';
+import Tabs from '../../../components/ui/Tabs.astro';
+import MessageContainer from '../../../components/ui/MessageContainer.astro';
 import animalService from '../../../services/animalService';
-import explotacioService from '../../../services/explotacioService';
 
 // Obtener el ID del animal de los parámetros de la URL
 const { id } = Astro.params;
 
-// Definir título y rol de usuario
-const title = `Actualizar Animal #${id}`;
-const userRole = "administrador"; // Simulación de rol
+// Obtener el rol del usuario de la sesión
+const userRole = Astro.cookies.get('userRole')?.value || 'user';
 
-// Variables para almacenar datos y estado
+// Estado inicial
 let animal = null;
-let explotaciones = [];
-let potentialFathers = [];
-let potentialMothers = [];
-let error = null;
 let loading = true;
+let error = null;
+let title = 'Cargando animal...';
 
 try {
-  if (!id || isNaN(parseInt(id))) {
-    throw new Error('ID de animal no válido');
+  // Obtener los datos del animal directamente del servicio
+  animal = await animalService.getAnimalById(Number(id));
+
+  // Convertir el animal a un formato más sencillo para el formulario
+  if (animal && animal.data) {
+    animal = animal.data;
   }
 
-  // Intentar cargar los datos del animal con un timeout
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Timeout al cargar datos del animal')), 10000);
-  });
-  
-  const animalPromise = animalService.getAnimalById(parseInt(id));
-  
-  // Usar Promise.race para implementar un timeout
-  animal = await Promise.race([animalPromise, timeoutPromise]);
-  
-  // Cargar datos adicionales necesarios para el formulario
-  try {
-    explotaciones = await explotacioService.getAllExplotacions();
-    
-    if (animal) {
-      potentialFathers = await animalService.getPotentialFathers(animal.explotacio_id);
-      potentialMothers = await animalService.getPotentialMothers(animal.explotacio_id);
-    }
-  } catch (dataError) {
-    console.error('Error al cargar datos adicionales:', dataError);
-    // No interrumpir la carga del formulario si fallan los datos adicionales
-  }
-  
+  title = `Editar ${animal.nom}`;
   loading = false;
-} catch (e) {
-  console.error('Error al cargar datos del animal:', e);
-  error = e.message || 'Error al cargar los datos del animal';
+} catch (err) {
+  console.error('Error al cargar el animal:', err);
+  error = err.message || 'Error al cargar los datos del animal';
   loading = false;
+  title = 'Error al cargar animal';
 }
 
-// Obtener el icono del animal
-const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
-
-// Obtener la clase CSS para el estado del animal
-const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) : 'bg-gray-100 text-gray-800';
-
-// Determinar si mostrar la sección de partos (solo para hembras)
-const showPartosSection = animal && animal.genere === 'F';
-
+// Configurar las pestañas
+const tabs = [
+  { id: 'general', label: 'Datos Generales', active: true },
+  { id: 'habitual', label: 'Cambios Habituales' }
+];
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <!-- Encabezado con botón de volver -->
   <div class="mb-6">
     <div class="flex items-center gap-2 mb-2">
       <a href={`/animals/${id}`} class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
         <span class="mr-1">←</span> Volver al detalle
       </a>
     </div>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-300">ID Animal: {id}</p>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{animal?.nom}</h1>
+    <p class="text-gray-600 dark:text-gray-300">ID: {id}</p>
   </div>
 
+  <!-- Estado de carga -->
   {loading && (
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center min-h-[200px]">
-      <div class="flex flex-col items-center space-y-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6">
+      <div class="flex justify-center items-center py-10">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-        <p class="text-gray-600 dark:text-gray-300">Cargando datos del animal...</p>
+        <span class="ml-3 text-gray-700 dark:text-gray-300">Cargando...</span>
       </div>
     </div>
   )}
 
+  <!-- Mensaje de error -->
   {error && (
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
-      <div class="flex items-start">
-        <div class="flex-shrink-0">
-          <Icon name="mdi:alert-circle" class="h-6 w-6 text-red-600 dark:text-red-400" />
-        </div>
-        <div class="ml-3">
-          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error al cargar datos</h3>
-          <div class="mt-2 text-red-700 dark:text-red-200">
-            <p>{error}</p>
-          </div>
-          <div class="mt-4">
-            <button 
-              id="retry-button"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <Icon name="mdi:refresh" class="h-5 w-5 mr-2" />
-              Reintentar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <MessageContainer 
+      type="error"
+      title="Error"
+      message={error}
+    />
   )}
 
   {!loading && !error && animal && (
-    <>
-      <!-- Resumen del animal -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
-        <div class="flex flex-col md:flex-row gap-6">
-          <!-- Icono y estado -->
-          <div class="flex flex-col items-center md:items-start">
-            <div class="text-6xl mb-3">{icon}</div>
-            <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
-              {animal.estado}
-            </span>
-          </div>
-          
-          <!-- Información básica -->
-          <div class="flex-grow">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom || 'Sin nombre'}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
-                <p class="font-medium">{animal.cod || 'No disponible'}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
-              </div>
-            </div>
-          </div>
+    <div class="grid grid-cols-1 gap-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+        <div class="border-b border-gray-200 dark:border-gray-700">
+          <Tabs tabs={tabs} />
         </div>
-      </div>
-
-      <!-- Pestañas de actualización -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <!-- Pestañas de navegación -->
-        <div class="flex border-b border-gray-200 dark:border-gray-700">
-          <button id="tab-general" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
-            Datos Generales
-          </button>
-          <button id="tab-habitual" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-            Cambios Habituales
-          </button>
-        </div>
-
-        <!-- Contenido de pestañas -->
         <div class="p-6">
           <!-- Pestaña 1: Datos Generales -->
-          <div id="content-general">
-            <form id="form-general" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Columna 1 -->
-                <div class="space-y-4">
-                  <div>
-                    <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                    <input type="text" id="nombre" name="nombre" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.nom}>
-                  </div>
-                  
-                  <div>
-                    <label for="codigo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código</label>
-                    <input type="text" id="codigo" name="codigo" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.cod}>
-                  </div>
-                  
-                  <div>
-                    <label for="num_serie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Serie</label>
-                    <input type="text" id="num_serie" name="num_serie" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.num_serie}>
-                  </div>
-                  
-                  <div>
-                    <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Nacimiento</label>
-                    <input type="date" id="dob" name="dob" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.dob ? new Date(animal.dob).toISOString().split('T')[0] : ''}>
-                  </div>
-                </div>
-                
-                <!-- Columna 2 -->
-                <div class="space-y-4">
-                  <div>
-                    <label for="explotacion" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Explotación</label>
-                    <select id="explotacion" name="explotacion" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                      {explotaciones.map((explotacion) => (
-                        <option value={explotacion.id} selected={explotacion.id === animal.explotacio_id}>{explotacion.nom || explotacion.nombre || `Explotación ${explotacion.id}`}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label for="quadra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cuadra</label>
-                    <input type="text" id="quadra" name="quadra" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.quadra}>
-                  </div>
-                  
-                  <div>
-                    <label for="padre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padre</label>
-                    <input type="text" id="padre" name="padre" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.pare_id ? potentialFathers.find(p => p.id === animal.pare_id)?.nom || `Animal ${animal.pare_id}` : 'Sin padre'} readonly>
-                    <input type="hidden" name="padre_id" value={animal.pare_id || ''}>
-                  </div>
-                  
-                  <div>
-                    <label for="madre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Madre</label>
-                    <input type="text" id="madre" name="madre" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={animal.mare_id ? potentialMothers.find(m => m.id === animal.mare_id)?.nom || `Animal ${animal.mare_id}` : 'Sin madre'} readonly>
-                    <input type="hidden" name="madre_id" value={animal.mare_id || ''}>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="flex justify-end">
-                <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  Guardar Cambios
-                </button>
-              </div>
-            </form>
+          <div id="content-general" class="tab-content">
+            <AnimalForm animal={animal} />
           </div>
-
-          <!-- Pestaña 2: Cambios Habituales (oculta por defecto) -->
-          <div id="content-habitual" class="hidden">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Estado y Amamantamiento</h3>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Estado -->
-                <div>
-                  <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
-                  <select id="estado" name="estado" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <option value="ACT" selected={animal.estat === 'ACT'}>Activo</option>
-                    <option value="DEF" selected={animal.estat === 'DEF'}>Baja</option>
-                  </select>
-                  
-                  <div id="motivo-baja-container" class="mt-3" style={animal.estat !== 'DEF' ? 'display: none;' : ''}>
-                    <label for="motivo-baja" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo de Baja</label>
-                    <select id="motivo-baja" name="motivo-baja" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                      <option value="VENTA">Venta</option>
-                      <option value="MUERTE">Muerte</option>
-                      <option value="SACRIFICIO">Sacrificio</option>
-                      <option value="OTRO">Otro</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <!-- Amamantamiento (solo para hembras) -->
-                {animal.genere === 'F' && (
-                  <div class="mb-4">
-                    <label for="alletar" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Amamantamiento
-                    </label>
-                    <select id="alletar" name="alletar" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                      <option value="NO" selected={animal.alletar === 'NO'}>No</option>
-                      <option value="1" selected={animal.alletar === '1'}>1 ternero</option>
-                      <option value="2" selected={animal.alletar === '2'}>2 terneros</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-              
-              <div class="mt-6">
-                <button id="guardar-cambios-habituales-btn" type="button" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-                  Guardar Cambios
-                </button>
-              </div>
-            </div>
-            
-            <!-- Registro de Parto (solo para hembras) -->
-            {animal.genere === 'F' && (
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Registrar Nuevo Parto</h3>
-                
-                <div id="parto-form" class="space-y-4">
-                  <div>
-                    <label for="fecha_parto" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Parto</label>
-                    <input type="date" id="fecha_parto" name="fecha_parto" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                  </div>
-                  
-                  <div>
-                    <label for="genero_ternero" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género del Ternero</label>
-                    <select id="genero_ternero" name="genero_ternero" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                      <option value="M">Macho</option>
-                      <option value="F">Hembra</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label for="estado_ternero" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado del Ternero</label>
-                    <select id="estado_ternero" name="estado_ternero" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                      <option value="ACT">Activo</option>
-                      <option value="DEF">Fallecido</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label for="observaciones_parto" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones</label>
-                    <textarea id="observaciones_parto" name="observaciones_parto" rows="3" class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
-                  </div>
-                  
-                  <div class="mt-4">
-                    <button id="registrar-parto-btn" type="button" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-                      Registrar Parto
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+          
+          <!-- Pestaña 2: Cambios Habituales -->
+          <div id="content-habitual" class="tab-content hidden">
+            <HabitualesForm animal={animal} />
           </div>
         </div>
       </div>
-    </>
+    </div>
   )}
 </MainLayout>
 
+<script is:inline define:vars={{id}}>
+  // Variables globales
+  window.animalId = id;
+  
+  // Función para mostrar mensajes
+  window.mostrarMensaje = function(mensaje, tipo = 'info') {
+    const container = document.createElement('div');
+    container.className = 'fixed bottom-4 right-4 z-50 animate-slideIn';
+    
+    // Colores según el tipo
+    let colorClase = 'bg-blue-50 border-blue-200 text-blue-800';
+    if (tipo === 'error') {
+      colorClase = 'bg-red-50 border-red-200 text-red-800';
+    } else if (tipo === 'success') {
+      colorClase = 'bg-green-50 border-green-200 text-green-800';
+    }
+    
+    // Determinar qué icono mostrar
+    let icono = 'ℹ️'; // Icono de info por defecto
+    if (tipo === 'error') {
+      icono = '❌'; // Icono de error
+    } else if (tipo === 'success') {
+      icono = '✅'; // Icono de éxito
+    }
+    
+    container.innerHTML = `
+      <div class="flex items-center p-4 ${colorClase} rounded-lg border shadow-lg max-w-md">
+        <div class="mr-3 text-xl">
+          ${icono}
+        </div>
+        <div>
+          <p class="font-medium">${mensaje}</p>
+        </div>
+        <button class="ml-auto pl-3 hover:opacity-70" onclick="this.parentNode.parentNode.remove()">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(container);
+    
+    // Auto eliminar después de 5 segundos
+    setTimeout(() => {
+      container.remove();
+    }, 5000);
+  };
+</script>
+
 <script>
-  // Script para manejar interacciones de la página
-  document.addEventListener('DOMContentLoaded', () => {
-    // Botón de reintentar carga
-    const retryButton = document.getElementById('retry-button');
-    if (retryButton) {
-      retryButton.addEventListener('click', () => {
-        window.location.reload();
-      });
-    }
+  // Configurar formularios cuando la página esté cargada
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM completamente cargado y analizado');
     
-    // Elementos de pestañas
-    const tabGeneral = document.getElementById('tab-general');
-    const tabHabitual = document.getElementById('tab-habitual');
+    // Configurar pestañas
+    const tabs = document.querySelectorAll('[data-tab]');
+    const tabContents = document.querySelectorAll('.tab-content');
     
-    const contentGeneral = document.getElementById('content-general');
-    const contentHabitual = document.getElementById('content-habitual');
-    
-    // Función para cambiar entre pestañas
-    function switchTab(activeTab, activeContent) {
-      // Desactivar todas las pestañas
-      [tabGeneral, tabHabitual].forEach(tab => {
-        if (tab) {
-          tab.classList.remove('text-primary', 'border-b-2', 'border-primary');
-          tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-        }
-      });
-      
-      // Ocultar todos los contenidos
-      [contentGeneral, contentHabitual].forEach(content => {
-        if (content) {
-          content.classList.add('hidden');
-        }
-      });
-      
-      // Activar la pestaña seleccionada
-      if (activeTab) {
-        activeTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-        activeTab.classList.add('text-primary', 'border-b-2', 'border-primary');
-      }
-      
-      // Mostrar el contenido seleccionado
-      if (activeContent) {
-        activeContent.classList.remove('hidden');
-      }
-    }
-    
-    // Configurar eventos de clic para las pestañas
-    if (tabGeneral) {
-      tabGeneral.addEventListener('click', () => switchTab(tabGeneral, contentGeneral));
-    }
-    
-    if (tabHabitual) {
-      tabHabitual.addEventListener('click', () => switchTab(tabHabitual, contentHabitual));
-    }
-    
-    // Manejar cambio de estado para mostrar/ocultar motivo de baja
-    const estadoSelect = document.getElementById('estado');
-    const motivoBajaContainer = document.getElementById('motivo-baja-container');
-    
-    if (estadoSelect && motivoBajaContainer) {
-      estadoSelect.addEventListener('change', () => {
-        if (estadoSelect.value === 'DEF') {
-          motivoBajaContainer.style.display = 'block';
-        } else {
-          motivoBajaContainer.style.display = 'none';
-        }
-      });
-    }
-    
-    // Manejar envío del formulario de datos generales
-    const formGeneral = document.getElementById('form-general');
-    if (formGeneral) {
-      formGeneral.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
         
-        try {
-          // Mostrar indicador de carga
-          const submitBtn = document.querySelector('#form-general button[type="submit"]');
-          if (submitBtn) {
-            const originalBtnText = submitBtn.textContent;
-            submitBtn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Guardando...';
-            submitBtn.disabled = true;
-            
-            // Recopilar datos del formulario
-            const formData = new FormData(formGeneral);
-            const animalData = {
-              id: parseInt(`${id}`),
-              nombre: formData.get('nombre'),
-              codigo: formData.get('codigo'),
-              num_serie: formData.get('num_serie'),
-              fecha_nacimiento: formData.get('dob'),
-              explotacion_id: parseInt(formData.get('explotacion')),
-              cuadra: formData.get('quadra'),
-              padre_id: formData.get('padre_id') ? parseInt(formData.get('padre_id')) : null,
-              madre_id: formData.get('madre_id') ? parseInt(formData.get('madre_id')) : null
-            };
-            
-            // Simular envío al servidor (reemplazar con llamada real a API)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Mostrar mensaje de éxito
-            const successMessage = document.createElement('div');
-            successMessage.className = 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 mt-4';
-            successMessage.innerHTML = `
-              <p class="font-bold">Datos actualizados</p>
-              <p>Los datos generales del animal han sido actualizados correctamente.</p>
-            `;
-            
-            formGeneral.appendChild(successMessage);
-            
-            // Restaurar botón
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-            
-            // Eliminar mensaje después de un tiempo
-            setTimeout(() => {
-              if (successMessage.parentNode) {
-                successMessage.parentNode.removeChild(successMessage);
-              }
-            }, 5000);
-          }
-        } catch (error) {
-          console.error('Error al actualizar datos:', error);
-          
-          // Mostrar mensaje de error
-          const errorMessage = document.createElement('div');
-          errorMessage.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 mt-4';
-          errorMessage.innerHTML = `
-            <p class="font-bold">Error</p>
-            <p>No se pudieron actualizar los datos. Por favor, inténtalo de nuevo.</p>
-          `;
-          
-          formGeneral.appendChild(errorMessage);
-          
-          // Restaurar botón
-          const submitBtn = document.querySelector('#form-general button[type="submit"]');
-          if (submitBtn) {
-            submitBtn.innerHTML = 'Guardar Cambios';
-            submitBtn.disabled = false;
-          }
-          
-          // Eliminar mensaje después de un tiempo
-          setTimeout(() => {
-            if (errorMessage.parentNode) {
-              errorMessage.parentNode.removeChild(errorMessage);
-            }
-          }, 5000);
-        }
+        // Activar tab
+        tabs.forEach(t => t.classList.remove('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light'));
+        this.classList.add('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light');
+        
+        // Mostrar contenido
+        tabContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        
+        console.log(`Cambio a pestaña ${tabId}`);
       });
-    }
+    });
     
-    // Manejar cambios habituales
-    const guardarCambiosHabitualesBtn = document.getElementById('guardar-cambios-habituales-btn');
-    if (guardarCambiosHabitualesBtn) {
-      guardarCambiosHabitualesBtn.addEventListener('click', async () => {
-        try {
-          // Mostrar indicador de carga
-          const btn = guardarCambiosHabitualesBtn;
-          const originalBtnText = btn.textContent;
-          btn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Guardando...';
-          btn.disabled = true;
-          
-          // Recopilar datos
-          const estado = document.getElementById('estado')?.value;
-          const alletar = document.getElementById('alletar')?.value;
-          
-          // Simular envío al servidor (reemplazar con llamada real a API)
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Mostrar mensaje de éxito
-          const successMessage = document.createElement('div');
-          successMessage.className = 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 mt-4';
-          successMessage.innerHTML = `
-            <p class="font-bold">Cambios guardados</p>
-            <p>Los cambios habituales han sido guardados correctamente.</p>
-          `;
-          
-          const contentHabitual = document.getElementById('content-habitual');
-          if (contentHabitual) {
-            contentHabitual.appendChild(successMessage);
-          }
-          
-          // Restaurar botón
-          btn.innerHTML = originalBtnText;
-          btn.disabled = false;
-          
-          // Eliminar mensaje después de un tiempo
-          setTimeout(() => {
-            if (successMessage.parentNode) {
-              successMessage.parentNode.removeChild(successMessage);
-            }
-          }, 5000);
-        } catch (error) {
-          console.error('Error al guardar cambios habituales:', error);
-          
-          // Mostrar mensaje de error
-          const errorMessage = document.createElement('div');
-          errorMessage.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 mt-4';
-          errorMessage.innerHTML = `
-            <p class="font-bold">Error</p>
-            <p>No se pudieron guardar los cambios habituales. Por favor, inténtalo de nuevo.</p>
-          `;
-          
-          const contentHabitual = document.getElementById('content-habitual');
-          if (contentHabitual) {
-            contentHabitual.appendChild(errorMessage);
-          }
-          
-          // Restaurar botón
-          const btn = guardarCambiosHabitualesBtn;
-          btn.innerHTML = 'Guardar Cambios';
-          btn.disabled = false;
-          
-          // Eliminar mensaje después de un tiempo
-          setTimeout(() => {
-            if (errorMessage.parentNode) {
-              errorMessage.parentNode.removeChild(errorMessage);
-            }
-          }, 5000);
-        }
-      });
-    }
+    // Capturar los formularios
+    const formGeneral = document.getElementById('form-general');
+    const formHabitual = document.getElementById('form-habitual');
+    const formHabituales = document.getElementById('form-habituales');
     
-    // Manejar registro de parto
+    console.log('Configurando formularios...');
+    console.log('Form general encontrado:', formGeneral ? 'Sí' : 'No');
+    console.log('Form habitual encontrado:', formHabitual ? 'Sí' : 'No');
+    console.log('Form habituales encontrado:', formHabituales ? 'Sí' : 'No');
+    
+    // Configurar botón de registrar parto
     const registrarPartoBtn = document.getElementById('registrar-parto-btn');
     if (registrarPartoBtn) {
-      registrarPartoBtn.addEventListener('click', async () => {
-        try {
-          // Mostrar indicador de carga
-          const btn = registrarPartoBtn;
-          const originalBtnText = btn.textContent;
-          btn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Registrando...';
-          btn.disabled = true;
-          
-          // Recopilar datos
-          const fechaParto = document.getElementById('fecha_parto')?.value;
-          const generoTernero = document.getElementById('genero_ternero')?.value;
-          const estadoTernero = document.getElementById('estado_ternero')?.value;
-          const observaciones = document.getElementById('observaciones_parto')?.value;
-          
-          // Validar datos
-          if (!fechaParto) {
-            throw new Error('La fecha de parto es obligatoria');
-          }
-          
-          // Simular envío al servidor (reemplazar con llamada real a API)
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Mostrar mensaje de éxito
-          const successMessage = document.createElement('div');
-          successMessage.className = 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 mt-4';
-          successMessage.innerHTML = `
-            <p class="font-bold">Parto registrado</p>
-            <p>El parto ha sido registrado correctamente.</p>
-          `;
-          
-          const partoForm = document.getElementById('parto-form');
-          if (partoForm) {
-            partoForm.appendChild(successMessage);
-            
-            // Limpiar formulario
-            document.getElementById('fecha_parto').value = '';
-            document.getElementById('genero_ternero').value = 'M';
-            document.getElementById('estado_ternero').value = 'ACT';
-            document.getElementById('observaciones_parto').value = '';
-          }
-          
-          // Restaurar botón
-          btn.innerHTML = originalBtnText;
-          btn.disabled = false;
-          
-          // Eliminar mensaje después de un tiempo
-          setTimeout(() => {
-            if (successMessage.parentNode) {
-              successMessage.parentNode.removeChild(successMessage);
-            }
-          }, 5000);
-        } catch (error) {
-          console.error('Error al registrar parto:', error);
-          
-          // Mostrar mensaje de error
-          const errorMessage = document.createElement('div');
-          errorMessage.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 mt-4';
-          errorMessage.innerHTML = `
-            <p class="font-bold">Error</p>
-            <p>${error.message || 'No se pudo registrar el parto. Por favor, inténtalo de nuevo.'}</p>
-          `;
-          
-          const partoForm = document.getElementById('parto-form');
-          if (partoForm) {
-            partoForm.appendChild(errorMessage);
-          }
-          
-          // Restaurar botón
-          const btn = registrarPartoBtn;
-          btn.innerHTML = 'Registrar Parto';
-          btn.disabled = false;
-          
-          // Eliminar mensaje después de un tiempo
-          setTimeout(() => {
-            if (errorMessage.parentNode) {
-              errorMessage.parentNode.removeChild(errorMessage);
-            }
-          }, 5000);
-        }
+      console.log('Botón de registrar parto encontrado, configurando...');
+      registrarPartoBtn.addEventListener('click', function() {
+        console.log('Botón de registrar parto clickeado');
+        handleRegistrarParto();
       });
+    } else {
+      console.log('Botón de registrar parto NO encontrado');
     }
+    
+    // Configurar manejadores para formularios
+    if (formGeneral) {
+      console.log('Formulario general encontrado, configurando...');
+      formGeneral.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario general enviado');
+        handleFormSubmit(formGeneral);
+      });
+    } else {
+      console.log('Formulario general no encontrado');
+    }
+    
+    // Probar con ambos nombres posibles para el formulario de cambios habituales
+    if (formHabitual) {
+      console.log('Formulario habitual encontrado, configurando...');
+      formHabitual.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario habitual enviado');
+        handleFormSubmit(formHabitual);
+      });
+    } else {
+      console.log('Formulario habitual no encontrado');
+    }
+    
+    if (formHabituales) {
+      console.log('Formulario habituales encontrado, configurando...');
+      formHabituales.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario habituales enviado');
+        handleFormSubmit(formHabituales);
+      });
+    } else {
+      console.log('Formulario habituales no encontrado');
+    }
+    
+    // Para capturar cualquier otro formulario en la página
+    document.querySelectorAll('form').forEach(form => {
+      if (!form._hasSubmitListener) {
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          console.log('Formulario genérico enviado:', form.id);
+          handleFormSubmit(form);
+        });
+        form._hasSubmitListener = true;
+      }
+    });
   });
+  
+  // Función para manejar el envío del formulario
+  async function handleFormSubmit(form) {
+    try {
+      // Registrar el formulario que se está enviando
+      console.log('Procesando formulario:', form.id);
+      
+      // Obtener datos del formulario
+      const formData = new FormData(form);
+      
+      // Depuración: mostrar todos los campos del formulario
+      console.log('Campos en el formulario:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+      }
+      
+      // Si es form-habituales y no contiene campos, verificar selectores directamente
+      if (form.id === 'form-habituales' && formData.entries().next().done) {
+        console.log('Formulario habituales está vacío, verificando campos manualmente...');
+        
+        // Verificar selectores y campos específicos
+        const alletarSelect = form.querySelector('select[name="alletar"]');
+        if (alletarSelect) {
+          console.log('Encontrado select alletar con valor:', alletarSelect.value);
+          formData.append('alletar', alletarSelect.value);
+        }
+        
+        const estadoSelect = form.querySelector('select[name="estado_hab"]');
+        if (estadoSelect) {
+          console.log('Encontrado select estado_hab con valor:', estadoSelect.value);
+          formData.append('estado_hab', estadoSelect.value);
+        }
+      }
+      
+      const datos = {};
+      
+      // Convertir FormData a objeto JSON
+      for (const [key, value] of formData.entries()) {
+        // Mapear nombres de campos al formato de la API
+        switch(key) {
+          // Campos del formulario general
+          case 'nombre': datos.nom = value || ''; break;
+          case 'genere': datos.genere = value || 'F'; break;
+          case 'dob': 
+            // Solo incluir fecha si tiene valor
+            if (value) {
+              // Convertir formato YYYY-MM-DD a DD/MM/YYYY
+              if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = value.split('-');
+                datos.dob = `${day}/${month}/${year}`;
+              } else {
+                datos.dob = value;
+              }
+            }
+            break;
+          case 'codigo': datos.cod = value || null; break;
+          case 'num_serie': datos.num_serie = value || null; break;
+          case 'explotacio': datos.explotacio = value || ''; break;
+          case 'quadra': datos.quadra = value || null; break;
+          case 'pare': datos.pare = value || null; break;
+          case 'mare': datos.mare = value || null; break;
+          
+          // Campos del formulario de cambios habituales
+          case 'estado_hab': datos.estado = value || 'OK'; break;
+          
+          // Campos que pueden estar en ambos formularios
+          case 'alletar': 
+            // Asegurar que alletar siempre sea un string: '0', '1', o '2'
+            if (value === '' || value === undefined || value === null) {
+              datos.alletar = '0'; // Valor por defecto
+            } else {
+              datos.alletar = String(value);
+            }
+            break;
+          case 'estado': datos.estado = value || 'OK'; break;
+          default: console.log('Campo no mapeado:', key);
+        }
+      }
+      
+      // Mostrar mensaje de carga
+      window.mostrarMensaje('Actualizando animal...', 'info');
+      
+      // Mostrar mensaje de carga
+      window.mostrarMensaje('Enviando actualización al servidor...', 'info');
+      
+      // Usaremos fetch directamente para evitar problemas con imports
+      window.animalesFormData = datos; // Para inspección por consola
+      console.log('Datos a enviar directamente al backend:', datos);
+      
+      try {
+        // Primero, vamos a cargar el animal actual para comparar los valores
+        console.log('Obteniendo datos actuales del animal para comparar...');
+        
+        // Obtener token de autenticación para las peticiones
+        const token = localStorage.getItem('token') || 'admin123'; // Token para desarrollo
+        
+        // Petición para obtener los datos actuales
+        const responseGet = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!responseGet.ok) {
+          throw new Error(`Error al obtener los datos actuales: ${responseGet.status} ${responseGet.statusText}`);
+        }
+        
+        const animalActual = await responseGet.json();
+        const animalData = animalActual.data || animalActual;
+        console.log('Datos actuales del animal:', animalData);
+        
+        // Construir un objeto con solo los campos modificados
+        const datosModificados = {};
+        
+        // Mostrar todos los valores antes de la comparación
+        console.log('Datos del formulario:');
+        for (const [key, value] of Object.entries(datos)) {
+          console.log(`  ${key}: ${value} (${typeof value})`);
+        }
+        console.log('Datos actuales del animal:');
+        for (const [key, value] of Object.entries(animalData)) {
+          console.log(`  ${key}: ${value} (${typeof value})`);
+        }
+        
+        // Comprobamos cada campo para ver si ha cambiado
+        if (datos.nom !== animalData.nom) datosModificados.nom = datos.nom;
+        if (datos.genere !== animalData.genere) datosModificados.genere = datos.genere;
+        if (datos.explotacio !== animalData.explotacio) datosModificados.explotacio = datos.explotacio;
+        if (datos.estado !== animalData.estado) datosModificados.estado = datos.estado;
+        
+        // Campos opcionales - solo los incluimos si han cambiado
+        if (datos.dob && datos.dob !== animalData.dob) datosModificados.dob = datos.dob;
+        if (datos.mare !== animalData.mare) datosModificados.mare = datos.mare;
+        if (datos.pare !== animalData.pare) datosModificados.pare = datos.pare;
+        if (datos.quadra !== animalData.quadra) datosModificados.quadra = datos.quadra;
+        if (datos.cod !== animalData.cod) datosModificados.cod = datos.cod;
+        if (datos.num_serie !== animalData.num_serie) datosModificados.num_serie = datos.num_serie;
+        
+        // Manejo especial para alletar - siempre convertir a string antes de comparar
+        console.log('Comparando alletar:', 
+          `Valor formulario: ${datos.alletar} (${typeof datos.alletar})`, 
+          `Valor actual: ${animalData.alletar} (${typeof animalData.alletar})`);
+        
+        // Convertir ambos valores a string para comparar
+        const alletarForm = String(datos.alletar || '0');
+        const alletarActual = String(animalData.alletar || '0');
+        
+        if (datos.alletar && alletarForm !== alletarActual) {
+          console.log(`Valor de alletar diferente: ${alletarForm} !== ${alletarActual}`);
+          datosModificados.alletar = alletarForm;
+        }
+        
+        console.log('Campos modificados a enviar:', datosModificados);
+        
+        // Si no hay cambios, informamos al usuario y terminamos
+        if (Object.keys(datosModificados).length === 0) {
+          window.mostrarMensaje('No se detectaron cambios que actualizar', 'info');
+          return;
+        }
+        
+        console.log('Enviando solo campos modificados para actualización:', datosModificados);
+        
+        // Realizar la petición PATCH usando fetch
+        const response = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(datosModificados)
+        });
+        
+        console.log(`Respuesta recibida: ${response.status} ${response.statusText}`);
+        
+        // Comprobar si la respuesta es exitosa
+        if (response.ok) {
+          const resultado = await response.json();
+          console.log('Respuesta de actualización:', resultado);
+          
+          window.mostrarMensaje('¡Animal actualizado con éxito!', 'success');
+          
+          // Redirigir al detalle del animal
+          setTimeout(() => {
+            window.location.href = `/animals/${window.animalId}`;
+          }, 1500);
+        } else {
+          // Intentar obtener el mensaje de error
+          let mensajeError = `Error ${response.status}: ${response.statusText}`;
+          
+          try {
+            const errorJson = await response.json();
+            console.error('Error detallado:', errorJson);
+            
+            if (errorJson.detail) {
+              if (Array.isArray(errorJson.detail)) {
+                mensajeError = 'Errores de validación: ' + 
+                  errorJson.detail.map(e => e.msg).join(', ');
+              } else {
+                mensajeError = errorJson.detail;
+              }
+            }
+          } catch (e) {
+            // Si no se puede parsear como JSON, intentamos obtener como texto
+            try {
+              const errorText = await response.text();
+              mensajeError += ` - ${errorText}`;
+            } catch (e2) {
+              console.error('No se pudo obtener detalle del error');
+            }
+          }
+          
+          window.mostrarMensaje('Error: ' + mensajeError, 'error');
+        }
+      } catch (error) {
+        console.error('Error en la petición:', error);
+        window.mostrarMensaje('Error: ' + (error.message || 'Error desconocido'), 'error');
+      }
+    } catch (error) {
+      console.error('Error al actualizar el animal:', error);
+      window.mostrarMensaje(`Error: ${error.message || 'Error desconocido'}`, 'error');
+    }
+  }
+  
+  // Función para manejar el registro de un nuevo parto
+  async function handleRegistrarParto() {
+    console.log('Iniciando proceso de registro de parto...');
+    
+    try {
+      // Obtener datos del formulario de partos
+      const part = document.getElementById('part')?.value;
+      const genereT = document.getElementById('GenereT')?.value;
+      const estadoT = document.getElementById('EstadoT')?.value;
+      const observacions = document.getElementById('observacions')?.value;
+      
+      console.log('Datos del parto:', { part, genereT, estadoT, observacions });
+      
+      // Validar que los campos requeridos tengan valor
+      if (!part || !genereT || !estadoT) {
+        window.mostrarMensaje('Por favor, completa todos los campos obligatorios (fecha, género y estado)', 'error');
+        return;
+      }
+      
+      // Formatear la fecha si es necesario (de YYYY-MM-DD a DD/MM/YYYY)
+      let fechaFormateada = part;
+      if (part.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = part.split('-');
+        fechaFormateada = `${day}/${month}/${year}`;
+      }
+      
+      // Preparar datos para enviar
+      const datosParto = {
+        part: fechaFormateada,
+        GenereT: genereT,
+        EstadoT: estadoT
+      };
+      
+      // Añadir observaciones solo si tiene valor
+      if (observacions) {
+        datosParto.observacions = observacions;
+      }
+      
+      console.log('Datos del parto formateados:', datosParto);
+      
+      // Obtener token de autenticación
+      const token = localStorage.getItem('token') || 'admin123'; // Token para desarrollo
+      
+      // Mostrar mensaje de proceso
+      window.mostrarMensaje('Registrando nuevo parto...', 'info');
+      
+      // Enviar datos al servidor para crear el parto
+      const response = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}/partos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosParto)
+      });
+      
+      console.log(`Respuesta recibida: ${response.status} ${response.statusText}`);
+      
+      // Procesar respuesta
+      if (response.ok) {
+        const resultado = await response.json();
+        console.log('Respuesta de registro de parto:', resultado);
+        
+        window.mostrarMensaje('¡Parto registrado con éxito!', 'success');
+        
+        // Limpiar formulario
+        document.getElementById('part').value = '';
+        document.getElementById('GenereT').value = '';
+        document.getElementById('EstadoT').value = '';
+        if (document.getElementById('observacions')) {
+          document.getElementById('observacions').value = '';
+        }
+        
+        // Redirigir a la página de detalle después de un breve delay
+        setTimeout(() => {
+          window.location.href = `/animals/${window.animalId}`;
+        }, 1500);
+      } else {
+        // Si hay error, intentar obtener mensaje
+        let mensajeError = 'Error al registrar el parto';
+        try {
+          const errorData = await response.json();
+          mensajeError = errorData.detail || errorData.message || mensajeError;
+          console.error('Error detallado:', errorData);
+        } catch (e) {
+          console.error('Error al procesar respuesta de error:', e);
+        }
+        
+        window.mostrarMensaje(`Error: ${mensajeError}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error en el registro de parto:', error);
+      window.mostrarMensaje(`Error: ${error.message || 'Error desconocido al registrar el parto'}`, 'error');
+    }
+  }
 </script>

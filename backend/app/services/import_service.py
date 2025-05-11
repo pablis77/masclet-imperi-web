@@ -348,16 +348,13 @@ async def import_animal_with_partos(data: Dict) -> Animal:
                             )
                             print(f"DEBUG_PARTO - Parto creado con éxito con ID: {parto.id}")
                             
-                            # IMPORTANTE: Actualizar alletar si es necesario cuando se crea un parto
-                            if animal.alletar is None or animal.alletar == '0':
-                                print(f"DEBUG_ALLETAR - Animal con parto nuevo tiene alletar={animal.alletar}, actualizando a 1")
-                                animal.alletar = '1'
-                                await animal.save()
-                                print(f"DEBUG_ALLETAR - Actualizado alletar a 1 para vaca con parto nuevo: {animal.nom}")
-                                
-                                # Verificación adicional
-                                animal_after_update = await Animal.get(id=animal.id)
-                                print(f"DEBUG_ALLETAR - Después de actualizar, alletar = {animal_after_update.alletar}")
+                            # IMPORTANTE: Respetamos el valor de alletar que viene en el CSV
+                            # y no lo modificamos automáticamente al crear un parto
+                            print(f"DEBUG_ALLETAR - Creando parto para {animal.nom}. Manteniendo alletar={animal.alletar} según CSV")
+                            
+                            # Verificación adicional para confirmar que se respeta el valor
+                            animal_after_update = await Animal.get(id=animal.id)
+                            print(f"DEBUG_ALLETAR - Valor de alletar después de crear parto: {animal_after_update.alletar}")
                         except Exception as create_error:
                             print(f"ERROR - Error al crear el parto: {str(create_error)}")
                 

@@ -118,15 +118,6 @@ class Animal(models.Model):
             raise ValueError("Solo las hembras pueden tener estado de amamantamiento")
         
         return await super().save(*args, **kwargs)
-    @classmethod
-    async def to_api_dict_list(cls, animals):
-        """Convierte una lista de animales a lista de diccionarios para la API"""
-        result = []
-        for animal in animals:
-            animal_dict = await animal.to_dict(include_partos=False)
-            result.append(animal_dict)
-        return result
-
     class Meta:
         """Metadatos del modelo"""
         table = "animals"

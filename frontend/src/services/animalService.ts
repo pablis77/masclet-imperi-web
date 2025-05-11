@@ -1,5 +1,6 @@
-import { get, post, put, del } from './apiService';
+import apiService from './apiService';
 import { mockAnimals, mockExplotacions } from './mockData';
+import api from './api';
 
 // Interfaces
 export interface Parto {
@@ -250,17 +251,18 @@ const animalService = {
       console.log('Obteniendo animales con parámetros:', Object.fromEntries(params.entries()));
       
       // Realizar petición a la API
-      const apiResponse = await get<any>(`/animals?${params.toString()}`);
-      console.log('Respuesta RAW de animales recibida:', apiResponse);
+      // Usar la ruta correcta sin duplicar el prefijo /api/v1 que ya está en la URL base
+      const responseData = await apiService.get(`/animals?${params.toString()}`);
+      console.log('Respuesta RAW de animales recibida:', responseData);
       
       // Transformar la estructura de respuesta del backend a nuestro formato esperado
       let processedResponse: PaginatedResponse<Animal>;
       
       // Verificar si la respuesta tiene el formato {status, data}
-      if (apiResponse && apiResponse.status === 'success' && apiResponse.data) {
+      if (responseData && responseData.status === 'success' && responseData.data) {
         console.log('Detectada respuesta con formato {status, data}. Procesando correctamente...');
         
-        const { total, offset, limit, items } = apiResponse.data;
+        const { total, offset, limit, items } = responseData.data;
         
         processedResponse = {
           items: items || [],
@@ -272,7 +274,7 @@ const animalService = {
       } else {
         // Si ya tiene el formato esperado o no conocemos el formato
         console.log('Usando respuesta en formato directo');
-        processedResponse = apiResponse as PaginatedResponse<Animal>;
+        processedResponse = responseData as PaginatedResponse<Animal>;
       }
       
       console.log('Respuesta procesada de animales:', processedResponse);
@@ -346,18 +348,19 @@ const animalService = {
   async getAnimalById(id: number): Promise<Animal> {
     try {
       console.log(`Intentando cargar animal con ID: ${id}`);
-      const response = await get<any>(`/animals/${id}`);
-      console.log('Animal cargado:', response);
+      // Usar la ruta correcta sin duplicar el prefijo /api/v1 que ya está en la URL base
+      const responseData = await apiService.get(`/animals/${id}`);
+      console.log('Animal cargado:', responseData);
       
       let animalData: Animal;
       
       // Comprobamos si la respuesta tiene el formato esperado {status, data}
-      if (response && response.status === 'success' && response.data) {
-        animalData = response.data as Animal;
+      if (responseData && responseData.status === 'success' && responseData.data) {
+        animalData = responseData.data as Animal;
       } 
       // Si la respuesta es directamente el animal
-      else if (response && response.id) {
-        animalData = response as Animal;
+      else if (responseData && responseData.id) {
+        animalData = responseData as Animal;
       }
       else {
         throw new Error('Formato de respuesta inválido');
@@ -411,9 +414,10 @@ const animalService = {
   async createAnimal(animalData: AnimalCreateDto): Promise<Animal> {
     try {
       console.log('Creando nuevo animal:', animalData);
-      const response = await post<Animal>('/animals', animalData);
-      console.log('Animal creado:', response);
-      return response;
+      // Añadir barra diagonal al final para que coincida con el endpoint del backend
+      const responseData = await apiService.post('/animals/', animalData);
+      console.log('Animal creado:', responseData);
+      return responseData;
     } catch (error: any) {
       console.error('Error al crear animal:', error);
       
@@ -439,45 +443,96 @@ const animalService = {
     }
   },
   
-  // Actualiza un animal existente
-  async updateAnimal(id: number, animalData: AnimalUpdateDto): Promise<Animal> {
+  // Actualiza un animal existente usando PATCH (actualización parcial)
+  async updateAnimal(id: number, animalData: any): Promise<Animal> {
     try {
-      console.log(`Actualizando animal con ID ${id}:`, animalData);
-      const response = await put<Animal>(`/animals/${id}`, animalData);
-      console.log('Animal actualizado:', response);
-      return response;
-    } catch (error: any) {
-      console.error(`Error al actualizar animal con ID ${id}:`, error);
+      console.log(`[PATCH] Actualizando animal con ID ${id}:`, animalData);
       
-      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
-      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
-          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
-        console.warn('Usando datos simulados para actualizar animal debido a error en el backend');
-        
-        const now = new Date().toISOString();
-        const currentAnimal = mockAnimals.find(a => a.id === id);
-        
-        if (!currentAnimal) {
-          throw new Error(`No se encontró el animal con ID ${id}`);
+      // IMPORTANTE: Solo procesamos los campos que realmente se han enviado
+      // No clonamos todo el objeto para evitar enviar campos innecesarios
+      const datosNormalizados: Record<string, any> = {};
+      
+      // Lista de campos que pueden ser nulos
+      const camposNulables = ['mare', 'pare', 'quadra', 'cod', 'num_serie', 'dob'];
+      
+      // Procesar solo los campos que se han proporcionado
+      for (const campo in animalData) {
+        // Comprobar si el campo existe en animalData
+        if (Object.prototype.hasOwnProperty.call(animalData, campo)) {
+          // Si es un campo nullable y está vacío, establecerlo como null
+          if (camposNulables.includes(campo) && animalData[campo] === '') {
+            datosNormalizados[campo] = null;
+          } else if (campo === 'alletar' && animalData[campo] !== undefined) {
+            // Tratar alletar como caso especial
+            datosNormalizados[campo] = String(animalData[campo]) as '0' | '1' | '2';
+          } else if (campo === 'dob' && animalData[campo]) {
+            // Formatear fecha siempre al formato esperado por el backend: DD/MM/YYYY
+            try {
+              let fechaFinal;
+              
+              // Si la fecha ya está en formato DD/MM/YYYY, la dejamos igual
+              if (typeof animalData[campo] === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(animalData[campo])) {
+                fechaFinal = animalData[campo];
+              }
+              // Si es formato YYYY-MM-DD (desde inputs HTML)
+              else if (typeof animalData[campo] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(animalData[campo])) {
+                const [year, month, day] = animalData[campo].split('-');
+                fechaFinal = `${day}/${month}/${year}`;
+              }
+              // Cualquier otro formato, intentamos parsearlo
+              else {
+                const fecha = new Date(animalData[campo]);
+                if (!isNaN(fecha.getTime())) {
+                  const day = fecha.getDate().toString().padStart(2, '0');
+                  const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                  const year = fecha.getFullYear();
+                  fechaFinal = `${day}/${month}/${year}`;
+                } else {
+                  // Si no se puede parsear, usamos el valor original 
+                  fechaFinal = animalData[campo];
+                }
+              }
+              
+              console.log(`Fecha convertida: ${animalData[campo]} -> ${fechaFinal}`);
+              datosNormalizados[campo] = fechaFinal;
+            } catch (err) {
+              console.error('Error al formatear fecha:', err);
+              // En caso de error, usar el valor original
+              datosNormalizados[campo] = animalData[campo];
+            }
+          } else {
+            // Para cualquier otro campo, usar el valor tal cual
+            datosNormalizados[campo] = animalData[campo];
+          }
         }
-        
-        // Actualizar los campos en el animal simulado
-        const updatedAnimal = {
-          ...currentAnimal,
-          ...animalData,
-          updated_at: now
-        };
-        
-        // Actualizar el animal en el array de animales simulados
-        const index = mockAnimals.findIndex(a => a.id === id);
-        if (index !== -1) {
-          mockAnimals[index] = updatedAnimal;
-        }
-        
-        return updatedAnimal;
       }
       
-      // Si no es un error manejable, propagar el error
+      // Verificar que hay campos para actualizar
+      const camposAActualizar = Object.keys(datosNormalizados);
+      if (camposAActualizar.length === 0) {
+        throw new Error('No se detectaron cambios para actualizar');
+      }
+      
+      console.log(`[PATCH] Campos a actualizar: ${camposAActualizar.join(', ')}`);
+      console.log('[PATCH] Datos finales:', datosNormalizados);
+      
+      // Ya no necesitamos manejar el token manualmente
+      // La función patch del apiService se encarga de añadir los headers de autenticación
+      
+      // IMPORTANTE: Usar PATCH y la ruta correcta
+      console.log(`[PATCH] Enviando petición a /animals/${id}`);
+      console.log('Datos normalizados:', JSON.stringify(datosNormalizados, null, 2));
+      
+      // Usar el servicio API para garantizar coherencia
+      console.log('Iniciando patch...');
+      const responseData = await apiService.patch(`/animals/${id}`, datosNormalizados);
+      console.log('PATCH completado con éxito');
+      
+      // El método patch de apiService ya maneja los errores y parsea la respuesta
+      return responseData.data || responseData;
+
+    } catch (error: any) {
+      console.error(`[PATCH] Error al actualizar animal con ID ${id}:`, error);
       throw error;
     }
   },
@@ -485,12 +540,14 @@ const animalService = {
   // Elimina un animal (marcado como DEF)
   async deleteAnimal(id: number): Promise<Animal> {
     try {
-      console.log(`Eliminando animal con ID ${id}`);
-      await del(`/animals/${id}`);
-      console.log('Animal eliminado correctamente');
+      console.log(`Intentando eliminar animal con ID ${id}`);
       
-      // Marcar como DEF en el frontend (el backend realmente no lo borra)
-      return this.updateAnimal(id, { estado: 'DEF' });
+      // Llamar al endpoint de eliminación (en realidad, marcar como DEF)
+      // Usar la ruta correcta sin duplicar el prefijo /api/v1 que ya está en la URL base
+      const response = await apiService.delete(`/api/v1/animals/${id}`);
+      console.log(`Respuesta al eliminar animal con ID ${id}:`, response);
+      
+      return response;
     } catch (error: any) {
       console.error(`Error al eliminar animal con ID ${id}:`, error);
       
@@ -509,54 +566,80 @@ const animalService = {
   },
   
   // Obtiene los posibles padres (machos) para selección en formularios
-  async getPotentialFathers(explotacioId: number | string): Promise<Animal[]> {
+  async getPotentialFathers(explotacioId?: number | string): Promise<Animal[]> {
     try {
-      console.log(`Obteniendo posibles padres para explotación ${explotacioId}`);
-      const response = await get<Animal[]>(`/animals/fathers?explotacio=${explotacioId}`);
-      console.log('Posibles padres recibidos:', response);
-      return response;
-    } catch (error: any) {
-      console.error(`Error al obtener posibles padres para explotación ${explotacioId}:`, error);
+      console.log(`Obteniendo posibles padres${explotacioId ? ` para explotación ${explotacioId}` : ''}`);
       
-      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
-      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
-          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
-        console.warn('Usando datos simulados para posibles padres debido a error en el backend');
-        // Filtrar animales simulados (machos activos de la misma explotación)
-        return mockAnimals.filter(a => 
-          a.genere === 'M' && 
-          a.estado === 'OK' && 
-          a.explotacio === String(explotacioId));
+      // Usar el endpoint general de animales con filtros
+      const filters: AnimalFilters = {
+        genere: 'M',
+        estado: 'OK'
+      };
+      
+      // Añadir filtro de explotación si se proporciona
+      if (explotacioId && explotacioId !== 'undefined') {
+        filters.explotacio = String(explotacioId);
       }
       
-      // Si no es un error manejable, propagar el error
-      throw error;
+      // Obtener animales filtrados
+      const response = await this.getAnimals(filters);
+      
+      // Extraer los items si es una respuesta paginada
+      const fathers = Array.isArray(response) ? response : (response.items || []);
+      console.log('Posibles padres recibidos:', fathers);
+      return fathers;
+    } catch (error: any) {
+      console.error(`Error al obtener posibles padres${explotacioId ? ` para explotación ${explotacioId}` : ''}:`, error);
+      
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      console.warn('Usando datos simulados para posibles padres debido a error en el backend');
+      
+      // Filtrar animales simulados (machos activos)
+      const filteredFathers = mockAnimals.filter(a => 
+        a.genere === 'M' && 
+        a.estado === 'OK' && 
+        (!explotacioId || explotacioId === 'undefined' || a.explotacio === String(explotacioId)));
+      
+      return filteredFathers;
     }
   },
   
   // Obtiene las posibles madres (hembras) para selección en formularios
-  async getPotentialMothers(explotacioId: number | string): Promise<Animal[]> {
+  async getPotentialMothers(explotacioId?: number | string): Promise<Animal[]> {
     try {
-      console.log(`Obteniendo posibles madres para explotación ${explotacioId}`);
-      const response = await get<Animal[]>(`/animals/mothers?explotacio=${explotacioId}`);
-      console.log('Posibles madres recibidas:', response);
-      return response;
-    } catch (error: any) {
-      console.error(`Error al obtener posibles madres para explotación ${explotacioId}:`, error);
+      console.log(`Obteniendo posibles madres${explotacioId ? ` para explotación ${explotacioId}` : ''}`);
       
-      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
-      if (error.code === 'DB_COLUMN_ERROR' || error.code === 'NETWORK_ERROR' || 
-          (error.message && (error.message.includes('estado_t') || error.message.includes('conexión')))) {
-        console.warn('Usando datos simulados para posibles madres debido a error en el backend');
-        // Filtrar animales simulados (hembras activas de la misma explotación)
-        return mockAnimals.filter(a => 
-          a.genere === 'F' && 
-          a.estado === 'OK' && 
-          a.explotacio === String(explotacioId));
+      // Usar el endpoint general de animales con filtros
+      const filters: AnimalFilters = {
+        genere: 'F',
+        estado: 'OK'
+      };
+      
+      // Añadir filtro de explotación si se proporciona
+      if (explotacioId && explotacioId !== 'undefined') {
+        filters.explotacio = String(explotacioId);
       }
       
-      // Si no es un error manejable, propagar el error
-      throw error;
+      // Obtener animales filtrados
+      const response = await this.getAnimals(filters);
+      
+      // Extraer los items si es una respuesta paginada
+      const mothers = Array.isArray(response) ? response : (response.items || []);
+      console.log('Posibles madres recibidas:', mothers);
+      return mothers;
+    } catch (error: any) {
+      console.error(`Error al obtener posibles madres${explotacioId ? ` para explotación ${explotacioId}` : ''}:`, error);
+      
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      console.warn('Usando datos simulados para posibles madres debido a error en el backend');
+      
+      // Filtrar animales simulados (hembras activas)
+      const filteredMothers = mockAnimals.filter(a => 
+        a.genere === 'F' && 
+        a.estado === 'OK' && 
+        (!explotacioId || explotacioId === 'undefined' || a.explotacio === String(explotacioId)));
+      
+      return filteredMothers;
     }
   },
   
@@ -569,8 +652,7 @@ const animalService = {
         
         // Probar con diferentes formatos de endpoint para mayor compatibilidad
         const endpoints = [
-          `/animals?explotacio=${explotacionId}`,
-          `/animals/explotacio/${explotacionId}`
+          `/animals?explotacio=${encodeURIComponent(explotacionId)}&limit=100`
         ];
         
         let response = null;
@@ -580,7 +662,7 @@ const animalService = {
         for (const endpoint of endpoints) {
           try {
             console.log(`🐄 [Animal] Intentando endpoint: ${endpoint}`);
-            response = await get<any>(endpoint);
+            response = await apiService.get(endpoint);
             successEndpoint = endpoint;
             console.log(`🐄 [Animal] Respuesta recibida de ${endpoint}:`, response);
             break; // Si llegamos aquí, la petición fue exitosa
@@ -666,8 +748,64 @@ const animalService = {
     return 'Desconocido';
   },
   
-  // Esta función se ha movido a explotacioService.ts
-  // Ya no está disponible en animalService
+  // Método simplificado para obtener valores únicos de explotaciones
+  async getExplotacions(): Promise<{id: number, explotacio: string}[]> {
+    try {
+      console.log('Obteniendo lista de explotaciones');
+      
+      // Intentar primero obtener directamente del endpoint de dashboard/explotacions
+      try {
+        // Usar el endpoint correcto de dashboard para explotaciones
+        const responseData = await apiService.get('/dashboard/explotacions');
+        
+        // Procesamos la respuesta para devolver el formato esperado
+        if (responseData && responseData.status === 'success' && responseData.data && Array.isArray(responseData.data.items)) {
+          const items = responseData.data.items;
+          return items.map((item: any, index: number) => ({
+            id: index + 1, // Usamos un ID secuencial ya que no hay un ID real en la respuesta
+            explotacio: item.explotacio || ""
+          }));
+        }
+      } catch (explotacioError) {
+        console.warn('No se pudo obtener explotaciones del dashboard, intentando alternativa', explotacioError);
+        // Continuar con el método alternativo
+      }
+      
+      // Método alternativo: extraer de los animales existentes
+      const response = await this.getAnimals({ page: 1, limit: 100 });
+      
+      // Extraer valores únicos de explotaciones
+      const uniqueExplotacions = new Set<string>();
+      
+      if (response && response.items) {
+        response.items.forEach((animal: Animal) => {
+          if (animal.explotacio) {
+            uniqueExplotacions.add(animal.explotacio);
+          }
+        });
+      }
+      
+      // Si no hay datos, usar valores predefinidos
+      if (uniqueExplotacions.size === 0) {
+        return [
+          { id: 1, explotacio: 'Madrid' },
+          { id: 2, explotacio: 'Barcelona' },
+          { id: 3, explotacio: 'Valencia' },
+          { id: 4, explotacio: 'Guadalajara' }
+        ];
+      }
+      
+      // Convertir a array de objetos con id y explotacio
+      return Array.from(uniqueExplotacions).map((explotacio, index) => ({
+        id: index + 1,
+        explotacio
+      }));
+    } catch (error: any) {
+      console.error('Error al obtener explotaciones:', error);
+      console.log('Usando datos simulados');
+      return mockExplotacions;
+    }
+  }
 };
 
 export default animalService;

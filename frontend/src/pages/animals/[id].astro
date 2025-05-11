@@ -1,75 +1,57 @@
 ---
-// Importar el layout y componentes
+// [id].astro - Página principal de detalle de animal refactorizada para usar componentes
 import MainLayout from '../../components/layout/MainLayout.astro';
-import animalService from '../../services/animalService';
+import AnimalDetails from '../../components/animals/AnimalDetails.astro';
+import AnimalTabs from '../../components/animals/AnimalTabs.astro';
 
-// Obtener el ID del animal de los parámetros de la URL
+// Obtener datos del animal
 const { id } = Astro.params;
-
-// Definir título y rol de usuario
-const title = "Ficha de Animal";
-const userRole = "administrador"; // Simulación de rol
-
-// Variables para almacenar datos y estado
+const userRole = Astro.cookies.get('userRole')?.value || 'user';
 let animal = null;
-let error = null;
 let loading = true;
+let error = null;
+let title = 'Cargando animal...';
+
+// Variable para mostrar o no la pestaña de partos
+let showPartosTab = false;
 
 try {
-  if (!id || isNaN(parseInt(id))) {
-    throw new Error('ID de animal no válido');
+  // Obtener detalles del animal desde la API
+  const response = await fetch(`http://localhost:8000/api/v1/animals/${id}`);
+  if (!response.ok) {
+    throw new Error(`Error al cargar el animal: ${response.status} ${response.statusText}`);
   }
+  
+  // Parsear la respuesta
+  const responseData = await response.json();
+  animal = responseData.data || responseData;
+  
+  // Configurar el título de la página
+  title = `Detalle de ${animal.nom}`;
+  
+  // Determinar si el animal tiene partos y es hembra para mostrar la pestaña
+  showPartosTab = animal.genere === 'F';
 
-  // Intentar cargar los datos del animal
-  console.log(`Intentando cargar animal con ID: ${id}`);
-  animal = await animalService.getAnimalById(parseInt(id));
-  console.log('Animal cargado:', animal);
-  
-  if (!animal) {
-    throw new Error('No se pudo encontrar el animal');
-  }
-  
   loading = false;
-} catch (e) {
-  console.error('Error al cargar datos del animal:', e);
-  error = e.message || 'Error al cargar los datos del animal';
+} catch (err) {
+  console.error('Error al cargar el animal:', err);
+  error = err.message || 'Error al cargar los datos del animal';
   loading = false;
+  title = 'Error al cargar animal';
 }
-
-// Variables para controlar pestañas
-const showPartosTab = animal && animal.genere === 'F'; // Solo mostrar pestaña de partos para hembras
-
-// Obtener el icono del animal
-const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
-
-// Obtener la clase CSS para el estado del animal
-const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) : 'bg-gray-100 text-gray-800';
-
 ---
 
-<MainLayout title={title} userRole={userRole} currentPath="/animals">
-  <div class="mb-6">
-    <div class="flex items-center gap-2 mb-2">
-      <a href="/animals" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
-        <span class="mr-1">←</span> Volver al listado
-      </a>
-    </div>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-300">ID Animal: {id}</p>
-  </div>
-
+<MainLayout title={title} userRole={userRole}>
   {loading && (
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center">
-      <div class="flex items-center space-x-2">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-        <p>Cargando datos del animal...</p>
-      </div>
+    <div class="flex justify-center items-center py-10">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      <span class="ml-3">Cargando...</span>
     </div>
   )}
 
   {error && (
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
-      <div class="flex items-start">
+    <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+      <div class="flex">
         <div class="flex-shrink-0">
           ⚠️
         </div>
@@ -93,508 +75,23 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 
   {animal && (
     <>
-      <!-- Elemento oculto con datos del animal para el script -->
-      <div id="animal-data" class="hidden" 
-        data-genere={animal.genere}
-        data-tiene-partos={
-          (animal.partos && animal.partos.items && animal.partos.items.length > 0) || 
-          (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) || 
-          (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) ? 'true' : 'false'
-        }
-      ></div>
-      <!-- Resumen del animal -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
-        <div class="flex flex-col md:flex-row gap-6">
-          <!-- Icono y estado -->
-          <div class="flex flex-col items-center md:items-start">
-            <div class="text-6xl mb-3">{icon}</div>
-            <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
-              {animal.estat === 'ACT' ? 'Activo' : 'Baja'}
-            </span>
-          </div>
-          
-          <!-- Información básica -->
-          <div class="flex-grow">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
-                <p class="font-medium">{animal.cod || 'No disponible'}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
-                <p class="font-medium">{animal.dob ? new Date(animal.dob).toLocaleDateString() : 'No disponible'}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
-                <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
-                <p class="font-medium">{animal.quadra || 'No asignada'}</p>
-              </div>
-              {animal.genere === 'F' && (
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Estado amamantamiento</p>
-                  <p class="font-medium">
-                    {animal.alletar === '0' ? 'No amamanta' : 
-                     animal.alletar === '1' ? 'Amamanta un ternero' : 
-                     animal.alletar === '2' ? 'Amamanta dos terneros' : 'No disponible'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <!-- Acciones -->
-          <div class="flex flex-col gap-2">
-            <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-              ↻ Actualizar
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pestañas de información detallada -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <!-- Pestañas de navegación -->
-        <div class="flex border-b border-gray-200 dark:border-gray-700">
-          <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
-            Información Completa
-          </button>
-          {showPartosTab && (
-            <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-              Historial de Partos
-            </button>
-          )}
-          <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-            Historial de Cambios
-          </button>
-        </div>
-
-        <!-- Contenido de pestañas -->
-        <div class="p-6">
-          <!-- Pestaña 1: Información Completa -->
-          <div id="content-info">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos de Identificación</h3>
-                <div class="space-y-3">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
-                    <p class="font-medium">{animal.cod || 'No disponible'}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Nombre</p>
-                    <p class="font-medium">{animal.nom}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Serie</p>
-                    <p class="font-medium">{animal.num_serie || 'No disponible'}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos Generales</h3>
-                <div class="space-y-3">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                    <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
-                    <p class="font-medium">
-                      {animal.dob ? 
-                        (() => {
-                          try {
-                            const fecha = new Date(animal.dob);
-                            // Verificar si es una fecha válida
-                            if (!isNaN(fecha.getTime())) {
-                              // Formatear DD/MM/YYYY
-                              return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                            }
-                            // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
-                            if (typeof animal.dob === 'string' && new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(animal.dob)) {
-                              return animal.dob;
-                            }
-                            return String(animal.dob);
-                          } catch (e) {
-                            return 'Fecha incorrecta';
-                          }
-                        })() 
-                        : 'No disponible'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
-                    <p class="font-medium">{animal.estado === 'OK' ? 'Activo' : 'Fallecido'}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <!-- Eliminado encabezado de Ubicación -->
-                <div class="space-y-3">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
-                    <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
-                    <p class="font-medium">{animal.quadra || 'No asignada'}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <!-- Eliminado encabezado de Parentesco -->
-                <div class="space-y-3">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Padre</p>
-                    <p class="font-medium">{animal.pare || 'No disponible'}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Madre</p>
-                    <p class="font-medium">{animal.mare || 'No disponible'}</p>
-                  </div>
-                  {animal.genere === 'F' && (
-                    <div>
-                      <p class="text-sm text-gray-500 dark:text-gray-400">Estado de amamantamiento</p>
-                      <p class="font-medium">
-                        {animal.alletar === '0' ? 'No amamanta' : 
-                         animal.alletar === '1' ? 'Amamanta a un ternero' : 
-                         animal.alletar === '2' ? 'Amamanta a dos terneros' : 'No disponible'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <!-- Botón Volver al listado al final de la pestaña Información -->
-              <div class="mt-6 text-center">
-                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  <span class="mr-2">←</span> Volver al listado de animales
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
-          <div id="content-partos" class="hidden">
-            <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos</h3>
-              <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
-            </div>
-            {showPartosTab && (
-              
-              <div class="overflow-x-auto">
-                <table id="tabla-partos" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-fecha">
-                        Fecha <span class="ml-1 sort-indicator">↑</span>
-                      </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ficha Ternero</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {animal && (() => {
-                      // Manejar diferentes estructuras posibles de partos
-                      let partosArray = [];
-                      
-                      if (animal.partos && animal.partos.items && animal.partos.items.length > 0) {
-                        // Estructura esperada: animal.partos.items[]
-                        partosArray = animal.partos.items;
-                      } else if (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) {
-                        // Estructura alternativa: animal.partos[]
-                        partosArray = animal.partos;
-                      } else if (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) {
-                        // Estructura antigua: animal.parts[]
-                        partosArray = animal.parts;
-                      }
-                      
-                      if (partosArray.length > 0) {
-                        // Ordenar partos por fecha (de más antiguo a más reciente por defecto)
-                        partosArray.sort((a, b) => {
-                          const fechaA = a.part ? new Date(a.part) : new Date(0);
-                          const fechaB = b.part ? new Date(b.part) : new Date(0);
-                          return fechaA - fechaB; // Orden ascendente (más antiguo primero)
-                        });
-                        
-                        return partosArray.map((parto) => (
-                          <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parto.part ? 
-                                (() => {
-                                  try {
-                                    if (typeof parto.part === 'string') {
-                                      const fecha = new Date(parto.part);
-                                      // Verificar si es una fecha válida
-                                      if (!isNaN(fecha.getTime())) {
-                                        // Formatear DD/MM/YYYY
-                                        return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                                      }
-                                      // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
-                                      if (new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(parto.part)) {
-                                        return parto.part;
-                                      }
-                                    }
-                                    return String(parto.part);
-                                  } catch (e) {
-                                    return 'Fecha incorrecta';
-                                  }
-                                })() 
-                                : 'N/A'
-                              }
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parto.GenereT === 'M' ? 'Macho' : 
-                               parto.GenereT === 'F' ? 'Hembra' : 
-                               parto.GenereT === 'esforrada' ? 'Esforrá' : parto.GenereT || 'No disponible'}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              <span class={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                parto.EstadoT === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
-                                'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
-                              }`}>
-                                {parto.EstadoT === 'OK' ? 'Vivo' : 'Fallecido'}
-                              </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              No disponible
-                            </td>
-                          </tr>
-                        ));
-                      } else {
-                        return (
-                          <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                              No hay registros de partos para este animal
-                            </td>
-                          </tr>
-                        );
-                      }
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-              {!showPartosTab && (
-                <p>Este animal no tiene partos registrados</p>
-              )}
-              
-              <!-- Botón Volver al listado al final de la pestaña Partos -->
-              <div class="mt-6 text-center">
-                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  <span class="mr-2">←</span> Volver al listado de animales
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
-          <div id="content-changes" class="hidden">
-            <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Cambios</h3>
-              <p class="text-gray-500 dark:text-gray-400">Actualmente no se registran cambios históricos en la ficha del animal</p>
-            </div>
-            
-            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-              <p>No hay datos históricos disponibles</p>
-            </div>
-            
-            <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
-            <div class="mt-6 text-center">
-              <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                <span class="mr-2">←</span> Volver al listado de animales
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Botón flotante para volver al listado -->
-      <div class="fixed bottom-6 right-6 z-10">
-        <a href="/animals" class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white shadow-lg hover:bg-primary/80 transition-colors">
-          <span class="text-xl">←</span>
-        </a>
-      </div>
+      <AnimalDetails animal={animal} id={id} />
+      <AnimalTabs animal={animal} showPartosTab={showPartosTab} />
     </>
   )}
 </MainLayout>
 
 <script>
-  // Script para manejar interacciones de la página
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM completamente cargado y analizado');
+  // Script mínimo necesario para la página principal
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de detalle de animal cargada');
     
-    // Botón de reintentar carga
+    // Botón de reintento en caso de error
     const retryButton = document.getElementById('retry-button');
     if (retryButton) {
-      retryButton.addEventListener('click', () => {
+      retryButton.addEventListener('click', function() {
         window.location.reload();
       });
     }
-    
-    // Obtener todas las pestañas y contenidos
-    const tabs = document.querySelectorAll('#tab-info, #tab-partos, #tab-changes');
-    const contents = document.querySelectorAll('#content-info, #content-partos, #content-changes');
-    
-    console.log('Pestañas encontradas:', tabs.length);
-    console.log('Contenidos encontrados:', contents.length);
-    
-    // Función para mostrar pestaña y ocultar las demás
-    const showTab = (tabId) => {
-      console.log('Cambiando a pestaña:', tabId);
-      
-      // Ocultar todos los contenidos
-      contents.forEach(content => {
-        content.classList.add('hidden');
-      });
-      
-      // Resetear estilos de todas las pestañas
-      tabs.forEach(tab => {
-        tab.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
-        tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-      });
-      
-      // Activar pestaña seleccionada
-      const selectedTab = document.getElementById(tabId);
-      if (selectedTab) {
-        selectedTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-        selectedTab.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
-      }
-      
-      // Mostrar contenido correspondiente
-      const contentId = tabId.replace('tab-', 'content-');
-      const selectedContent = document.getElementById(contentId);
-      if (selectedContent) {
-        selectedContent.classList.remove('hidden');
-      }
-    };
-    
-    // Inicializar con la pestaña de información abierta
-    showTab('tab-info');
-    
-    // Eventos de clic para pestañas
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        showTab(tab.id);
-        console.log('Clic en pestaña:', tab.id);
-      });
-    });
-
-    // Ordenación de la tabla de partos
-    const sortColumns = document.querySelectorAll('#sort-fecha, #sort-genero, #sort-estado');
-    let currentSortColumn = 'sort-fecha';
-    let currentSortDirection = 'asc';
-
-    // Función para ordenar la tabla
-    const sortTable = (columnId, direction) => {
-      const table = document.getElementById('tabla-partos');
-      if (!table) return;
-
-      const tbody = table.querySelector('tbody');
-      if (!tbody) return;
-
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      const sortedRows = [...rows];
-
-      // Obtener el índice de la columna según el ID del encabezado
-      let columnIndex = 0;
-      if (columnId === 'sort-genero') columnIndex = 1;
-      if (columnId === 'sort-estado') columnIndex = 2;
-
-      // Ordenar filas
-      sortedRows.sort((a, b) => {
-        const cellA = a.querySelectorAll('td')[columnIndex].textContent.trim();
-        const cellB = b.querySelectorAll('td')[columnIndex].textContent.trim();
-        
-        if (columnId === 'sort-fecha') {
-          // Para fechas, intentar convertir a objetos Date para comparación
-          const dateA = parseDate(cellA);
-          const dateB = parseDate(cellB);
-          
-          if (direction === 'asc') {
-            return dateA - dateB;
-          } else {
-            return dateB - dateA;
-          }
-        } else {
-          // Para texto, comparar strings
-          if (direction === 'asc') {
-            return cellA.localeCompare(cellB, 'es');
-          } else {
-            return cellB.localeCompare(cellA, 'es');
-          }
-        }
-      });
-
-      // Limpiar y reconstruir la tabla
-      while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
-      }
-
-      sortedRows.forEach(row => tbody.appendChild(row));
-
-      // Actualizar indicadores de ordenación
-      sortColumns.forEach(col => {
-        const indicator = col.querySelector('.sort-indicator');
-        if (indicator) {
-          indicator.textContent = '';
-        }
-      });
-
-      const activeHeader = document.getElementById(columnId);
-      const indicator = activeHeader.querySelector('.sort-indicator');
-      if (indicator) {
-        indicator.textContent = direction === 'asc' ? '↑' : '↓';
-      }
-    };
-
-    // Ayudante para convertir texto de fecha a objeto Date
-    const parseDate = (dateStr) => {
-      if (dateStr === 'N/A' || dateStr === 'Fecha incorrecta') {
-        return new Date(0); // Para valores no fechas, usar una fecha muy antigua
-      }
-      
-      // Intenta analizar la fecha en formato DD/MM/YYYY
-      const parts = dateStr.split(/[\/\-]/);
-      if (parts.length === 3) {
-        // Asumir formato DD/MM/YYYY
-        return new Date(parts[2], parts[1] - 1, parts[0]);
-      }
-      
-      // Como último recurso, intentar crear fecha directamente
-      return new Date(dateStr);
-    };
-
-    // Agregar eventos de clic a las columnas
-    sortColumns.forEach(col => {
-      col.addEventListener('click', () => {
-        // Si es la misma columna, cambiar dirección
-        if (col.id === currentSortColumn) {
-          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          // Si es una nueva columna, establecer como ascendente
-          currentSortColumn = col.id;
-          currentSortDirection = 'asc';
-        }
-        
-        sortTable(currentSortColumn, currentSortDirection);
-      });
-    });
-
-    // Ordenar por fecha ascendente al cargar la página
-    sortTable('sort-fecha', 'asc');
   });
 </script>

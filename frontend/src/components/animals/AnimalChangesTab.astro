@@ -1,0 +1,24 @@
+---
+// AnimalChangesTab.astro - Componente para mostrar el historial de cambios del animal
+export interface Props {
+  animal: any;
+}
+
+const { animal } = Astro.props;
+---
+
+<div id="content-changes" class="hidden">
+  <div class="mb-4">
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Cambios</h3>
+    <p class="text-gray-500 dark:text-gray-400">Registro de modificaciones realizadas al animal</p>
+  </div>
+
+  <!-- Tabla de cambios - De momento esta parte es un placeholder -->
+  <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mb-6">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="text-center text-gray-500 dark:text-gray-400">
+        El historial de cambios estará disponible próximamente
+      </div>
+    </div>
+  </div>
+</div>

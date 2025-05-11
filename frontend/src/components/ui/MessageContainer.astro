@@ -1,0 +1,155 @@
+---
+/**
+ * Contenedor para mostrar mensajes y notificaciones de la aplicación
+ */
+---
+
+<div id="message-container" class="fixed top-4 right-4 z-50 space-y-4 max-w-md"></div>
+
+<script>
+  import { messagesStore, removeMessage } from '../../stores/messageStore';
+  
+  // Función para crear un elemento de mensaje
+  function createMessageElement(message) {
+    // Configurar clases y iconos según el tipo de alerta
+    let bgColor, borderColor, textColor, iconSvg;
+    
+    switch (message.type) {
+      case 'success':
+        bgColor = 'bg-green-50 dark:bg-green-900/20';
+        borderColor = 'border-green-500 dark:border-green-700';
+        textColor = 'text-green-800 dark:text-green-300';
+        iconSvg = `<svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>`;
+        break;
+      case 'error':
+        bgColor = 'bg-red-50 dark:bg-red-900/20';
+        borderColor = 'border-red-500 dark:border-red-700';
+        textColor = 'text-red-800 dark:text-red-300';
+        iconSvg = `<svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        </svg>`;
+        break;
+      case 'warning':
+        bgColor = 'bg-yellow-50 dark:bg-yellow-900/20';
+        borderColor = 'border-yellow-500 dark:border-yellow-700';
+        textColor = 'text-yellow-800 dark:text-yellow-300';
+        iconSvg = `<svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>`;
+        break;
+      default: // info
+        bgColor = 'bg-blue-50 dark:bg-blue-900/20';
+        borderColor = 'border-blue-500 dark:border-blue-700';
+        textColor = 'text-blue-800 dark:text-blue-300';
+        iconSvg = `<svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>`;
+    }
+    
+    // Crear elemento de mensaje
+    const messageElement = document.createElement('div');
+    messageElement.id = `message-${message.id}`;
+    messageElement.className = `message-alert rounded-lg border ${borderColor} ${bgColor} p-4 shadow-lg transform transition-all duration-300 ease-in-out opacity-0 translate-x-4`;
+    messageElement.setAttribute('role', 'alert');
+    
+    // Contenido del mensaje
+    messageElement.innerHTML = `
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          ${iconSvg}
+        </div>
+        <div class="ml-3 flex-grow">
+          ${message.title ? `<h3 class="text-sm font-medium ${textColor}">${message.title}</h3>` : ''}
+          <div class="mt-1 text-sm ${textColor}">
+            <p>${message.content}</p>
+          </div>
+        </div>
+        ${message.dismissible ? `
+          <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+              <button 
+                type="button" 
+                class="inline-flex rounded-md p-1.5 text-gray-500 hover:text-gray-600 focus:outline-none" 
+                aria-label="Cerrar"
+                onclick="document.dispatchEvent(new CustomEvent('dismiss-message', { detail: { id: '${message.id}' } }))"
+              >
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    return messageElement;
+  }
+  
+  // Función para mostrar un mensaje con animación
+  function showMessage(message) {
+    const container = document.getElementById('message-container');
+    if (!container) return;
+    
+    const messageElement = createMessageElement(message);
+    container.appendChild(messageElement);
+    
+    // Aplicar animación de entrada
+    setTimeout(() => {
+      messageElement.classList.remove('opacity-0', 'translate-x-4');
+      messageElement.classList.add('opacity-100', 'translate-x-0');
+    }, 10);
+    
+    return messageElement;
+  }
+  
+  // Función para ocultar un mensaje con animación
+  function hideMessage(id) {
+    const messageElement = document.getElementById(`message-${id}`);
+    if (!messageElement) return;
+    
+    // Aplicar animación de salida
+    messageElement.classList.add('opacity-0', 'translate-x-4');
+    
+    // Eliminar elemento después de la animación
+    setTimeout(() => {
+      messageElement.remove();
+    }, 300);
+  }
+  
+  // Inicializar el contenedor de mensajes
+  document.addEventListener('DOMContentLoaded', () => {
+    // Manejar evento para descartar mensajes
+    document.addEventListener('dismiss-message', (event) => {
+      const { id } = event.detail;
+      removeMessage(id);
+    });
+    
+    // Suscribirse a cambios en el store de mensajes
+    messagesStore.subscribe((messages) => {
+      const container = document.getElementById('message-container');
+      if (!container) return;
+      
+      // Obtener IDs de mensajes actuales en el DOM
+      const currentMessageIds = Array.from(container.children).map(
+        el => el.id.replace('message-', '')
+      );
+      
+      // Mostrar nuevos mensajes
+      messages.forEach(message => {
+        if (!currentMessageIds.includes(message.id)) {
+          showMessage(message);
+        }
+      });
+      
+      // Ocultar mensajes eliminados
+      currentMessageIds.forEach(id => {
+        if (!messages.some(message => message.id === id)) {
+          hideMessage(id);
+        }
+      });
+    });
+  });
+</script>

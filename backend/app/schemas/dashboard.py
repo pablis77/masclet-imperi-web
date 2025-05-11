@@ -17,7 +17,7 @@ class PartoStats(BaseModel):
     """Estadísticas de partos"""
     total: int
     ultimo_mes: int
-    ultimo_año: int
+    ultimo_anio: int
     promedio_mensual: float
     por_mes: Dict[str, int]
     por_genero_cria: Optional[Dict[str, int]] = None
@@ -69,7 +69,7 @@ class PartosResponse(BaseModel):
     tendencia: Dict[str, float]
     por_animal: Optional[List[Dict[str, Any]]] = None
     ultimo_mes: int
-    ultimo_año: int
+    ultimo_año: int  # Cambiado de ultimo_anio a ultimo_año para coincidir con el frontend
     promedio_mensual: float
     explotacio: Optional[str] = None
     periodo: Optional[Dict[str, date]] = None

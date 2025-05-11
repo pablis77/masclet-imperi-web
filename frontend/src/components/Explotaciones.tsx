@@ -1,25 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { getExplotacions, getAnimalsByExplotacion } from '../services/explotacioService';
+import type { ChangeEvent } from 'react';
+import animalService from '../services/animalService';
+import type { Animal } from '../services/animalService';
 import { Button, Card, Input } from './ui';
 
+// Definición del tipo Explotacion
+interface Explotacion {
+  id: number;
+  explotacio: string;
+  animal_count: number;
+}
+
 const Explotaciones: React.FC = () => {
-  const [explotaciones, setExplotaciones] = useState([]);
-  const [selectedExplotacion, setSelectedExplotacion] = useState<number | null>(null);
-  const [animals, setAnimals] = useState([]);
+  const [explotaciones, setExplotaciones] = useState<Explotacion[]>([]);
+  const [selectedExplotacion, setSelectedExplotacion] = useState<string | null>(null);
+  const [animals, setAnimals] = useState<Animal[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchExplotaciones = async () => {
-      const data = await getExplotacions();
-      setExplotaciones(data);
+      try {
+        const data = await animalService.getExplotacions();
+        setExplotaciones(data);
+      } catch (error) {
+        console.error('Error al obtener explotaciones:', error);
+        setExplotaciones([]);
+      }
     };
     fetchExplotaciones();
   }, []);
 
   const handleSearch = async () => {
     if (selectedExplotacion) {
-      const data = await getAnimalsByExplotacion(selectedExplotacion);
-      setAnimals(data);
+      try {
+        const data = await animalService.getAnimalsByExplotacion(selectedExplotacion);
+        setAnimals(data);
+      } catch (error) {
+        console.error('Error al obtener animales:', error);
+        setAnimals([]);
+      }
     }
   };
 
@@ -38,9 +57,10 @@ const Explotaciones: React.FC = () => {
       {/* Barra de búsqueda */}
       <div className="flex items-center mb-4">
         <Input
+          name="search"
           placeholder="Buscar explotación..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
           className="mr-2"
         />
         <Button onClick={handleSearch}>Buscar</Button>
@@ -48,13 +68,10 @@ const Explotaciones: React.FC = () => {
 
       {/* Resumen de explotaciones */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {explotaciones.map((explotacion) => (
+        {explotaciones.map((explotacion: any) => (
           <Card key={explotacion.id}>
-            <h2 className="text-lg font-bold">{explotacion.nombre}</h2>
-            <p>Total animales: {explotacion.totalAnimales}</p>
-            <p>Toros: {explotacion.toros}</p>
-            <p>Vacas: {explotacion.vacas}</p>
-            <p>Terneros: {calculateTerneros(explotacion.vacas)}</p>
+            <h2 className="text-lg font-bold">{explotacion.explotacio}</h2>
+            <p>Total animales: {explotacion.animal_count || 0}</p>
           </Card>
         ))}
       </div>
@@ -64,8 +81,8 @@ const Explotaciones: React.FC = () => {
         <div className="mt-6">
           <h2 className="text-xl font-bold">Animales en la explotación</h2>
           <ul>
-            {animals.map((animal) => (
-              <li key={animal.id}>{animal.nombre}</li>
+            {animals.map((animal: any) => (
+              <li key={animal.id}>{animal.nom}</li>
             ))}
           </ul>
         </div>

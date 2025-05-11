@@ -34,7 +34,7 @@ class TokenData(BaseModel):
     
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: str  # Cambiado de EmailStr a str para permitir dominios especiales como .local
     role: Optional[UserRole] = UserRole.USER
     
 class UserCreate(UserBase):

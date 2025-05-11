@@ -1,81 +1,138 @@
 ---
 // Importar el layout y componentes necesarios
-import Layout from '../layouts/Layout.astro';
-import { getToken } from '../utils/auth';
+import DefaultLayout from '../layouts/DefaultLayout.astro';
+// La función getToken no existe, usamos nuestro servicio de autenticación
+import authService from '../services/authService';
 
-// Verificar si el usuario está autenticado
-const token = getToken();
-const isAuthenticated = !!token;
+// IMPORTANTE: No acceder a localStorage durante el renderizado del servidor
 
-// Lista de endpoints disponibles según la documentación real de la API
+// En desarrollo, siempre considerar autenticado
+const isAuthenticated = true;
+
+// Usar un token por defecto para desarrollo
+const token = 'token-desarrollo-12345';
+
+// Lista de endpoints disponibles que existen en el backend con datos REALES
 const endpoints = [
+  // ESTADÍSTICAS REALES DEL DASHBOARD
   {
-    name: 'Estadísticas del Dashboard',
+    name: 'Estadísticas Completas',
     url: '/api/v1/dashboard/stats',
-    description: 'Obtiene estadísticas generales del dashboard'
+    description: 'Estadísticas reales completas que incluyen todos los datos necesarios para el dashboard principal.',
+    detailedDescription: 'Este endpoint proporciona un conjunto completo de estadísticas sobre todos los animales y partos en el sistema. Incluye totales por género (machos/hembras), distribución por estado (OK/DEF), distribución por alletar (amamantamiento), distribución por cuadras y estadísticas detalladas de partos a lo largo del tiempo.',
+    method: 'GET',
+    autoLoad: true
   },
   {
-    name: 'Estadísticas del Dashboard (con fechas)',
-    url: '/api/v1/dashboard/stats?inicio=2023-01-01&fin=2023-12-31',
-    description: 'Obtiene estadísticas generales del dashboard filtradas por fechas'
-  },
-  {
-    name: 'Lista de Explotaciones',
-    url: '/api/v1/dashboard/explotacions',
-    description: 'Obtiene la lista de explotaciones disponibles'
-  },
-  {
-    name: 'Estadísticas de Explotación',
-    url: '/api/v1/dashboard/explotacions/1',
-    description: 'Obtiene estadísticas detalladas de una explotación específica'
-  },
-  {
-    name: 'Estadísticas de Explotación (con fechas)',
-    url: '/api/v1/dashboard/explotacions/1?inicio=2023-01-01&fin=2023-12-31',
-    description: 'Obtiene estadísticas de una explotación filtradas por fechas'
+    name: 'Estadísticas por Fechas',
+    url: '/api/v1/dashboard/stats?start_date=2023-01-01&end_date=2023-12-31',
+    description: 'Estadísticas filtradas por un rango de fechas específico para análisis histórico.',
+    detailedDescription: 'Permite analizar los datos de animales y partos dentro de un período específico. Muy útil para comparar tendencias a lo largo del tiempo o para generar informes de períodos concretos (trimestral, anual, etc.). Incluye los mismos tipos de datos que el endpoint de estadísticas completas.',
+    method: 'GET',
+    autoLoad: true
   },
   {
     name: 'Resumen del Dashboard',
     url: '/api/v1/dashboard/resumen',
-    description: 'Obtiene un resumen general del dashboard'
+    description: 'Resumen ejecutivo de las principales métricas del sistema ganadero.',
+    detailedDescription: 'Proporciona una visión general rápida del estado actual del sistema ganadero. Incluye conteos totales de animales, distribución básica por género, total de partos, y tendencias recientes. Está diseñado para ofrecer una visualización rápida de los indicadores clave de rendimiento (KPIs).',
+    method: 'GET',
+    autoLoad: true
   },
   {
     name: 'Estadísticas de Partos',
     url: '/api/v1/dashboard/partos',
-    description: 'Obtiene estadísticas de partos'
+    description: 'Análisis detallado de la actividad reproductiva del ganado.',
+    detailedDescription: 'Este endpoint está especializado en proporcionar datos detallados sobre los partos registrados en el sistema. Incluye distribución temporal (por meses/años), tasas de éxito, distribución por género de las crías, y tendencias de fertilidad. Es fundamental para el seguimiento reproductivo del ganado.',
+    method: 'GET',
+    autoLoad: true
   },
   {
-    name: 'Datos Combinados',
+    name: 'Estadísticas Combinadas',
     url: '/api/v1/dashboard/combined',
-    description: 'Obtiene datos combinados del dashboard'
+    description: 'Conjunto completo de todas las estadísticas disponibles en el sistema.',
+    detailedDescription: 'Este es el endpoint más completo, que combina todos los datos de animales, partos, explotaciones y tendencias en una sola respuesta. Es ideal para aplicaciones que necesitan mostrar múltiples gráficos y estadísticas interrelacionadas. Incluye todos los datos disponibles en los otros endpoints, organizados por categorías.',
+    method: 'GET',
+    autoLoad: true
+  },
+  // ENDPOINTS DE ANIMALES
+  {
+    name: 'Listado de Animales',
+    url: '/api/v1/animals',
+    description: 'Obtiene todos los animales',
+    method: 'GET'
   },
   {
-    name: 'Actividades Recientes',
-    url: '/api/v1/dashboard/recientes',
-    description: 'Obtiene las actividades recientes'
+    name: 'Búsqueda de Animales',
+    url: '/api/v1/animals?search=Marta',
+    description: 'Búsqueda de animales por nombre u otros campos',
+    method: 'GET'
+  },
+  {
+    name: 'Animal por ID',
+    url: '/api/v1/animals/2736',
+    description: 'Obtiene un animal por su ID',
+    method: 'GET'
+  },
+  {
+    name: 'Actualizar Animal (PATCH)',
+    url: '/api/v1/animals/2736',
+    description: 'Actualiza un animal (actualización parcial)',
+    method: 'PATCH',
+    body: `{
+  "quadra": "Nueva Cuadra"
+}`
+  },
+  // OTROS ENDPOINTS
+  {
+    name: 'Listado de Explotaciones',
+    url: '/api/v1/explotacions',
+    description: 'Obtiene todas las explotaciones',
+    method: 'GET'
+  },
+  {
+    name: 'Listado de Usuarios',
+    url: '/api/v1/users',
+    description: 'Obtiene todos los usuarios',
+    method: 'GET'
   },
   {
     name: 'Login',
     url: '/api/v1/auth/login',
-    description: 'Endpoint para iniciar sesión'
-  },
-  {
-    name: 'Información de Usuario',
-    url: '/api/v1/auth/me',
-    description: 'Obtiene información del usuario actual'
+    description: 'Endpoint para iniciar sesión',
+    method: 'POST',
+    body: `{
+  "username": "admin",
+  "password": "admin123"
+}`
   }
 ];
 
 // Función para probar un endpoint
-const testEndpoint = async (url) => {
+const testEndpoint = async (url, method = 'GET', body = null) => {
   try {
-    const headers = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+    
+    const fetchOptions = {
+      method: method,
+      headers: headers
+    };
+    
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
     }
     
-    const response = await fetch(url, { headers });
-    const data = await response.json();
+    const response = await fetch(url, fetchOptions);
+    let data;
+    
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = { message: 'No se pudo parsear la respuesta como JSON' };
+    }
     
     return {
       status: response.status,
@@ -90,9 +147,17 @@ const testEndpoint = async (url) => {
 };
 ---
 
-<Layout title="Debug Dashboard">
+<DefaultLayout title="Panel de Depuración" userRole="admin" currentPath="/dashboard-debug">
   <main class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Debug Dashboard - Endpoints Disponibles</h1>
+    <div class="mb-6">
+      <div class="flex items-center gap-2 mb-2">
+        <a href="/" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+          <span class="mr-1">←</span> Volver al Dashboard
+        </a>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Panel de Depuración - Endpoints Disponibles</h1>
+      <p class="text-gray-600 dark:text-gray-300 mb-6">Esta página permite probar directamente los endpoints de la API del sistema.</p>
+    </div>
     
     {!isAuthenticated && (
       <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
@@ -103,28 +168,57 @@ const testEndpoint = async (url) => {
     )}
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {endpoints.map((endpoint) => (
-        <div class="border rounded-lg p-4 bg-white shadow">
-          <h2 class="text-lg font-semibold">{endpoint.name}</h2>
-          <p class="text-gray-600 mb-2">{endpoint.description}</p>
-          <div class="bg-gray-100 p-2 rounded mb-2 font-mono text-sm overflow-x-auto">
-            {endpoint.url}
+      {endpoints.map((endpoint, index) => (
+      <div class="mb-6 p-4 bg-white dark:bg-gray-800 shadow rounded-lg">
+        <h2 class="text-xl font-semibold mb-2">{endpoint.name}</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-2">{endpoint.description}</p>
+        
+        <!-- URL y método HTTP -->
+        <div class="flex flex-col sm:flex-row mb-2">
+          <div class="flex-grow mb-2 sm:mb-0 sm:mr-2">
+            <div class="flex items-center mb-1">
+              <span class="text-sm font-medium mr-2 text-gray-700 dark:text-gray-300">Método:</span>
+              <span class="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100">{endpoint.method || 'GET'}</span>
+            </div>
+            <code class="block p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-sm overflow-x-auto">{endpoint.url}</code>
+            {endpoint.detailedDescription && (
+              <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+                <div class="font-medium mb-1 text-gray-700 dark:text-gray-300">Detalles:</div>
+                <p>{endpoint.detailedDescription}</p>
+              </div>
+            )}
           </div>
-          <button
-            class="test-endpoint-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+          <button 
             data-url={endpoint.url}
+            data-method={endpoint.method || 'GET'}
+            data-body={endpoint.body || ''}
+            data-autoload={endpoint.autoLoad ? 'true' : 'false'}
+            class="test-button bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary text-white dark:text-gray-900 px-4 py-2 rounded transition-colors"
           >
-            Probar
+            {endpoint.autoLoad ? 'Cargando...' : 'Probar'}
           </button>
-          <div class="result mt-2 hidden">
-            <div class="loading text-gray-500">Cargando...</div>
-            <pre class="output bg-gray-800 text-green-400 p-2 rounded text-xs mt-2 overflow-x-auto hidden"></pre>
+        </div>
+        
+        <!-- Cuerpo de la petición si existe -->
+        {endpoint.body && (
+          <div class="mt-2">
+            <div class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Cuerpo de la petición:</div>
+            <code class="body-content block p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-sm overflow-x-auto whitespace-pre">{endpoint.body}</code>
+          </div>
+        )}
+        
+        <div class="mt-4 hidden loading-indicator">
+          <div class="flex items-center justify-center p-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            <span class="ml-2">Realizando petición...</span>
           </div>
         </div>
-      ))}
+        <pre class="output-box hidden p-3 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-sm overflow-x-auto mt-2 max-h-80 overflow-y-auto"></pre>
+      </div>
+    ))}
     </div>
   </main>
-</Layout>
+</DefaultLayout>
 
 <script>
   // Función para formatear JSON con indentación
@@ -134,64 +228,66 @@ const testEndpoint = async (url) => {
   
   // Función para obtener el token de autenticación
   function getToken() {
-    return localStorage.getItem('token');
+    return localStorage.getItem('token') || 'token-desarrollo-12345';
   }
   
-  // Función para probar un endpoint
-  async function testEndpoint(url) {
-    try {
-      const token = getToken();
-      const headers = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+  // La función que se ejecuta cuando el documento está listo
+  document.addEventListener('DOMContentLoaded', function() {
+    // Obtener todos los botones de prueba
+    const testButtons = document.querySelectorAll('.test-button');
+    
+    // Función para probar un endpoint
+    async function probarEndpoint(button) {
+      const url = button.getAttribute('data-url');
+      const method = button.getAttribute('data-method') || 'GET';
+      const bodyContent = button.getAttribute('data-body');
+      const outputPre = button.closest('div.mb-6').querySelector('.output-box');
+      const loadingDiv = button.closest('div.mb-6').querySelector('.loading-indicator');
+      
+      // Mostrar el indicador de carga y ocultar cualquier resultado anterior
+      loadingDiv.classList.remove('hidden');
+      outputPre.classList.add('hidden');
+      
+      try {
+        const result = await testEndpoint(url, method, bodyContent);
+        
+        // Ocultar el indicador de carga y mostrar el resultado
+        loadingDiv.classList.add('hidden');
+        outputPre.classList.remove('hidden');
+        
+        // Formatear y mostrar el resultado
+        outputPre.textContent = formatJSON(result);
+
+        // Actualizar el estado del botón (texto e icono)
+        button.innerHTML = `
+          <span class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </span>
+        `;
+      } catch (error) {
+        // Mostrar el error
+        loadingDiv.classList.add('hidden');
+        outputPre.classList.remove('hidden');
+        outputPre.textContent = `Error: ${error.message}`;
+      }
+    }
+    
+    // Añadir manejador de eventos para cada botón
+    testButtons.forEach(button => {
+      // Verificar si este endpoint debe cargarse automáticamente
+      const autoLoad = button.getAttribute('data-autoload') === 'true';
+      
+      // Si debe cargarse automáticamente, ejecutar ahora
+      if (autoLoad) {
+        probarEndpoint(button);
       }
       
-      const response = await fetch(url, { headers });
-      const data = await response.json();
-      
-      return {
-        status: response.status,
-        statusText: response.statusText,
-        data
-      };
-    } catch (error) {
-      return {
-        error: error.message
-      };
-    }
-  }
-  
-  // Configurar los botones de prueba
-  document.addEventListener('DOMContentLoaded', () => {
-    const buttons = document.querySelectorAll('.test-endpoint-btn');
-    
-    buttons.forEach(button => {
-      button.addEventListener('click', async () => {
-        const url = button.getAttribute('data-url');
-        const resultDiv = button.nextElementSibling;
-        const loadingDiv = resultDiv.querySelector('.loading');
-        const outputPre = resultDiv.querySelector('.output');
-        
-        // Mostrar el div de resultado y el indicador de carga
-        resultDiv.classList.remove('hidden');
-        loadingDiv.classList.remove('hidden');
-        outputPre.classList.add('hidden');
-        
-        try {
-          const result = await testEndpoint(url);
-          
-          // Ocultar el indicador de carga y mostrar el resultado
-          loadingDiv.classList.add('hidden');
-          outputPre.classList.remove('hidden');
-          
-          // Formatear y mostrar el resultado
-          outputPre.textContent = formatJSON(result);
-        } catch (error) {
-          // Mostrar el error
-          loadingDiv.classList.add('hidden');
-          outputPre.classList.remove('hidden');
-          outputPre.textContent = `Error: ${error.message}`;
-        }
+      // Añadir manejador de clic para todos los botones
+      button.addEventListener('click', function() {
+        probarEndpoint(this);
       });
     });
   });

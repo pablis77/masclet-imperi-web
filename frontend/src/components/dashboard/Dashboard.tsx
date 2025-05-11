@@ -1,809 +1,1078 @@
-import React, { useState, useEffect } from 'react';
-import StatCard from './StatCard';
-import StatusDistribution from './StatusDistribution';
-import ActivityFeed from './ActivityFeed';
-import { 
-  getDashboardStats, 
-  getExplotaciones,
-  getExplotacionStats,
-  getDashboardResumen,
-  getPartosStats,
-  getCombinedDashboard,
-  getRecentActivities
-} from '../../services/dashboardService';
-import type {
-  ExplotacionResponse,
-  ExplotacionDetailResponse,
-  PartosResponse,
-  CombinedDashboardResponse,
-  RecentActivityResponse,
-  Activity,
-  ActivityType
-} from '../../services/dashboardService';
-import LoadingState from '../common/LoadingState';
-import { isAuthenticated, getToken, getStoredUser } from '../../services/authService';
+/**
+ * DashboardEnhancedV2.tsx
+ * ======================
+ * 
+ * PLAN DE DESPLIEGUE - PUNTO 1.2: OPTIMIZACIÓN DEL COMPONENTE DASHBOARD
+ * 
+ * Versión refactorizada del DashboardEnhanced que mantiene EXACTAMENTE la misma
+ * estructura visual y funcionalidad, pero con el código organizado de forma más
+ * modular y mantenible.
+ * 
+ * IMPORTANTE: Este componente es un orquestador que usa componentes más pequeños,
+ * manteniendo visualmente idéntico el dashboard al original.
+ */
 
-// Interfaces
-interface DashboardParams {
-  explotacioId?: number;
-  startDate?: string;
-  endDate?: string;
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import apiService from '../../services/apiService';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
+import './dashboardStyles.css';
 
-interface DashboardResponse {
-  explotacio_id?: number;
-  explotacio_name?: string;
-  fecha_inicio?: string;
-  fecha_fin?: string;
-  animales: {
-    total: number;
-    machos: number;
-    hembras: number;
-    ratio_machos_hembras: number;
-    por_estado: Record<string, number>;
-    por_quadra: Record<string, number>;
-    por_alletar: Record<string, number>;
-  };
-  partos: {
-    total: number;
-    ultimo_mes: number;
-    ultimo_año: number;
-    promedio_mensual: number;
-    por_mes?: Record<string, number>;
-    tendencia_partos: {
-      tendencia: number;
-      promedio: number;
-      valores: Record<string, number>;
-      mensaje?: string;
-    };
-  };
-}
+// Importar componentes de secciones modulares que reemplazan el monolito original
+import ResumenGeneralSection from './sections/ResumenGeneralSection';
+import PartosSection from './sections/PartosSection';
+import ExplotacionesSection from './sections/ExplotacionesSection';
+import PeriodoAnalisisSection from './sections/PeriodoAnalisisSection';
 
-interface DashboardProps {
-  title?: string;
-  showExplotacionSelector?: boolean;
-}
+// Importar componentes UI reutilizables
+import { SectionTitle } from './components/UIComponents';
+
+// Importar tipos
+import type { 
+  DashboardResumen, 
+  DashboardStats, 
+  PartosStats, 
+  CombinedStats,
+  ExplotacionInfo,
+  AnimalStats,
+  DateParams
+} from './types/dashboard';
+
+// Registrar los componentes de ChartJS necesarios
+ChartJS.register(
+  ArcElement, 
+  CategoryScale, 
+  LinearScale, 
+  BarElement, 
+  PointElement, 
+  LineElement, 
+  Title, 
+  Tooltip, 
+  Legend
+);
 
 /**
- * Componente Dashboard - IMPORTANTE: Este componente debe usarse con client:only en Astro
- * para evitar problemas de hidratación.
+ * Componente Dashboard Mejorado con múltiples endpoints
+ * Optimizado para rendimiento y mantenibilidad
+ * 
+ * La estructura de este componente ha sido refactorizada para mejorar 
+ * su organización y mantenibilidad, delegando la renderización a componentes más pequeños
+ * mientras mantiene centralizada la lógica de obtención de datos y gestión de estado.
  */
-const Dashboard: React.FC<DashboardProps> = ({ 
-  title = 'Panel de Control', 
-  showExplotacionSelector = false 
-}) => {
-  // Estado para la explotación seleccionada
-  const [selectedExplotacion, setSelectedExplotacion] = useState<number | null>(null);
+
+/**
+ * Dashboard - Versión optimizada y modular
+ * 
+ * Mantiene la misma apariencia visual pero divide el código en componentes
+ * más pequeños para mejorar mantenibilidad. Este componente actúa como orquestador
+ * de los demás y obtiene todos los datos directamente de la API.
+ */
+const Dashboard: React.FC = () => {
+  // Estados para los diferentes endpoints
+  const [resumenData, setResumenData] = useState<DashboardResumen | null>(null);
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
+  const [partosData, setPartosData] = useState<PartosStats | null>(null);
+  const [combinedData, setCombinedData] = useState<CombinedStats | null>(null);
+  const [explotaciones, setExplotaciones] = useState<ExplotacionInfo[]>([]);
+  const [rendimientoPartos, setRendimientoPartos] = useState<Record<string, number>>({});
+  const [tendencias, setTendencias] = useState<Record<string, any>>({});
+  const [distribucionPorQuadra, setDistribucionPorQuadra] = useState<Record<string, number>>({});
+  const [animalStats, setAnimalStats] = useState<AnimalStats>({
+    total: 0,
+    machos: 0,
+    hembras: 0,
+    ratio_m_h: 0,
+    por_estado: {},
+    por_alletar: {},
+    por_quadra: {},
+    edades: {}
+  });
   
-  // Estados para los datos
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState<boolean>(false);
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
-  const [explotaciones, setExplotaciones] = useState<ExplotacionResponse[]>([]);
-  const [explotacionData, setExplotacionData] = useState<ExplotacionDetailResponse | null>(null);
-  const [resumen, setResumen] = useState<DashboardResponse | null>(null);
-  const [partosStats, setPartosStats] = useState<PartosResponse | null>(null);
-  const [combinedData, setCombinedData] = useState<CombinedDashboardResponse | null>(null);
-  const [recentActivitiesData, setRecentActivitiesData] = useState<RecentActivityResponse | null>(null);
+  // Estados generales
+  const [loading, setLoading] = useState<Record<string, boolean>>({
+    resumen: true,
+    stats: true,
+    partos: true,
+    combined: true,
+    explotaciones: true
+  });
   
-  // Estados para controlar qué datos mostrar
-  const [activeTab, setActiveTab] = useState<string>('stats');
+  // Estados para los filtros de fecha
+  const [fechaInicio, setFechaInicio] = useState<string>('');
+  const [fechaFin, setFechaFin] = useState<string>('');
+  const [error, setError] = useState<Record<string, string | null>>({
+    resumen: null,
+    stats: null,
+    partos: null,
+    combined: null,
+    explotaciones: null
+  });
+  const [requestLogs, setRequestLogs] = useState<string[]>([]);
+  
+  // Estado para el tema (sincronizado con tema global)
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  
+  // Estado para indicar si el dashboard está completamente cargado
+  const [dashboardReady, setDashboardReady] = useState<boolean>(false);
+
+  // Efecto para sincronizar con el tema global al cargar
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setDarkMode(isDarkMode);
+    
+    // Observar cambios en el tema
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setDarkMode(isDark);
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Función para añadir logs de depuración - solo en desarrollo
+  const addLog = (message: string) => {
+    const timestamp = new Date().toISOString();
+    setRequestLogs(prev => [`[${timestamp}] ${message}`, ...prev]);
+    // Solo mostrar logs en modo desarrollo
+    if (import.meta.env.DEV) {
+      console.log(`[Dashboard] ${message}`);
+    }
+  };
+
+  // Funciones para obtener datos de los diferentes endpoints
+  const fetchResumenData = async (dateParams?: DateParams) => {
+    try {
+      // Iniciar el estado de carga
+      setLoading(prev => ({ ...prev, resumen: true }));
+      
+      // Forma directa de construir la URL con parámetros - SIEMPRE con barra final para evitar redirecciones
+      let endpoint = '/dashboard/resumen/';
+      
+      // Si hay parámetros de fecha, añadirlos directamente a la URL
+      if (dateParams?.fechaInicio || dateParams?.fechaFin) {
+        // NOTA IMPORTANTE: Cambiamos a formato de querystring directo para evitar problemas con caracteres
+        endpoint = `/dashboard/resumen/?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}`;
+        addLog(`Iniciando petición a ${endpoint} con filtros de fecha directos`);
+      } else {
+        addLog('Iniciando petición a /dashboard/resumen/ sin filtros');
+      }
+      
+      // Verificar token (no es necesario, apiService ya lo maneja)
+      if (!localStorage.getItem('token')) {
+        addLog('⚠️ No se encontró token en localStorage');
+        setError(prev => ({ ...prev, resumen: 'No hay token de autenticación' }));
+        setLoading(prev => ({ ...prev, resumen: false }));
+        return null;
+      }
+      
+      console.log('Endpoint a utilizar:', endpoint);
+      
+      // Usar apiService que detecta automáticamente la IP
+      const response = await apiService.get(endpoint);
+      
+      addLog('✅ Datos de resumen recibidos');
+      console.log('Datos de resumen recibidos:', response);
+      
+      // Validar estructura de datos
+      if (!response || typeof response !== 'object') {
+        throw new Error('Formato de respuesta inválido - datos vacíos');
+      }
+      
+      // Definir valores predeterminados para campos requeridos
+      const validatedData = {
+        total_animales: response.total_animales ?? 0,
+        total_terneros: response.total_terneros ?? 0,
+        total_partos: response.total_partos ?? 0,
+        ratio_partos_animal: response.ratio_partos_animal ?? 0,
+        tendencias: response.tendencias ?? {
+          partos_mes_anterior: 0,
+          partos_actual: 0,
+          nacimientos_promedio: 0
+        },
+        terneros: response.terneros ?? { total: 0 },
+        explotaciones: response.explotaciones ?? { count: 0 },
+        partos: response.partos ?? { total: 0 },
+        periodo: response.periodo ?? {
+          inicio: '2010-01-01',
+          fin: new Date().toISOString().split('T')[0]
+        }
+      };
+      
+      // Actualizar estado con los datos validados (solo una vez)
+      setResumenData(validatedData);
+      
+      addLog('Datos validados y procesados correctamente');
+      
+      // Actualizar el estado de carga
+      setLoading(prev => ({ ...prev, resumen: false }));
+      
+      // Actualizar el estado de error
+      setError(prev => ({ ...prev, resumen: null }));
+      
+      // Devolver los datos validados
+      return validatedData;
+      
+    } catch (err) {
+      // Manejar errores Axios
+      if (axios.isAxiosError(err)) {
+        addLog(`❌ Error en resumen: ${err.message}`);
+        setError(prev => ({ ...prev, resumen: `Error: ${err.message}` }));
+      } else {
+        // Manejar otros tipos de errores
+        addLog(`❌ Error desconocido en resumen: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        setError(prev => ({ ...prev, resumen: 'Error procesando datos de resumen' }));
+      }
+      
+      // Actualizar estado de carga en caso de error y proporcionar datos vacíos
+      setResumenData({
+        total_animales: 0,
+        total_terneros: 0,
+        total_partos: 0,
+        ratio_partos_animal: 0,
+        tendencias: {
+          partos_mes_anterior: 0,
+          partos_actual: 0,
+          nacimientos_promedio: 0
+        },
+        terneros: { total: 0 },
+        explotaciones: { count: 0 },
+        partos: { total: 0 },
+        periodo: {
+          inicio: new Date().toISOString().split('T')[0],
+          fin: new Date().toISOString().split('T')[0]
+        }
+      });
+      setLoading(prev => ({ ...prev, resumen: false }));
+    }
+  };
+
+  const fetchStatsData = async () => {
+    try {
+      addLog('Iniciando petición a /dashboard/stats usando apiService');
+      
+      // Verificar token (no es necesario, apiService ya lo maneja)
+      if (!localStorage.getItem('token')) {
+        addLog('⚠️ No se encontró token en localStorage');
+        setError(prev => ({ ...prev, stats: 'No hay token de autenticación' }));
+        setLoading(prev => ({ ...prev, stats: false }));
+        return;
+      }
+      // Usar todos los datos disponibles sin filtro de fecha para mostrar estadísticas globales
+      addLog('Iniciando petición a /dashboard/stats sin filtros para mostrar datos históricos completos');
+      const response = await apiService.get('/dashboard/stats');
+      
+      addLog('✅ Datos de stats recibidos');
+      console.log('Datos de stats recibidos:', response);
+
+      // Usar response directamente en lugar de response.data
+      if (!response) {
+        addLog('⚠️ Respuesta vacía recibida en stats');
+        throw new Error('Formato de respuesta inválido en stats - datos vacíos');
+      }
+
+      // Imprimir la estructura para depuración
+      console.log('Estructura de stats:', {
+        keys: Object.keys(response),
+        type: typeof response,
+        isArray: Array.isArray(response)
+      });
+      
+      // Asegurar que otros campos requeridos estén presentes
+      const defaultStats = {
+        animales: {
+          total: 0,
+          machos: 0,
+          hembras: 0,
+          ratio_m_h: 0,
+          por_estado: {},
+          por_quadra: {},
+          por_alletar: {},
+          edades: {
+            menos_1_año: 0,
+            "1_2_años": 0,
+            "2_5_años": 0,
+            mas_5_años: 0
+          }
+        },
+        partos: {
+          total: 0,
+          ultimo_mes: 0,
+          ultimo_año: 0,
+          promedio_mensual: 0,
+          por_mes: {},
+          por_genero_cria: { "M": 0, "F": 0 },
+          tasa_supervivencia: 0,
+          distribucion_anual: {}
+        },
+        explotaciones: {
+          total: 0,
+          activas: 0,
+          inactivas: 0
+        },
+        comparativas: {
+          mes_actual_vs_anterior: {
+            partos: 0,
+            animales: 0
+          },
+          año_actual_vs_anterior: {
+            partos: 0
+          }
+        },
+        periodo: {
+          inicio: new Date().toISOString().split('T')[0],
+          fin: new Date().toISOString().split('T')[0]
+        }
+      };
+      
+      // Utilizar una estrategia de fusión profunda para asegurar que la estructura sea completa
+      const mergeObjects = (target: any, source: any) => {
+        if (!source) return target;
+        const result = {...target};
+        
+        for (const key in source) {
+          if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            result[key] = mergeObjects(result[key] || {}, source[key]);
+          } else {
+            result[key] = source[key];
+          }
+        }
+        return result;
+      };
+      
+      // Mezclar con valores predeterminados para campos faltantes
+      const validatedData = mergeObjects(defaultStats, response);
+      
+      // Actualizar el estado con datos validados
+      addLog('Datos de stats validados y procesados correctamente');
+      setStatsData(validatedData);
+      setLoading(prev => ({ ...prev, stats: false }));
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        addLog(`❌ Error en stats: ${err.message}`);
+        setError(prev => ({ ...prev, stats: `Error: ${err.message}` }));
+      } else {
+        addLog(`❌ Error desconocido en stats: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        setError(prev => ({ ...prev, stats: 'Error procesando datos' }));
+      }
+      // Establecer valores predeterminados en caso de error
+      setStatsData({
+        animales: {
+          total: 0,
+          machos: 0,
+          hembras: 0,
+          ratio_m_h: 0,
+          por_estado: {},
+          por_quadra: {},
+          por_alletar: {},
+          edades: {
+            menos_1_año: 0,
+            "1_2_años": 0,
+            "2_5_años": 0,
+            mas_5_años: 0
+          }
+        },
+        partos: {
+          total: 0,
+          ultimo_mes: 0,
+          ultimo_año: 0,
+          promedio_mensual: 0,
+          por_mes: {},
+          por_genero_cria: { "M": 0, "F": 0 },
+          tasa_supervivencia: 0,
+          distribucion_anual: {}
+        },
+        explotaciones: {
+          total: 0,
+          activas: 0,
+          inactivas: 0
+        },
+        comparativas: {
+          mes_actual_vs_anterior: {
+            partos: 0,
+            animales: 0
+          },
+          año_actual_vs_anterior: {
+            partos: 0
+          }
+        },
+        periodo: {
+          inicio: new Date().toISOString().split('T')[0],
+          fin: new Date().toISOString().split('T')[0]
+        }
+      });
+      setLoading(prev => ({ ...prev, stats: false }));
+    }
+  };
+
+  const fetchPartosData = async () => {
+    try {
+      addLog('Iniciando petición a /dashboard/partos usando apiService');
+      
+      // Verificar token (no es necesario, apiService ya lo maneja)
+      if (!localStorage.getItem('token')) {
+        addLog('⚠️ No se encontró token en localStorage');
+        setError(prev => ({ ...prev, partos: 'No hay token de autenticación' }));
+        setLoading(prev => ({ ...prev, partos: false }));
+        return;
+      }
+      
+      const response = await apiService.get('/dashboard/partos');
+      
+      addLog('✅ Datos de partos recibidos');
+      console.log('Datos de partos completos:', response);
+      
+      // Validar estructura de datos
+      if (!response || typeof response !== 'object') {
+        throw new Error('Formato de respuesta inválido en partos');
+      }
+      
+      // Definir valores predeterminados para campos requeridos
+      const defaultPartosData = {
+        total: 0,
+        por_mes: {},
+        por_genero_cria: { M: 0, F: 0 },
+        tasa_supervivencia: 0,
+        distribucion_anual: {},
+        tendencia: {},
+        ultimo_mes: 0,
+        ultimo_año: 0,
+        promedio_mensual: 0
+      };
+      
+      // Mezclar con valores predeterminados para campos faltantes
+      const validatedData = {
+        ...defaultPartosData,
+        // Asegurarnos de que estos campos sean números válidos
+        total: typeof response.total === 'number' ? response.total : 0,
+        ultimo_mes: typeof response.ultimo_mes === 'number' ? response.ultimo_mes : 0,
+        ultimo_año: typeof response.ultimo_año === 'number' ? response.ultimo_año : 0,
+        tasa_supervivencia: typeof response.tasa_supervivencia === 'number' ? response.tasa_supervivencia : 0,
+        // Asegurar que estos objetos estén presentes y no sean null
+        por_mes: response.por_mes || {},
+        por_genero_cria: response.por_genero_cria || { M: 0, F: 0 },
+        distribucion_anual: response.distribucion_anual || {}
+      };
+      
+      console.log('Datos de partos procesados:', validatedData);
+      addLog(`Datos de partos validados correctamente`);
+      setPartosData(validatedData);
+      setLoading(prev => ({ ...prev, partos: false }));
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        addLog(`❌ Error en partos: ${err.message}`);
+        setError(prev => ({ ...prev, partos: `Error: ${err.message}` }));
+      } else {
+        addLog(`❌ Error desconocido en partos: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        setError(prev => ({ ...prev, partos: 'Error procesando datos de partos' }));
+      }
+      setLoading(prev => ({ ...prev, partos: false }));
+    };
+  };
+
+  const fetchCombinedData = async () => {
+    try {
+      // Código para obtener datos combinados
+      addLog('Iniciando petición a /dashboard/combined usando apiService');
+      
+      const response = await apiService.get('/dashboard/combined');
+      
+      setCombinedData(response);
+      setLoading(prev => ({ ...prev, combined: false }));
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        addLog(`❌ Error en combined: ${err.message}`);
+        setError(prev => ({ ...prev, combined: `Error: ${err.message}` }));
+      } else {
+        console.error('Error procesando datos combinados:', err);
+        addLog(`❌ Error desconocido en combined: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        setError(prev => ({ ...prev, combined: 'Error procesando datos combinados' }));
+      }
+      setLoading(prev => ({ ...prev, combined: false }));
+    }
+  };
+
+  const fetchExplotacionesData = async () => {
+    try {
+      // Mostrar indicador de carga
+      setLoading(prev => ({ ...prev, explotaciones: true }));
+      setError(prev => ({ ...prev, explotaciones: null }));
+      
+      // Solicitar la lista de explotaciones
+      const response = await apiService.get('/dashboard/explotacions');
+      
+      if (response && Array.isArray(response)) {
+        // Eliminar duplicados basados en el campo 'explotacio'
+        const uniqueExplotaciones = [];
+        const explotacioSet = new Set();
+        
+        for (const exp of response) {
+          if (exp && exp.explotacio && !explotacioSet.has(exp.explotacio)) {
+            explotacioSet.add(exp.explotacio);
+            uniqueExplotaciones.push(exp);
+          }
+        }
+        
+        // Procesar las explotaciones para obtener toda la información necesaria
+        const processedExplotaciones = [];
+        
+        // Definir interfaz para los animales para usarla en todas las explotaciones
+        interface Animal {
+          id: number;
+          nom: string;
+          genere: string;
+          estado: string;
+          alletar: number;
+          explotacio: string;
+        }
+        
+        for (const exp of uniqueExplotaciones) {
+          try {
+            console.log(`Procesando explotación: ${exp.explotacio}`);
+            
+            // Obtener detalles básicos de la explotación
+            const explotacionDetail = await apiService.get(`/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`);
+            console.log(`Detalles de explotación:`, explotacionDetail);
+            
+            // Obtener estadísticas de animales
+            const statsData = await apiService.get(`/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`);
+            console.log(`Estadísticas:`, statsData);
+            
+            // Obtener los datos reales de animales para esta explotación
+            const animalesResponse = await apiService.get(`/animals/?explotacio=${encodeURIComponent(exp.explotacio)}`);
+            console.log(`Respuesta de animales:`, animalesResponse?.length ? `${animalesResponse.length} animales` : animalesResponse);
+            
+            // La API siempre devuelve un objeto con estructura {status, data: {items}}. Vamos a obtener los items directamente
+            console.log(`Respuesta de la API para ${exp.explotacio}:`, animalesResponse);
+            
+            // Definir interfaz para los animales
+            interface Animal {
+              id: number;
+              nom: string;
+              genere: string;
+              estado: string;
+              alletar: number | string | null;
+              explotacio: string;
+            }
+            
+            // Procesamos correctamente la respuesta de la API en formato {status, data: {items}}
+            let animalesList: Animal[] = [];
+            
+            if (animalesResponse && typeof animalesResponse === 'object') {
+              if ('data' in animalesResponse && typeof animalesResponse.data === 'object' && animalesResponse.data !== null) {
+                if ('items' in animalesResponse.data && Array.isArray(animalesResponse.data.items)) {
+                  animalesList = animalesResponse.data.items;
+                  console.log(`Extraídos ${animalesList.length} animales de estructura data.items`);
+                } else if (Array.isArray(animalesResponse.data)) {
+                  animalesList = animalesResponse.data;
+                  console.log(`Extraídos ${animalesList.length} animales de estructura data array`);
+                }
+              } else if (Array.isArray(animalesResponse)) {
+                animalesList = animalesResponse;
+                console.log(`La respuesta ya es un array de ${animalesResponse.length} elementos`);
+              }
+            }
+            
+            if (animalesList.length === 0) {
+              console.log(`No hay animales en la explotación ${exp.explotacio}`);
+            } else {
+              console.log(`Procesados correctamente ${animalesList.length} animales para la explotación ${exp.explotacio}`);
+            }
+            
+            console.log(`Procesando ${animalesList.length} animales para explotación ${exp.explotacio}`);
+            
+            // Analizar cada animal para confirmar su estructura
+            animalesList.forEach((animal: Animal, index: number) => {
+              console.log(`Animal #${index+1}:`, {
+                id: animal.id,
+                nom: animal.nom,
+                genere: animal.genere,
+                estado: animal.estado,
+                alletar: animal.alletar,
+                tipo: typeof animal.alletar
+              });
+            });
+            
+            // Filtrar solo animales activos (estado = "OK")
+            const animalesActivos = animalesList.filter((animal: Animal) => {
+              // Verificación básica del objeto
+              if (!animal || typeof animal !== 'object') {
+                console.warn('Animal no válido encontrado:', animal);
+                return false;
+              }
+              
+              // Verificar estado (OK = activo)
+              const estadoNormalizado = animal.estado?.toString().toUpperCase();
+              const esActivo = estadoNormalizado === "OK";
+              
+              console.log(`Animal ${animal.nom || 'sin nombre'}: estado=${estadoNormalizado}, activo=${esActivo}`);
+              return esActivo;
+            });
+            
+            console.log(`Total animales ACTIVOS: ${animalesActivos.length}`);
+            
+            // Toros activos
+            const torosActivos = animalesActivos.filter((animal: Animal) => {
+              const generoNormalizado = animal.genere?.toString().toUpperCase();
+              const esToro = generoNormalizado === "M";
+              
+              if (esToro) {
+                console.log(`Toro activo encontrado: ${animal.nom}`);
+              }
+              
+              return esToro;
+            }).length;
+            
+            console.log(`Total TOROS activos: ${torosActivos}`);
+            
+            // Vacas activas
+            const vacasActivas = animalesActivos.filter((animal: Animal) => {
+              const generoNormalizado = animal.genere?.toString().toUpperCase();
+              const esVaca = generoNormalizado === "F";
+              
+              if (esVaca) {
+                console.log(`Vaca activa encontrada: ${animal.nom}, alletar=${animal.alletar}`);
+              }
+              
+              return esVaca;
+            }).length;
+            
+            console.log(`Total VACAS activas: ${vacasActivas}`);
+            
+            // Vacas por alletar (asegurarse de normalizar los valores)
+            function normalizarAlletar(valor: number | string | null | undefined): number {
+              // Convertir a número si es posible
+              if (valor === null || valor === undefined) return 0;
+              if (typeof valor === 'string') {
+                const parsed = parseInt(valor, 10);
+                return isNaN(parsed) ? 0 : parsed;
+              }
+              return typeof valor === 'number' ? valor : 0;
+            }
+            
+            // Vacas sin crías (alletar = 0)
+            const vacasAlletar0 = animalesActivos.filter((animal: Animal) => {
+              const generoNormalizado = animal.genere?.toString().toUpperCase();
+              const alletar = normalizarAlletar(animal.alletar);
+              const esVacaSinCrias = generoNormalizado === "F" && alletar === 0;
+              
+              if (esVacaSinCrias) {
+                console.log(`Vaca sin crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+              }
+              
+              return esVacaSinCrias;
+            }).length;
+            
+            // Vacas con 1 cría (alletar = 1)
+            const vacasAlletar1 = animalesActivos.filter((animal: Animal) => {
+              const generoNormalizado = animal.genere?.toString().toUpperCase();
+              const alletar = normalizarAlletar(animal.alletar);
+              const esVacaConUnaCria = generoNormalizado === "F" && alletar === 1;
+              
+              if (esVacaConUnaCria) {
+                console.log(`Vaca con 1 cría: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+              }
+              
+              return esVacaConUnaCria;
+            }).length;
+            
+            // Vacas con 2 crías (alletar = 2)
+            const vacasAlletar2 = animalesActivos.filter((animal: Animal) => {
+              const generoNormalizado = animal.genere?.toString().toUpperCase();
+              const alletar = normalizarAlletar(animal.alletar);
+              const esVacaConDosCrias = generoNormalizado === "F" && alletar === 2;
+              
+              if (esVacaConDosCrias) {
+                console.log(`Vaca con 2 crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+              }
+              
+              return esVacaConDosCrias;
+            }).length;
+            
+            console.log(`Vacas por alletar: 0=${vacasAlletar0}, 1=${vacasAlletar1}, 2=${vacasAlletar2}`)
+            
+            // Total de animales activos = toros activos + vacas activas
+            const totalAnimales = torosActivos + vacasActivas;
+            
+            // Usar los datos de la API para fallecidos si es necesario
+            const animalesFallecidos = statsData?.animales?.por_estado?.DEF || 0;
+            
+            // Obtener el total de partos de la estructura correcta
+            const totalPartos = statsData?.partos?.total || 0;
+            
+            // Preparar los valores para alletar usando los datos reales
+            const vacasSinCrias = vacasAlletar0;
+            const vacasConUnaCria = vacasAlletar1;
+            const vacasConDosCrias = vacasAlletar2;
+            
+            // Usar datos reales en lugar de proporciones calculadas
+            const alletar0Activas = vacasAlletar0;
+            const alletar1Activas = vacasAlletar1;
+            const alletar2Activas = vacasAlletar2;
+            
+            // Valores para datos estadísticos
+            const hembrasActivas = vacasActivas;
+            const toros = torosActivos;
+            
+            // Crear objeto completo con todos los datos para la tabla
+            // Importante: usamos sólo los datos calculados a partir de los animales reales de la API
+            const explotacionData = {
+              id: explotacionDetail?.id || 0,
+              explotacio: exp.explotacio,
+              total_animales: animalesList.length, // Total de todos los animales (incluidos fallecidos)
+              total_animales_activos: animalesActivos.length, // Sólo animales activos (estado="OK")
+              vacas: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "F").length, // Total de vacas incluyendo fallecidas
+              vacas_activas: vacasActivas, // Sólo vacas activas
+              toros: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "M").length, // Total de toros incluyendo fallecidos
+              toros_activos: torosActivos, // Sólo toros activos
+              terneros: explotacionDetail?.total_terneros || 0, // Mantener de explotacionDetail
+              partos: totalPartos,
+              total_partos: totalPartos,
+              ratio: animalesActivos.length > 0 ? parseFloat((totalPartos / animalesActivos.length).toFixed(2)) : 0,
+              activa: true,
+              alletar_0: vacasAlletar0, // Valor real
+              alletar_1: vacasAlletar1, // Valor real
+              alletar_2: vacasAlletar2, // Valor real
+              alletar_0_activas: vacasAlletar0, // Para vacas activas son los mismos valores
+              alletar_1_activas: vacasAlletar1, // Para vacas activas son los mismos valores 
+              alletar_2_activas: vacasAlletar2, // Para vacas activas son los mismos valores
+              ultima_actualizacion: explotacionDetail?.ultima_actualizacion
+            };
+            
+            // Log para depuración
+            console.log(`Datos finales para explotación ${exp.explotacio}:`, {
+              animales_totales: animalesList.length,
+              animales_activos: animalesActivos.length,
+              toros_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "M").length,
+              toros_activos: torosActivos,
+              vacas_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "F").length,
+              vacas_activas: vacasActivas,
+              vacas_alletar0: vacasAlletar0,
+              vacas_alletar1: vacasAlletar1,
+              vacas_alletar2: vacasAlletar2,
+              partos: totalPartos
+            });
+            
+            console.log(`Datos procesados para ${exp.explotacio}:`, explotacionData);
+            processedExplotaciones.push(explotacionData);
+          } catch (error) {
+            console.error(`Error al procesar la explotación ${exp.explotacio}:`, error);
+          }
+        }
+        
+        // Actualizar el estado con las explotaciones procesadas
+        console.log(`Total de explotaciones procesadas: ${processedExplotaciones.length}`);
+        setExplotaciones(processedExplotaciones);
+      } else {
+        console.error('Respuesta de explotaciones no es un array:', response);
+        setError(prev => ({
+          ...prev,
+          explotaciones: 'No se pudieron obtener datos de explotaciones. Formato de respuesta incorrecto.'
+        }));
+      }
+    } catch (error) {
+      console.error('Error al obtener datos de explotaciones:', error);
+      setError(prev => ({
+        ...prev,
+        explotaciones: 'Error al obtener datos de explotaciones'
+      }));
+    } finally {
+      setLoading(prev => ({ ...prev, explotaciones: false }));
+    }
+  };
+
+  // Función para autenticar y obtener un token nuevo cada vez
+  const authenticate = async () => {
+    try {
+      addLog('Iniciando autenticación con apiService.login');
+      
+      // Autenticar usando el apiService que ya tiene la IP correcta
+      const loginResponse = await apiService.login('admin', 'admin123');
+      
+      // Guardar el token
+      if (loginResponse.data && loginResponse.data.access_token) {
+        localStorage.setItem('token', loginResponse.data.access_token);
+        addLog('✅ Autenticación exitosa, token guardado');
+        return loginResponse.data.access_token;
+      } else {
+        throw new Error('Token no encontrado en la respuesta');
+      }
+      
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        addLog(`❌ Error en autenticación: ${err.message}`);
+        throw new Error(`Error de autenticación: ${err.message}`);
+      } else {
+        addLog(`❌ Error desconocido en autenticación`);
+        throw new Error('Error desconocido en autenticación');
+      }
+    }
+  };
+
+  // Función para cambiar tema manualmente
+  const toggleTheme = () => {
+    setDarkMode(prev => !prev);
+  };
+
+  // Cargar parámetros de fecha de la URL si existen
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fechaInicioParam = params.get('fecha_inicio');
+    const fechaFinParam = params.get('fecha_fin');
+    
+    if (fechaInicioParam) {
+      setFechaInicio(fechaInicioParam);
+    }
+    
+    if (fechaFinParam) {
+      setFechaFin(fechaFinParam);
+    }
+    
+    // Si hay parámetros, aplicar filtros automáticamente
+    if (fechaInicioParam || fechaFinParam) {
+      console.log('Detectados parámetros de fecha en URL:', { fechaInicioParam, fechaFinParam });
+    }
+  }, []);
+
+  // Función para aplicar filtros de fecha
+  const aplicarFiltroFechas = useCallback(async () => {
+    try {
+      // Mostrar estado de carga
+      setLoading(prev => ({
+        ...prev,
+        resumen: true,
+        stats: true,
+        partos: true,
+        combined: true
+      }));
+
+      // Método más simple: recargar la página con los parámetros de fecha
+      // Esto asegura que todos los componentes se actualicen correctamente
+      const currentUrl = new URL(window.location.href);
+      
+      // Limpiar parámetros existentes
+      currentUrl.searchParams.delete('fecha_inicio');
+      currentUrl.searchParams.delete('fecha_fin');
+      
+      // Añadir nuevos parámetros
+      if (fechaInicio) {
+        currentUrl.searchParams.append('fecha_inicio', fechaInicio);
+      }
+      
+      if (fechaFin) {
+        currentUrl.searchParams.append('fecha_fin', fechaFin);
+      }
+      
+      // Guardar preferencias en localStorage para recuperarlas después
+      localStorage.setItem('dashboard_fecha_inicio', fechaInicio || '');
+      localStorage.setItem('dashboard_fecha_fin', fechaFin || '');
+      
+      console.log('Recargando dashboard con filtros de fecha:', {
+        desde: fechaInicio || 'inicio', 
+        hasta: fechaFin || 'actualidad'
+      });
+      
+      // Recargar la página para que todos los componentes utilicen los nuevos parámetros
+      window.location.href = currentUrl.toString();
+      
+    } catch (error) {
+      console.error('Error aplicando filtros de fecha:', error);
+      setError(prev => ({
+        ...prev,
+        global: 'Error al aplicar filtros de fecha'
+      }));
+      
+      // Actualizar estado de carga incluso si hay error
+      setLoading(prev => ({
+        ...prev,
+        resumen: false,
+        stats: false,
+        partos: false,
+        combined: false
+      }));
+    }
+  }, [fechaInicio, fechaFin]);
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    const initializeDashboard = async () => {
+    // Función para cargar todos los datos con los parámetros de fecha de la URL
+    const loadDashboardData = async () => {
       try {
-        console.log('🚀 [Dashboard] Inicializando componente...');
+        addLog('Cargando datos del dashboard');
         
-        // Verificar autenticación
-        const token = getToken();
-        if (!token) {
-          console.warn('⚠️ [Dashboard] Usuario no autenticado');
-          setError('Debes iniciar sesión para ver el dashboard');
-          setLoading(false);
-          return;
+        // Obtener parámetros de fecha de la URL
+        const params = new URLSearchParams(window.location.search);
+        const fechaInicioParam = params.get('fecha_inicio');
+        const fechaFinParam = params.get('fecha_fin');
+        
+        // Actualizar los campos de fecha con los valores de la URL
+        if (fechaInicioParam) {
+          setFechaInicio(fechaInicioParam);
         }
         
-        console.log('✅ [Dashboard] Token de autenticación encontrado');
-        
-        // Verificar permisos
-        const user = getStoredUser();
-        console.log('👤 [Dashboard] Datos de usuario recuperados:', user);
-        
-        if (user && !['administrador', 'gerente'].includes(user.role)) {
-          console.warn(`⛔ [Dashboard] Usuario sin permisos suficientes. Rol: ${user.role}`);
-          setError(`No tienes permisos para acceder al dashboard. Tu rol actual es: ${user.role}`);
-          setLoading(false);
-          return;
+        if (fechaFinParam) {
+          setFechaFin(fechaFinParam);
         }
         
-        setInitialized(true);
-      } catch (error: any) {
-        console.error('❌ [Dashboard] Error al inicializar:', error);
-        setError(`Error al inicializar: ${error.message || 'Error desconocido'}`);
-        setLoading(false);
+        // Construir objeto con parámetros de fecha para las APIs
+        const dateParams: DateParams = {};
+        if (fechaInicioParam) {
+          dateParams.fechaInicio = fechaInicioParam;
+        }
+        if (fechaFinParam) {
+          dateParams.fechaFin = fechaFinParam;
+        }
+        
+        // Mostrar mensaje en la consola con los filtros aplicados
+        if (fechaInicioParam || fechaFinParam) {
+          console.log('Aplicando filtros a través de la URL:', {
+            desde: fechaInicioParam || 'inicio',
+            hasta: fechaFinParam || 'actualidad'
+          });
+        }
+        
+        // Cargar datos de resumen con parámetros de fecha
+        if (Object.keys(dateParams).length > 0) {
+          await fetchResumenData(dateParams);
+        } else {
+          await fetchResumenData();
+        }
+        
+        // Cargar datos de estadísticas
+        const statsEndpoint = Object.keys(dateParams).length > 0 ?
+          `/dashboard/stats?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
+          '/dashboard/stats';
+          
+        const statsResponse = await apiService.get(statsEndpoint);
+        setStatsData(statsResponse);
+        setLoading(prev => ({ ...prev, stats: false }));
+        
+        // Cargar datos de partos
+        const partosEndpoint = Object.keys(dateParams).length > 0 ?
+          `/dashboard/partos?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
+          '/dashboard/partos';
+          
+        const partosResponse = await apiService.get(partosEndpoint);
+        setPartosData(partosResponse);
+        setLoading(prev => ({ ...prev, partos: false }));
+        
+        // Cargar datos combinados
+        const combinedEndpoint = Object.keys(dateParams).length > 0 ?
+          `/dashboard/combined?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
+          '/dashboard/combined';
+          
+        const combinedResponse = await apiService.get(combinedEndpoint);
+        setCombinedData(combinedResponse);
+        setLoading(prev => ({ ...prev, combined: false }));
+        
+        // Cargar datos de explotaciones (no necesitan parámetros de fecha)
+        await fetchExplotacionesData();
+        
+        addLog('✅ Datos del dashboard cargados correctamente');
+      } catch (error) {
+        console.error('Error cargando datos del dashboard:', error);
+        setError(prev => ({
+          ...prev,
+          global: 'Error cargando datos del dashboard. Inténtalo de nuevo más tarde.'
+        }));
       }
     };
     
-    initializeDashboard();
-  }, []); // Solo se ejecuta una vez al montar el componente
+    // Cargar los datos inmediatamente
+    loadDashboardData();
+  }, []);
 
-  // Efecto separado para cargar datos cuando el componente está inicializado
-  useEffect(() => {
-    if (initialized) {
-      console.log('🔄 [Dashboard] Componente inicializado, cargando datos...');
-      loadAllDashboardData({
-        explotacioId: selectedExplotacion || undefined
-      });
-    }
-  }, [initialized, selectedExplotacion, activeTab]);
+  // Comprobar si todas las llamadas han finalizado (con éxito o error)
+  const allLoaded = Object.values(loading).every(isLoading => isLoading === false);
 
-  // Cargar todos los datos del dashboard
-  const loadAllDashboardData = async (params: DashboardParams = {}) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Cargar la lista de explotaciones primero
-      await loadExplotaciones();
-      
-      // Cargar datos según la pestaña activa
-      switch (activeTab) {
-        case 'stats':
-          await loadDashboardStats(params);
-          break;
-        case 'explotacion':
-          if (selectedExplotacion) {
-            await loadExplotacionDetail(selectedExplotacion, params);
-          } else {
-            setError('Debes seleccionar una explotación para ver sus detalles');
-          }
-          break;
-        case 'resumen':
-          await loadResumen();
-          break;
-        case 'partos':
-          await loadPartosStats(params);
-          break;
-        case 'combined':
-          await loadCombinedData(params);
-          break;
-        case 'recientes':
-          await loadRecentActivities();
-          break;
-        default:
-          await loadDashboardStats(params);
-      }
-    } catch (error: any) {
-      console.error(' Error al cargar datos:', error);
-      setError(`Error al cargar datos: ${error.message || 'Error desconocido'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Manejar el cambio de explotación
-  const handleExplotacionChange = (explotacionId: number | null) => {
-    setSelectedExplotacion(explotacionId);
-  };
-
-  // Cargar estadísticas del dashboard
-  const loadDashboardStats = async (params: DashboardParams = {}, retryCount = 0) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log(`🔄 [Dashboard] Iniciando carga de estadísticas con parámetros:`, params);
-      console.log(`🔄 [Dashboard] Intento ${retryCount + 1}/3`);
-
-      try {
-        console.log('📊 [Dashboard] Llamando a getDashboardStats()...');
-        const data = await getDashboardStats(params);
-        console.log('✅ [Dashboard] Datos recibidos correctamente:', data);
-        
-        if (data) {
-          console.log('💾 [Dashboard] Actualizando estado con datos recibidos');
-          setDashboardData(data);
-          return data;
-        } else {
-          throw new Error('Los datos recibidos están vacíos');
-        }
-      } catch (apiError: any) {
-        console.error('❌ [Dashboard] Error al cargar estadísticas:', apiError);
-        
-        // Manejar errores específicos
-        if (apiError.status === 403) {
-          console.warn('⛔ [Dashboard] Error de permisos (403)');
-          setError('No tienes permisos para acceder a las estadísticas del dashboard. Se requiere rol de administrador o gerente.');
-          
-          // Usar datos simulados como fallback
-          setDashboardData(getMockDashboardData());
-        } else if (apiError.status === 401) {
-          console.warn('🔒 [Dashboard] Error de autenticación (401)');
-          setError('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
-          
-          // Redirigir a la página de login después de un breve retraso
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
-        } else if (apiError.status === 404 || (apiError.message && apiError.message.includes('Network Error'))) {
-          // Reintentar automáticamente hasta 3 veces para errores de red o 404
-          if (retryCount < 2) {
-            console.warn(`🔄 [Dashboard] Error de conexión. Reintentando (${retryCount + 1}/3)...`);
-            
-            // Esperar 2 segundos antes de reintentar
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            return loadDashboardStats(params, retryCount + 1);
-          } else {
-            console.warn('❌ [Dashboard] Error de red después de 3 intentos');
-            setError('No se pudo conectar con el servidor después de varios intentos. Comprueba tu conexión a internet.');
-            
-            // Usar datos simulados como fallback
-            setDashboardData(getMockDashboardData());
-          }
-        } else {
-          console.warn('❓ [Dashboard] Error desconocido');
-          setError(`Error al cargar las estadísticas: ${apiError.message || 'Error desconocido'}`);
-          
-          // Usar datos simulados como fallback
-          setDashboardData(getMockDashboardData());
-        }
-      }
-    } catch (error: any) {
-      console.error('💥 [Dashboard] Error general:', error);
-      setError(`Error general: ${error.message || 'Error desconocido'}`);
-      
-      // Usar datos simulados como fallback
-      setDashboardData(getMockDashboardData());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Datos simulados para fallback
-  const getMockDashboardData = (): DashboardResponse => {
-    console.log('🔄 [Dashboard] Generando datos simulados como fallback');
-    return {
-      explotacio_id: undefined,
-      explotacio_name: undefined,
-      fecha_inicio: undefined,
-      fecha_fin: undefined,
-      animales: {
-        total: 120,
-        machos: 45,
-        hembras: 75,
-        ratio_machos_hembras: 0.6,
-        por_estado: {
-          'ACTIVO': 80,
-          'INACTIVO': 30,
-          'FALLECIDO': 10
-        },
-        por_quadra: {
-          'Quadra 1': 40,
-          'Quadra 2': 35,
-          'Quadra 3': 45
-        },
-        por_alletar: {
-          'Si': 28,
-          'No': 47
-        }
-      },
-      partos: {
-        total: 35,
-        ultimo_mes: 5,
-        ultimo_año: 30,
-        promedio_mensual: 2.5,
-        por_mes: {
-          'Enero': 3,
-          'Febrero': 2,
-          'Marzo': 4,
-          'Abril': 1,
-          'Mayo': 3,
-          'Junio': 2
-        },
-        tendencia_partos: {
-          tendencia: 0.2,
-          promedio: 2.5,
-          valores: {
-            'Enero': 3,
-            'Febrero': 2,
-            'Marzo': 4,
-            'Abril': 1,
-            'Mayo': 3,
-            'Junio': 2
-          },
-          mensaje: 'Tendencia positiva en los últimos 6 meses'
-        }
-      }
-    };
-  };
-
-  // Cargar lista de explotaciones
-  const loadExplotaciones = async (retryCount = 0) => {
-    try {
-      console.log(' Cargando lista de explotaciones...');
-      const data = await getExplotaciones();
-      console.log(' Lista de explotaciones recibida:', data);
-      setExplotaciones(data);
-      return data;
-    } catch (error: any) {
-      console.error(' Error al cargar explotaciones:', error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar explotaciones (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadExplotaciones(retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Cargar detalles de una explotación
-  const loadExplotacionDetail = async (explotacionId: number, params: DashboardParams = {}, retryCount = 0) => {
-    try {
-      console.log(` Cargando detalles de explotación ${explotacionId}...`);
-      const data = await getExplotacionStats(explotacionId, params);
-      console.log(' Detalles de explotación recibidos:', data);
-      setExplotacionData(data);
-      return data;
-    } catch (error: any) {
-      console.error(` Error al cargar detalles de explotación ${explotacionId}:`, error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar detalles de explotación (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadExplotacionDetail(explotacionId, params, retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Cargar resumen básico
-  const loadResumen = async (retryCount = 0) => {
-    try {
-      console.log(' Cargando resumen básico...');
-      const data = await getDashboardResumen();
-      console.log(' Resumen básico recibido:', data);
-      setResumen(data);
-      return data;
-    } catch (error: any) {
-      console.error(' Error al cargar resumen básico:', error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar resumen básico (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadResumen(retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Cargar estadísticas de partos
-  const loadPartosStats = async (params: DashboardParams = {}, retryCount = 0) => {
-    try {
-      console.log(' Cargando estadísticas de partos...');
-      const data = await getPartosStats(params);
-      console.log(' Estadísticas de partos recibidas:', data);
-      setPartosStats(data);
-      return data;
-    } catch (error: any) {
-      console.error(' Error al cargar estadísticas de partos:', error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar estadísticas de partos (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadPartosStats(params, retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Cargar datos combinados
-  const loadCombinedData = async (params: DashboardParams = {}, retryCount = 0) => {
-    try {
-      console.log(' Cargando datos combinados...');
-      const data = await getCombinedDashboard(params);
-      console.log(' Datos combinados recibidos:', data);
-      setCombinedData(data);
-      return data;
-    } catch (error: any) {
-      console.error(' Error al cargar datos combinados:', error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar datos combinados (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadCombinedData(params, retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Cargar actividades recientes
-  const loadRecentActivities = async (limit: number = 10, retryCount = 0) => {
-    try {
-      console.log(` Cargando actividades recientes (límite: ${limit})...`);
-      const data = await getRecentActivities(limit);
-      console.log(' Actividades recientes recibidas:', data);
-      
-      setRecentActivitiesData(data);
-      
-      return data;
-    } catch (error: any) {
-      console.error(' Error al cargar actividades recientes:', error);
-      
-      // Reintentar si es necesario
-      if (retryCount < 2 && (error.status === 404 || (error.message && error.message.includes('Network Error')))) {
-        console.warn(` Reintentando cargar actividades recientes (${retryCount + 1}/3)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return loadRecentActivities(limit, retryCount + 1);
-      }
-      
-      throw error;
-    }
-  };
-
-  // Convertir datos para StatusDistribution
-  const convertToStatusData = (data: Record<string, number> = {}, colorMap: Record<string, string>, labelMap: Record<string, string>) => {
-    return Object.entries(data).map(([key, value]) => ({
-      label: labelMap[key] || key,
-      value,
-      color: colorMap[key] || 'bg-gray-500'
-    }));
-  };
-
-  // Manejar el cambio de pestaña
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    const params: DashboardParams = {};
-    if (selectedExplotacion) {
-      params.explotacioId = selectedExplotacion;
-    }
-    loadAllDashboardData(params);
-  };
-
-  // Renderizar el componente
   return (
-    <div className="space-y-6">
-      {/* Información de conexión */}
-      <div className={`text-sm font-medium ${
-        loading ? 'text-blue-500' :
-        error ? 'text-red-500' :
-        'text-green-500'
-      }`}>
-        {loading ? 'Cargando...' :
-        error ? 'Error al cargar datos' :
-        'Datos cargados correctamente'}
-      </div>
-
-      {/* Mostrar error si existe */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
-            <div className="mt-2">
-              <button 
-                onClick={() => loadAllDashboardData()}
-                className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors"
-              >
-                Reintentar conexión
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* Selector de explotación */}
-      {showExplotacionSelector && explotaciones.length > 0 && (
-        <div className="mb-4">
-          <label htmlFor="explotacion-selector" className="block text-sm font-medium text-gray-700 mb-1">
-            Seleccionar Explotación
-          </label>
-          <select
-            id="explotacion-selector"
-            className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            value={selectedExplotacion || ''}
-            onChange={(e) => handleExplotacionChange(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">Todas las explotaciones</option>
-            {explotaciones.map((explotacion) => (
-              <option key={explotacion.id} value={explotacion.id}>
-                {explotacion.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Pestañas para los diferentes endpoints */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-4" aria-label="Tabs">
-          {[
-            { id: 'stats', name: 'Estadísticas' },
-            { id: 'explotacion', name: 'Explotación', disabled: !selectedExplotacion },
-            { id: 'resumen', name: 'Resumen' },
-            { id: 'partos', name: 'Partos' },
-            { id: 'combined', name: 'Combinado' },
-            { id: 'recientes', name: 'Actividad Reciente' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              disabled={tab.disabled}
-              className={`${
-                activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } ${
-                tab.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-              aria-current={activeTab === tab.id ? 'page' : undefined}
-            >
-              {tab.name}
-            </button>
+    <div 
+      className={`dashboard-container ${darkMode ? 'theme-dark' : 'theme-light'} ${allLoaded ? 'dashboard-ready' : ''}`}
+      data-component-name="DashboardEnhancedV2"
+    >
+      {/* Botón para cambiar tema */}
+      <button 
+        onClick={toggleTheme} 
+        style={{
+          position: 'fixed',
+          bottom: '6rem',
+          left: '1rem',
+          backgroundColor: darkMode ? '#374151' : '#e5e7eb',
+          color: darkMode ? 'white' : 'black',
+          padding: '0.75rem',
+          borderRadius: '9999px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          zIndex: 20,
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '1.2rem',
+        }}
+      >
+        {darkMode ? '☀️' : '🌙'}
+      </button>
+      {/* Sección de logs para desarrollo - COMPLETAMENTE ELIMINADA */}
+      {false && (
+        <div className="log-container" style={{ maxHeight: '200px', overflow: 'auto' }}>
+          <h3 className="text-lg font-bold mb-2">Logs de desarrollo</h3>
+          {requestLogs.map((log, index) => (
+            <div key={index} className="text-sm mb-1">{log}</div>
           ))}
-        </nav>
-      </div>
-
-      {/* Contenido principal */}
-      {loading ? (
-        <LoadingState message="Cargando datos..." />
-      ) : (
-        <div>
-          {/* Contenido según la pestaña activa */}
-          {activeTab === 'stats' && dashboardData && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">{title} {dashboardData.explotacio_name ? `- ${dashboardData.explotacio_name}` : ''}</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Animales"
-                  value={dashboardData.animales.total}
-                  icon="🐄"
-                  trend={0}
-                  description="Animales registrados"
-                />
-                <StatCard
-                  title="Machos"
-                  value={dashboardData.animales.machos}
-                  icon="♂️"
-                  trend={0}
-                  description={`${((dashboardData.animales.machos / dashboardData.animales.total) * 100).toFixed(1)}% del total`}
-                />
-                <StatCard
-                  title="Hembras"
-                  value={dashboardData.animales.hembras}
-                  icon="♀️"
-                  trend={0}
-                  description={`${((dashboardData.animales.hembras / dashboardData.animales.total) * 100).toFixed(1)}% del total`}
-                />
-                <StatCard
-                  title="Ratio M/H"
-                  value={dashboardData.animales.ratio_machos_hembras.toFixed(2)}
-                  icon="⚖️"
-                  trend={0}
-                  description="Ratio machos/hembras"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-4">Distribución por Estado</h3>
-                  <StatusDistribution 
-                    data={convertToStatusData(
-                      dashboardData.animales.por_estado,
-                      {
-                        'activo': 'bg-green-500',
-                        'inactivo': 'bg-red-500',
-                        'vendido': 'bg-blue-500',
-                        'muerto': 'bg-gray-500'
-                      },
-                      {
-                        'activo': 'Activo',
-                        'inactivo': 'Inactivo',
-                        'vendido': 'Vendido',
-                        'muerto': 'Muerto'
-                      }
-                    )} 
-                  />
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-4">Distribución por Cuadra</h3>
-                  <StatusDistribution 
-                    data={convertToStatusData(
-                      dashboardData.animales.por_quadra,
-                      {
-                        'A': 'bg-green-500',
-                        'B': 'bg-blue-500',
-                        'C': 'bg-yellow-500',
-                        'D': 'bg-purple-500',
-                        'E': 'bg-pink-500'
-                      },
-                      {
-                        'A': 'Cuadra A',
-                        'B': 'Cuadra B',
-                        'C': 'Cuadra C',
-                        'D': 'Cuadra D',
-                        'E': 'Cuadra E'
-                      }
-                    )} 
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Partos"
-                  value={dashboardData.partos.total}
-                  icon="🐣"
-                  trend={0}
-                  description="Partos registrados"
-                />
-                <StatCard
-                  title="Último Mes"
-                  value={dashboardData.partos.ultimo_mes}
-                  icon="📅"
-                  trend={0}
-                  description="Partos en el último mes"
-                />
-                <StatCard
-                  title="Último Año"
-                  value={dashboardData.partos.ultimo_año}
-                  icon="📆"
-                  trend={0}
-                  description="Partos en el último año"
-                />
-                <StatCard
-                  title="Promedio Mensual"
-                  value={dashboardData.partos.promedio_mensual.toFixed(1)}
-                  icon="📊"
-                  trend={dashboardData.partos.tendencia_partos.tendencia}
-                  description="Partos por mes"
-                />
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'explotacion' && explotacionData && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">Detalles de Explotación: {explotacionData.nombre}</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Animales"
-                  value={explotacionData.total_animales}
-                  icon="🐄"
-                  trend={0}
-                  description="Animales en esta explotación"
-                />
-                <StatCard
-                  title="Total Partos"
-                  value={explotacionData.total_partos}
-                  icon="🐣"
-                  trend={0}
-                  description="Partos en esta explotación"
-                />
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Información Adicional</h3>
-                <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-                  {JSON.stringify(explotacionData, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'resumen' && resumen && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">Resumen Básico</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Animales"
-                  value={resumen.animales.total}
-                  icon="🐄"
-                  trend={0}
-                  description="Animales registrados"
-                />
-                <StatCard
-                  title="Total Partos"
-                  value={resumen.partos.total}
-                  icon="🐣"
-                  trend={0}
-                  description="Partos registrados"
-                />
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Datos Completos</h3>
-                <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-                  {JSON.stringify(resumen, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'partos' && partosStats && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">Estadísticas de Partos</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Partos"
-                  value={partosStats.total}
-                  icon="🐣"
-                  trend={0}
-                  description="Partos registrados"
-                />
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Distribución por Mes</h3>
-                <div className="h-64">
-                  {/* Aquí iría un gráfico de barras con los datos de partosStats.por_mes */}
-                  <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-                    {JSON.stringify(partosStats.por_mes, null, 2)}
-                  </pre>
-                </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Distribución por Género</h3>
-                <div className="h-64">
-                  {/* Aquí iría un gráfico de pastel con los datos de partosStats.por_genero */}
-                  <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-                    {JSON.stringify(partosStats.por_genero, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'combined' && combinedData && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">Datos Combinados</h2>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Datos Completos</h3>
-                <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-                  {JSON.stringify(combinedData, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'recientes' && recentActivitiesData && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold">Actividades Recientes</h2>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <ActivityFeed activities={recentActivitiesData.activities} />
-              </div>
-            </div>
-          )}
         </div>
       )}
+
+      {/* SECCIÓN 1: Resumen General - Estadísticas clave */}
+      <SectionTitle number="1" title="Resumen General" darkMode={darkMode} />
+      <div className="stats-grid-lg">
+        <ResumenGeneralSection 
+          statsData={statsData} 
+          darkMode={darkMode} 
+          loading={loading.stats || loading.partos} 
+          error={error.stats || error.partos} 
+        />
+      </div>
+      
+      {/* SECCIÓN 2: Análisis de Partos - Estadísticas y gráficos */}
+      <SectionTitle number="2" title="Análisis de Partos" darkMode={darkMode} />
+      <div className="stats-grid-lg">
+        <PartosSection 
+          statsData={statsData} 
+          partosData={partosData}
+          darkMode={darkMode} 
+          loading={loading.stats || loading.partos} 
+          error={error.stats || error.partos} 
+        />
+      </div>
+      
+      {/* SECCIÓN 3: Principales Explotaciones */}
+      <SectionTitle number="3" title="Principales Explotaciones" darkMode={darkMode} />
+      <div className="stats-grid-lg">
+        {/* Usamos el componente original, pero nos aseguramos de eliminar duplicados primero */}
+        <ExplotacionesSection 
+          explotaciones={explotaciones.filter((v, i, a) => 
+            a.findIndex(t => (t.explotacio === v.explotacio)) === i
+          )}
+          darkMode={darkMode} 
+          loading={loading.explotaciones} 
+          error={error.explotaciones} 
+        />
+      </div>
+      
+      {/* Período de análisis con selectores */}
+      <PeriodoAnalisisSection 
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        setFechaInicio={setFechaInicio}
+        setFechaFin={setFechaFin}
+        onFilterChange={aplicarFiltroFechas}
+        darkMode={darkMode}
+      />
     </div>
   );
-};
+}
 
 export default Dashboard;
