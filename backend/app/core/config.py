@@ -79,13 +79,19 @@ class Settings(BaseModel):
     # Configuración de base de datos
     postgres_db: str = os.getenv("POSTGRES_DB", "masclet_imperi")
     postgres_user: str = os.getenv("POSTGRES_USER", "postgres")
-    postgres_password: str = os.getenv("POSTGRES_PASSWORD", "1234")
+    postgres_password: str = os.getenv("POSTGRES_PASSWORD", "db_password_placeholder")
     db_port: str = os.getenv("DB_PORT", "5432")
     db_host: str = os.getenv("DB_HOST", "localhost")
 
-    # Claves de seguridad
-    api_key: str = os.getenv("API_KEY", "masclet_api_2024_secure")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "masclet_secret_key_2024_secure")
+    # Variables globales de la aplicación
+    operation_semaphore: Dict[str, float] = {}
+    
+    # Configuración de seguridad
+    enable_rate_limit: bool = os.getenv("ENABLE_RATE_LIMIT", "true").lower() == "true"
+    rate_limit_requests: int = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
+    rate_limit_window: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))  # en segundos
+    api_key: str = os.getenv("API_KEY", "api_key_placeholder")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key_placeholder")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
@@ -103,7 +109,7 @@ class Settings(BaseModel):
 
     # Configuración para Traefik
     traefik_dashboard_user: str = os.getenv("TRAEFIK_DASHBOARD_USER", "admin")
-    traefik_dashboard_password: str = os.getenv("TRAEFIK_DASHBOARD_PASSWORD", "masclet_admin_2024_secure")
+    traefik_dashboard_password: str = os.getenv("TRAEFIK_DASHBOARD_PASSWORD", "traefik_dashboard_password_placeholder")
 
     # Dominios
     domain: str = os.getenv("DOMAIN", "mascletimperi.local")

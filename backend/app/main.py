@@ -12,6 +12,7 @@ from fastapi.openapi.utils import get_openapi
 
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
+from app.core.security import setup_security
 
 # Configurar logging
 logging.basicConfig(
@@ -44,6 +45,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"]
 )
+
+# Configurar medidas de seguridad
+setup_security(app)
 
 # Middleware de depuración para diagnóstico de errores
 @app.middleware("http")
