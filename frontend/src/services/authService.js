@@ -311,6 +311,7 @@ export const register = async (userData) => authService.register(userData);
 export const updateUser = async (userId, userData) => authService.updateUser(userId, userData);
 export const getStoredUser = () => authService.getStoredUser();
 export const getCurrentUser = () => authService.getCurrentUser();
+export const getUserRole = () => authService.getCurrentUserRole();
 export const getRedirectPathForUser = (user) => {
   const role = user?.role || 'usuario';
   return role === 'administrador' ? '/dashboard' : '/';
