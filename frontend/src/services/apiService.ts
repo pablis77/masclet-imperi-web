@@ -9,38 +9,31 @@ const getApiUrl = (): string => {
   if (envApiUrl) {
     return envApiUrl;
   }
+
+  // LOG del entorno
+  console.log(`Detectado entorno: ${ENVIRONMENT}`);
   
-  // En caso contrario, detectar automáticamente (para compatibilidad)
-  let serverHost = 'localhost';
-  let port = '8000';
-  let protocol = 'http';
-  
-  // Si estamos en el navegador, usar la misma IP que el frontend
+  // En producción o entorno con dominio personalizado, SIEMPRE usar ruta relativa
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
-    const currentProtocol = window.location.protocol.replace(':', '');
     
-    // Si estamos en producción (Render)
-    if (currentHost.includes('onrender.com')) {
-      // En Render, usamos el proxy configurado en fix-server.js
-      // No necesitamos la URL completa, solo la ruta relativa
-      console.log(`Detectado entorno de producción: ${currentHost}`);
-      console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
+    // Si estamos en producción (Render) o cualquier entorno que no sea local
+    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      console.log(`[ApiService] Detectado entorno de producción o externo: ${currentHost}`);
       console.log(`[ApiService] API configurada para conectarse a: /api/v1`);
-      return '/api/v1'; // Usar ruta relativa para que el proxy funcione
-    }
-    // Si se está accediendo por otra IP y no por localhost
-    else if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      serverHost = currentHost;
-      protocol = currentProtocol; // Usar el mismo protocolo que el frontend
-      console.log(`Detectado acceso desde dispositivo externo: ${currentHost}`);
+      
+      // USAR SIEMPRE ruta relativa en entornos de producción (esto es crítico)
+      return '/api/v1'; 
     }
   }
   
-  // Construir la URL final
-  return port 
-    ? `${protocol}://${serverHost}:${port}/api/v1` 
-    : `${protocol}://${serverHost}/api/v1`;
+  // Solo para entornos locales (localhost/127.0.0.1) usar URL completa
+  const serverHost = 'localhost';
+  const port = '8000';
+  const protocol = 'http';
+  
+  console.log(`[ApiService] Usando URL local: ${protocol}://${serverHost}:${port}/api/v1`);
+  return `${protocol}://${serverHost}:${port}/api/v1`;
 };
 
 // Opciones de entorno
