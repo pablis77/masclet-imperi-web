@@ -18,7 +18,7 @@ app.get('/health', (req, res) => {
 
 // Añadimos todos los demás endpoints necesarios
 try {
-  const { handler } = await import('./dist/server/entry.original.mjs');
+  const { handler } = await import('./entry.original.mjs');
   app.use(handler);
   console.log('✅ Handler de Astro importado correctamente');
 } catch (error) {
