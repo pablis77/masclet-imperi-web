@@ -2,7 +2,6 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
-import node from '@astrojs/node';
 
 export default defineConfig({
     // Directorio base donde se servirá la aplicación (si es en subpath)
@@ -42,12 +41,7 @@ export default defineConfig({
     ],
 
     // Configuración de build
-    output: 'server',  // Usando modo servidor para permitir rutas dinámicas
-    
-    // Adaptador para despliegue en Render
-    adapter: node({
-        mode: 'standalone'
-    }),
+    output: 'static',  // Cambiado a modo estático para evitar problemas con SSR
 
     // Configuración de vite (bundler usado por Astro)
     vite: {
