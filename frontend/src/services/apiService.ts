@@ -88,34 +88,56 @@ const api = axios.create({
   }
 });
 
-// SOLUCIÓN FORZADA: Interceptar todas las peticiones y asegurar URLs relativas
+// SOLUCIÓN MANEJADA SEGÚN ENTORNO: Solo forzar URLs relativas en producción
 api.interceptors.request.use(
   (config) => {
-    // Si estamos en producción, FORZAR el uso de URLs relativas
-    if (isProduction) {
-      // Extraer solo la parte de la ruta relativa después de /api/v1
-      const endpoint = config.url || '';
-      
-      // Reconstruir la URL como relativa y asegurar que no hay doble /api/v1
-      if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
-        // Ya contiene /api/v1, así que solo usar la ruta tal cual
-        config.url = endpoint;
-        config.baseURL = '';
-        console.log(`[FORZADO] URL ya contiene /api/v1, usando: ${endpoint}`);
-      } else {
-        // No contiene /api/v1, así que agregar el prefijo
-        config.url = endpoint;
-        config.baseURL = '/api/v1';
-        console.log(`[FORZADO] URL configurada como: ${config.baseURL}${config.url}`);
-      }
-      
-      // Eliminar cualquier otra parte que pueda causar problemas
-      delete config.headers['Origin'];
-      delete config.headers['Referer'];
-      
-      // Añadir encabezados CORS explícitos para ayudar en situaciones problemáticas
-      config.headers['Access-Control-Allow-Origin'] = '*';
+    const endpoint = config.url || '';
+    
+    // Si estamos en entorno de desarrollo local, NO modificar las URLs
+    // (permitir URLs absolutas para localhost/127.0.0.1)
+    if (!isProduction) {
+      console.log(`[DEV] Usando URL original en desarrollo: ${endpoint}`);
+      return config;
     }
+    
+    // A partir de aquí, solo se ejecuta en producción
+    console.log(`[PROD] Procesando URL para entorno de producción: ${endpoint}`);
+    
+    // Limpiar cualquier URL absoluta que pueda estar presente
+    let cleanedEndpoint = endpoint;
+    
+    // Quitar cualquier URL absoluta (para prevenir peticiones a dominios incorrectos)
+    if (cleanedEndpoint.includes('://')) {
+      try {
+        const urlObj = new URL(cleanedEndpoint);
+        cleanedEndpoint = urlObj.pathname + urlObj.search;
+        console.log(`[LIMPIEZA] URL absoluta convertida a relativa: ${cleanedEndpoint}`);
+      } catch (e) {
+        console.warn(`[ADVERTENCIA] Error al procesar URL: ${cleanedEndpoint}`);
+      }
+    }
+    
+    // Normalizar URLs con path /api/v1
+    if (cleanedEndpoint.startsWith('/api/v1') || cleanedEndpoint.startsWith('api/v1')) {
+      // Ya contiene /api/v1, así que usar la URL tal cual, garantizando que empieza con /
+      if (!cleanedEndpoint.startsWith('/')) {
+        cleanedEndpoint = '/' + cleanedEndpoint;
+      }
+      config.url = cleanedEndpoint;
+      config.baseURL = ''; // No añadir nada más
+      console.log(`[URL-API] Usando ruta API completa: ${config.url}`);
+    } else {
+      // No contiene /api/v1, así que agregar el prefijo
+      config.url = cleanedEndpoint;
+      config.baseURL = '/api/v1';
+      console.log(`[URL-API] URL con prefijo añadido: ${config.baseURL}${config.url}`);
+    }
+    
+    // Eliminar encabezados que pueden causar que axios genere URLs absolutas
+    delete config.headers['Origin'];
+    delete config.headers['Referer'];
+    delete config.headers['Host'];
+    
     return config;
   },
   (error) => {
@@ -215,33 +237,86 @@ export async function get<T = any>(endpoint: string): Promise<T> {
       console.error(`❌ Error no relacionado con Axios en ${endpoint}:`, error);
     }
     
-    // Mecanismo de reintento para 404 en ciertas rutas que podrían estar mal formadas
+    // Mecanismo de reintento para errores 404
     if (axios.isAxiosError(error) && error.response?.status === 404) {
-      // Intentar reconocer si la URL podría estar mal formada
+      // Obtener la URL original que falló
       const originalUrl = error.config?.url || '';
+      const absoluteUrl = error.config?.baseURL ? `${error.config.baseURL}${originalUrl}` : originalUrl;
       
-      // Registrar el intento fallido para depuración
-      console.warn(`⚠️ Intento fallido 404 en URL: ${originalUrl}`);
+      // Registrar el fallo para diagnóstico
+      console.warn(`⚠️ Error 404 en: ${absoluteUrl}`);
       
-      // Intentar alternativas si la URL original parece contener problemas
-      if (originalUrl.includes('//') || originalUrl.includes('api/api') || 
-          (originalUrl.includes('/api/v1') && endpoint.includes('/api/v1'))) {
+      // En desarrollo local, simplemente registramos el error y dejamos que falle normalmente
+      if (!isProduction) {
+        console.warn(`Entorno de desarrollo: sin reintentos automáticos`);
+      } else {
+        // En producción, intentamos estrategias de recuperación
         
-        console.log("🔧 Detectada posible URL mal formada, intentando corregir...");
-        
-        // Intentar limpiar y reconstruir la URL
-        let correctedUrl = endpoint.replace('api/api', 'api');
-        correctedUrl = correctedUrl.replace('/api/v1/api/v1', '/api/v1');
-        correctedUrl = correctedUrl.replace('//api/v1', '/api/v1');
-        
-        // Si la URL cambió, intentar de nuevo
-        if (correctedUrl !== endpoint) {
-          console.log(`🔨 Reintentando con URL corregida: ${correctedUrl}`);
+        // Estrategia 1: Convertir URL absoluta a relativa
+        if (absoluteUrl.includes('://')) {
           try {
-            const retryResponse = await api.get<T>(correctedUrl);
-            return retryResponse.data;
-          } catch (retryError) {
-            console.error(`💥 También falló el reintento con URL corregida: ${correctedUrl}`);            
+            // Extraer solo el path para hacer una petición relativa
+            const urlObj = new URL(absoluteUrl);
+            const relativePath = urlObj.pathname + urlObj.search;
+            console.log(`🔧 Detectada URL absoluta, reintentando con ruta relativa: ${relativePath}`);
+            
+            // Hacer una petición completamente relativa
+            try {
+              // Configurar manualmente para ignorar cualquier baseURL
+              const retryResponse = await axios.get<T>(relativePath, {
+                baseURL: '',
+                headers: error.config?.headers
+              });
+              console.log(`✅ Éxito con la ruta relativa!`);
+              return retryResponse.data;
+            } catch (retryError) {
+              console.error(`💥 Falló el intento con ruta relativa: ${relativePath}`);
+            }
+          } catch (e) {
+            console.warn(`No se pudo procesar la URL para reintento: ${absoluteUrl}`);
+          }
+        }
+        
+        // Estrategia 2: Corregir URLs mal formadas
+        if (originalUrl.includes('//') || originalUrl.includes('api/api') || 
+            (originalUrl.includes('/api/v1') && endpoint.includes('/api/v1'))) {
+          
+          console.log(`🔧 Detectada URL mal formada, intentando corregir...`);
+          
+          // Corregir problemas comunes en las URLs
+          let correctedUrl = endpoint.replace(/api\/api/g, 'api');
+          correctedUrl = correctedUrl.replace(/\/api\/v1\/api\/v1/g, '/api/v1');
+          correctedUrl = correctedUrl.replace(/\/\/api\/v1/g, '/api/v1');
+          
+          // Si la URL se corrige, intentar nuevamente
+          if (correctedUrl !== endpoint) {
+            console.log(`🔨 Reintentando con URL corregida: ${correctedUrl}`);
+            try {
+              const retryResponse = await api.get<T>(correctedUrl);
+              console.log(`✅ Éxito con URL corregida!`);
+              return retryResponse.data;
+            } catch (retryError) {
+              console.error(`💥 También falló el reintento con URL corregida`);            
+            }
+          }
+        }
+        
+        // Estrategia 3: Último intento con ruta absoluta desde raíz
+        if (error.config?.baseURL) {
+          try {
+            let finalAttemptUrl = originalUrl;
+            if (!finalAttemptUrl.startsWith('/api')) {
+              finalAttemptUrl = `/api/v1/${finalAttemptUrl.startsWith('/') ? finalAttemptUrl.substring(1) : finalAttemptUrl}`;
+            }
+            
+            console.log(`🤖 Último intento con ruta absoluta: ${finalAttemptUrl}`);
+            const lastResponse = await axios.get<T>(finalAttemptUrl, {
+              baseURL: ''
+            });
+            console.log(`✅ Éxito en el último intento!`);
+            return lastResponse.data;
+          } catch (lastError) {
+            console.error(`💥 Falló el último intento de recuperación`); 
           }
         }
       }
