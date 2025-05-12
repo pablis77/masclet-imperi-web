@@ -22,11 +22,12 @@ const getApiUrl = (): string => {
     
     // Si estamos en producción (Render)
     if (currentHost.includes('onrender.com')) {
-      // Usar la URL del backend de Render (sin puerto)
-      serverHost = 'masclet-imperi-web-backend.onrender.com';
-      port = ''; // Sin puerto en producción
-      protocol = 'https'; // Siempre HTTPS en producción
+      // En Render, usamos el proxy configurado en fix-server.js
+      // No necesitamos la URL completa, solo la ruta relativa
       console.log(`Detectado entorno de producción: ${currentHost}`);
+      console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
+      console.log(`[ApiService] API configurada para conectarse a: /api/v1`);
+      return '/api/v1'; // Usar ruta relativa para que el proxy funcione
     }
     // Si se está accediendo por otra IP y no por localhost
     else if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
