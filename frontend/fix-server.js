@@ -61,13 +61,35 @@ app.use(handleSSR);
 
 // Puerto e interfaz para escuchar
 const PORT = process.env.PORT || 10000;
+const FALLBACK_PORTS = [10001, 10002, 10003, 3000, 3001, 8080];
 const HOST = '0.0.0.0';
 
-// Iniciar el servidor
-app.listen(PORT, HOST, () => {
-  console.log(`>>> Servidor iniciado en http://${HOST}:${PORT}`);
-  console.log(`>>> Health check disponible en http://${HOST}:${PORT}/health`);
-});
+// Función para intentar iniciar el servidor en diferentes puertos
+function startServer(port, fallbackPorts = []) {
+  const server = app.listen(port, HOST)
+    .on('listening', () => {
+      console.log(`>>> Servidor iniciado en http://${HOST}:${port}`);
+      console.log(`>>> Health check disponible en http://${HOST}:${port}/health`);
+    })
+    .on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`>>> Puerto ${port} ya está en uso, intentando otro...`);
+        if (fallbackPorts.length > 0) {
+          const nextPort = fallbackPorts.shift();
+          startServer(nextPort, fallbackPorts);
+        } else {
+          console.error('>>> No hay más puertos disponibles para intentar');
+          process.exit(1);
+        }
+      } else {
+        console.error('>>> Error al iniciar el servidor:', err);
+        process.exit(1);
+      }
+    });
+}
+
+// Iniciar el servidor con el primer puerto
+startServer(PORT, FALLBACK_PORTS);
 
 // Manejar errores no capturados
 process.on('uncaughtException', (err) => {
