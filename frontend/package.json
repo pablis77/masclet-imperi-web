@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "astro dev",
-        "start": "node render.js",
+        "start": "node fix-server.js",
         "build": "astro build && node post-build.js",
         "preview": "astro preview",
         "astro": "astro"
