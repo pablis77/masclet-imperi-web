@@ -2,11 +2,8 @@
 export const defaultLang = 'es';
 export const supportedLanguages = ['es', 'ca'];
 
-// Definición de tipos para evitar errores
-type TranslationDict = Record<string, Record<string, string>>;
-
 // Traducción en Español
-const es: TranslationDict = {
+const es = {
   common: {
     welcome: "Bienvenido a Masclet Imperi",
     dashboard: "Dashboard",
@@ -21,7 +18,7 @@ const es: TranslationDict = {
 };
 
 // Traducción en Catalán
-const ca: TranslationDict = {
+const ca = {
   common: {
     welcome: "Benvingut a Masclet Imperi",
     dashboard: "Tauler de control",
@@ -36,7 +33,7 @@ const ca: TranslationDict = {
 };
 
 // Función simple pero efectiva para las traducciones
-export function t(key: string, lang = defaultLang): string {
+export function t(key, lang = defaultLang) {
   try {
     const parts = key.split('.');
     if (parts.length !== 2) return key;
@@ -58,7 +55,7 @@ export function t(key: string, lang = defaultLang): string {
 }
 
 // Función para cambiar el idioma
-export function setLanguage(lang: string): string {
+export function setLanguage(lang) {
   if (supportedLanguages.includes(lang)) {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('userLanguage', lang);
@@ -69,7 +66,7 @@ export function setLanguage(lang: string): string {
 }
 
 // Función para obtener el idioma actual
-export function getCurrentLanguage(): string {
+export function getCurrentLanguage() {
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     const savedLang = localStorage.getItem('userLanguage');
     return savedLang && supportedLanguages.includes(savedLang) 

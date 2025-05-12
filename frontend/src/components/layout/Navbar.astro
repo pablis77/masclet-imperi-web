@@ -17,6 +17,36 @@ const {
 import { LogoutButton } from '../auth/LogoutButton';
 import LanguageSwitcher from '../LanguageSwitcher.astro';
 
+// Función simple para detectar idioma (versión integrada)
+function getLanguage() {
+  if (typeof localStorage !== 'undefined') {
+    const lang = localStorage.getItem('userLanguage');
+    return lang === 'ca' ? 'ca' : 'es';
+  }
+  return 'es';
+}
+
+// Traducciones integradas
+const translations = {
+  es: {
+    dashboard: "Dashboard",
+    animals: "Animales",
+    exploitations: "Explotaciones",
+    users: "Usuarios",
+    imports: "Importación"
+  },
+  ca: {
+    dashboard: "Tauler de control",
+    animals: "Animals",
+    exploitations: "Explotacions",
+    users: "Usuaris",
+    imports: "Importació"
+  }
+};
+
+// Idioma por defecto
+const lang = 'es';
+
 // Menú de navegación según rol
 const menuItems = [
   { name: "Dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
