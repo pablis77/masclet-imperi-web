@@ -1,5 +1,10 @@
 import axios from 'axios';
 
+// Constantes de entorno
+let ENVIRONMENT: string = 'development';
+let API_BASE_URL: string = '';
+let USE_MOCK_DATA: boolean = false; // Variable faltante
+
 // Configuración global usando variables de entorno
 const getApiUrl = (): string => {
   // Obtener URL de API de las variables de entorno
@@ -37,18 +42,30 @@ const getApiUrl = (): string => {
 };
 
 // Opciones de entorno
-const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT || 'development';
-const ENABLE_LOGGING = import.meta.env.VITE_ENABLE_LOGGING === 'true';
-const TOKEN_EXPIRE_MINUTES = parseInt(import.meta.env.VITE_TOKEN_EXPIRE_MINUTES || '30');
+if (import.meta.env.PROD) {
+  ENVIRONMENT = 'production';
+} else {
+  ENVIRONMENT = 'development';
+}
 
-// Configurar valores iniciales
-let API_BASE_URL = getApiUrl();
-let USE_MOCK_DATA = false;
+// Configurar la URL base de la API
+API_BASE_URL = getApiUrl();
 
-// Solo mostrar log en desarrollo o si el logging está habilitado
-if (ENVIRONMENT === 'development' || ENABLE_LOGGING) {
-  console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
-  console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
+console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
+console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
+
+// IMPORTANTE: Detectar si estamos en producción para forzar rutas relativas
+// y evitar problemas de CORS
+let isProduction = false;
+if (typeof window !== 'undefined') {
+  const currentHost = window.location.hostname;
+  isProduction = currentHost !== 'localhost' && currentHost !== '127.0.0.1';
+}
+
+// Si estamos en producción, SIEMPRE sobrescribir la baseURL para garantizar URLs relativas
+if (isProduction) {
+  API_BASE_URL = '/api/v1';
+  console.log(`[ApiService] FORZANDO ruta relativa en producción: ${API_BASE_URL}`);
 }
 
 // Credenciales fijas para desarrollo: admin/admin123
@@ -109,7 +126,12 @@ export async function get<T = any>(endpoint: string): Promise<T> {
       ? normalizedEndpoint.slice(0, -1) 
       : normalizedEndpoint;
     
-    console.log(`Realizando petición GET a: ${API_BASE_URL}${finalEndpoint}`);
+    // IMPORTANTE: En producción, solo imprimir la ruta relativa
+    if (isProduction) {
+      console.log(`Realizando petición GET a: /api/v1${finalEndpoint}`);
+    } else {
+      console.log(`Realizando petición GET a: ${finalEndpoint}`);
+    }
     
     const response = await api.get<T>(finalEndpoint);
     
@@ -259,8 +281,18 @@ export async function login(username: string, password: string) {
     formData.append('password', password);
     formData.append('grant_type', 'password');
     
+    // Ruta de login directa sin concatenar baseURL para evitar problemas
+    const loginEndpoint = '/auth/login';
+    
+    // En producción, usar siempre rutas relativas para el login
+    if (isProduction) {
+      console.log(`Realizando login a: /api/v1${loginEndpoint}`);
+    } else {
+      console.log(`Realizando login a: ${api.defaults.baseURL}${loginEndpoint}`);
+    }
+    
     // Realizar la solicitud con el formato correcto
-    const response = await axios.post(`${api.defaults.baseURL}/auth/login`, formData, {
+    const response = await api.post(loginEndpoint, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
