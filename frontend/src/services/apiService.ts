@@ -79,10 +79,11 @@ if (typeof window !== 'undefined') {
   isProduction = currentHost !== 'localhost' && currentHost !== '127.0.0.1';
 }
 
-// Si estamos en producción, SIEMPRE sobrescribir la baseURL para garantizar URLs relativas
+// IMPORTANTE: Ya NO sobrescribimos la URL base en producción para mantener la conexión directa al backend
+// El problema era que estábamos convirtiendo la URL absoluta en relativa, lo que hacía que las peticiones
+// fueran al frontend en lugar de al backend
 if (isProduction) {
-  API_BASE_URL = '/api/v1';
-  console.log(`[ApiService] FORZANDO ruta relativa en producción: ${API_BASE_URL}`);
+  console.log(`[ApiService] Manteniendo URL absoluta en producción: ${API_BASE_URL}`);
 }
 
 // Credenciales fijas para desarrollo: admin/admin123
@@ -104,39 +105,40 @@ api.interceptors.request.use(
     // Debug para todas las peticiones
     console.log(`[API] Procesando solicitud: ${endpoint}`);
     
-    // Manejo diferenciado de rutas según entorno
+    // PROBLEMA CRÍTICO: En producción, debemos preservar las URLs absolutas
+    // y NO añadir /api/v1 a las rutas (el backend no tiene este prefijo)
     if (isProduction) {
-      // En producción, las rutas del backend NO incluyen /api/v1
+      // IMPORTANTE: Si la URL contiene /api/v1, necesitamos quitarlo
+      // ya que el backend no espera ese prefijo
       if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
-        // Extraer la parte después de /api/v1 pues esa es la ruta real del backend
-        const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
+        // Extraer la parte después de /api/v1
+        const pathRegex = /^\/?api\/v1\/?(.*)$/;
         const match = endpoint.match(pathRegex);
         
-        if (match) {
-          const path = match[2] || '';
-          console.log(`[API:PROD] Extrayendo ruta real: ${endpoint} -> /${path}`);
+        if (match && match[1]) {
+          const path = match[1] || '';
+          console.log(`[API:PROD] Corrigiendo ruta: ${endpoint} -> /${path}`);
           config.url = path.startsWith('/') ? path : `/${path}`;
         }
       }
     } else {
       // En desarrollo, SÍ necesitamos /api/v1 pero debemos evitar duplicados
       if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
-        const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
+        const pathRegex = /^\/?api\/v1\/?(.*)$/;
         const match = endpoint.match(pathRegex);
         
         if (match && config.baseURL?.includes('/api/v1')) {
           // Evitar duplicar /api/v1 si ya está en la baseURL
-          const path = match[2] || '';
+          const path = match[1] || '';
           console.log(`[API:DEV] Evitando duplicado: ${endpoint} -> /${path}`);
           config.url = path.startsWith('/') ? path : `/${path}`;
         }
       }
     }
     
-    // Solo en producción activamos withCredentials, en desarrollo causa problemas CORS
-    if (isProduction) {
-      config.withCredentials = true;
-    }
+    // NO activamos withCredentials en ningún entorno para evitar problemas CORS
+    // Las cookies no son necesarias para nuestro esquema de autenticación JWT
+    config.withCredentials = false;
     
     // Asegurar encabezados AUTH
     if (typeof localStorage !== 'undefined' && localStorage.getItem('token')) {
