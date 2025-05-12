@@ -23,29 +23,53 @@ app.get('/health', (req, res) => {
 const BACKEND_URL = process.env.BACKEND_URL || 'https://masclet-imperi-web-backend.onrender.com';
 console.log(`>>> Configurando proxy API hacia: ${BACKEND_URL}`);
 
-// Middleware de proxy para la API
+// Middleware de proxy para la API con configuración más robusta
 const apiProxy = createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
   secure: false, // No verificar certificados SSL (para entorno de desarrollo)
   pathRewrite: {
-    '^/api/v1': '/api/v1' // Importante: mantener el /v1 en la ruta
+    '^/api/v1': '/api/v1', // Mantener el /v1 en la ruta
+    '^/api': '/api' // También capturar /api sin el /v1
   },
   logLevel: 'debug', // Mayor nivel de logs para debuggear
   onProxyReq: (proxyReq, req, res) => {
+    // Forzar el host correcto
+    proxyReq.setHeader('host', new URL(BACKEND_URL).host);
+    
+    // Añadir encabezados CORS para peticiones preflighted
+    proxyReq.setHeader('Access-Control-Allow-Origin', '*');
+    proxyReq.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+    
     // Log de peticiones proxy para debuggeo
-    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
+    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url.replace('/api/v1', '/api/v1')}`);
   },
   onProxyRes: (proxyRes, req, res) => {
+    // Añadir encabezados CORS a todas las respuestas
+    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    proxyRes.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE';
+    
     // Log de respuestas proxy para debuggeo
     console.log(`>>> PROXY RESPUESTA: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
   },
   onError: (err, req, res) => {
     console.error(`>>> ERROR GRAVE DE PROXY: ${err.message}`);
-    res.writeHead(500, {
-      'Content-Type': 'text/plain'
-    });
-    res.end(`Error de conexión con API backend: ${err.message}`);
+    console.error(`>>> URL que causó el error: ${req.method} ${req.url}`);
+    console.error(`>>> URL de destino: ${BACKEND_URL}${req.url}`);
+    
+    // Enviar respuesta detallada al cliente
+    if (!res.headersSent) {
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        error: `Error de conexión con API backend: ${err.message}`,
+        url: req.url,
+        method: req.method,
+        target: `${BACKEND_URL}${req.url}`
+      }));
+    }
   }
 });
 
