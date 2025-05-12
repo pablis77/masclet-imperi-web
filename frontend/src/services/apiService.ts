@@ -13,19 +13,33 @@ const getApiUrl = (): string => {
   // En caso contrario, detectar automáticamente (para compatibilidad)
   let serverHost = 'localhost';
   let port = '8000';
+  let protocol = 'http';
   
   // Si estamos en el navegador, usar la misma IP que el frontend
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
+    const currentProtocol = window.location.protocol.replace(':', '');
     
-    // Si se está accediendo por IP y no por localhost, usar esa IP
-    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+    // Si estamos en producción (Render)
+    if (currentHost.includes('onrender.com')) {
+      // Usar la URL del backend de Render (sin puerto)
+      serverHost = 'masclet-imperi-web-backend.onrender.com';
+      port = ''; // Sin puerto en producción
+      protocol = 'https'; // Siempre HTTPS en producción
+      console.log(`Detectado entorno de producción: ${currentHost}`);
+    }
+    // Si se está accediendo por otra IP y no por localhost
+    else if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
       serverHost = currentHost;
+      protocol = currentProtocol; // Usar el mismo protocolo que el frontend
       console.log(`Detectado acceso desde dispositivo externo: ${currentHost}`);
     }
   }
   
-  return `http://${serverHost}:${port}/api/v1`;
+  // Construir la URL final
+  return port 
+    ? `${protocol}://${serverHost}:${port}/api/v1` 
+    : `${protocol}://${serverHost}/api/v1`;
 };
 
 // Opciones de entorno
