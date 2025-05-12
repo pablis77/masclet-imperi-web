@@ -27,24 +27,33 @@ console.log(`>>> Configurando proxy API hacia: ${BACKEND_URL}`);
 const apiProxy = createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  secure: false, // No verificar certificados SSL (para entorno de desarrollo)
   pathRewrite: {
-    '^/api': '/api' // mantener las rutas /api intactas
+    '^/api/v1': '/api/v1' // Importante: mantener el /v1 en la ruta
   },
+  logLevel: 'debug', // Mayor nivel de logs para debuggear
   onProxyReq: (proxyReq, req, res) => {
     // Log de peticiones proxy para debuggeo
-    console.log(`>>> Proxy API: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
+    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
   },
   onProxyRes: (proxyRes, req, res) => {
     // Log de respuestas proxy para debuggeo
-    console.log(`>>> Proxy API respuesta: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
+    console.log(`>>> PROXY RESPUESTA: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
   },
   onError: (err, req, res) => {
-    console.error(`>>> Error en proxy API: ${err.message}`);
-    res.status(500).send('Error de conexión con API backend');
+    console.error(`>>> ERROR GRAVE DE PROXY: ${err.message}`);
+    res.writeHead(500, {
+      'Content-Type': 'text/plain'
+    });
+    res.end(`Error de conexión con API backend: ${err.message}`);
   }
 });
 
-// Aplicar el proxy a las rutas /api
+// Aplicar el proxy a las rutas /api/v1 que es lo que usa nuestra aplicación
+console.log(`>>> Configurando proxy en /api/v1 hacia ${BACKEND_URL}`);
+app.use('/api/v1', apiProxy);
+
+// Para mayor compatibilidad, también configuramos /api
 app.use('/api', apiProxy);
 
 // Servir archivos estáticos del cliente
