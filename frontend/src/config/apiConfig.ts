@@ -12,15 +12,11 @@ const IS_RENDER = typeof window !== 'undefined' && window.location.hostname.incl
 
 // Configuración de URLs de API
 let apiConfig = {
-  // URL base para la API
-  baseURL: IS_PRODUCTION || IS_RENDER 
-    ? '/api/v1'  // En producción, usar ruta relativa (funciona con proxy)
-    : 'http://localhost:8000/api/v1', // En desarrollo, conectar directamente
+  // URL base para la API - SIEMPRE usar rutas relativas para evitar CORS
+  baseURL: '/api/v1',  // Usar ruta relativa en todos los entornos (proxy)
   
-  // URL para el backend (sin /api/v1)
-  backendURL: IS_PRODUCTION || IS_RENDER 
-    ? ''  // En producción, usar ruta relativa (funciona con proxy)
-    : 'http://localhost:8000', // En desarrollo, conectar directamente
+  // URL para el backend (sin /api/v1) - SIEMPRE usar ruta relativa
+  backendURL: '', // Siempre vacío para usar rutas relativas
     
   // Configuración de headers por defecto
   headers: {
