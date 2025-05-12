@@ -11,14 +11,14 @@ const API_CONFIG = {
     protocol: 'http',
     host: 'localhost',
     port: '8000',
-    path: '/api/v1'
+    path: '/api/v1'  // En desarrollo mantenemos la ruta api/v1
   },
   production: {
     // Usar variable de entorno o valor por defecto para el backend
     protocol: 'https',
     host: import.meta.env.VITE_BACKEND_HOST || 'masclet-imperi-web-backend.onrender.com',
     port: '',  // No usamos puerto en producción con HTTPS
-    path: '/api/v1'
+    path: ''   // En producción, las rutas del backend NO empiezan con /api/v1
   }
 };
 
@@ -104,17 +104,32 @@ api.interceptors.request.use(
     // Debug para todas las peticiones
     console.log(`[API] Procesando solicitud: ${endpoint}`);
     
-    // Evitar duplicados de /api/v1 en cualquier entorno - esto es crucial
-    if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
-      const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
-      const match = endpoint.match(pathRegex);
-      
-      if (match) {
-        // Si la URL ya contiene /api/v1 pero la baseURL también lo incluye,
-        // extraemos solo la parte después de /api/v1 para evitar duplicación
-        const path = match[2] || '';
-        console.log(`[API] Evitando duplicado de /api/v1 en: ${endpoint} -> path: ${path}`);
-        config.url = path.startsWith('/') ? path : `/${path}`;
+    // Manejo diferenciado de rutas según entorno
+    if (isProduction) {
+      // En producción, las rutas del backend NO incluyen /api/v1
+      if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
+        // Extraer la parte después de /api/v1 pues esa es la ruta real del backend
+        const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
+        const match = endpoint.match(pathRegex);
+        
+        if (match) {
+          const path = match[2] || '';
+          console.log(`[API:PROD] Extrayendo ruta real: ${endpoint} -> /${path}`);
+          config.url = path.startsWith('/') ? path : `/${path}`;
+        }
+      }
+    } else {
+      // En desarrollo, SÍ necesitamos /api/v1 pero debemos evitar duplicados
+      if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
+        const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
+        const match = endpoint.match(pathRegex);
+        
+        if (match && config.baseURL?.includes('/api/v1')) {
+          // Evitar duplicar /api/v1 si ya está en la baseURL
+          const path = match[2] || '';
+          console.log(`[API:DEV] Evitando duplicado: ${endpoint} -> /${path}`);
+          config.url = path.startsWith('/') ? path : `/${path}`;
+        }
       }
     }
     
