@@ -13,8 +13,9 @@ const {
   title = "Masclet Imperi"
 } = Astro.props;
 
-// Importar componente de cierre de sesión
+// Importar componentes
 import { LogoutButton } from '../auth/LogoutButton';
+import LanguageSwitcher from '../LanguageSwitcher.astro';
 
 // Menú de navegación según rol
 const menuItems = [
@@ -72,6 +73,9 @@ const isActive = (itemUrl: string) => {
       
       <!-- Controles siempre visibles (incluso en móvil) -->
       <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Selector de idiomas -->
+        <LanguageSwitcher />
+        
         <!-- Toggle de tema - Visible en todos los tamaños -->
         <button id="theme-toggle" class="text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20">
           <span id="theme-toggle-light-icon" class="hidden">🌞</span>
@@ -224,6 +228,19 @@ const isActive = (itemUrl: string) => {
     
     <!-- Opciones adicionales en móvil -->
     <div class="p-4 border-t border-gray-100 dark:border-gray-700">
+      <!-- Selector de idioma en móvil -->
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Idioma</span>
+        <select
+          id="mobile-language-selector"
+          class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded py-1 px-2 text-sm"
+        >
+          <option value="es">Español</option>
+          <option value="ca">Català</option>
+        </select>
+      </div>
+      
+      <!-- Modo oscuro -->
       <div class="flex justify-between items-center mb-4">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Modo oscuro</span>
         <button id="mobile-theme-toggle" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
@@ -246,6 +263,10 @@ const isActive = (itemUrl: string) => {
     const mobileMenu = document.getElementById('mobile-menu');
     const profileButton = document.getElementById('profile-button');
     const notificationsButton = document.getElementById('notifications-button');
+    
+    // Referencias a los selectores de idioma
+    const languageSelector = document.getElementById('language-selector');
+    const mobileLanguageSelector = document.getElementById('mobile-language-selector');
     const notificationsMenu = document.getElementById('notifications-menu');
     
     // Función para abrir el menú móvil
@@ -363,5 +384,36 @@ const isActive = (itemUrl: string) => {
     if (mobileThemeToggle) {
       mobileThemeToggle.addEventListener('click', handleThemeToggle);
     }
+    
+    // Configurar selectores de idioma
+    function setupLanguageSelectors() {
+      // Obtener el idioma guardado en localStorage
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Configurar selector de escritorio
+      if (languageSelector) {
+        languageSelector.value = currentLang;
+        
+        languageSelector.addEventListener('change', () => {
+          const newLang = languageSelector.value;
+          localStorage.setItem('userLanguage', newLang);
+          window.location.reload();
+        });
+      }
+      
+      // Configurar selector móvil
+      if (mobileLanguageSelector) {
+        mobileLanguageSelector.value = currentLang;
+        
+        mobileLanguageSelector.addEventListener('change', () => {
+          const newLang = mobileLanguageSelector.value;
+          localStorage.setItem('userLanguage', newLang);
+          window.location.reload();
+        });
+      }
+    }
+    
+    // Iniciar configuración de idioma
+    setupLanguageSelectors();
   });
 </script>
