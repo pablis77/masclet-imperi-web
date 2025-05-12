@@ -40,10 +40,14 @@ app = FastAPI(
 # Esto soluciona problema de acceso desde el frontend en Render
 logger.info("Configurando CORS para permitir todos los orígenes (solución temporal)")
 
+# IMPORTANTE: No se puede usar allow_origins=["*"] junto con allow_credentials=True
+# Es una restricción de seguridad del estándar CORS
+logger.info("Ajustando configuración CORS: allow_credentials=False para compatibilidad con wildcard origins")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permitir todos los orígenes
-    allow_credentials=True,
+    allow_credentials=False,  # No se puede usar True con allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
