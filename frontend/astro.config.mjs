@@ -41,7 +41,7 @@ export default defineConfig({
     ],
 
     // Configuración de build
-    output: 'static',  // Cambiado a modo estático para evitar problemas con SSR
+    output: 'hybrid',  // Cambiado a modo estático para evitar problemas con SSR
 
     // Configuración de vite (bundler usado por Astro)
     vite: {
