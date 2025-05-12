@@ -79,6 +79,31 @@ const api = axios.create({
   }
 });
 
+// SOLUCIÓN FORZADA: Interceptar todas las peticiones y asegurar URLs relativas
+api.interceptors.request.use(
+  (config) => {
+    // Si estamos en producción, FORZAR el uso de URLs relativas
+    if (isProduction) {
+      // Extraer solo la parte de la ruta relativa después de /api/v1
+      const endpoint = config.url || '';
+      
+      // Reconstruir la URL como relativa
+      config.url = endpoint;
+      config.baseURL = '/api/v1';
+      
+      // Eliminar cualquier otra parte que pueda causar problemas
+      delete config.headers['Origin'];
+      delete config.headers['Referer'];
+      
+      console.log(`[FORZADO] Petición URL convertida a: ${config.baseURL}${config.url}`);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor para añadir credenciales a todas las peticiones
 api.interceptors.request.use(
   (config) => {
