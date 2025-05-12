@@ -36,10 +36,17 @@ const getApiUrl = (): string => {
   // LOG del entorno detectado
   console.log(`[ApiService] Entorno detectado: ${ENVIRONMENT}`);
   
-  // Determinar si estamos en producción
-  const isLocal = typeof window !== 'undefined' && 
-                 (window.location.hostname === 'localhost' || 
-                  window.location.hostname === '127.0.0.1');
+  // Detectar explícitamente entorno local vs producción
+  let isLocal = false;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}`);
+  } else {
+    // Si window no está definido (SSR), usar variable de entorno
+    isLocal = ENVIRONMENT !== 'production';
+    console.log(`[ApiService] SSR, usando ENVIRONMENT: ${ENVIRONMENT}, isLocal: ${isLocal}`);
+  }
   
   // Seleccionar configuración según entorno
   const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
@@ -111,9 +118,10 @@ api.interceptors.request.use(
       }
     }
     
-    // Configurar todas las solicitudes para incluir credenciales (cookies) 
-    // Esto es necesario para mantener la sesión
-    config.withCredentials = true;
+    // Solo en producción activamos withCredentials, en desarrollo causa problemas CORS
+    if (isProduction) {
+      config.withCredentials = true;
+    }
     
     // Asegurar encabezados AUTH
     if (typeof localStorage !== 'undefined' && localStorage.getItem('token')) {
