@@ -2,19 +2,20 @@ import axios from 'axios';
 import api from './api';
 import { post, get } from './apiService';
 import authApi from '../api/authApi';
+import apiConfig from '../config/apiConfig';
 import type { LoginResponse as ApiLoginResponse } from '../api/authApi';
 
 // Verificar si estamos en un entorno de navegador
 const isBrowser = typeof window !== 'undefined';
 
-// Obtener la URL base del API 
-let API_URL = 'http://localhost:8000';
+// Obtener la URL base del API desde configuración centralizada
+let API_URL = apiConfig.backendURL;
 if (isBrowser) {
-  // Intentar obtener desde variables de entorno
+  // Intentar obtener desde variables de entorno (prioridad mayor que la configuración centralizada)
   if (import.meta.env.VITE_API_URL) {
     API_URL = import.meta.env.VITE_API_URL;
   }
-  console.log('API URL configurada:', API_URL);
+  console.log('API URL configurada:', API_URL || 'usando rutas relativas');
 }
 
 // Definición de tipos común para toda la aplicación

@@ -5,6 +5,7 @@
 ## 1. Preparación del Proyecto para Producción
 
 ### 1.1. Configuración de Variables de Entorno
+
 - **Backend (FastAPI)**:
 
   - ✅ Crear archivo `.env.example` con todas las variables necesarias (sin valores reales)
@@ -32,7 +33,6 @@
     - ✅ `BACKUP_DIR`: Directorio para backups automáticos
       > **Estado**: Completado. Configurado en config.py y `.env`
       >
-
 - **Frontend (React/Astro)**:
 
   - ✅ Configurar `.env.production` y `.env.development`
@@ -47,6 +47,7 @@
       >
 
 ### 1.2. Optimización de Código
+
 - **Frontend**:
 
   - ✅ Ejecutar build de producción con optimizaciones
@@ -66,6 +67,7 @@
     >
   - ✅ Reorganizar imágenes y recursos estáticos
     > **Estado**: Completado. Realizamos un análisis exhaustivo de las imágenes existentes, identificando su propósito y estandarizando su nomenclatura:
+    >
     > - Eliminamos espacios en los nombres de archivos (ej: `vaca azul.png` → `vaca_azul.png`)
     > - Categorizamos imágenes según su función:
     >   - `toro.png`: Icono para animales machos en tablas y formularios
@@ -75,7 +77,6 @@
     > - Reorganizamos los directorios en estructura lógica: `/assets/icons/animals/`, `/assets/images/auth/`, `/assets/logos/`, etc.
     > - Implementamos un registro central de assets `asset-manifest.json` para facilitar referencias
     >
-  
 - **Backend**:
 
   - ✅ Optimizar consultas SQL críticas
@@ -115,41 +116,46 @@
 ## 2. Selección de Plataforma de Hosting
 
 ### 2.1. Análisis de Opciones para Backend
-| Plataforma | Ventajas | Desventajas | Coste Mensual Aprox. |
-|------------|----------|-------------|----------------------|
-| **Railway** | Fácil configuración, buen free tier | Limitaciones en el plan gratuito | 5-20€ |
-| **Render** | Buena integración con GitHub, fácil despliegue | Performance variable en tier básico | 7-25€ |
-| **DigitalOcean** | Mayor control, Droplets estables | Requiere más configuración manual | 5-40€ |
-| **Heroku** | Simple, integración con GitHub | Precios más altos, despertar lento | 7-25€ |
+
+| Plataforma             | Ventajas                                         | Desventajas                          | Coste Mensual Aprox. |
+| ---------------------- | ------------------------------------------------ | ------------------------------------ | -------------------- |
+| **Railway**      | Fácil configuración, buen free tier            | Limitaciones en el plan gratuito     | 5-20€               |
+| **Render**       | Buena integración con GitHub, fácil despliegue | Performance variable en tier básico | 7-25€               |
+| **DigitalOcean** | Mayor control, Droplets estables                 | Requiere más configuración manual  | 5-40€               |
+| **Heroku**       | Simple, integración con GitHub                  | Precios más altos, despertar lento  | 7-25€               |
 
 ### 2.2. Análisis de Opciones para Frontend
-| Plataforma | Ventajas | Desventajas | Coste Mensual Aprox. |
-|------------|----------|-------------|----------------------|
-| **Vercel** | Optimizado para Next.js/React, rápido | Limitaciones en build minutes | 0-20€ |
-| **Netlify** | Fácil de usar, buen CDN | Límites en funciones serverless | 0-19€ |
-| **Servidor Único** | Todo en un lugar, más simple | Punto único de fallo | Incluido con backend |
+
+| Plataforma                | Ventajas                               | Desventajas                      | Coste Mensual Aprox. |
+| ------------------------- | -------------------------------------- | -------------------------------- | -------------------- |
+| **Vercel**          | Optimizado para Next.js/React, rápido | Limitaciones en build minutes    | 0-20€               |
+| **Netlify**         | Fácil de usar, buen CDN               | Límites en funciones serverless | 0-19€               |
+| **Servidor Único** | Todo en un lugar, más simple          | Punto único de fallo            | Incluido con backend |
 
 ### 2.3. Análisis de Opciones para Base de Datos
-| Servicio | Ventajas | Desventajas | Coste Mensual Aprox. |
-|----------|----------|-------------|----------------------|
-| **PostgreSQL en mismo servidor** | Simple, sin coste adicional | Menos redundancia | Incluido en hosting |
-| **Railway PostgreSQL** | Fácil configuración, backups | Limitado en plan gratuito | 5-20€ |
-| **Supabase** | API adicional, backups automáticos | Curva de aprendizaje | 0-25€ |
-| **ElephantSQL** | Sencillo, buen tier gratuito | Menos opciones avanzadas | 0-19€ |
+
+| Servicio                               | Ventajas                            | Desventajas               | Coste Mensual Aprox. |
+| -------------------------------------- | ----------------------------------- | ------------------------- | -------------------- |
+| **PostgreSQL en mismo servidor** | Simple, sin coste adicional         | Menos redundancia         | Incluido en hosting  |
+| **Railway PostgreSQL**           | Fácil configuración, backups      | Limitado en plan gratuito | 5-20€               |
+| **Supabase**                     | API adicional, backups automáticos | Curva de aprendizaje      | 0-25€               |
+| **ElephantSQL**                  | Sencillo, buen tier gratuito        | Menos opciones avanzadas  | 0-19€               |
 
 ### 2.4. Recomendación según Presupuesto
-- **Presupuesto Mínimo**: 
+
+- **Presupuesto Mínimo**:
+
   - Backend + DB: Railway (plan inicial)
   - Frontend: Vercel (plan gratuito)
   - Coste total aproximado: 5-10€/mes
-
 - **Presupuesto Medio**:
+
   - Backend: Render (plan estándar)
-  - DB: Supabase (plan inicial)
+  - DB: Supabase (plan inicial)t
   - Frontend: Vercel (plan hobby)
   - Coste total aproximado: 25-35€/mes
-
 - **Presupuesto Óptimo**:
+
   - Backend: DigitalOcean (Droplet 2GB)
   - DB: DigitalOcean Managed PostgreSQL
   - Frontend: Vercel (plan pro)
@@ -160,81 +166,97 @@
 ### 3.1. Preparación del Repositorio
 
 - ✅ Crear ramas específicas (`production`, `staging`)
+
   > **Estado**: Completado. Creadas dos ramas adicionales para gestionar el flujo de despliegue:
+  >
   > - `staging`: Rama para pruebas previas a despliegue en producción
   > - `production`: Rama para el código final que se despliega en producción
   >
   > **Propósito**: La separación en ramas permite un flujo de trabajo seguro donde podemos desarrollar en `main`, probar en `staging` y desplegar solo código verificado a `production`. Esto garantiza que nunca se despliegue código no probado y reduce el riesgo de errores en producción.
   >
   > **Proceso de trabajo**:
+  >
   > 1. Desarrollo diario en rama `main`
   > 2. Cuando una funcionalidad está lista, se hace merge a `staging` y se prueba completamente
   > 3. Solo cuando todo funciona en `staging` se hace merge a `production` para el despliegue final
   >
-
 - ✅ Crear archivo `Dockerfile` para el backend
+
   > **Estado**: Completado. El archivo ya existía y lo hemos actualizado para usar el nuevo endpoint de health check en `/api/v1/health`.
   >
-
 - ✅ Optimizar `.gitignore` para producción
+
   > **Estado**: Completado. Ampliado el archivo `.gitignore` para:
+  >
   > - Excluir múltiples tipos de archivos `.env` pero mantener `.env.example` como referencia
   > - Añadir patrones para logs detallados y directorios de logs
   > - Excluir archivos de seguridad, certificados y claves
   > - Ignorar backups, volcados SQL y archivos temporales de producción
   > - Evitar el rastreo de archivos de configuración específicos para producción
   >
-
 - ⭕ Configurar GitHub Actions o similar para CI/CD
+
   > **Estado**: Pendiente. Se implementará después de configurar los entornos en Render.
+  >
 
 ### 3.2. Configuración de la Base de Datos en Producción
 
 - ✅ Configurar sistema de migraciones
+
   > **Estado**: Completado. Creado script `prepare_db_migration.py` que:
+  >
   > - Inicializa el sistema de migraciones usando Aerich
   > - Genera la migración inicial para crear todas las tablas en producción
   > - Configura la estructura completa de la base de datos para el primer despliegue
   >
-
 - ✅ Establecer esquema de backups automáticos
+
   > **Estado**: Completado. Implementado sistema completo de backups mediante script `backup_database.py`:
+  >
   > - Realiza backups completos de PostgreSQL comprimidos (gzip)
   > - Implementa política de retención configurable (30 días por defecto)
   > - Nombra los archivos con timestamps para fácil identificación
   > - Limpia automáticamente backups antiguos para optimizar espacio
   >
-
 - ✅ Implementar sistema de restauración
+
   > **Estado**: Completado. Creado script `restore_database.py` para recuperación de emergencia:
+  >
   > - Permite restaurar cualquier backup existente
   > - Ofrece opción para recrear la base de datos desde cero
   > - Incluye interfaz interactiva para elegir el backup a usar
   > - Implementa confirmaciones para prevenir restauraciones accidentales
   >
-
 - ⭕ Crear instancia de base de datos en la plataforma elegida
+
   > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
   >
-
 - ⭕ Configurar seguridad (firewall, acceso restringido)
+
   > **Estado**: Pendiente. Se implementará junto con la creación de la instancia en Render.
+  >
 
 ### 3.3. Despliegue del Backend
 
 - ⭕ Configurar variables de entorno en la plataforma
+
   > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
-
+  >
 - ⭕ Desplegar servicio web API
+
   > **Estado**: Pendiente. Se ejecutará una vez finalizadas todas las preparaciones.
-
+  >
 - ⭕ Verificar estado y logs
-  > **Estado**: Pendiente. Se verificará después del despliegue inicial.
 
+  > **Estado**: Pendiente. Se verificará después del despliegue inicial.
+  >
 - ⭕ Configurar dominios y HTTPS
+
   > **Estado**: Pendiente. Se configurará tras el despliegue exitoso del backend.
+  >
 
 ### 3.4. Despliegue del Frontend
+
 1. Configurar variables de entorno de producción
 2. Ejecutar build optimizado
 3. Desplegar a la plataforma seleccionada
@@ -243,6 +265,7 @@
 6. Verificar funcionamiento con backend en producción
 
 ### 3.5. Configuración de Dominio y DNS
+
 1. Registrar dominio si no se tiene (p.ej.: mascletimperi.com)
 2. Configurar registros DNS:
    - A/CNAME para frontend
@@ -252,6 +275,7 @@
 4. Establecer redirecciones www/no-www
 
 ### 3.6. Implementación de Monitorización
+
 1. Configurar sistema de logs centralizado
 2. Implementar alertas para errores críticos
 3. Configurar monitorización de uptime
@@ -260,6 +284,7 @@
 ## 4. Procedimientos Post-Despliegue
 
 ### 4.1. Pruebas de Verificación
+
 1. Verificar todos los flujos críticos:
    - Registro de animales
    - Gestión de explotaciones
@@ -270,12 +295,14 @@
 4. Pruebas de seguridad básicas (inyección, XSS)
 
 ### 4.2. Documentación del Entorno
+
 1. Crear documento con accesos y credenciales (seguro)
 2. Documentar proceso de despliegue para futuras versiones
 3. Crear guía de troubleshooting para problemas comunes
 4. Establecer protocolo de actualizaciones
 
 ### 4.3. Plan de Mantenimiento
+
 1. Establecer ventanas de mantenimiento
 2. Crear proceso de despliegue de hotfixes
 3. Definir política de respaldos y retención
@@ -284,21 +311,25 @@
 ## 5. Consideraciones Adicionales
 
 ### 5.1. Escalabilidad
+
 - Evaluar puntos de posible crecimiento (usuarios, datos)
 - Planificar estrategia de escalado (vertical vs horizontal)
 - Identificar posibles cuellos de botella
 
 ### 5.2. Costes Operativos
+
 - Estimar costes mensuales y anuales
 - Identificar opciones de reducción de costes
 - Planificar para incrementos futuros (tráfico, almacenamiento)
 
 ### 5.3. Cumplimiento Legal
+
 - Verificar cumplimiento RGPD/LOPD
 - Implementar política de privacidad
 - Configurar avisos de cookies si es necesario
 
 ### 5.4. Estrategia de Migración
+
 - Plan para migrar datos de desarrollo a producción
 - Estrategia para futuras migraciones de plataforma
 - Proceso de respaldo antes de cambios mayores

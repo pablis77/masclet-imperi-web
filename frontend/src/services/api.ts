@@ -12,8 +12,11 @@ declare module 'axios' {
   }
 }
 
-// Configuración base
-const baseURL = 'http://localhost:8000/api/v1';
+// Importar configuración centralizada
+import apiConfig from '../config/apiConfig';
+
+// Configuración base - usar valores de apiConfig
+const baseURL = apiConfig.baseURL;
 const API_BASE_URL = '/api'; // Para el proxy local
 
 // Crear instancia de axios con configuración base

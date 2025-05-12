@@ -1,5 +1,8 @@
 // Servicio para gestionar las importaciones
 
+// Importar configuración centralizada
+import apiConfig from '../config/apiConfig';
+
 // Interfaces y tipos
 export interface ImportResult {
   // Campos originales de la interfaz
@@ -96,8 +99,8 @@ const importService = {
    */
   async getImportHistory(filters: ImportHistoryFilters = {}): Promise<ImportHistoryResponse> {
     try {
-      // URL del backend
-      const BACKEND_URL = 'http://localhost:8000';
+      // Usar la URL del backend de configuración centralizada
+      const BACKEND_URL = apiConfig.backendURL;
       
       // Construir query string para los filtros
       const queryParams = new URLSearchParams();
@@ -211,8 +214,8 @@ const importService = {
         fileInfo = `Archivo: ${fileEntry.name}, ${fileEntry.size} bytes, tipo: ${fileEntry.type}`;
       }
       
-      // URLs para intentar
-      const BACKEND_URL = 'http://localhost:8000';
+      // Usar la URL del backend de configuración centralizada
+      const BACKEND_URL = apiConfig.backendURL;
       console.log('Enviando petición directa al backend:', `${BACKEND_URL}/api/v1/imports/csv`);
       console.log('Contenido del FormData:', fileInfo);
       
