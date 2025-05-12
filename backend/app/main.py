@@ -144,23 +144,21 @@ async def ensure_admin_user():
         
         logger.info("Verificando si existe usuario administrador...")
         
-        # Verificar si ya existe un superusuario
-        admin = await User.filter(is_superuser=True).first()
+        # Verificar si ya existe un usuario administrador por su rol
+        admin = await User.filter(role="administrador").first()
         
         if not admin:
             logger.info("Creando usuario administrador por defecto...")
-            # Crear nuevo superusuario con credenciales admin/admin123
+            # Crear nuevo usuario administrador con credenciales admin/admin123
             admin_username = "admin"
             admin_password = "admin123"
             
             admin = User(
                 username=admin_username,
                 email="admin@example.com",
-                hashed_password=get_password_hash(admin_password),
+                password_hash=get_password_hash(admin_password),
                 is_active=True,
-                is_superuser=True,
-                role="administrador",
-                full_name="Administrador"
+                role="administrador"  # Usar el campo role en lugar de is_superuser
             )
             await admin.save()
             logger.info(f"Usuario administrador {admin_username} creado correctamente")
