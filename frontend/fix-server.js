@@ -40,14 +40,23 @@ const apiProxy = createProxyMiddleware({
     // Añadir encabezados CORS para peticiones preflighted
     proxyReq.setHeader('Access-Control-Allow-Origin', '*');
     proxyReq.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+    proxyReq.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
+    proxyReq.setHeader('Access-Control-Allow-Credentials', 'true');
+    proxyReq.setHeader('Access-Control-Max-Age', '1800');
+    
+    // Eliminar el encabezado Host original para evitar conflictos
+    delete req.headers.host;
     
     // Log de peticiones proxy para debuggeo
-    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url.replace('/api/v1', '/api/v1')}`);
+    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
   },
   onProxyRes: (proxyRes, req, res) => {
     // Añadir encabezados CORS a todas las respuestas
     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     proxyRes.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE';
+    proxyRes.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,Content-Type,Accept,Authorization';
+    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+    proxyRes.headers['Access-Control-Max-Age'] = '1800';
     
     // Log de respuestas proxy para debuggeo
     console.log(`>>> PROXY RESPUESTA: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
@@ -73,9 +82,25 @@ const apiProxy = createProxyMiddleware({
   }
 });
 
-// Aplicar el proxy a las rutas /api/v1 que es lo que usa nuestra aplicación
-console.log(`>>> Configurando proxy en /api/v1 hacia ${BACKEND_URL}`);
-app.use('/api/v1', apiProxy);
+// Configurar manejo de preflight OPTIONS para CORS
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '1800');
+  res.sendStatus(204); // No content para OPTIONS
+});
+
+// Aplicar el proxy a las rutas de API en múltiples patrones para capturar todas las variantes
+console.log(`>>> Configurando proxy en /api y /api/v1 hacia ${BACKEND_URL}`);
+app.use('/api', apiProxy); // Capturar /api con cualquier subruta
+app.use('/api/v1', apiProxy); // Reforzar captura específica de /api/v1
+
+// Agregar rutas específicas que podrían estarse perdiendo
+console.log(`>>> Agregando rutas específicas adicionales para asegurar captura`);
+app.use('/auth', apiProxy); // Capturar /auth (por si algún endpoint no usa /api)
+app.use('/api/auth', apiProxy); // Capturar /api/auth como variante
 
 // Para mayor compatibilidad, también configuramos /api
 app.use('/api', apiProxy);

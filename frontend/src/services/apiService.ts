@@ -10,8 +10,17 @@ const getApiUrl = (): string => {
   // Obtener URL de API de las variables de entorno
   const envApiUrl = import.meta.env.VITE_API_URL;
   
-  // Si existe una URL configurada, usarla
+  // Si existe una URL configurada, usarla (pero verificar que sea relativa en producción)
   if (envApiUrl) {
+    // Verificar si estamos en producción para forzar ruta relativa
+    if (typeof window !== 'undefined') {
+      const currentHost = window.location.hostname;
+      if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+        // En producción, SIEMPRE usar ruta relativa independientemente del env
+        console.log(`[ApiService] Forzando ruta relativa a pesar de VITE_API_URL en producción`);
+        return '/api/v1';
+      }
+    }
     return envApiUrl;
   }
 
@@ -87,15 +96,25 @@ api.interceptors.request.use(
       // Extraer solo la parte de la ruta relativa después de /api/v1
       const endpoint = config.url || '';
       
-      // Reconstruir la URL como relativa
-      config.url = endpoint;
-      config.baseURL = '/api/v1';
+      // Reconstruir la URL como relativa y asegurar que no hay doble /api/v1
+      if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
+        // Ya contiene /api/v1, así que solo usar la ruta tal cual
+        config.url = endpoint;
+        config.baseURL = '';
+        console.log(`[FORZADO] URL ya contiene /api/v1, usando: ${endpoint}`);
+      } else {
+        // No contiene /api/v1, así que agregar el prefijo
+        config.url = endpoint;
+        config.baseURL = '/api/v1';
+        console.log(`[FORZADO] URL configurada como: ${config.baseURL}${config.url}`);
+      }
       
       // Eliminar cualquier otra parte que pueda causar problemas
       delete config.headers['Origin'];
       delete config.headers['Referer'];
       
-      console.log(`[FORZADO] Petición URL convertida a: ${config.baseURL}${config.url}`);
+      // Añadir encabezados CORS explícitos para ayudar en situaciones problemáticas
+      config.headers['Access-Control-Allow-Origin'] = '*';
     }
     return config;
   },
@@ -196,8 +215,38 @@ export async function get<T = any>(endpoint: string): Promise<T> {
       console.error(`❌ Error no relacionado con Axios en ${endpoint}:`, error);
     }
     
-    // En caso de error 404, devolver array vacío si parece ser un endpoint que devuelve lista
+    // Mecanismo de reintento para 404 en ciertas rutas que podrían estar mal formadas
     if (axios.isAxiosError(error) && error.response?.status === 404) {
+      // Intentar reconocer si la URL podría estar mal formada
+      const originalUrl = error.config?.url || '';
+      
+      // Registrar el intento fallido para depuración
+      console.warn(`⚠️ Intento fallido 404 en URL: ${originalUrl}`);
+      
+      // Intentar alternativas si la URL original parece contener problemas
+      if (originalUrl.includes('//') || originalUrl.includes('api/api') || 
+          (originalUrl.includes('/api/v1') && endpoint.includes('/api/v1'))) {
+        
+        console.log("🔧 Detectada posible URL mal formada, intentando corregir...");
+        
+        // Intentar limpiar y reconstruir la URL
+        let correctedUrl = endpoint.replace('api/api', 'api');
+        correctedUrl = correctedUrl.replace('/api/v1/api/v1', '/api/v1');
+        correctedUrl = correctedUrl.replace('//api/v1', '/api/v1');
+        
+        // Si la URL cambió, intentar de nuevo
+        if (correctedUrl !== endpoint) {
+          console.log(`🔨 Reintentando con URL corregida: ${correctedUrl}`);
+          try {
+            const retryResponse = await api.get<T>(correctedUrl);
+            return retryResponse.data;
+          } catch (retryError) {
+            console.error(`💥 También falló el reintento con URL corregida: ${correctedUrl}`);            
+          }
+        }
+      }
+      
+      // Si llegamos aquí, el reintento falló o no se intentó, devolver array vacío para endpoints de lista
       if (endpoint.includes('list') || 
           endpoint.includes('all') || 
           endpoint.includes('explotacions') || 
