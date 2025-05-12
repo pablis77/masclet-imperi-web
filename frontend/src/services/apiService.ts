@@ -10,38 +10,30 @@ const getApiUrl = (): string => {
   // Obtener URL de API de las variables de entorno
   const envApiUrl = import.meta.env.VITE_API_URL;
   
-  // Si existe una URL configurada, usarla (pero verificar que sea relativa en producción)
+  // Si existe una URL configurada, usarla (pero verificar si estamos en producción)
   if (envApiUrl) {
-    // Verificar si estamos en producción para forzar ruta relativa
-    if (typeof window !== 'undefined') {
-      const currentHost = window.location.hostname;
-      if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-        // En producción, SIEMPRE usar ruta relativa independientemente del env
-        console.log(`[ApiService] Forzando ruta relativa a pesar de VITE_API_URL en producción`);
-        return '/api/v1';
-      }
-    }
     return envApiUrl;
   }
 
   // LOG del entorno
   console.log(`Detectado entorno: ${ENVIRONMENT}`);
   
-  // En producción o entorno con dominio personalizado, SIEMPRE usar ruta relativa
+  // En producción o entorno con dominio personalizado, usar URL directa al backend
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
     
     // Si estamos en producción (Render) o cualquier entorno que no sea local
     if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
       console.log(`[ApiService] Detectado entorno de producción o externo: ${currentHost}`);
-      console.log(`[ApiService] API configurada para conectarse a: /api/v1`);
       
-      // USAR SIEMPRE ruta relativa en entornos de producción (esto es crítico)
-      return '/api/v1'; 
+      // ESTRATEGIA DIRECTA: Usar la URL completa al backend en lugar de proxy
+      const backendURL = 'https://masclet-imperi-web-backend.onrender.com/api/v1';
+      console.log(`[ApiService] API configurada para conectarse directamente al backend: ${backendURL}`);
+      return backendURL; 
     }
   }
   
-  // Solo para entornos locales (localhost/127.0.0.1) usar URL completa
+  // Solo para entornos locales (localhost/127.0.0.1) usar URL completa local
   const serverHost = 'localhost';
   const port = '8000';
   const protocol = 'http';
@@ -88,7 +80,7 @@ const api = axios.create({
   }
 });
 
-// SOLUCIÓN MANEJADA SEGÚN ENTORNO: Solo forzar URLs relativas en producción
+// CONEXIÓN DIRECTA AL BACKEND: No usamos proxy en producción, vamos directo al backend
 api.interceptors.request.use(
   (config) => {
     const endpoint = config.url || '';
@@ -103,40 +95,28 @@ api.interceptors.request.use(
     // A partir de aquí, solo se ejecuta en producción
     console.log(`[PROD] Procesando URL para entorno de producción: ${endpoint}`);
     
-    // Limpiar cualquier URL absoluta que pueda estar presente
-    let cleanedEndpoint = endpoint;
+    // Añadir cabeceras CORS para comunicación cross-origin directa
+    config.headers['Access-Control-Allow-Origin'] = '*';
+    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+    config.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
     
-    // Quitar cualquier URL absoluta (para prevenir peticiones a dominios incorrectos)
-    if (cleanedEndpoint.includes('://')) {
-      try {
-        const urlObj = new URL(cleanedEndpoint);
-        cleanedEndpoint = urlObj.pathname + urlObj.search;
-        console.log(`[LIMPIEZA] URL absoluta convertida a relativa: ${cleanedEndpoint}`);
-      } catch (e) {
-        console.warn(`[ADVERTENCIA] Error al procesar URL: ${cleanedEndpoint}`);
+    // En producción, no modificamos las URLs ya que la baseURL ya apunta al backend
+    // Solo normalizamos para asegurarnos que no hay doble /api/v1
+    if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
+      // Si la URL ya incluye /api/v1, extraerla para evitar duplicados
+      const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
+      const match = endpoint.match(pathRegex);
+      
+      if (match) {
+        // Extraer solo la parte después de /api/v1
+        const path = match[2];
+        console.log(`[URL-API] Evitando duplicado de /api/v1 en: ${endpoint}`);
+        config.url = path;
+      } else {
+        // Caso improbable: la regex no coincidió
+        console.log(`[URL-API] URL sin cambios: ${endpoint}`);
       }
     }
-    
-    // Normalizar URLs con path /api/v1
-    if (cleanedEndpoint.startsWith('/api/v1') || cleanedEndpoint.startsWith('api/v1')) {
-      // Ya contiene /api/v1, así que usar la URL tal cual, garantizando que empieza con /
-      if (!cleanedEndpoint.startsWith('/')) {
-        cleanedEndpoint = '/' + cleanedEndpoint;
-      }
-      config.url = cleanedEndpoint;
-      config.baseURL = ''; // No añadir nada más
-      console.log(`[URL-API] Usando ruta API completa: ${config.url}`);
-    } else {
-      // No contiene /api/v1, así que agregar el prefijo
-      config.url = cleanedEndpoint;
-      config.baseURL = '/api/v1';
-      console.log(`[URL-API] URL con prefijo añadido: ${config.baseURL}${config.url}`);
-    }
-    
-    // Eliminar encabezados que pueden causar que axios genere URLs absolutas
-    delete config.headers['Origin'];
-    delete config.headers['Referer'];
-    delete config.headers['Host'];
     
     return config;
   },
