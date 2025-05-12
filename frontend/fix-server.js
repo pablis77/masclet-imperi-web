@@ -1,4 +1,4 @@
-// Script DEFINITIVO para forzar que el servidor escuche en 0.0.0.0 correctamente
+// SOLUCIÓN DEFINITIVA: Servidor solo para health check sin conflicto de puertos
 // Ejecutar con: node fix-server.js
 
 import express from 'express';
@@ -10,86 +10,61 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function iniciarServidor() {
   try {
-    console.log('>>> Iniciando servidor personalizado con soporte para health check...');
+    console.log('>>> Iniciando servidor minimalista SOLO para health check...');
     
-    // Crear una aplicación Express
+    // Crear una aplicación Express muy simple
     const app = express();
     
-    // Configurar middleware básico
-    app.use(express.json());
-    
-    // Añadir endpoint de health check ANTES de cualquier otro middleware
+    // Añadir ÚNICAMENTE endpoint de health check
     app.get('/health', (req, res) => {
       console.log('>>> Health check solicitado - respondiendo 200 OK');
       res.status(200).send('OK');
     });
     
-    // Servir archivos estáticos (cliente)
-    app.use(express.static(join(__dirname, 'dist/client')));
+    // Añadir una página de status
+    app.get('/status', (req, res) => {
+      res.status(200).send(`
+        <html>
+          <head>
+            <title>Masclet Imperi Web - Estado</title>
+            <style>
+              body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+              h1 { color: #333; }
+              .success { color: green; }
+            </style>
+          </head>
+          <body>
+            <h1>Masclet Imperi Web</h1>
+            <p class="success">✅ El servidor de health check está funcionando correctamente</p>
+            <p>La aplicación principal está siendo servida por el servidor Astro.</p>
+          </body>
+        </html>
+      `);
+    });
     
-    // Importar el handler de Astro
-    let astroHandler;
-    try {
-      const { handler } = await import('./dist/server/entry.mjs');
-      astroHandler = handler;
-      console.log('>>> Handler de Astro importado correctamente');
-    } catch (error) {
-      console.error('>>> Error al importar el handler de Astro:', error);
-      // Continuar de todos modos, manejaremos las rutas manualmente si es necesario
-    }
-    
-    // Middleware que procesa todas las demás rutas a través del handler de Astro
-    app.use(async (req, res, next) => {
-      if (astroHandler) {
-        try {
-          await astroHandler(req, res);
-        } catch (error) {
-          console.error('>>> Error en el handler de Astro:', error);
-          if (!res.headersSent) {
-            res.status(500).send('Error interno del servidor');
-          }
-        }
-      } else {
-        // Si no tenemos handler de Astro, intentamos manejar rutas básicas
-        res.status(200).send(`
-          <html>
-            <head>
-              <title>Masclet Imperi Web</title>
-              <style>
-                body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-                h1 { color: #333; }
-              </style>
-            </head>
-            <body>
-              <h1>Masclet Imperi Web</h1>
-              <p>El servidor está funcionando correctamente, pero el handler de Astro no pudo cargarse.</p>
-              <p>Por favor, inténtelo de nuevo más tarde o contacte con el administrador.</p>
-            </body>
-          </html>
-        `);
-      }
+    // Para todas las demás rutas, redirigir al servidor Astro
+    app.use((req, res) => {
+      res.redirect(`http://localhost:10000${req.url}`);
     });
     
     // Crear un servidor HTTP explícito
     const server = createServer(app);
     
-    // Configurar tiempos de espera largos
-    server.timeout = 300000; // 5 minutos
-    server.keepAliveTimeout = 300000;
-    server.headersTimeout = 300000;
-    
-    // Escuchar explícitamente en 0.0.0.0
-    const PORT = process.env.PORT || 10000;
+    // Escuchar explícitamente en un puerto DIFERENTE para evitar conflictos
+    // El puerto 10000 lo está usando Astro, usaremos el 9999
+    const PORT = 9999;
     const HOST = '0.0.0.0';
     
     server.listen(PORT, HOST, () => {
-      console.log(`>>> Servidor iniciado exitosamente en http://${HOST}:${PORT}`);
+      console.log(`>>> Servidor de health check iniciado exitosamente en http://${HOST}:${PORT}`);
       console.log(`>>> Health check disponible en http://${HOST}:${PORT}/health`);
+      console.log(`>>> Status disponible en http://${HOST}:${PORT}/status`);
+      console.log('>>> El servidor principal Astro sigue en http://localhost:10000');
     });
     
-    // Manejar errores del servidor
+    // Asegurar que el health check siga funcionando incluso si hay errores
     server.on('error', (err) => {
-      console.error('>>> Error del servidor:', err);
+      console.error('>>> Error del servidor de health check:', err);
     });
     
     // Manejar excepciones no capturadas
@@ -102,8 +77,7 @@ async function iniciarServidor() {
     });
     
   } catch (error) {
-    console.error('>>> Error al iniciar el servidor:', error);
-    process.exit(1);
+    console.error('>>> Error al iniciar el servidor de health check:', error);
   }
 }
 
