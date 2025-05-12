@@ -46,7 +46,19 @@ export default defineConfig({
     
     // Adaptador para servidor Node.js (requerido para modo híbrido)
     adapter: node({
-        mode: 'standalone'
+        mode: 'standalone',
+        host: '0.0.0.0', // IMPORTANTE: Escuchar en todas las interfaces, no solo localhost
+        port: process.env.PORT || 10000,
+        // Añadimos middleware personalizado para el health check
+        middleware: async (context, next) => {
+            // Interceptamos las peticiones al endpoint de health check
+            if (context.url.pathname === '/health') {
+                console.log('✅ Health check solicitado - respondiendo 200 OK');
+                return new Response('OK', { status: 200 });
+            }
+            // Para el resto de rutas, continuamos con el flujo normal
+            return next();
+        }
     }),
 
     // Configuración de vite (bundler usado por Astro)

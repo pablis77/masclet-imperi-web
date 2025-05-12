@@ -1,4 +1,4 @@
-// Script post-build para reemplazar el archivo de entrada
+// Script post-build simplificado
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,33 +6,41 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function postBuild() {
-  console.log('Ejecutando script post-build...');
+  console.log('Ejecutando script post-build simplificado...');
   
+  // Verificamos que todo esté correcto
   try {
     // Ruta al archivo de entrada original generado por Astro
-    const originalEntryPath = path.join(__dirname, 'dist/server/entry.mjs');
+    const entryPath = path.join(__dirname, 'dist/server/entry.mjs');
     
-    // Ruta donde guardaremos una copia del archivo original
-    const backupEntryPath = path.join(__dirname, 'dist/server/entry.original.mjs');
+    // Verificamos si existe el archivo de entrada
+    await fs.access(entryPath);
+    console.log(`✅ Verificado que ${entryPath} existe correctamente`);
     
-    // Ruta a nuestro archivo de entrada personalizado con health check
-    const healthEntryPath = path.join(__dirname, 'health-entry.mjs');
+    // Añadimos un archivo health-check.txt para documentación
+    const healthCheckInfoPath = path.join(__dirname, 'dist/health-check.txt');
+    const healthCheckInfo = `
+Health Check en Masclet-Imperi-Web
+==============================
+
+Endpoint: /health
+Método: GET
+Respuesta esperada: 200 OK
+Cuerpo de respuesta: "OK"
+
+Este endpoint se usa para verificar que la aplicación está funcionando correctamente.
+Si recibes un código 200, la aplicación está lista para recibir solicitudes.
+
+Configurando en Render.com:
+-------------------------
+Asegúrate de que la URL del health check sea:
+{DEPLOY_URL}/health
+
+Donde {DEPLOY_URL} es la URL de tu aplicación desplegada.
+`;
     
-    // Verificamos si existe el archivo de entrada original
-    console.log(`Verificando si existe ${originalEntryPath}...`);
-    await fs.access(originalEntryPath);
-    
-    // Creamos una copia de seguridad del archivo original
-    console.log('Creando copia de seguridad del entry.mjs original...');
-    await fs.copyFile(originalEntryPath, backupEntryPath);
-    
-    // Leemos nuestro archivo de entrada personalizado
-    console.log('Leyendo archivo de entrada personalizado...');
-    const healthEntryContent = await fs.readFile(healthEntryPath, 'utf8');
-    
-    // Sobrescribimos el archivo original con nuestro archivo personalizado
-    console.log('Reemplazando archivo de entrada con versión que soporta health check...');
-    await fs.writeFile(originalEntryPath, healthEntryContent, 'utf8');
+    await fs.writeFile(healthCheckInfoPath, healthCheckInfo, 'utf8');
+    console.log(`✅ Documentación de health check creada en ${healthCheckInfoPath}`);
     
     console.log('✅ Post-build completado con éxito!');
   } catch (error) {
