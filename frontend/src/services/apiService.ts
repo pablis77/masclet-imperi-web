@@ -5,41 +5,50 @@ let ENVIRONMENT: string = 'development';
 let API_BASE_URL: string = '';
 let USE_MOCK_DATA: boolean = false; // Variable faltante
 
+// URLs configurables para diferentes entornos
+const API_CONFIG = {
+  development: {
+    protocol: 'http',
+    host: 'localhost',
+    port: '8000',
+    path: '/api/v1'
+  },
+  production: {
+    // Usar variable de entorno o valor por defecto para el backend
+    protocol: 'https',
+    host: import.meta.env.VITE_BACKEND_HOST || 'masclet-imperi-web-backend.onrender.com',
+    port: '',  // No usamos puerto en producción con HTTPS
+    path: '/api/v1'
+  }
+};
+
 // Configuración global usando variables de entorno
 const getApiUrl = (): string => {
-  // Obtener URL de API de las variables de entorno
+  // Obtener URL de API de las variables de entorno (prioridad máxima)
   const envApiUrl = import.meta.env.VITE_API_URL;
   
-  // Si existe una URL configurada, usarla (pero verificar si estamos en producción)
+  // Si existe una URL explícita configurada, usarla
   if (envApiUrl) {
+    console.log(`[ApiService] Usando URL explícita de variable de entorno: ${envApiUrl}`);
     return envApiUrl;
   }
 
-  // LOG del entorno
-  console.log(`Detectado entorno: ${ENVIRONMENT}`);
+  // LOG del entorno detectado
+  console.log(`[ApiService] Entorno detectado: ${ENVIRONMENT}`);
   
-  // En producción o entorno con dominio personalizado, usar URL directa al backend
-  if (typeof window !== 'undefined') {
-    const currentHost = window.location.hostname;
-    
-    // Si estamos en producción (Render) o cualquier entorno que no sea local
-    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      console.log(`[ApiService] Detectado entorno de producción o externo: ${currentHost}`);
-      
-      // ESTRATEGIA DIRECTA: Usar la URL completa al backend en lugar de proxy
-      const backendURL = 'https://masclet-imperi-web-backend.onrender.com/api/v1';
-      console.log(`[ApiService] API configurada para conectarse directamente al backend: ${backendURL}`);
-      return backendURL; 
-    }
-  }
+  // Determinar si estamos en producción
+  const isLocal = typeof window !== 'undefined' && 
+                 (window.location.hostname === 'localhost' || 
+                  window.location.hostname === '127.0.0.1');
   
-  // Solo para entornos locales (localhost/127.0.0.1) usar URL completa local
-  const serverHost = 'localhost';
-  const port = '8000';
-  const protocol = 'http';
+  // Seleccionar configuración según entorno
+  const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
   
-  console.log(`[ApiService] Usando URL local: ${protocol}://${serverHost}:${port}/api/v1`);
-  return `${protocol}://${serverHost}:${port}/api/v1`;
+  // Construir URL
+  const baseUrl = `${config.protocol}://${config.host}${config.port ? ':' + config.port : ''}${config.path}`;
+  
+  console.log(`[ApiService] API configurada para entorno ${isLocal ? 'desarrollo' : 'producción'}: ${baseUrl}`);
+  return baseUrl;
 };
 
 // Opciones de entorno
@@ -80,42 +89,50 @@ const api = axios.create({
   }
 });
 
-// CONEXIÓN DIRECTA AL BACKEND: No usamos proxy en producción, vamos directo al backend
+// GESTIÓN UNIVERSAL DE PETICIONES API
 api.interceptors.request.use(
   (config) => {
     const endpoint = config.url || '';
     
-    // Si estamos en entorno de desarrollo local, NO modificar las URLs
-    // (permitir URLs absolutas para localhost/127.0.0.1)
-    if (!isProduction) {
-      console.log(`[DEV] Usando URL original en desarrollo: ${endpoint}`);
-      return config;
-    }
+    // Debug para todas las peticiones
+    console.log(`[API] Procesando solicitud: ${endpoint}`);
     
-    // A partir de aquí, solo se ejecuta en producción
-    console.log(`[PROD] Procesando URL para entorno de producción: ${endpoint}`);
-    
-    // Añadir cabeceras CORS para comunicación cross-origin directa
-    config.headers['Access-Control-Allow-Origin'] = '*';
-    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
-    config.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
-    
-    // En producción, no modificamos las URLs ya que la baseURL ya apunta al backend
-    // Solo normalizamos para asegurarnos que no hay doble /api/v1
+    // Evitar duplicados de /api/v1 en cualquier entorno - esto es crucial
     if (endpoint.startsWith('/api/v1') || endpoint.startsWith('api/v1')) {
-      // Si la URL ya incluye /api/v1, extraerla para evitar duplicados
       const pathRegex = /^\/?(api\/v1)\/?(.*)$/;
       const match = endpoint.match(pathRegex);
       
       if (match) {
-        // Extraer solo la parte después de /api/v1
-        const path = match[2];
-        console.log(`[URL-API] Evitando duplicado de /api/v1 en: ${endpoint}`);
-        config.url = path;
-      } else {
-        // Caso improbable: la regex no coincidió
-        console.log(`[URL-API] URL sin cambios: ${endpoint}`);
+        // Si la URL ya contiene /api/v1 pero la baseURL también lo incluye,
+        // extraemos solo la parte después de /api/v1 para evitar duplicación
+        const path = match[2] || '';
+        console.log(`[API] Evitando duplicado de /api/v1 en: ${endpoint} -> path: ${path}`);
+        config.url = path.startsWith('/') ? path : `/${path}`;
       }
+    }
+    
+    // Configurar todas las solicitudes para incluir credenciales (cookies) 
+    // Esto es necesario para mantener la sesión
+    config.withCredentials = true;
+    
+    // Asegurar encabezados AUTH
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('token')) {
+      config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+    }
+    
+    // Si estamos en producción, configuración adicional
+    if (isProduction) {
+      // En producción, asegurar que todas las peticiones son seguras
+      if (config.url && config.url.startsWith('http:')) {
+        config.url = config.url.replace('http:', 'https:');
+      }
+      
+      // Asegurar que baseURL es HTTPS en producción
+      if (config.baseURL && config.baseURL.startsWith('http:')) {
+        config.baseURL = config.baseURL.replace('http:', 'https:');
+      }
+      
+      console.log(`[PROD] URL final: ${config.baseURL}${config.url}`);
     }
     
     return config;
