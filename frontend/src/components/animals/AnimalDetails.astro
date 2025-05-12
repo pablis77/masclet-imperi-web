@@ -9,7 +9,7 @@ const { animal, id } = Astro.props;
 
 // Determinar el icono y la clase de estado
 const icon = animal.genere === 'M' ? '🐂' : '🐄';
-const estadoClass = animal.estat === 'ACT' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+const estadoClass = (animal.estado || animal.estat) === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
 ---
 
 <!-- Resumen del animal -->
@@ -19,7 +19,7 @@ const estadoClass = animal.estat === 'ACT' ? 'bg-green-100 text-green-800 dark:b
     <div class="flex flex-col items-center md:items-start">
       <div class="text-6xl mb-3">{icon}</div>
       <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
-        {animal.estat === 'ACT' ? 'Activo' : 'Baja'}
+        {(animal.estado || animal.estat) === 'OK' ? 'Activo' : 'Baja'}
       </span>
     </div>
     

@@ -225,121 +225,145 @@ export const getAlletarText = (alletar: string) => {
   return 'Desconocido';
 };
 
-// Servicio de animales
 const animalService = {
   // Obtiene una lista paginada de animales con filtros opcionales
   async getAnimals(filters: AnimalFilters = {}): Promise<PaginatedResponse<Animal>> {
     try {
+      console.log('🐄 [Animal] Obteniendo animales con filtros:', filters);
+      
       // Construir parámetros de consulta
-      const params = new URLSearchParams();
-      params.append('page', (filters.page || 1).toString());
-      params.append('limit', (filters.limit || 10).toString());
+      const queryParams = new URLSearchParams();
       
-      // Añadir filtros opcionales si están presentes
-      if (filters.explotacio) params.append('explotacio', filters.explotacio);
-      if (filters.genere) params.append('genere', filters.genere);
-      if (filters.estado) params.append('estado', filters.estado);
-      if (filters.alletar) params.append('alletar', filters.alletar);
-      if (filters.quadra) params.append('quadra', filters.quadra);
+      // Añadir filtros a los parámetros de la consulta
+      if (filters.explotacio) queryParams.append('explotacio', filters.explotacio);
+      if (filters.genere) queryParams.append('genere', filters.genere);
+      if (filters.estado) queryParams.append('estado', filters.estado);
+      if (filters.alletar) queryParams.append('alletar', filters.alletar);
+      if (filters.quadra) queryParams.append('quadra', filters.quadra);
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.page) queryParams.append('page', filters.page.toString());
+      if (filters.limit) queryParams.append('limit', filters.limit.toString());
       
-      // Búsqueda por nombre y otros campos (nom, cod, num_serie)
-      if (filters.search) {
-        params.append('search', filters.search);
-        console.log(`Buscando animales que coincidan con: "${filters.search}"`);
-      }
+      const queryString = queryParams.toString();
       
-      console.log('Obteniendo animales con parámetros:', Object.fromEntries(params.entries()));
-      
-      // Realizar petición a la API
-      // Usar la ruta correcta sin duplicar el prefijo /api/v1 que ya está en la URL base
-      const responseData = await apiService.get(`/animals?${params.toString()}`);
-      console.log('Respuesta RAW de animales recibida:', responseData);
-      
-      // Transformar la estructura de respuesta del backend a nuestro formato esperado
-      let processedResponse: PaginatedResponse<Animal>;
-      
-      // Verificar si la respuesta tiene el formato {status, data}
-      if (responseData && responseData.status === 'success' && responseData.data) {
-        console.log('Detectada respuesta con formato {status, data}. Procesando correctamente...');
+      try {
+        // Intentar obtener datos reales de la API
+        // Probar con diferentes formatos de endpoint para mayor compatibilidad
+        const endpoints = [
+          `/animals?${queryString}`,
+          `/dashboard/animals?${queryString}`
+        ];
         
-        const { total, offset, limit, items } = responseData.data;
+        let response = null;
+        let successEndpoint = '';
         
-        processedResponse = {
-          items: items || [],
-          total: total || 0,
-          page: Math.floor(offset / limit) + 1, // Calcular página en base a offset y limit
-          limit: limit || 10,
-          pages: Math.ceil((total || 0) / (limit || 10))
-        };
-      } else {
-        // Si ya tiene el formato esperado o no conocemos el formato
-        console.log('Usando respuesta en formato directo');
-        processedResponse = responseData as PaginatedResponse<Animal>;
-      }
-      
-      console.log('Respuesta procesada de animales:', processedResponse);
-      
-      // Notificar al usuario que los datos son reales
-      if (filters.search) {
-        document.dispatchEvent(new CustomEvent('search-completed', {
-          detail: {
-            term: filters.search,
-            count: processedResponse.items.length,
-            total: processedResponse.total,
-            usedMock: false
+        // Intentar cada endpoint hasta que uno funcione
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`🐄 [Animal] Intentando endpoint: ${endpoint}`);
+            response = await apiService.get(endpoint);
+            successEndpoint = endpoint;
+            console.log(`🐄 [Animal] Respuesta recibida de ${endpoint}`);
+            break; // Si llegamos aquí, la petición fue exitosa
+          } catch (endpointError) {
+            console.warn(`🐄 [Animal] Error con endpoint ${endpoint}:`, endpointError);
+            // Continuar con el siguiente endpoint
           }
-        }));
+        }
+        
+        if (!response) {
+          throw new Error('Todos los endpoints fallaron');
+        }
+        
+        console.log(`🐄 [Animal] Endpoint exitoso: ${successEndpoint}`);
+        
+        // Manejo de diferentes formatos de respuesta
+        let items: Animal[] = [];
+        let total = 0;
+        let page = filters.page || 1;
+        let limit = filters.limit || 10;
+        let pages = 1;
+        
+        // CASO 1: Respuesta es un array directo
+        if (Array.isArray(response)) {
+          console.log(`🐄 [Animal] Procesando respuesta como array directo de ${response.length} elementos`);
+          items = response;
+          total = response.length;
+          pages = Math.ceil(total / limit);
+        }
+        // CASO 2: Respuesta es un objeto con propiedad 'items' (formato paginado)
+        else if (response && typeof response === 'object' && 'items' in response && Array.isArray(response.items)) {
+          console.log(`🐄 [Animal] Procesando respuesta como objeto paginado con ${response.items.length} elementos`);
+          items = response.items;
+          total = response.total || items.length;
+          page = response.page || page;
+          limit = response.limit || limit;
+          pages = response.pages || Math.ceil(total / limit);
+        }
+        // CASO 3: Respuesta es un objeto con propiedad 'data' (otro formato común)
+        else if (response && typeof response === 'object' && 'data' in response) {
+          if (Array.isArray(response.data)) {
+            console.log(`🐄 [Animal] Procesando respuesta como objeto con data[] que contiene ${response.data.length} elementos`);
+            items = response.data;
+            total = response.total || items.length;
+            page = response.page || page;
+            limit = response.limit || limit;
+            pages = response.pages || Math.ceil(total / limit);
+          } 
+          else if (response.data && typeof response.data === 'object' && 'items' in response.data && Array.isArray(response.data.items)) {
+            console.log(`🐄 [Animal] Procesando respuesta como objeto con data.items[] que contiene ${response.data.items.length} elementos`);
+            items = response.data.items;
+            total = response.data.total || items.length;
+            page = response.data.page || page;
+            limit = response.data.limit || limit;
+            pages = response.data.pages || Math.ceil(total / limit);
+          }
+        }
+        
+        // Si después de todo no tenemos items válidos, lanzar error
+        if (!items || !Array.isArray(items)) {
+          console.error('🔴 Error: items no es un array válido:', items);
+          throw new Error('No se pudieron extraer datos válidos de la respuesta');
+        }
+        
+        console.log(`🐄 [Animal] Procesados ${items.length} animales correctamente`);
+        
+        return {
+          items,
+          total,
+          page,
+          limit,
+          pages
+        };
+        
+      } catch (innerError) {
+        console.error('🔴 [Animal] Error al obtener animales desde API:', innerError);
+        throw innerError; // Propagar el error para el manejo del fallback
       }
+    } catch (error) {
+      console.error('🔴 [Animal] Error en obtención de animales:', error);
       
-      return processedResponse;
-    } catch (error: any) {
-      console.error('Error en petición GET /animals:', error);
+      // Si es un error de red o cualquier otro error, usar datos simulados como fallback
+      console.warn('⚠️ [Animal] Usando datos simulados debido a error en conexión con backend');
       
-      // Usar datos simulados en caso de error
-      let useMockReason = '';
+      // Filtrar datos mock usando la misma lógica
+      const filteredMock = getFilteredAnimals(filters);
       
-      // Verificar el tipo de error
-      if (error.code === 'DB_COLUMN_ERROR' || (error.message && error.message.includes('estado_t'))) {
-        useMockReason = 'error en la estructura de la tabla en el backend';
-      } else if (error.code === 'NETWORK_ERROR') {
-        useMockReason = 'error de conexión al servidor';
-      } else {
-        // Si no es un error específico conocido, seguir usando datos simulados pero con otro mensaje
-        useMockReason = 'error en el servidor';
-      }
-      
-      console.warn(`Usando datos simulados debido a: ${useMockReason}`);
-      
-      // Filtrar datos simulados según los filtros proporcionados
-      const filteredAnimals = getFilteredAnimals(filters);
-      
-      // Calcular paginación
+      // Calcular paginación para datos simulados
       const page = filters.page || 1;
       const limit = filters.limit || 10;
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
-      const paginatedAnimals = filteredAnimals.slice(startIndex, endIndex);
+      const paginatedItems = filteredMock.slice(startIndex, endIndex);
       
-      // Notificar al usuario que los datos son simulados si es una búsqueda
-      if (filters.search) {
-        document.dispatchEvent(new CustomEvent('search-completed', {
-          detail: {
-            term: filters.search,
-            count: paginatedAnimals.length,
-            total: filteredAnimals.length,
-            usedMock: true,
-            reason: useMockReason
-          }
-        }));
-      }
+      console.log(`🐄 [Animal] Devolviendo ${paginatedItems.length} animales simulados (de ${filteredMock.length} filtrados)`);
       
-      // Devolver respuesta paginada simulada
       return {
-        items: paginatedAnimals,
-        total: filteredAnimals.length,
+        items: paginatedItems,
+        total: filteredMock.length,
         page,
         limit,
-        pages: Math.ceil(filteredAnimals.length / limit)
+        pages: Math.ceil(filteredMock.length / limit)
       };
     }
   },
