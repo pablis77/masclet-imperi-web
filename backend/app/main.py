@@ -36,14 +36,13 @@ app = FastAPI(
     redoc_url="/api/v1/redoc",
 )
 
-# Configurar CORS para orígenes específicos
-# Obtener orígenes permitidos desde la configuración
-allowed_origins = settings.cors_origins.split(",")
-logger.info(f"Configurando CORS para los siguientes orígenes: {allowed_origins}")
+# Configurar CORS para permitir todos los orígenes temporalmente
+# Esto soluciona problema de acceso desde el frontend en Render
+logger.info("Configurando CORS para permitir todos los orígenes (solución temporal)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],  # Permitir todos los orígenes
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
