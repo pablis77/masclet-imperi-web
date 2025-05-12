@@ -24,10 +24,12 @@ const BACKEND_URL = process.env.BACKEND_URL || 'https://masclet-imperi-web-backe
 console.log(`>>> Configurando proxy API hacia: ${BACKEND_URL}`);
 
 // Middleware de proxy para la API
-const apiProxy = createProxyMiddleware('/api', {
+const apiProxy = createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
-  pathRewrite: (path) => path,
+  pathRewrite: {
+    '^/api': '/api' // mantener las rutas /api intactas
+  },
   onProxyReq: (proxyReq, req, res) => {
     // Log de peticiones proxy para debuggeo
     console.log(`>>> Proxy API: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
