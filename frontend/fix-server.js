@@ -3,6 +3,8 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import fetch from 'node-fetch';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,6 +17,33 @@ app.get('/health', (req, res) => {
   console.log('>>> Health check solicitado - respondiendo 200 OK');
   res.status(200).send('OK');
 });
+
+// Configurar proxy para API - Esto redirigirá las peticiones al backend
+// y evitará completamente los problemas de CORS
+const BACKEND_URL = process.env.BACKEND_URL || 'https://masclet-imperi-web-backend.onrender.com';
+console.log(`>>> Configurando proxy API hacia: ${BACKEND_URL}`);
+
+// Middleware de proxy para la API
+const apiProxy = createProxyMiddleware('/api', {
+  target: BACKEND_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => path,
+  onProxyReq: (proxyReq, req, res) => {
+    // Log de peticiones proxy para debuggeo
+    console.log(`>>> Proxy API: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    // Log de respuestas proxy para debuggeo
+    console.log(`>>> Proxy API respuesta: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
+  },
+  onError: (err, req, res) => {
+    console.error(`>>> Error en proxy API: ${err.message}`);
+    res.status(500).send('Error de conexión con API backend');
+  }
+});
+
+// Aplicar el proxy a las rutas /api
+app.use('/api', apiProxy);
 
 // Servir archivos estáticos del cliente
 app.use(express.static(join(__dirname, 'dist/client'), { index: false }));
