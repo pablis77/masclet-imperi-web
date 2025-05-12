@@ -131,6 +131,44 @@ register_tortoise(
     add_exception_handlers=True,
 )
 
+# Función para asegurar que existe un usuario administrador
+@app.on_event("startup")
+async def ensure_admin_user():
+    """Asegura que existe un usuario administrador en la base de datos"""
+    try:
+        # Importaciones necesarias
+        from app.models.user import User
+        from app.core.auth import get_password_hash
+        
+        logger.info("Verificando si existe usuario administrador...")
+        
+        # Verificar si ya existe un superusuario
+        admin = await User.filter(is_superuser=True).first()
+        
+        if not admin:
+            logger.info("Creando usuario administrador por defecto...")
+            # Crear nuevo superusuario con credenciales admin/admin123
+            admin_username = "admin"
+            admin_password = "admin123"
+            
+            admin = User(
+                username=admin_username,
+                email="admin@example.com",
+                hashed_password=get_password_hash(admin_password),
+                is_active=True,
+                is_superuser=True,
+                role="administrador",
+                full_name="Administrador"
+            )
+            await admin.save()
+            logger.info(f"Usuario administrador {admin_username} creado correctamente")
+        else:
+            logger.info(f"Usuario administrador ya existe: {admin.username}")
+            
+    except Exception as e:
+        logger.error(f"Error al verificar/crear usuario admin: {str(e)}")
+        # No interrumpir el arranque de la aplicación por esto
+
 # Iniciar el servidor si este archivo es ejecutado directamente
 if __name__ == "__main__":
     import uvicorn
