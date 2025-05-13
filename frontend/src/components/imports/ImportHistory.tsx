@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import importService, { ImportStatus } from '../../services/importService';
-import type { ImportHistoryItem, ImportHistoryFilters, ImportHistoryResponse } from '../../services/importService';
+import importService from '../../services/importService';
+import type { ImportHistoryItem, ImportHistoryFilters } from '../../services/importService';
 
 interface ImportHistoryProps {
   className?: string;
@@ -28,22 +28,22 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     setError(null);
     
     try {
-      // Crear objeto de filtros con la paginación actual
+      // Preparar los filtros para la API
       const apiFilters: ImportHistoryFilters = {
         ...filters,
         page: currentPage,
         limit: limit
       };
       
-      // Llamar al servicio real para obtener el historial
+      console.log('[ImportHistory] Consultando API con filtros:', apiFilters);
+      
+      // Llamar al servicio real
       const response = await importService.getImportHistory(apiFilters);
       
-      // Actualizar estado con los datos recibidos
+      // Actualizar el estado con los datos reales
       setHistory(response.items);
       setTotalItems(response.total);
       setTotalPages(response.totalPages);
-      
-      console.log('Historial de importaciones cargado:', response);
     } catch (err) {
       console.error('Error al cargar el historial de importaciones:', err);
       setError('No se pudo cargar el historial de importaciones');
@@ -57,11 +57,9 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     loadHistory();
   }, [filters, currentPage, refreshTrigger]);
 
-  // Manejar cambio de página
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    // Recargar datos al cambiar de página
-    loadHistory();
+  // Cambiar página
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   // Formatear fecha
@@ -76,37 +74,55 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     });
   };
 
-  // Obtener color según estado
+  // Obtener color y estilo según estado (estilos Tailwind)
   const getStatusBadge = (status: string) => {
+    let bgColor = '';
+    let textColor = '';
+    let text = '';
+    
     switch (status) {
       case 'completed':
-        return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800">
-            ✅ Completado
-          </span>
-        );
+        bgColor = 'bg-green-100 dark:bg-green-800';
+        textColor = 'text-green-800 dark:text-green-100';
+        text = 'Completado';
+        break;
+      case 'completed_err':
+        bgColor = 'bg-amber-100 dark:bg-amber-800'; 
+        textColor = 'text-amber-800 dark:text-amber-100';
+        text = 'Completado con errores';
+        break;
       case 'failed':
-        return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800">
-            ❌ Error
-          </span>
-        );
+        bgColor = 'bg-red-100 dark:bg-red-800';
+        textColor = 'text-red-800 dark:text-red-100';
+        text = 'Error';
+        break;
       case 'processing':
-        return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            ⏳ Procesando
-          </span>
-        );
+        bgColor = 'bg-blue-100 dark:bg-blue-800';
+        textColor = 'text-blue-800 dark:text-blue-100';
+        text = 'Procesando';
+        break;
+      case 'pending':
+        bgColor = 'bg-amber-100 dark:bg-amber-800';
+        textColor = 'text-amber-800 dark:text-amber-100';
+        text = 'Pendiente';
+        break;
       default:
-        return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-            {status}
-          </span>
-        );
+        bgColor = 'bg-gray-100 dark:bg-gray-700';
+        textColor = 'text-gray-800 dark:text-gray-100';
+        // Para estados desconocidos, mostrar de forma más amigable
+        text = status
+          .replace('_', ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()); // Capitalizar cada palabra
     }
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
+        {text}
+      </span>
+    );
   };
 
-  // Simulación: descargar errores
+  // Descargar errores
   const handleDownloadErrors = async (importId: number) => {
     try {
       setIsLoading(true);
@@ -151,124 +167,58 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
   };
 
   return (
-    <div className={`import-history ${className}`}>
+    <div className={`${className}`}>
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 text-xl">🚨</div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-800 dark:text-red-300">{error}</p>
-            </div>
-          </div>
+        <div className="mb-4 p-4 border border-red-200 bg-red-50 text-red-800 dark:bg-red-900/50 dark:text-red-100 dark:border-red-800 rounded-lg">
+          {error}
         </div>
       )}
       
-      {/* Filtros */}
-      <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filtrar por estado</h3>
-              <div className="flex flex-wrap gap-2">
-                <button 
-                  onClick={() => {
-                    setFilters({...filters, status: undefined});
-                    setCurrentPage(1);
-                    loadHistory();
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${!filters.status ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                >
-                  Todos
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    setFilters({...filters, status: ImportStatus.COMPLETED});
-                    setCurrentPage(1);
-                    loadHistory();
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.COMPLETED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                >
-                  Completados
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    setFilters({...filters, status: ImportStatus.FAILED});
-                    setCurrentPage(1);
-                    loadHistory();
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.FAILED ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                >
-                  Fallidos
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    setFilters({...filters, status: ImportStatus.PROCESSING});
-                    setCurrentPage(1);
-                    loadHistory();
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${filters.status === ImportStatus.PROCESSING ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                >
-                  En proceso
-                </button>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => {
-                setFilters({});
-                setCurrentPage(1);
-                loadHistory();
-              }}
-              className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              Limpiar filtros
-            </button>
-          </div>
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center p-8 text-gray-600 dark:text-gray-300">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <p className="mt-4 font-medium">Cargando historial...</p>
         </div>
-      </div>
-
-      {isLoading && history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
-          <p className="text-gray-600 dark:text-gray-300">Cargando historial de importaciones...</p>
+      ) : history.length === 0 ? (
+        <div className="p-8 text-center text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+          <div className="text-4xl mb-3">📋</div>
+          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">No hay importaciones en el historial</p>
+          <p className="text-gray-500 dark:text-gray-400">Las importaciones que realices aparecerán aquí.</p>
         </div>
-      ) : history.length > 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Archivo</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Registros</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Archivo</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Registros</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {history.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.id}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                {history.map((item, index) => (
+                  <tr key={item.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{item.id}</td>
+                    <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{item.filename}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Por: {item.user_name || `Usuario ${item.user_id}`}
-                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Por: {item.user_name || 'Sistema'}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(item.created_at)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(item.created_at)}</td>
+                    <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm text-gray-900 dark:text-white">Total: {item.total_records}</span>
-                        <div className="flex space-x-2 text-xs">
-                          <span className="text-green-600 dark:text-green-400">
-                            Éxito: {item.successful_records}
-                          </span>
+                        <div className="flex mt-1 text-xs">
+                          {item.successful_records > 0 && (
+                            <span className="text-green-600 dark:text-green-400 mr-2">
+                              Éxito: {item.successful_records}
+                            </span>
+                          )}
                           {item.failed_records > 0 && (
                             <span className="text-red-600 dark:text-red-400">
                               Errores: {item.failed_records}
@@ -277,22 +227,20 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap">
                       {getStatusBadge(item.status)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        {item.failed_records > 0 && (
-                          <button
-                            onClick={() => handleDownloadErrors(item.id)}
-                            className="inline-flex items-center px-2.5 py-1.5 border border-red-300 dark:border-red-700 text-xs font-medium rounded text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            title="Descargar errores"
-                          >
-                            <span className="mr-1">📥</span>
-                            <span>Errores</span>
-                          </button>
-                        )}
-                      </div>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm">
+                      {item.failed_records > 0 && (
+                        <button 
+                          className="inline-flex items-center px-2.5 py-1.5 border border-red-300 dark:border-red-700 text-xs font-medium rounded 
+                                   text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 transition-colors"
+                          onClick={() => handleDownloadErrors(item.id)}
+                        >
+                          Descargar errores
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -300,69 +248,95 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
             </table>
           </div>
           
-          {/* Paginación */}
+          {/* Paginación con estilo Tailwind */}
           {totalPages > 1 && (
-            <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Mostrando <span className="font-medium">{(currentPage - 1) * limit + 1}</span> a <span className="font-medium">{Math.min(currentPage * limit, totalItems)}</span> de <span className="font-medium">{totalItems}</span> resultados
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <div className="flex items-center justify-center mt-6 space-x-1">
+              <button 
+                onClick={() => handlePageChange(1)} 
+                disabled={currentPage === 1}
+                className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                          ${currentPage === 1 
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                <span className="sr-only">Primera</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => handlePageChange(currentPage - 1)} 
+                disabled={currentPage === 1}
+                className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                          ${currentPage === 1 
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                <span className="sr-only">Anterior</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Números de página */}
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                // Mostrar solo algunas páginas si hay muchas
+                if (
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                ) {
+                  return (
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
-                        currentPage === 1 
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
+                      key={pageNumber}
+                      onClick={() => handlePageChange(pageNumber)}
+                      className={`inline-flex items-center px-3 py-1 border text-sm font-medium rounded-md 
+                                ${pageNumber === currentPage 
+                                  ? 'bg-primary/10 dark:bg-primary/30 text-primary border-primary/20 dark:border-primary/40' 
+                                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                     >
-                      &laquo; Anterior
+                      {pageNumber}
                     </button>
-                    
-                    {/* Números de página */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`relative inline-flex items-center px-4 py-2 border ${
-                          page === currentPage
-                            ? 'z-10 bg-primary border-primary text-white'
-                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        } text-sm font-medium`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
-                        currentPage === totalPages 
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      Siguiente &raquo;
-                    </button>
-                  </nav>
-                </div>
-              </div>
+                  );
+                } else if (
+                  pageNumber === currentPage - 2 ||
+                  pageNumber === currentPage + 2
+                ) {
+                  return <span key={`ellipsis-${pageNumber}`} className="px-1 text-gray-500 dark:text-gray-400">...</span>;
+                }
+                return null;
+              })}
+              
+              <button 
+                onClick={() => handlePageChange(currentPage + 1)} 
+                disabled={currentPage === totalPages}
+                className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                          ${currentPage === totalPages 
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                <span className="sr-only">Siguiente</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => handlePageChange(totalPages)} 
+                disabled={currentPage === totalPages}
+                className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                          ${currentPage === totalPages 
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                <span className="sr-only">Última</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           )}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center border border-gray-100 dark:border-gray-700">
-          <div className="text-4xl mb-3">📋</div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No hay importaciones</h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            No se encontraron registros de importaciones en el sistema.
-          </p>
-        </div>
+        </>
       )}
     </div>
   );

@@ -29,16 +29,10 @@ const apiProxy = createProxyMiddleware({
   changeOrigin: true,          // Esencial para cambiar el origen
   secure: false,               // Permitir HTTPS sin verificar certificados
   pathRewrite: function(path) {
-    // CRITICAL: Extraer las rutas correctas para el backend
-    let newPath = path;
-    
-    if (path.startsWith('/api/v1/')) {
-      // Eliminar /api/v1/ y dejar el resto para usar las rutas reales del backend
-      newPath = path.replace('/api/v1/', '/');
-      console.log(`>>> [PROXY] Reescribiendo: ${path} -> ${newPath}`);
-    }
-    
-    return newPath;
+    // NO reescribir las rutas /api/v1/
+    // Las dejamos tal cual para que lleguen correctamente al backend
+    console.log(`>>> [PROXY] Enviando ruta sin modificar: ${path}`);
+    return path;
   },
   onProxyReq: (proxyReq, req, res) => {
     // Depurar la solicitud

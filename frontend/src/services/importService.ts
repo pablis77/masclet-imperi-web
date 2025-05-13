@@ -1,6 +1,7 @@
 // Servicio para gestionar las importaciones
 
-// Importar configuración centralizada
+// Importar servicios y configuraciones
+import apiService from './apiService';
 import apiConfig from '../config/apiConfig';
 
 // Interfaces y tipos
@@ -99,9 +100,6 @@ const importService = {
    */
   async getImportHistory(filters: ImportHistoryFilters = {}): Promise<ImportHistoryResponse> {
     try {
-      // Usar la URL del backend de configuración centralizada
-      const BACKEND_URL = apiConfig.backendURL;
-      
       // Construir query string para los filtros
       const queryParams = new URLSearchParams();
       
@@ -127,65 +125,31 @@ const importService = {
       queryParams.append('page', page.toString());
       queryParams.append('limit', limit.toString());
       
-      // Token de desarrollo
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer test_token_for_development'
-      };
+      // Usamos apiService que funciona correctamente con todos los demás endpoints
+      console.log(`[ImportService] Consultando historial de importaciones`);
       
-      // Endpoint con slash final para evitar redirecciones 307
-      const endpoint = `${BACKEND_URL}/api/v1/imports/?${queryParams.toString()}`;
-      console.log(`[ImportService] Consultando historial: ${endpoint}`);
+      // Usamos el mismo patrón que los demás componentes funcionales
+      const endpoint = `/imports/?${queryParams.toString()}`;
+      const response = await apiService.get(endpoint);
       
-      // Llamar al endpoint
-      try {
-        const response = await fetch(endpoint, {
-          method: 'GET',
-          headers: headers
-        });
+      // apiService devuelve directamente los datos (no hay response.data)
+      // apiService.get devuelve directamente el objeto con los datos
+      // Lo vemos en la consola: items, total, page, size, totalPages
       
-      if (response.ok) {
-        const data = await response.json();
+      // Si hay datos, convertirlos al formato esperado por el componente
+      if (response && response.items) {
         return {
-          items: data.items || [],
-          total: data.total || 0,
-          page: data.page || 1,
-          limit: data.limit || 10,
-          totalPages: data.total_pages || 1
+          items: response.items || [],
+          total: response.total || 0,
+          page: response.page || 1,
+          limit: response.size || 10, // En la API se llama 'size', no 'limit'
+          totalPages: response.totalPages || 1
         };
-      }
-      
-        console.error('Error al obtener historial de importaciones:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: endpoint
-        });
+      } else {
+        // Si no hay datos, informar de forma clara
+        console.error('Error: Formato de respuesta inesperado:', response);
         
-        // Intentar obtener más información del error
-        try {
-          const errorText = await response.text();
-          console.error('Detalle del error:', errorText);
-        } catch (e) {
-          console.error('No se pudo obtener detalles del error');
-        }
-        
-        // Si el endpoint no existe (404), no mostrar error al usuario
-        if (response.status === 404) {
-          console.log('Endpoint de historial no disponible, mostrando lista vacía');
-        }
-        
-        // Siempre devolver un objeto vacío válido para no romper la interfaz
-        return {
-          items: [],
-          total: 0,
-          page: 1,
-          limit: 10,
-          totalPages: 1
-        };
-      } catch (fetchError) {
-        console.error('Error al hacer fetch del historial:', fetchError);
-        
-        // Devolver objeto vacío para no romper la interfaz
+        // Devolver una respuesta vacía pero válida
         return {
           items: [],
           total: 0,
