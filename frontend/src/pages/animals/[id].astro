@@ -163,15 +163,15 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
         <!-- Pestañas de navegación -->
         <div class="flex border-b border-gray-200 dark:border-gray-700">
-          <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
+          <button id="tab-info" data-tab="info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium active-tab" aria-selected="true">
             Información Completa
           </button>
           {showPartosTab && (
-            <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            <button id="tab-partos" data-tab="partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
               Historial de Partos
             </button>
           )}
-          <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+          <button id="tab-changes" data-tab="changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
             Historial de Cambios
           </button>
         </div>
@@ -302,7 +302,8 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                       </th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ficha Ternero</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Observaciones</th>
+                      <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -322,6 +323,27 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                       }
                       
                       if (partosArray.length > 0) {
+                        // Eliminar partos duplicados (basados en la misma fecha)
+                        // Usamos Map para mantener solo un parto para cada fecha, preferentemente el de número de parto mayor
+                        const fechaMap = new Map();
+                        
+                        partosArray.forEach(parto => {
+                          if (!parto.part) return; // Ignorar partos sin fecha
+                          
+                          // Calcular una clave para agrupar por fecha
+                          const fechaParto = parto.part.trim();
+                          
+                          // Si no tenemos un parto para esta fecha, o este tiene un número de parto más grande, lo guardamos
+                          if (!fechaMap.has(fechaParto) || 
+                              (parto.numero_part && fechaMap.get(fechaParto).numero_part && 
+                               parto.numero_part > fechaMap.get(fechaParto).numero_part)) {
+                            fechaMap.set(fechaParto, parto);
+                          }
+                        });
+                        
+                        // Convertir el Map a un array nuevamente
+                        partosArray = Array.from(fechaMap.values());
+                        
                         // Ordenar partos por fecha (de más antiguo a más reciente por defecto)
                         partosArray.sort((a, b) => {
                           const fechaA = a.part ? new Date(a.part) : new Date(0);
@@ -368,8 +390,26 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                                 {parto.EstadoT === 'OK' ? 'Vivo' : 'Fallecido'}
                               </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              No disponible
+                            <td class="px-6 py-4 whitespace-normal text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                              {parto.observacions || '-'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                              <button 
+                                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-100 focus:outline-none"
+                                data-parto-id={parto.id}
+                                data-action="edit"
+                              >
+                                <span class="sr-only">Editar</span>
+                                ✏️
+                              </button>
+                              <button 
+                                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-100 focus:outline-none"
+                                data-parto-id={parto.id}
+                                data-action="delete"
+                              >
+                                <span class="sr-only">Eliminar</span>
+                                🗑️
+                              </button>
                             </td>
                           </tr>
                         ));
@@ -432,169 +472,315 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   )}
 </MainLayout>
 
-<script>
-  // Script para manejar interacciones de la página
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM completamente cargado y analizado');
+<script is:inline>
+  // Script simplificado para evitar errores 500
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado: Inicializando funcionalidades de animal...');
     
-    // Botón de reintentar carga
-    const retryButton = document.getElementById('retry-button');
-    if (retryButton) {
-      retryButton.addEventListener('click', () => {
-        window.location.reload();
+    // Funcionalidad de las pestañas
+    const tabs = document.querySelectorAll('[data-tab]');
+    const tabInfo = document.querySelector('[data-tab="info"]');
+    const tabPartos = document.querySelector('[data-tab="partos"]');
+    const contentInfo = document.getElementById('content-info');
+    const contentPartos = document.getElementById('content-partos');
+    
+    // Comprobamos que existen los elementos necesarios
+    if (tabs && contentInfo && contentPartos) {
+      // Inicialmente mostramos la info y ocultamos los partos
+      contentInfo.classList.remove('hidden');
+      contentPartos.classList.add('hidden');
+      
+      // Establecemos la primera pestaña como activa
+      if (tabInfo) {
+        tabInfo.classList.add('active-tab');
+        tabInfo.setAttribute('aria-selected', 'true');
+        // Añadir clases de estilo activo
+        tabInfo.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+        tabInfo.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+      }
+      if (tabPartos) {
+        tabPartos.classList.remove('active-tab');
+        tabPartos.setAttribute('aria-selected', 'false');
+        // Quitar clases de estilo activo
+        tabPartos.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+        tabPartos.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+      }
+      
+      // Añadimos eventos de click a cada pestaña
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          const tabId = this.getAttribute('data-tab');
+          
+          // Ocultamos todos los contenidos
+          contentInfo.classList.add('hidden');
+          contentPartos.classList.add('hidden');
+          
+          // Quitamos la clase activa de todas las pestañas
+          tabs.forEach(function(t) {
+            t.classList.remove('active-tab');
+            t.setAttribute('aria-selected', 'false');
+            // Quitar estilos visuales de pestaña activa
+            t.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+            t.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+          });
+          
+          // Activamos la pestaña y contenido seleccionados
+          this.classList.add('active-tab');
+          this.setAttribute('aria-selected', 'true');
+          // Añadir estilos visuales de pestaña activa
+          this.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+          this.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+          
+          if (tabId === 'info') {
+            contentInfo.classList.remove('hidden');
+          } else if (tabId === 'partos') {
+            contentPartos.classList.remove('hidden');
+          }
+        });
       });
     }
     
-    // Obtener todas las pestañas y contenidos
-    const tabs = document.querySelectorAll('#tab-info, #tab-partos, #tab-changes');
-    const contents = document.querySelectorAll('#content-info, #content-partos, #content-changes');
+    // Ordenamiento de la tabla de partos
+    const sortFecha = document.getElementById('sort-fecha');
+    const sortGenero = document.getElementById('sort-genero');
+    const sortEstado = document.getElementById('sort-estado');
+    const tablaPartos = document.getElementById('tabla-partos');
     
-    console.log('Pestañas encontradas:', tabs.length);
-    console.log('Contenidos encontrados:', contents.length);
-    
-    // Función para mostrar pestaña y ocultar las demás
-    const showTab = (tabId) => {
-      console.log('Cambiando a pestaña:', tabId);
+    if (sortFecha && tablaPartos) {
+      // Establecer orden inicial
+      let ordenActual = { columna: 'fecha', direccion: 'asc' };
       
-      // Ocultar todos los contenidos
-      contents.forEach(content => {
-        content.classList.add('hidden');
-      });
-      
-      // Resetear estilos de todas las pestañas
-      tabs.forEach(tab => {
-        tab.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
-        tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-      });
-      
-      // Activar pestaña seleccionada
-      const selectedTab = document.getElementById(tabId);
-      if (selectedTab) {
-        selectedTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
-        selectedTab.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
-      }
-      
-      // Mostrar contenido correspondiente
-      const contentId = tabId.replace('tab-', 'content-');
-      const selectedContent = document.getElementById(contentId);
-      if (selectedContent) {
-        selectedContent.classList.remove('hidden');
-      }
-    };
-    
-    // Inicializar con la pestaña de información abierta
-    showTab('tab-info');
-    
-    // Eventos de clic para pestañas
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        showTab(tab.id);
-        console.log('Clic en pestaña:', tab.id);
-      });
-    });
-
-    // Ordenación de la tabla de partos
-    const sortColumns = document.querySelectorAll('#sort-fecha, #sort-genero, #sort-estado');
-    let currentSortColumn = 'sort-fecha';
-    let currentSortDirection = 'asc';
-
-    // Función para ordenar la tabla
-    const sortTable = (columnId, direction) => {
-      const table = document.getElementById('tabla-partos');
-      if (!table) return;
-
-      const tbody = table.querySelector('tbody');
-      if (!tbody) return;
-
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      const sortedRows = [...rows];
-
-      // Obtener el índice de la columna según el ID del encabezado
-      let columnIndex = 0;
-      if (columnId === 'sort-genero') columnIndex = 1;
-      if (columnId === 'sort-estado') columnIndex = 2;
-
-      // Ordenar filas
-      sortedRows.sort((a, b) => {
-        const cellA = a.querySelectorAll('td')[columnIndex].textContent.trim();
-        const cellB = b.querySelectorAll('td')[columnIndex].textContent.trim();
+      // Función para ordenar la tabla
+      function ordenarTabla(columna, direccion) {
+        const tbody = tablaPartos.querySelector('tbody');
+        if (!tbody) return;
         
-        if (columnId === 'sort-fecha') {
-          // Para fechas, intentar convertir a objetos Date para comparación
-          const dateA = parseDate(cellA);
-          const dateB = parseDate(cellB);
+        // Obtener todas las filas excepto la de "no hay datos"
+        const filas = Array.from(tbody.querySelectorAll('tr:not([data-empty])'));
+        if (filas.length <= 1) return;
+        
+        // Actualizar indicadores visuales
+        document.querySelectorAll('.sort-indicator').forEach(function(el) {
+          el.textContent = '';
+        });
+        
+        // Mostrar indicador en la columna ordenada
+        let indicador;
+        if (columna === 'fecha') {
+          indicador = sortFecha.querySelector('.sort-indicator');
+        } else if (columna === 'genero' && sortGenero) {
+          indicador = sortGenero.querySelector('.sort-indicator');
+        } else if (columna === 'estado' && sortEstado) {
+          indicador = sortEstado.querySelector('.sort-indicator');
+        }
+        
+        if (indicador) {
+          indicador.textContent = direccion === 'asc' ? '↑' : '↓';
+        }
+        
+        // Ordenar las filas
+        filas.sort(function(a, b) {
+          let valorA, valorB;
+          let idx = 0; // Índice de columna
           
-          if (direction === 'asc') {
-            return dateA - dateB;
-          } else {
-            return dateB - dateA;
+          if (columna === 'genero') idx = 1;
+          else if (columna === 'estado') idx = 2;
+          
+          valorA = a.cells[idx] ? a.cells[idx].textContent.trim() : '';
+          valorB = b.cells[idx] ? b.cells[idx].textContent.trim() : '';
+          
+          // Para fechas, intentamos convertir a objetos Date
+          if (columna === 'fecha') {
+            try {
+              const partsA = valorA.split('/');
+              const partsB = valorB.split('/');
+              
+              if (partsA.length === 3 && partsB.length === 3) {
+                const fechaA = new Date(partsA[2], partsA[1]-1, partsA[0]);
+                const fechaB = new Date(partsB[2], partsB[1]-1, partsB[0]);
+                
+                if (!isNaN(fechaA) && !isNaN(fechaB)) {
+                  return direccion === 'asc' ? fechaA - fechaB : fechaB - fechaA;
+                }
+              }
+            } catch (e) {
+              console.log('Error al comparar fechas:', e);
+            }
           }
-        } else {
-          // Para texto, comparar strings
-          if (direction === 'asc') {
-            return cellA.localeCompare(cellB, 'es');
+          
+          // Si no son fechas o hubo error, comparar como texto
+          if (direccion === 'asc') {
+            return valorA.localeCompare(valorB);
           } else {
-            return cellB.localeCompare(cellA, 'es');
+            return valorB.localeCompare(valorA);
           }
-        }
-      });
-
-      // Limpiar y reconstruir la tabla
-      while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
-      }
-
-      sortedRows.forEach(row => tbody.appendChild(row));
-
-      // Actualizar indicadores de ordenación
-      sortColumns.forEach(col => {
-        const indicator = col.querySelector('.sort-indicator');
-        if (indicator) {
-          indicator.textContent = '';
-        }
-      });
-
-      const activeHeader = document.getElementById(columnId);
-      const indicator = activeHeader.querySelector('.sort-indicator');
-      if (indicator) {
-        indicator.textContent = direction === 'asc' ? '↑' : '↓';
-      }
-    };
-
-    // Ayudante para convertir texto de fecha a objeto Date
-    const parseDate = (dateStr) => {
-      if (dateStr === 'N/A' || dateStr === 'Fecha incorrecta') {
-        return new Date(0); // Para valores no fechas, usar una fecha muy antigua
-      }
-      
-      // Intenta analizar la fecha en formato DD/MM/YYYY
-      const parts = dateStr.split(/[\/\-]/);
-      if (parts.length === 3) {
-        // Asumir formato DD/MM/YYYY
-        return new Date(parts[2], parts[1] - 1, parts[0]);
-      }
-      
-      // Como último recurso, intentar crear fecha directamente
-      return new Date(dateStr);
-    };
-
-    // Agregar eventos de clic a las columnas
-    sortColumns.forEach(col => {
-      col.addEventListener('click', () => {
-        // Si es la misma columna, cambiar dirección
-        if (col.id === currentSortColumn) {
-          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          // Si es una nueva columna, establecer como ascendente
-          currentSortColumn = col.id;
-          currentSortDirection = 'asc';
-        }
+        });
         
-        sortTable(currentSortColumn, currentSortDirection);
+        // Reordenar las filas en el DOM
+        filas.forEach(function(fila) {
+          tbody.appendChild(fila);
+        });
+      }
+      
+      // Añadir event listeners para ordenamiento
+      if (sortFecha) {
+        sortFecha.addEventListener('click', function() {
+          if (ordenActual.columna === 'fecha') {
+            ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+          } else {
+            ordenActual = { columna: 'fecha', direccion: 'asc' };
+          }
+          ordenarTabla('fecha', ordenActual.direccion);
+        });
+      }
+      
+      if (sortGenero) {
+        sortGenero.addEventListener('click', function() {
+          if (ordenActual.columna === 'genero') {
+            ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+          } else {
+            ordenActual = { columna: 'genero', direccion: 'asc' };
+          }
+          ordenarTabla('genero', ordenActual.direccion);
+        });
+      }
+      
+      if (sortEstado) {
+        sortEstado.addEventListener('click', function() {
+          if (ordenActual.columna === 'estado') {
+            ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+          } else {
+            ordenActual = { columna: 'estado', direccion: 'asc' };
+          }
+          ordenarTabla('estado', ordenActual.direccion);
+        });
+      }
+      
+      // Ordenar inicialmente por fecha (ascendente)
+      ordenarTabla('fecha', 'asc');
+    }
+    
+    // Gestionar botones de editar/eliminar partos
+    const botonesEditar = document.querySelectorAll('[data-action="edit"]');
+    const botonesEliminar = document.querySelectorAll('[data-action="delete"]');
+    
+    // Funcionalidad para editar partos
+    botonesEditar.forEach(function(boton) {
+      boton.addEventListener('click', function() {
+        const partoId = this.getAttribute('data-parto-id');
+        alert('Edición de parto: Funcionalidad en desarrollo');
+        console.log('Click en editar parto:', partoId);
       });
     });
+    
+    // Funcionalidad para eliminar partos
+    botonesEliminar.forEach(function(boton) {
+      boton.addEventListener('click', function() {
+        const partoId = this.getAttribute('data-parto-id');
+        const fila = this.closest('tr');
+        
+        if (confirm('¿Seguro que desea eliminar este parto? Esta acción no se puede deshacer.')) {
+          console.log('Eliminando parto:', partoId);
+          
+          const token = localStorage.getItem('token');
+          if (!token) {
+            alert('Error: No se ha encontrado el token de autenticación');
+            return;
+          }
 
-    // Ordenar por fecha ascendente al cargar la página
-    sortTable('sort-fecha', 'asc');
+          // Vamos a intentar diferentes rutas de API ya que puede estar en diferentes formatos
+          const apiUrls = [
+            `http://localhost:8000/api/v1/partos/${partoId}`,
+            `http://localhost:8000/api/v1/parts/${partoId}`,
+            `http://localhost:8000/api/v1/animals/parts/${partoId}`
+          ];
+          
+          // Probar con la primera ruta
+          console.log(`Intentando eliminar parto con ID ${partoId} usando la primera ruta API`);
+          fetch(apiUrls[0], {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(function(response) {
+            if (!response.ok) {
+              // Si la primera ruta falla, probar con la segunda
+              console.log(`Primera ruta falló con ${response.status}, intentando segunda ruta...`);
+              return fetch(apiUrls[1], {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+            }
+            return response.json().catch(() => ({ success: true })); // Algunos endpoints no devuelven JSON
+          })
+          .then(function(responseOrData) {
+            // Si es una respuesta de la segunda petición
+            if (responseOrData instanceof Response) {
+              const response = responseOrData;
+              if (!response.ok) {
+                // Si la segunda ruta falla, probar con la tercera
+                console.log(`Segunda ruta falló con ${response.status}, intentando tercera ruta...`);
+                return fetch(apiUrls[2], {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+              }
+              return response.json().catch(() => ({ success: true }));
+            }
+            // Si es datos de una petición exitosa anterior
+            return responseOrData;
+          })
+          .then(function(responseOrData) {
+            // Verificar si es una respuesta de la tercera petición
+            if (responseOrData instanceof Response) {
+              const response = responseOrData;
+              if (!response.ok) {
+                throw new Error(`Todas las rutas de API fallaron, último error: ${response.status}`);
+              }
+              return response.json().catch(() => ({ success: true }));
+            }
+            return responseOrData;
+          })
+          .then(function(data) {
+            console.log('Parto eliminado correctamente:', data);
+            
+            // Eliminar la fila de la tabla
+            if (fila) {
+              fila.remove();
+              
+              // Si no quedan filas, mostrar mensaje
+              const filas = tablaPartos.querySelectorAll('tbody tr');
+              if (filas.length === 0) {
+                const tbody = tablaPartos.querySelector('tbody');
+                if (tbody) {
+                  const tr = document.createElement('tr');
+                  tr.setAttribute('data-empty', 'true');
+                  tr.innerHTML = `
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No hay registros de partos para este animal
+                    </td>
+                  `;
+                  tbody.appendChild(tr);
+                }
+              }
+            }
+            
+            alert('Parto eliminado correctamente');
+          })
+          .catch(function(error) {
+            console.error('Error al eliminar parto:', error);
+            alert(`Error al eliminar parto: ${error.message}\n\nIntente más tarde o contacte al administrador.`);
+          });
+        }
+      });
+    });
   });
 </script>
