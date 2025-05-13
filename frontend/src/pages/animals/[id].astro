@@ -302,7 +302,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                       </th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ficha Ternero</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Observaciones</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -330,7 +330,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                         });
                         
                         return partosArray.map((parto) => (
-                          <tr>
+                          <tr data-id={parto.id}>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                               {parto.part ? 
                                 (() => {
@@ -369,7 +369,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                               </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              No disponible
+                              {parto.observacions || parto.observaciones || parto.obs || 'Sin observaciones'}
                             </td>
                           </tr>
                         ));
@@ -596,5 +596,265 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 
     // Ordenar por fecha ascendente al cargar la página
     sortTable('sort-fecha', 'asc');
+  });
+  // Crear un modal personalizado para interacciones con el usuario
+  function crearModalPersonalizado() {
+    // Comprobar si ya existe un modal
+    let modal = document.getElementById('modal-personalizado');
+    if (modal) return modal;
+    
+    // Crear el modal
+    modal = document.createElement('div');
+    modal.id = 'modal-personalizado';
+    modal.className = 'fixed inset-0 flex items-center justify-center z-50 hidden';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-25" onclick="document.getElementById('modal-personalizado').classList.add('hidden')"></div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-auto z-50 relative shadow-lg">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4" id="modal-titulo"></h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-6" id="modal-mensaje"></p>
+        <div class="flex justify-end space-x-4">
+          <button id="modal-btn-cancelar" class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">Cancelar</button>
+          <button id="modal-btn-confirmar" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none">Confirmar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Configurar el botón Cancelar
+    const btnCancelar = modal.querySelector('#modal-btn-cancelar');
+    btnCancelar.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+    
+    return modal;
+  }
+  
+  // Función para mostrar una notificación
+  function mostrarNotificacion(mensaje, tipo = 'success') {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white ${tipo === 'success' ? 'bg-green-500' : 'bg-red-500'} z-50 animate-fadeIn`;
+    notificacion.textContent = mensaje;
+    document.body.appendChild(notificacion);
+    
+    // Eliminar después de 3 segundos
+    setTimeout(() => {
+      notificacion.classList.add('animate-fadeOut');
+      setTimeout(() => {
+        notificacion.remove();
+      }, 500);
+    }, 3000);
+  }
+  
+  // Añadir botones de acciones a la tabla de partos
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado: Inicializando funcionalidades de animal...');
+    
+    // Agregar estilos para animaciones
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(10px); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+      .animate-fadeOut {
+        animation: fadeOut 0.3s ease-in forwards;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Crear modal personalizado
+    const modal = crearModalPersonalizado();
+    
+    const tablaPartos = document.getElementById('tabla-partos');
+    if (!tablaPartos) return;
+    
+    const tbody = tablaPartos.querySelector('tbody');
+    if (!tbody) return;
+    
+    // No añadir botones si no hay partos (solo hay mensaje de 'no hay registros')
+    const filasVacias = tbody.querySelectorAll('tr[data-empty="true"]');
+    if (filasVacias.length > 0) return;
+    
+    // Añadir columna de acciones al encabezado
+    const thead = tablaPartos.querySelector('thead tr');
+    if (thead) {
+      const thAcciones = document.createElement('th');
+      thAcciones.scope = 'col';
+      thAcciones.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider';
+      thAcciones.textContent = 'Acciones';
+      thead.appendChild(thAcciones);
+    }
+    
+    // Añadir botones a cada fila
+    const filas = tbody.querySelectorAll('tr');
+    filas.forEach(function(fila) {
+      // Si es una fila vacía, no añadir botones
+      if (fila.getAttribute('data-empty') === 'true') return;
+      
+      // Extraer el ID del parto - intentaremos obtenerlo de un atributo data-id
+      // Si no está disponible, usaremos un ID generado
+      const partoId = fila.getAttribute('data-id') || `parto-${Math.floor(Math.random() * 1000000)}`;
+      
+      // Crear celda para botones
+      const tdAcciones = document.createElement('td');
+      tdAcciones.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400';
+      
+      // Botón editar (deshabilitado por ahora)
+      const btnEditar = document.createElement('button');
+      btnEditar.className = 'bg-gray-100 text-blue-600 py-1 px-3 rounded-md mr-2 text-xs font-medium hover:bg-gray-200 cursor-not-allowed opacity-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600';
+      btnEditar.title = 'Funcionalidad en desarrollo';
+      btnEditar.textContent = 'Editar';
+      btnEditar.disabled = true;
+      
+      // Botón eliminar
+      const btnEliminar = document.createElement('button');
+      btnEliminar.className = 'bg-gray-100 text-red-600 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-200 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-gray-600';
+      btnEliminar.textContent = 'Eliminar';
+      btnEliminar.setAttribute('data-id', partoId);
+      btnEliminar.title = 'Eliminar parto';
+      
+      // Añadir botones a la celda
+      tdAcciones.appendChild(btnEditar);
+      tdAcciones.appendChild(btnEliminar);
+      
+      // Añadir celda a la fila
+      fila.appendChild(tdAcciones);
+      
+      // Evento para eliminar parto
+      btnEliminar.addEventListener('click', function(event) {
+        const partoId = this.getAttribute('data-id');
+        const fila = this.closest('tr');
+        const rect = this.getBoundingClientRect();
+        
+        // Configurar el modal
+        document.getElementById('modal-titulo').textContent = 'Eliminar parto';
+        document.getElementById('modal-mensaje').textContent = '¿Seguro que desea eliminar este parto? Esta acción no se puede deshacer.';
+        
+        // Mostrar el modal
+        modal.classList.remove('hidden');
+        
+        // Configurar el botón Confirmar
+        const btnConfirmar = modal.querySelector('#modal-btn-confirmar');
+        btnConfirmar.onclick = function() {
+          modal.classList.add('hidden');
+          console.log('Eliminando parto:', partoId);
+          
+          const token = localStorage.getItem('token');
+          if (!token) {
+            mostrarNotificacion('Error: No se ha encontrado el token de autenticación', 'error');
+            return;
+          }
+          
+          // Obtener el ID del animal de la URL
+          const animalIdMatch = window.location.pathname.match(/\/animals\/([0-9]+)/);
+          const animalId = animalIdMatch ? animalIdMatch[1] : null;
+          
+          if (!animalId) {
+            alert('Error: No se pudo determinar el ID del animal');
+            return;
+          }
+          
+          // Vamos a intentar diferentes rutas de API en orden de prioridad
+          const apiUrls = [
+            `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, // Ruta preferida con ID de animal
+            `http://localhost:8000/api/v1/partos/${partoId}` // Ruta alternativa
+          ];
+          
+          // Probar con el endpoint principal (animal_id/partos/parto_id)
+          console.log(`Intentando eliminar parto ${partoId} del animal ${animalId}`);
+          fetch(apiUrls[0], {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(function(response) {
+            if (!response.ok) {
+              // Si el primer endpoint falla, probar con el endpoint alternativo
+              console.log(`Endpoint principal falló con ${response.status}, intentando endpoint alternativo...`);
+              return fetch(apiUrls[1], {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+            }
+            
+            // Algunos endpoints no devuelven JSON válido
+            return response.json().catch(() => ({ success: true }));
+          })
+          .then(function(responseOrData) {
+            // Si es una respuesta HTTP de la segunda petición
+            if (responseOrData instanceof Response) {
+              const response = responseOrData;
+              if (!response.ok) {
+                throw new Error(`Error en la API: ${response.status}`);
+              }
+              
+              // Algunos endpoints no devuelven JSON válido
+              return response.json().catch(() => ({ success: true }));
+            }
+            
+            // Si son datos de una petición exitosa anterior
+            return responseOrData;
+          })
+          .then(function(data) {
+            console.log('Parto eliminado correctamente:', data);
+            
+            // Eliminar la fila de la tabla
+            if (fila) {
+              fila.remove();
+              
+              // Si no quedan filas, mostrar mensaje
+              const filas = tablaPartos.querySelectorAll('tbody tr');
+              if (filas.length === 0) {
+                const tbody = tablaPartos.querySelector('tbody');
+                if (tbody) {
+                  const tr = document.createElement('tr');
+                  tr.setAttribute('data-empty', 'true');
+                  tr.innerHTML = `
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No hay registros de partos para este animal
+                    </td>
+                  `;
+                  tbody.appendChild(tr);
+                }
+              }
+            }
+            
+            mostrarNotificacion('Parto eliminado correctamente', 'success');
+          })
+          .catch(function(error) {
+            console.error('Error al eliminar parto:', error);
+            
+            // Intentar mostrar un mensaje más descriptivo basado en el error
+            let mensajeError = error.message || 'Error desconocido';
+            
+            // Si es un error específico de API, intentar extraer más información
+            if (mensajeError.includes('500')) {
+              mensajeError = 'Error interno del servidor. Posible problema con la base de datos.';
+            } else if (mensajeError.includes('404')) {
+              mensajeError = 'No se encontró el recurso. Es posible que el parto ya haya sido eliminado.';
+            } else if (mensajeError.includes('403')) {
+              mensajeError = 'No tiene permisos para eliminar este parto.';
+            } else if (mensajeError.includes('401')) {
+              mensajeError = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+            }
+            
+            mostrarNotificacion(`Error al eliminar parto: ${mensajeError}`, 'error');
+          });
+        }
+      });
+    });
   });
 </script>
