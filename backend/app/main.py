@@ -56,6 +56,29 @@ app.add_middleware(
 # Configurar medidas de seguridad
 setup_security(app)
 
+# Middleware para manejar LocalTunnel
+@app.middleware("http")
+async def localtunnel_fix(request: Request, call_next):
+    # Arreglar URLs duplicadas que vienen de LocalTunnel
+    path = request.url.path
+    if 'https,' in path or 'http,' in path:
+        # Detectar y limpiar URLs malformadas desde el túnel
+        logger.info(f"Solicitud recibida con URL duplicada: {path}")
+        
+        # Extraer la última parte de la URL (la parte correcta)
+        if '/api/v1/' in path:
+            # Buscar todas las ocurrencias de '/api/v1/'
+            parts = path.split('/api/v1/')
+            if len(parts) > 1:
+                # Reconstruir la URL correcta
+                clean_path = f"/api/v1/{parts[-1]}"
+                # Modificar la URL de la petición
+                request.scope["path"] = clean_path
+                logger.info(f"URL limpiada: {clean_path}")
+    
+    # Continuar con la solicitud
+    return await call_next(request)
+
 # Middleware de depuración para diagnóstico de errores
 @app.middleware("http")
 async def debug_request(request: Request, call_next):
