@@ -133,11 +133,16 @@ const importService = {
         'Authorization': 'Bearer test_token_for_development'
       };
       
+      // Endpoint con slash final para evitar redirecciones 307
+      const endpoint = `${BACKEND_URL}/api/v1/imports/?${queryParams.toString()}`;
+      console.log(`[ImportService] Consultando historial: ${endpoint}`);
+      
       // Llamar al endpoint
-      const response = await fetch(`${BACKEND_URL}/api/v1/imports?${queryParams.toString()}`, {
-        method: 'GET',
-        headers: headers
-      });
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: headers
+        });
       
       if (response.ok) {
         const data = await response.json();
@@ -150,18 +155,45 @@ const importService = {
         };
       }
       
-      console.error('Error al obtener historial de importaciones:', {
-        status: response.status,
-        statusText: response.statusText
-      });
-      
-      return {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 1
-      };
+        console.error('Error al obtener historial de importaciones:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: endpoint
+        });
+        
+        // Intentar obtener más información del error
+        try {
+          const errorText = await response.text();
+          console.error('Detalle del error:', errorText);
+        } catch (e) {
+          console.error('No se pudo obtener detalles del error');
+        }
+        
+        // Si el endpoint no existe (404), no mostrar error al usuario
+        if (response.status === 404) {
+          console.log('Endpoint de historial no disponible, mostrando lista vacía');
+        }
+        
+        // Siempre devolver un objeto vacío válido para no romper la interfaz
+        return {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 1
+        };
+      } catch (fetchError) {
+        console.error('Error al hacer fetch del historial:', fetchError);
+        
+        // Devolver objeto vacío para no romper la interfaz
+        return {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 1
+        };
+      }
     } catch (error: any) {
       console.error('Error general al obtener historial de importaciones:', error);
       return {

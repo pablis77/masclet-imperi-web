@@ -81,18 +81,13 @@ app.options('*', (req, res) => {
   console.log(`>>> [CORS] Respondiendo a OPTIONS para: ${req.url}`);
 });
 
-// REGISTRAR EL PROXY PARA TODAS LAS RUTAS API - Esto es crítico
+// REGISTRAR EL PROXY SOLO PARA RUTAS API - Esto es crítico
 console.log(`>>> Configurando proxy en /api y /api/v1 hacia ${BACKEND_URL}`);
 app.use('/api', apiProxy);         // Captura /api/*
 app.use('/api/v1', apiProxy);      // Captura /api/v1/*
 
-// Agregar más rutas específicas para asegurar que se capturen todas las peticiones API
-console.log(`>>> Agregando rutas específicas adicionales para asegurar captura`);
-app.use('/dashboard', apiProxy);   // Captura directa de /dashboard/*
-app.use('/animals', apiProxy);     // Captura directa de /animals/*
-app.use('/users', apiProxy);       // Captura directa de /users/*
-app.use('/imports', apiProxy);     // Captura directa de /imports/*
-app.use('/auth', apiProxy);        // Captura directa de /auth/*
+// Ya no agregamos rutas específicas para evitar conflictos con las rutas del frontend
+console.log(`>>> IMPORTANTE: No interceptando rutas directas para evitar conflictos con el frontend`);
 
 // El proxy ya está configurado arriba, no necesitamos líneas duplicadas
 // Esto asegura que no haya conflictos entre los distintos middlewares de proxy
