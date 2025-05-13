@@ -1,0 +1,40 @@
+---
+// Componente para mostrar una tarjeta de explotación
+export interface Props {
+  explotacio: string;
+  totalAnimals: number;
+  numToros: number;
+  numVacas: number;
+}
+
+const { explotacio, totalAnimals, numToros, numVacas } = Astro.props;
+---
+
+<div class="rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer" data-explotacion={explotacio}>
+  <div class="p-4">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      {explotacio}
+    </h3>
+    
+    <div class="grid grid-cols-3 gap-2 mb-2">
+      <div class="bg-primary/10 rounded p-2 text-center">
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</div>
+        <div class="text-lg font-bold text-primary dark:text-primary-light">{totalAnimals}</div>
+      </div>
+      <div class="bg-blue-50 dark:bg-blue-900/20 rounded p-2 text-center">
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Toros</div>
+        <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{numToros}</div>
+      </div>
+      <div class="bg-rose-50 dark:bg-rose-900/20 rounded p-2 text-center">
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Vacas</div>
+        <div class="text-lg font-bold text-rose-600 dark:text-rose-400">{numVacas}</div>
+      </div>
+    </div>
+    
+    <div class="text-right mt-2">
+      <button class="text-xs text-primary dark:text-primary-light hover:underline">
+        Ver detalles →
+      </button>
+    </div>
+  </div>
+</div>

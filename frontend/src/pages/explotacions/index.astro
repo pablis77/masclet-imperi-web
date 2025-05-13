@@ -263,19 +263,55 @@ const title = 'Explotaciones';
             }
           });
           
+          // Obtener estadísticas detalladas de la explotación
+          const statsEndpoint = `http://localhost:8000/api/v1/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
+          const statsResponse = await fetch(statsEndpoint, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // Inicializar objeto con datos actualizados
+          let updatedExp = {...exp};
+          
+          // Procesar respuesta básica de explotación
           if (explotacionResponse.ok) {
             const explotacionInfo = await explotacionResponse.json();
             console.log(`Información de explotación ${exp.explotacio}:`, explotacionInfo);
             
             // Actualizar el conteo de partos con el valor correcto de la API
             if (explotacionInfo && explotacionInfo.total_partos !== undefined) {
-              return {
-                ...exp,
+              updatedExp = {
+                ...updatedExp,
                 partos: explotacionInfo.total_partos
               };
             }
           }
-          return exp; // Si hay algún error, devolvemos la explotación sin cambios
+          
+          // Procesar respuesta de estadísticas
+          if (statsResponse.ok) {
+            const statsInfo = await statsResponse.json();
+            console.log(`Estadísticas detalladas para ${exp.explotacio}:`, statsInfo);
+            
+            // Extraer datos detallados de estadísticas
+            const animales = statsInfo.animales || {};
+            const partos = statsInfo.partos || {};
+            
+            // Actualizar con los datos estadísticos completos
+            updatedExp = {
+              ...updatedExp,
+              toros: animales.toros || updatedExp.toros,
+              vacas: animales.vacas || updatedExp.vacas,
+              terneros: animales.terneros || updatedExp.terneros,
+              amamantando: animales.vacas_amamantando || updatedExp.amamantando,
+              noAmamantando: animales.vacas_no_amamantando || updatedExp.noAmamantando,
+              partos: partos.total || updatedExp.partos
+            };
+          }
+          
+          // Devolver la explotación con todos los datos actualizados
+          return updatedExp;
         } catch (error) {
           console.error(`Error obteniendo información para ${exp.explotacio}:`, error);
           return exp; // En caso de error, devolver la explotación sin cambios
