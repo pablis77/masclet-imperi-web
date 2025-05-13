@@ -74,7 +74,7 @@ class Settings(BaseModel):
     
     # Rate limiting y CORS
     enable_rate_limit: bool = os.getenv("ENABLE_RATE_LIMIT", "True").lower() in ("true", "1", "t")
-    cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:4321,http://127.0.0.1:3000,http://127.0.0.1:4321,https://masclet-imperi-web-frontend.onrender.com,https://masclet-imperi-web-frontend.onrender.com/")
+    cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:4321,http://127.0.0.1:3000,http://127.0.0.1:4321,https://masclet-imperi-web-frontend.onrender.com,https://masclet-imperi-web-frontend.onrender.com/,https://masclet-imperi-web-frontend-2025.loca.lt")
 
     # Configuración de base de datos
     postgres_db: str = os.getenv("POSTGRES_DB", "masclet_imperi")

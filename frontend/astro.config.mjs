@@ -5,6 +5,13 @@ import icon from 'astro-icon';
 import node from '@astrojs/node';
 
 export default defineConfig({
+    // Permitir todas las conexiones
+    output: 'server',
+    server: {
+        host: '0.0.0.0',
+        port: 3000,
+    },
+    
     // Directorio base donde se servirá la aplicación (si es en subpath)
     base: '/',
 
@@ -12,6 +19,12 @@ export default defineConfig({
     server: {
         port: 3000,
         host: '0.0.0.0',
+        cors: {
+            origin: ['*']
+        },
+        headers: {
+            'Access-Control-Allow-Origin': '*'
+        },
         // Configuración del proxy para comunicación con backend
         proxy: {
             '/api/v1': {
@@ -20,6 +33,13 @@ export default defineConfig({
                 secure: false,
                 // No reescribir la ruta, mantener tal cual
                 rewrite: (path) => path
+            },
+            // Proxy para el túnel - esto facilita las conexiones remotas
+            '/.netloc/api/v1': {
+                target: 'https://api-masclet-imperi.loca.lt',
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path.replace('/.netloc', '')
             }
         }
     },
@@ -67,7 +87,21 @@ export default defineConfig({
       server: {
           watch: {
               usePolling: true
-          }
+          },
+          // IMPORTANTE: Permitir explícitamente el host de LocalTunnel
+          host: '0.0.0.0',
+          cors: true,
+          strictPort: true,
+          allowedHosts: [
+              'localhost',
+              '127.0.0.1',
+              '0.0.0.0',
+              '192.168.68.54',
+              'masclet-imperi-web-frontend-2025.loca.lt',
+              '.loca.lt'
+          ],
+          // CRUCIAL: DESACTIVAR HMR para túneles - esto es lo que causa el problema
+          hmr: false
       },
       // Excluir archivos de prueba
       build: {

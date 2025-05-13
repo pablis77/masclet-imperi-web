@@ -38,10 +38,15 @@ const getApiUrl = (): string => {
   
   // Detectar explícitamente entorno local vs producción
   let isLocal = false;
+  let isTunnel = false;
+  
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-    console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}`);
+    // Comprobar si estamos en LocalTunnel
+    isTunnel = hostname.includes('loca.lt');
+    // Comprobar si estamos en localhost o en tunnel
+    isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || isTunnel;
+    console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}, isTunnel: ${isTunnel}`);
   } else {
     // Si window no está definido (SSR), usar variable de entorno
     isLocal = ENVIRONMENT !== 'production';
@@ -51,7 +56,15 @@ const getApiUrl = (): string => {
   // Seleccionar configuración según entorno
   const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
   
-  // Construir URL
+  // Si estamos en un túnel, usamos la URL del túnel para el backend
+  if (isTunnel) {
+    // Usamos la URL directa del backend a través de su túnel
+    const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
+    console.log(`[ApiService] Usando URL del túnel para backend: ${tunnelBackendUrl}`);
+    return tunnelBackendUrl;
+  }
+  
+  // Para conexiones normales, construir URL estándar
   const baseUrl = `${config.protocol}://${config.host}${config.port ? ':' + config.port : ''}${config.path}`;
   
   console.log(`[ApiService] API configurada para entorno ${isLocal ? 'desarrollo' : 'producción'}: ${baseUrl}`);
