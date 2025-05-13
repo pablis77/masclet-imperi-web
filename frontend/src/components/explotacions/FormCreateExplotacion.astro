@@ -1,0 +1,107 @@
+---
+// Componente para crear una nueva explotación
+---
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    Nueva Explotación
+  </h2>
+  
+  <form id="create-explotacion-form" class="space-y-4">
+    <div>
+      <label for="explotacio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Código de Explotación *
+      </label>
+      <input
+        type="text"
+        id="explotacio"
+        name="explotacio"
+        required
+        placeholder="Ej: ES12345678"
+        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+      />
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Identificador único para la explotación. No se puede modificar después de la creación.
+      </p>
+    </div>
+
+    <div class="flex justify-end space-x-2 pt-4">
+      <button
+        type="button"
+        id="cancel-create"
+        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      >
+        Crear Explotación
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Manejador del formulario
+  const form = document.getElementById('create-explotacion-form') as HTMLFormElement;
+  const cancelButton = document.getElementById('cancel-create');
+  
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const formData = new FormData(form);
+        const explotacioCode = formData.get('explotacio') as string;
+        
+        if (!explotacioCode) {
+          alert('El código de explotación es obligatorio');
+          return;
+        }
+        
+        // Verificar token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No hay token de autenticación');
+          window.location.href = '/login';
+          return;
+        }
+        
+        // Enviar petición al backend para crear la explotación
+        const response = await fetch('http://localhost:8000/api/v1/explotacions/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ explotacio: explotacioCode })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || `Error ${response.status}`);
+        }
+        
+        // Éxito
+        alert('Explotación creada con éxito');
+        form.reset();
+        
+        // Recargar la página para mostrar la nueva explotación
+        window.location.reload();
+        
+      } catch (error) {
+        console.error('Error al crear la explotación:', error);
+        alert(`Error al crear la explotación: ${error.message}`);
+      }
+    });
+  }
+  
+  // Manejador del botón de cancelar
+  if (cancelButton) {
+    cancelButton.addEventListener('click', () => {
+      form.reset();
+    });
+  }
+</script>
