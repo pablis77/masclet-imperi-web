@@ -18,92 +18,86 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Configurar proxy para API - Esto redirigirá las peticiones al backend
-// y evitará completamente los problemas de CORS
+// SOLUCIÓN DEFINITIVA MÁXIMA: Proxy global para eliminar 100% de problemas CORS
 const BACKEND_URL = process.env.BACKEND_URL || 'https://masclet-imperi-web-backend.onrender.com';
 console.log(`>>> Configurando proxy API hacia: ${BACKEND_URL}`);
 
-// Middleware de proxy para la API con configuración más robusta
+// MEGA PROXY: Configurar un middleware que intercepta TODAS las peticiones API
+// y las redirige al backend correctamente, sin problemas de CORS
 const apiProxy = createProxyMiddleware({
   target: BACKEND_URL,
-  changeOrigin: true,
-  secure: false, // No verificar certificados SSL (para entorno de desarrollo)
-  pathRewrite: {
-    '^/api/v1': '/api/v1', // Mantener el /v1 en la ruta
-    '^/api': '/api' // También capturar /api sin el /v1
+  changeOrigin: true,          // Esencial para cambiar el origen
+  secure: false,               // Permitir HTTPS sin verificar certificados
+  pathRewrite: function(path) {
+    // CRITICAL: Extraer las rutas correctas para el backend
+    let newPath = path;
+    
+    if (path.startsWith('/api/v1/')) {
+      // Eliminar /api/v1/ y dejar el resto para usar las rutas reales del backend
+      newPath = path.replace('/api/v1/', '/');
+      console.log(`>>> [PROXY] Reescribiendo: ${path} -> ${newPath}`);
+    }
+    
+    return newPath;
   },
-  logLevel: 'debug', // Mayor nivel de logs para debuggear
   onProxyReq: (proxyReq, req, res) => {
-    // Forzar el host correcto
+    // Depurar la solicitud
+    console.log(`>>> [PROXY] Procesando: ${req.method} ${req.url}`);
+    
+    // Configurar host correcto
     proxyReq.setHeader('host', new URL(BACKEND_URL).host);
-    
-    // Añadir encabezados CORS para peticiones preflighted
-    proxyReq.setHeader('Access-Control-Allow-Origin', '*');
-    proxyReq.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-    proxyReq.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
-    proxyReq.setHeader('Access-Control-Allow-Credentials', 'true');
-    proxyReq.setHeader('Access-Control-Max-Age', '1800');
-    
-    // Eliminar el encabezado Host original para evitar conflictos
-    delete req.headers.host;
-    
-    // Log de peticiones proxy para debuggeo
-    console.log(`>>> PROXY DETALLADO: ${req.method} ${req.url} -> ${BACKEND_URL}${req.url}`);
   },
   onProxyRes: (proxyRes, req, res) => {
-    // Añadir encabezados CORS a todas las respuestas
+    // Agregar siempre encabezados CORS a las respuestas
     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-    proxyRes.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE';
-    proxyRes.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,Content-Type,Accept,Authorization';
-    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
-    proxyRes.headers['Access-Control-Max-Age'] = '1800';
+    proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
+    proxyRes.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
     
-    // Log de respuestas proxy para debuggeo
-    console.log(`>>> PROXY RESPUESTA: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
+    console.log(`>>> [PROXY] Respuesta: ${proxyRes.statusCode} para ${req.method} ${req.url}`);
   },
   onError: (err, req, res) => {
-    console.error(`>>> ERROR GRAVE DE PROXY: ${err.message}`);
-    console.error(`>>> URL que causó el error: ${req.method} ${req.url}`);
-    console.error(`>>> URL de destino: ${BACKEND_URL}${req.url}`);
+    console.error(`>>> [ERROR PROXY]: ${err.message}`);
+    console.error(`>>> URL original: ${req.method} ${req.url}`);
     
-    // Enviar respuesta detallada al cliente
     if (!res.headersSent) {
       res.writeHead(500, {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       });
       res.end(JSON.stringify({
-        error: `Error de conexión con API backend: ${err.message}`,
-        url: req.url,
-        method: req.method,
-        target: `${BACKEND_URL}${req.url}`
+        error: `Error de conexión con API: ${err.message}`,
+        url: req.url
       }));
     }
   }
 });
 
-// Configurar manejo de preflight OPTIONS para CORS
+// Manejador de preflight OPTIONS para CORS - Responde automáticamente a todas las solicitudes OPTIONS
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '1800');
-  res.sendStatus(204); // No content para OPTIONS
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.sendStatus(204);
+  console.log(`>>> [CORS] Respondiendo a OPTIONS para: ${req.url}`);
 });
 
-// Aplicar el proxy a las rutas de API en múltiples patrones para capturar todas las variantes
+// REGISTRAR EL PROXY PARA TODAS LAS RUTAS API - Esto es crítico
 console.log(`>>> Configurando proxy en /api y /api/v1 hacia ${BACKEND_URL}`);
-app.use('/api', apiProxy); // Capturar /api con cualquier subruta
-app.use('/api/v1', apiProxy); // Reforzar captura específica de /api/v1
+app.use('/api', apiProxy);         // Captura /api/*
+app.use('/api/v1', apiProxy);      // Captura /api/v1/*
 
-// Agregar rutas específicas que podrían estarse perdiendo
+// Agregar más rutas específicas para asegurar que se capturen todas las peticiones API
 console.log(`>>> Agregando rutas específicas adicionales para asegurar captura`);
-app.use('/auth', apiProxy); // Capturar /auth (por si algún endpoint no usa /api)
-app.use('/api/auth', apiProxy); // Capturar /api/auth como variante
+app.use('/dashboard', apiProxy);   // Captura directa de /dashboard/*
+app.use('/animals', apiProxy);     // Captura directa de /animals/*
+app.use('/users', apiProxy);       // Captura directa de /users/*
+app.use('/imports', apiProxy);     // Captura directa de /imports/*
+app.use('/auth', apiProxy);        // Captura directa de /auth/*
 
-// Para mayor compatibilidad, también configuramos /api
-app.use('/api', apiProxy);
+// El proxy ya está configurado arriba, no necesitamos líneas duplicadas
+// Esto asegura que no haya conflictos entre los distintos middlewares de proxy
+
+// La ruta de autenticación ya está configurada arriba en las rutas específicas
 
 // Servir archivos estáticos del cliente
 app.use(express.static(join(__dirname, 'dist/client'), { index: false }));
