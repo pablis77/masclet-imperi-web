@@ -109,16 +109,18 @@ async def create_parto(
         # Esto es sólo para debugging, en producción se debería usar Redis o similar
         import threading
         
-        # Bloqueo global para sincronización
-        if not hasattr(settings, 'operation_semaphore'):
-            settings.operation_semaphore = {}
-            settings.operation_lock = threading.Lock()
+        # Bloqueo global para sincronización (usando variables globales en lugar de settings)
+        global _operation_semaphore, _operation_lock
+        if not '_operation_semaphore' in globals():
+            _operation_semaphore = {}
+        if not '_operation_lock' in globals():
+            _operation_lock = threading.Lock()
         
         # Verificar si la operación ya está en proceso o se completó recientemente
-        with settings.operation_lock:
+        with _operation_lock:
             current_time = time.time()
-            if operation_key in settings.operation_semaphore:
-                last_time = settings.operation_semaphore[operation_key]
+            if operation_key in _operation_semaphore:
+                last_time = _operation_semaphore[operation_key]
                 # Si la operación se procesó en los últimos 5 segundos, considerarla duplicada
                 if current_time - last_time < 5:  # 5 segundos de ventana
                     logger.warning(f"PETICIÓN DUPLICADA DETECTADA: {operation_key} - procesada hace {current_time - last_time:.2f} segundos")
@@ -128,18 +130,18 @@ async def create_parto(
                     }
             
             # Registrar esta operación con marca de tiempo actual
-            settings.operation_semaphore[operation_key] = current_time
+            _operation_semaphore[operation_key] = current_time
             logger.info(f"Registrando operación {operation_key} con marca de tiempo {current_time}")
             
         # Limpiar entradas antiguas (más de 60 segundos)
-        with settings.operation_lock:
+        with _operation_lock:
             keys_to_remove = []
-            for key, timestamp in settings.operation_semaphore.items():
+            for key, timestamp in _operation_semaphore.items():
                 if current_time - timestamp > 60:  # 60 segundos de retención
                     keys_to_remove.append(key)
-            
+
             for key in keys_to_remove:
-                del settings.operation_semaphore[key]
+                del _operation_semaphore[key]
                 
             if keys_to_remove:
                 logger.info(f"Limpiadas {len(keys_to_remove)} entradas antiguas del semáforo")
