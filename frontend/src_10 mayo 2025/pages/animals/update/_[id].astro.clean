@@ -1,0 +1,557 @@
+---
+import MainLayout from '../../../components/layout/MainLayout.astro';
+import AnimalForm from '../../../components/animals/AnimalForm.astro';
+import HabitualesForm from '../../../components/animals/HabitualesForm.astro';
+import PartoForm from '../../../components/animals/PartoForm.astro';
+import Tabs from '../../../components/ui/Tabs.astro';
+import MessageContainer from '../../../components/ui/MessageContainer.astro';
+import animalService from '../../../services/animalService';
+import animalCacheService from '../../../services/animalCacheService';
+
+// Obtener el ID del animal de los parámetros de la URL
+const { id } = Astro.params;
+
+// Obtener el rol del usuario de la sesión
+const userRole = Astro.cookies.get('userRole')?.value || 'user';
+
+// Estado inicial
+let animal = null;
+let loading = true;
+let error = null;
+let title = 'Cargando animal...';
+
+try {
+  // Obtener los datos del animal (usando el servicio de caché)
+  animal = await animalCacheService.getAnimal(id);
+  
+  // Convertir el animal a un formato más sencillo para el formulario si es necesario
+  if (animal && animal.data) {
+    animal = animal.data;
+  }
+  
+  console.log('Animal cargado:', animal);
+  title = `Editar ${animal.nom}`;
+  loading = false;
+} catch (err) {
+  console.error('Error al cargar el animal:', err);
+  error = err.message || 'Error al cargar los datos del animal';
+  loading = false;
+  title = 'Error al cargar animal';
+}
+
+// Obtener el icono del animal
+const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
+
+// Obtener la clase CSS para el estado del animal
+const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) : 'bg-gray-100 text-gray-800';
+
+// Configurar las pestañas
+const tabs = [
+  { id: 'general', label: 'Datos Generales', active: true },
+  { id: 'habitual', label: 'Cambios Habituales' }
+];
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href={`/animals/${id}`} class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+        <span class="mr-1">←</span> Volver al detalle
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{animal ? animal.nom : 'Cargando...'}</h1>
+    <p class="text-gray-600 dark:text-gray-300">ID: {id}</p>
+  </div>
+
+  {loading && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center min-h-[200px]">
+      <div class="flex flex-col items-center space-y-4">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        <p class="text-gray-600 dark:text-gray-300">Cargando datos del animal...</p>
+      </div>
+    </div>
+  )}
+
+  {error && (
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error al cargar datos</h3>
+          <div class="mt-2 text-red-700 dark:text-red-200">
+            <p>{error}</p>
+          </div>
+          <div class="mt-4">
+            <button 
+              id="retry-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {!loading && !error && animal && (
+    <>
+      <!-- Resumen del animal -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-6">
+          <!-- Icono y estado -->
+          <div class="flex flex-col items-center md:items-start">
+            <div class="text-6xl mb-3">{icon}</div>
+            <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
+              {animal.estado === 'OK' ? 'Activo' : 'Fallecido'}
+            </span>
+          </div>
+          
+          <!-- Información básica -->
+          <div class="flex-grow">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom || 'Sin nombre'}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
+                <p class="font-medium">{animal.cod || 'No disponible'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+                <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestañas de actualización -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <Tabs tabs={tabs} contentId="animal-update" />
+        
+        <!-- Contenido de pestañas -->
+        <div class="p-6">
+          <!-- Pestaña 1: Datos Generales -->
+          <div id="content-general" class="tab-content">
+            <AnimalForm animal={animal} />
+          </div>
+
+          <!-- Pestaña 2: Cambios Habituales -->
+          <div id="content-habitual" class="tab-content hidden">
+            <HabitualesForm animal={animal} />
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+</MainLayout>
+
+<script is:inline>
+  // Variables globales
+  window.animalId = "${id}";
+  window.animalData = JSON.parse(`${JSON.stringify(animal || {})}`);
+</script>
+
+<script>
+  // Inicialización de la página de actualización de animales
+  document.addEventListener('DOMContentLoaded', () => {
+    // Importación de servicios (debe ser dinámica en este contexto)
+    import('/src/services/apiService.js')
+      .then(apiModule => {
+        const apiService = apiModule.default;
+        
+        return import('/src/services/animalService.js');
+      })
+      .then(animalModule => {
+        const animalService = animalModule.default;
+        
+        return import('/src/services/animalCacheService.js');
+      })
+      .then(animalCacheModule => {
+        const animalCacheService = animalCacheModule.default;
+        
+        return import('/src/services/formService.js');
+      })
+      .then(formModule => {
+        const { initForm, getFormChanges, updateFormField, validateForm } = formModule;
+        
+        // Obtener referencias a formularios
+        const generalForm = document.getElementById('animal-form');
+        const habitualesForm = document.getElementById('habituales-form');
+        const id = window.animalId;
+        const animal = window.animalData;
+        
+        // Configurar formularios
+        if (generalForm) configureGeneralForm(generalForm, animal);
+        if (habitualesForm) configureHabitualesForm(habitualesForm, animal);
+        
+        // Botón de reintento
+        const retryButton = document.getElementById('retry-button');
+        if (retryButton) {
+          retryButton.addEventListener('click', async () => {
+            try {
+              // Usar el servicio de caché con forceRefresh para obtener datos frescos
+              await animalCacheService.getAnimal(id, true);
+              window.location.reload();
+            } catch (err) {
+              console.error('Error al reintentar cargar el animal:', err);
+              mostrarMensajeError('Error', 'No se pudo cargar el animal. Inténtalo de nuevo más tarde.');
+            }
+          });
+        }
+        
+        // Función para configurar el formulario general
+        function configureGeneralForm(form, animal) {
+          if (!form) return;
+          
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent : '';
+            
+            try {
+              // Verificar autenticación
+              const token = localStorage.getItem('token');
+              if (!token) {
+                throw new Error('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+              }
+              
+              // Mostrar indicador de carga
+              if (submitBtn) {
+                submitBtn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Guardando...';
+                submitBtn.disabled = true;
+              }
+              
+              // Obtener datos del formulario
+              const formData = new FormData(form);
+              const datos = {};
+              
+              // Detectar campos cambiados comparando con valores originales
+              const camposOriginales = form.querySelectorAll('[data-original-value]');
+              let hayModificaciones = false;
+              
+              camposOriginales.forEach(campo => {
+                const nombre = campo.name;
+                const valorOriginal = campo.getAttribute('data-original-value');
+                const valorActual = formData.get(nombre);
+                
+                if (valorActual !== valorOriginal) {
+                  hayModificaciones = true;
+                  datos[nombre] = valorActual;
+                }
+              });
+              
+              // Si no hay cambios, mostrar mensaje y salir
+              if (!hayModificaciones) {
+                mostrarMensajeInfo('Sin cambios', 'No se detectaron cambios para guardar');
+                
+                // Restaurar botón
+                if (submitBtn) {
+                  submitBtn.innerHTML = originalBtnText;
+                  submitBtn.disabled = false;
+                }
+                return;
+              }
+              
+              console.log('Datos a enviar:', datos);
+              
+              // Enviar datos al servidor
+              const response = await animalService.updateAnimal(id, datos);
+              console.log('Respuesta del servidor:', response);
+              
+              // Mostrar mensaje de éxito
+              mostrarMensajeExito('Datos actualizados', 'Los datos del animal se han actualizado correctamente');
+              
+              // Actualizar valores originales
+              camposOriginales.forEach(campo => {
+                const nombre = campo.name;
+                if (datos[nombre]) {
+                  campo.setAttribute('data-original-value', datos[nombre]);
+                }
+              });
+              
+              // Restaurar botón
+              if (submitBtn) {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+              }
+            } catch (error) {
+              console.error('Error al actualizar datos:', error);
+              mostrarMensajeError('Error', error.message || 'Ha ocurrido un error inesperado');
+              
+              // Restaurar botón
+              if (submitBtn) {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+              }
+            }
+          });
+        }
+        
+        // Función para configurar el formulario de cambios habituales
+        function configureHabitualesForm(form, animal) {
+          if (!form) return;
+          
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent : '';
+            
+            try {
+              // Verificar autenticación
+              const token = localStorage.getItem('token');
+              if (!token) {
+                throw new Error('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+              }
+              
+              // Mostrar indicador de carga
+              if (submitBtn) {
+                submitBtn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Guardando...';
+                submitBtn.disabled = true;
+              }
+              
+              // Obtener datos del formulario
+              const formData = new FormData(form);
+              const datos = {};
+              
+              // Detectar campos cambiados comparando con valores originales
+              const camposOriginales = form.querySelectorAll('[data-original-value]');
+              let hayModificaciones = false;
+              
+              camposOriginales.forEach(campo => {
+                const nombre = campo.name;
+                const valorOriginal = campo.getAttribute('data-original-value');
+                const valorActual = formData.get(nombre);
+                
+                if (valorActual !== valorOriginal) {
+                  hayModificaciones = true;
+                  // Mapear nombres de campos si es necesario
+                  if (nombre === 'estado_hab') {
+                    datos['estado'] = valorActual;
+                  } else {
+                    datos[nombre] = valorActual;
+                  }
+                }
+              });
+              
+              // Si no hay cambios, mostrar mensaje y salir
+              if (!hayModificaciones) {
+                mostrarMensajeInfo('Sin cambios', 'No se detectaron cambios para guardar');
+                
+                // Restaurar botón
+                if (submitBtn) {
+                  submitBtn.innerHTML = originalBtnText;
+                  submitBtn.disabled = false;
+                }
+                return;
+              }
+              
+              console.log('Datos a enviar (cambios habituales):', datos);
+              
+              // Enviar datos al servidor
+              const response = await animalService.updateAnimal(id, datos);
+              console.log('Respuesta del servidor (cambios habituales):', response);
+              
+              // Mostrar mensaje de éxito
+              mostrarMensajeExito('Datos actualizados', 'Los cambios habituales se han actualizado correctamente');
+              
+              // Actualizar valores originales
+              camposOriginales.forEach(campo => {
+                const nombre = campo.name;
+                if (nombre === 'estado_hab' && datos['estado']) {
+                  campo.setAttribute('data-original-value', datos['estado']);
+                } else if (datos[nombre]) {
+                  campo.setAttribute('data-original-value', datos[nombre]);
+                }
+              });
+              
+              // Restaurar botón
+              if (submitBtn) {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+              }
+            } catch (error) {
+              console.error('Error al actualizar datos habituales:', error);
+              mostrarMensajeError('Error', error.message || 'Ha ocurrido un error inesperado');
+              
+              // Restaurar botón
+              if (submitBtn) {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+              }
+            }
+          });
+          
+          // Configurar botón de registro de parto
+          const registrarPartoBtn = document.getElementById('registrar-parto-btn');
+          if (registrarPartoBtn) {
+            registrarPartoBtn.addEventListener('click', async () => {
+              const partDate = document.getElementById('part')?.value;
+              const genereT = document.getElementById('GenereT')?.value;
+              const estadoT = document.getElementById('EstadoT')?.value;
+              
+              if (!partDate || !genereT || !estadoT) {
+                mostrarMensajeError('Formulario incompleto', 'Por favor, completa todos los campos del parto');
+                return;
+              }
+              
+              try {
+                // Verificar autenticación
+                const token = localStorage.getItem('token');
+                if (!token) {
+                  throw new Error('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+                }
+                
+                // Mostrar indicador de carga
+                const originalBtnText = registrarPartoBtn.textContent;
+                registrarPartoBtn.innerHTML = '<span class="animate-spin inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></span> Registrando...';
+                registrarPartoBtn.disabled = true;
+                
+                // Preparar datos para enviar
+                const datosFormulario = {
+                  part: formatDateToAPI(partDate),
+                  GenereT: genereT,
+                  EstadoT: estadoT
+                };
+                
+                console.log('Datos a enviar (parto):', datosFormulario);
+                
+                // Enviar datos al servidor
+                const response = await animalService.updateAnimal(id, datosFormulario);
+                console.log('Respuesta del servidor (parto):', response);
+                
+                // Mostrar mensaje de éxito
+                mostrarMensajeExito('Parto registrado', 'El parto se ha registrado correctamente');
+                
+                // Limpiar formulario
+                document.getElementById('part').value = '';
+                document.getElementById('GenereT').value = '';
+                document.getElementById('EstadoT').value = '';
+                
+                // Restaurar botón
+                registrarPartoBtn.innerHTML = originalBtnText;
+                registrarPartoBtn.disabled = false;
+              } catch (error) {
+                console.error('Error al registrar parto:', error);
+                mostrarMensajeError('Error', error.message || 'Ha ocurrido un error inesperado');
+                
+                // Restaurar botón
+                registrarPartoBtn.innerHTML = 'Registrar Parto';
+                registrarPartoBtn.disabled = false;
+              }
+            });
+          }
+        }
+        
+        // Función para formatear fecha para la API (DD/MM/YYYY)
+        function formatDateToAPI(dateStr) {
+          if (!dateStr) return null;
+          
+          // Si es formato YYYY-MM-DD (del input date), convertir a DD/MM/YYYY
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+          }
+          
+          // Si ya está en formato DD/MM/YYYY, devolverlo como está
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+            return dateStr;
+          }
+          
+          // Si no se reconoce el formato, devolver la cadena original
+          return dateStr;
+        }
+        
+        // Funciones para mostrar mensajes
+        function mostrarMensajeExito(titulo, mensaje) {
+          const container = document.createElement('div');
+          container.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+          container.innerHTML = `
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">${titulo}</p>
+                <p class="text-xs mt-1">${mensaje}</p>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(container);
+          
+          // Eliminar el mensaje después de 5 segundos
+          setTimeout(() => {
+            if (document.body.contains(container)) {
+              container.remove();
+            }
+          }, 5000);
+        }
+        
+        function mostrarMensajeError(titulo, mensaje) {
+          const container = document.createElement('div');
+          container.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+          container.innerHTML = `
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">${titulo}</p>
+                <p class="text-xs mt-1">${mensaje}</p>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(container);
+          
+          // Eliminar el mensaje después de 5 segundos
+          setTimeout(() => {
+            if (document.body.contains(container)) {
+              container.remove();
+            }
+          }, 5000);
+        }
+        
+        function mostrarMensajeInfo(titulo, mensaje) {
+          const container = document.createElement('div');
+          container.className = 'fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-md z-50';
+          container.innerHTML = `
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">${titulo}</p>
+                <p class="text-xs mt-1">${mensaje}</p>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(container);
+          
+          // Eliminar el mensaje después de 5 segundos
+          setTimeout(() => {
+            if (document.body.contains(container)) {
+              container.remove();
+            }
+          }, 5000);
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar servicios:', error);
+      });
+  });
+</script>

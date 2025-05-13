@@ -1,0 +1,97 @@
+---
+// [id].astro - Página principal de detalle de animal refactorizada para usar componentes
+import MainLayout from '../../components/layout/MainLayout.astro';
+import AnimalDetails from '../../components/animals/AnimalDetails.astro';
+import AnimalTabs from '../../components/animals/AnimalTabs.astro';
+
+// Obtener datos del animal
+const { id } = Astro.params;
+const userRole = Astro.cookies.get('userRole')?.value || 'user';
+let animal = null;
+let loading = true;
+let error = null;
+let title = 'Cargando animal...';
+
+// Variable para mostrar o no la pestaña de partos
+let showPartosTab = false;
+
+try {
+  // Obtener detalles del animal desde la API
+  const response = await fetch(`http://localhost:8000/api/v1/animals/${id}`);
+  if (!response.ok) {
+    throw new Error(`Error al cargar el animal: ${response.status} ${response.statusText}`);
+  }
+  
+  // Parsear la respuesta
+  const responseData = await response.json();
+  animal = responseData.data || responseData;
+  
+  // Configurar el título de la página
+  title = `Detalle de ${animal.nom}`;
+  
+  // Determinar si el animal tiene partos y es hembra para mostrar la pestaña
+  showPartosTab = animal.genere === 'F';
+
+  loading = false;
+} catch (err) {
+  console.error('Error al cargar el animal:', err);
+  error = err.message || 'Error al cargar los datos del animal';
+  loading = false;
+  title = 'Error al cargar animal';
+}
+---
+
+<MainLayout title={title} userRole={userRole}>
+  {loading && (
+    <div class="flex justify-center items-center py-10">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      <span class="ml-3">Cargando...</span>
+    </div>
+  )}
+
+  {error && (
+    <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          ⚠️
+        </div>
+        <div class="ml-3">
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error</h3>
+          <div class="mt-2 text-red-700 dark:text-red-200">
+            <p>{error}</p>
+          </div>
+          <div class="mt-4">
+            <button 
+              id="retry-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              ↻ Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {animal && (
+    <>
+      <AnimalDetails animal={animal} id={id} />
+      <AnimalTabs animal={animal} showPartosTab={showPartosTab} />
+    </>
+  )}
+</MainLayout>
+
+<script>
+  // Script mínimo necesario para la página principal
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de detalle de animal cargada');
+    
+    // Botón de reintento en caso de error
+    const retryButton = document.getElementById('retry-button');
+    if (retryButton) {
+      retryButton.addEventListener('click', function() {
+        window.location.reload();
+      });
+    }
+  });
+</script>
