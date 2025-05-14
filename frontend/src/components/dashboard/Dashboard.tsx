@@ -1346,7 +1346,7 @@ const Dashboard: React.FC = () => {
       )}
       
       {/* SECCIÓN 1: Resumen General - Estadísticas clave */}
-      <SectionTitle number="1" title="Resumen General" darkMode={darkMode} />
+      <SectionTitle number="1" title="Resumen General" darkMode={darkMode} translationKey="dashboard.summary" />
       <div className="stats-grid-lg">
         <ResumenGeneralSection 
           statsData={statsData} 
@@ -1357,7 +1357,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* SECCIÓN 2: Análisis de Partos - Estadísticas y gráficos */}
-      <SectionTitle number="2" title="Análisis de Partos" darkMode={darkMode} />
+      <SectionTitle number="2" title="Análisis de Partos" darkMode={darkMode} translationKey="dashboard.partos_analysis" />
       <div className="stats-grid-lg">
         <PartosSection 
           statsData={statsData} 
@@ -1369,7 +1369,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* SECCIÓN 3: Principales Explotaciones */}
-      <SectionTitle number="3" title="Principales Explotaciones" darkMode={darkMode} />
+      <SectionTitle number="3" title="Principales Explotaciones" darkMode={darkMode} translationKey="dashboard.exploitations" />
       <div className="stats-grid-lg">
         {/* Usamos el componente original, pero nos aseguramos de eliminar duplicados primero */}
         <ExplotacionesSection 
