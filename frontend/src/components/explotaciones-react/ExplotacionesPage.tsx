@@ -62,6 +62,7 @@ const ExplotacionesPage: React.FC = () => {
 
   // Estados
   const [explotacionesData, setExplotacionesData] = useState<ExplotacionInfo[]>([]);
+  const [displayExplotaciones, setDisplayExplotaciones] = useState<ExplotacionInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,11 +75,83 @@ const ExplotacionesPage: React.FC = () => {
     vacas: 0,
     terneros: 0
   });
+  
+  // Estado para detectar si estamos en vista móvil
+  const [isMobileView, setIsMobileView] = useState(false);
+  // Estados para ordenación
+  const [sortField, setSortField] = useState<'explotacio' | 'total'>('explotacio');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Cargar datos iniciales
   useEffect(() => {
     loadInitialData();
   }, []);
+  
+  // Efecto para detectar el ancho de la pantalla
+  useEffect(() => {
+    const checkScreenWidth = () => {
+      const isMobile = window.innerWidth < 640; // sm breakpoint en Tailwind es 640px
+      setIsMobileView(isMobile);
+      
+      // Cuando cambiamos a móvil, asegurar que el orden es por total de animales
+      if (isMobile && (sortField !== 'total' || sortDirection !== 'desc')) {
+        setSortField('total');
+        setSortDirection('desc');
+      }
+    };
+    
+    // Comprobar al inicio
+    checkScreenWidth();
+    
+    // Añadir listener para cambios de tamaño
+    window.addEventListener('resize', checkScreenWidth);
+    return () => window.removeEventListener('resize', checkScreenWidth);
+  }, [sortField, sortDirection]);
+  
+  // Función para ordenar las explotaciones
+  const sortExplotaciones = (explotaciones: ExplotacionInfo[]) => {
+    if (!explotaciones) return [];
+    
+    // En móvil, siempre ordenar por cantidad de animales (mayor a menor)
+    if (isMobileView) {
+      return [...explotaciones].sort((a, b) => {
+        const aTotal = a.total || 0;
+        const bTotal = b.total || 0;
+        return bTotal - aTotal; // Orden descendente por total en móvil
+      });
+    }
+    
+    // En desktop, seguir el criterio de ordenación elegido
+    return [...explotaciones].sort((a, b) => {
+      if (sortField === 'explotacio') {
+        return sortDirection === 'asc' 
+          ? a.explotacio.localeCompare(b.explotacio)
+          : b.explotacio.localeCompare(a.explotacio);
+      } else if (sortField === 'total') {
+        const aTotal = a.total || 0;
+        const bTotal = b.total || 0;
+        return sortDirection === 'asc' ? aTotal - bTotal : bTotal - aTotal;
+      }
+      return a.explotacio.localeCompare(b.explotacio);
+    });
+  };
+
+  // Efecto para ordenar y filtrar explotaciones cuando cambian los datos, los criterios de ordenación o la vista
+  useEffect(() => {
+    if (!explotacionesData.length) return;
+    
+    let dataToDisplay = sortExplotaciones(explotacionesData);
+    
+    // Aplicar filtro de búsqueda si existe
+    if (searchTerm.trim() !== '') {
+      dataToDisplay = dataToDisplay.filter(exp => 
+        exp.explotacio.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Actualizar las explotaciones a mostrar
+    setDisplayExplotaciones(dataToDisplay);
+  }, [explotacionesData, searchTerm, isMobileView, sortField, sortDirection]);
 
   // Filtrar animales por categoría cuando cambia la categoría activa o la lista de animales
   useEffect(() => {
@@ -632,24 +705,24 @@ const ExplotacionesPage: React.FC = () => {
           {/* Vista de tarjetas de explotaciones */}
           <div 
             id="explotacionCards" 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
+            className="grid grid-cols-1 gap-0 mb-6"
             style={{ display: currentExplotacion ? 'none' : 'grid' }}
           >
-            {explotacionesData.map((exp) => (
+            {displayExplotaciones.map((exp) => (
               <div 
                 key={exp.explotacio} 
-                className="explotacion-card"
+                className="explotacion-card bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden w-full border border-gray-100 mb-4"
                 onClick={() => showExplotacionDetail(exp.explotacio)}
               >
                 {/* Cabecera con el nombre de la explotación */}
-                <div className="card-header">
-                  <h3>{exp.explotacio}</h3>
+                <div className="card-header bg-primary text-white p-3">
+                  <h3 className="text-lg font-bold">{exp.explotacio}</h3>
                 </div>
                 
                 {/* Cuerpo de la tarjeta */}
-                <div className="card-body">
+                <div className="card-body p-4">
                   {/* Primera fila: Total y Partos */}
-                  <div className="total-stats">
+                  <div className="total-stats grid grid-cols-2 gap-4 mb-3">
                     <div>
                       <div className="stat-label">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
                       <div className="stat-value total">{exp.total || 0}</div>
