@@ -1,79 +1,142 @@
 ---
-// Importar el layout
+// Importar el layout y sistema de traducción
 import MainLayout from '../../components/layout/MainLayout.astro';
 
+// Obtener el idioma del usuario desde cookies o localStorage
+const userLanguage = Astro.cookies.get('userLanguage')?.value || 'es';
+
+// Traducciones
+const translations = {
+  es: {
+    title: "Backup del Sistema",
+    subtitle: "Gestiona y restaura copias de seguridad del sistema",
+    createBackup: "Crear copia de seguridad",
+    createDesc: "Crea una copia de seguridad completa de la base de datos, incluyendo todos los animales, partos y configuraciones del sistema.",
+    includeAnimals: "Incluir datos de animales",
+    includeBirths: "Incluir datos de partos",
+    includeConfig: "Incluir configuración de usuarios",
+    createButton: "Crear backup ahora",
+    restoreBackup: "Restaurar copia de seguridad",
+    restoreDesc: "Restaura el sistema a partir de una copia de seguridad previamente creada.",
+    warning: "¡Precaución! Esta acción reemplazará todos los datos actuales.",
+    selectFile: "Selecciona un archivo de backup",
+    or: "o",
+    selectButton: "Seleccionar archivo",
+    restoreButton: "Restaurar sistema",
+    historyTitle: "Historial de copias de seguridad",
+    date: "Fecha",
+    size: "Tamaño",
+    createdBy: "Creado por",
+    content: "Contenido",
+    actions: "Acciones",
+    complete: "Completo",
+    download: "Descargar",
+    restore: "Restaurar",
+    delete: "Eliminar"
+  },
+  ca: {
+    title: "Backup del Sistema",
+    subtitle: "Gestiona i restaura còpies de seguretat del sistema",
+    createBackup: "Crear còpia de seguretat",
+    createDesc: "Crea una còpia de seguretat completa de la base de dades, incloent-hi tots els animals, parts i configuracions del sistema.",
+    includeAnimals: "Incloure dades d'animals",
+    includeBirths: "Incloure dades de parts",
+    includeConfig: "Incloure configuració d'usuaris",
+    createButton: "Crear backup ara",
+    restoreBackup: "Restaurar còpia de seguretat",
+    restoreDesc: "Restaura el sistema a partir d'una còpia de seguretat prèviament creada.",
+    warning: "Precaució! Aquesta acció reemplaçarà totes les dades actuals.",
+    selectFile: "Selecciona un arxiu de backup",
+    or: "o",
+    selectButton: "Seleccionar arxiu",
+    restoreButton: "Restaurar sistema",
+    historyTitle: "Historial de còpies de seguretat",
+    date: "Data",
+    size: "Mida",
+    createdBy: "Creat per",
+    content: "Contingut",
+    actions: "Accions",
+    complete: "Complet",
+    download: "Descarregar",
+    restore: "Restaurar",
+    delete: "Eliminar"
+  }
+};
+
+// Obtener las traducciones según el idioma seleccionado
+const t = translations[userLanguage as keyof typeof translations] || translations.es;
+
 // Definir título y rol de usuario
-const title = "Backup del Sistema";
+const title = t.title;
 const userRole = "administrador"; // Simulación de rol
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/backup">
   <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-300">Gestiona y restaura copias de seguridad del sistema</p>
+    <p class="text-gray-600 dark:text-gray-300">{t.subtitle}</p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <!-- Crear backup -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Crear copia de seguridad</h2>
+      <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">{t.createBackup}</h2>
       <p class="text-gray-600 dark:text-gray-300 mb-4">
-        Crea una copia de seguridad completa de la base de datos, incluyendo todos los animales, 
-        partos y configuraciones del sistema.
+        {t.createDesc}
       </p>
       <div class="space-y-4">
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
             <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
-            <span>Incluir datos de animales</span>
+            <span>{t.includeAnimals}</span>
           </label>
         </div>
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
             <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
-            <span>Incluir datos de partos</span>
+            <span>{t.includeBirths}</span>
           </label>
         </div>
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
             <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
-            <span>Incluir configuración de usuarios</span>
+            <span>{t.includeConfig}</span>
           </label>
         </div>
       </div>
-      <button class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors">Crear backup ahora</button>
+      <button class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors">{t.createButton}</button>
     </div>
 
     <!-- Restaurar backup -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Restaurar copia de seguridad</h2>
+      <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">{t.restoreBackup}</h2>
       <p class="text-gray-600 dark:text-gray-300 mb-4">
-        Restaura el sistema a partir de una copia de seguridad previamente creada.
-        <span class="font-semibold text-amber-600 dark:text-amber-400">¡Precaución! Esta acción reemplazará todos los datos actuales.</span>
+        {t.restoreDesc}
+        <span class="font-semibold text-amber-600 dark:text-amber-400">{t.warning}</span>
       </p>
       <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 mb-4 text-center">
         <div class="text-gray-500 dark:text-gray-400">
-          <p class="mb-2">Selecciona un archivo de backup</p>
-          <p class="text-sm">o</p>
-          <button class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">Seleccionar archivo</button>
+          <p class="mb-2">{t.selectFile}</p>
+          <p class="text-sm">{t.or}</p>
+          <button class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">{t.selectButton}</button>
         </div>
       </div>
-      <button class="w-full px-4 py-2 bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>Restaurar sistema</button>
+      <button class="w-full px-4 py-2 bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>{t.restoreButton}</button>
     </div>
   </div>
 
   <!-- Historial de backups -->
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700">
-    <h3 class="px-6 py-4 bg-gray-50 dark:bg-gray-700 text-lg font-semibold text-gray-800 dark:text-white">Historial de copias de seguridad</h3>
+    <h3 class="px-6 py-4 bg-gray-50 dark:bg-gray-700 text-lg font-semibold text-gray-800 dark:text-white">{t.historyTitle}</h3>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tamaño</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creado por</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contenido</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.date}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.size}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.createdBy}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.content}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.actions}</th>
           </tr>
         </thead>
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -82,13 +145,13 @@ const userRole = "administrador"; // Simulación de rol
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">15.2 MB</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">admin@mascletimperi.com</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Completo</span>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">{t.complete}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
-                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">Descargar</button>
-                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">Restaurar</button>
-                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Eliminar</button>
+                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{t.download}</button>
+                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">{t.restore}</button>
+                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">{t.delete}</button>
               </div>
             </td>
           </tr>
@@ -97,13 +160,13 @@ const userRole = "administrador"; // Simulación de rol
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">14.8 MB</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">admin@mascletimperi.com</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Completo</span>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">{t.complete}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
-                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">Descargar</button>
-                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">Restaurar</button>
-                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Eliminar</button>
+                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{t.download}</button>
+                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">{t.restore}</button>
+                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">{t.delete}</button>
               </div>
             </td>
           </tr>
