@@ -1,17 +1,7 @@
 ---
-import MainLayout from '../../components/layout/MainLayout.astro';
-
-// Obtener datos de la sesión del usuario
-const userRole = Astro.cookies.get('userRole')?.value || 'admin';
-const title = "Explotaciones";
+// Redirección a la nueva ruta de explotaciones
+return Astro.redirect('/explotaciones-react');
 ---
-
-<MainLayout title={title} userRole={userRole} currentPath="/explotacions">
-  <div class="container mx-auto px-4 py-4 sm:py-6">
-    <div class="mb-4 sm:mb-6">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">Agrupaciones de animales por explotación</p>
-    </div>
 
     <!-- Controles y filtros -->
     <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">

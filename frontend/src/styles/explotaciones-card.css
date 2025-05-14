@@ -15,7 +15,8 @@
 }
 
 .explotacion-card .card-header {
-  background-color: var(--color-primary, #8BC34A);
+  /* Verde corporativo exactamente igual al de la barra de navegación (bg-primary) */
+  background-color: #8BC34A;
   padding: 1rem;
 }
 
@@ -68,11 +69,11 @@
 
 .explotacion-card .stat-value.total,
 .explotacion-card .stat-value.partos {
-  color: var(--color-primary, #8BC34A);
+  color: #8BC34A; /* Verde corporativo */
 }
 
 .explotacion-card .stat-value.toros {
-  color: #3B82F6; /* blue-500 */
+  color: #8BC34A; /* Verde corporativo */
 }
 
 .explotacion-card .stat-value.vacas {
@@ -84,7 +85,7 @@
 }
 
 .explotacion-card .stat-value.vacas-amam {
-  color: #10B981; /* green-500 */
+  color: #8BC34A; /* Verde corporativo */
 }
 
 .explotacion-card .stat-value.vacas-no-amam {
@@ -106,7 +107,7 @@
 }
 
 .explotacion-card .card-footer .details-link {
-  color: var(--color-primary, #8BC34A);
+  color: #8BC34A; /* Verde corporativo */
   font-size: 0.875rem;
 }
 
