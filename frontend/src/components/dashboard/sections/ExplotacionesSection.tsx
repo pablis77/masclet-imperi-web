@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { DashboardCard, CardLabel } from '../components/UIComponents';
 import type { ExplotacionInfo } from '../types';
+import { t } from '../../../i18n/config';
 
 // Asegurarnos de que los campos necesarios están disponibles
 declare module '../types' {
@@ -35,8 +36,26 @@ const ExplotacionesSection: React.FC<ExplotacionesSectionProps> = ({
   loading, 
   error 
 }) => {
+  // Estado para el idioma actual
+  const [currentLang, setCurrentLang] = useState('es');
+  
+  // Obtener el idioma actual del localStorage
+  useEffect(() => {
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+    
+    // Escuchar cambios de idioma
+    const handleLanguageChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+    
+    window.addEventListener('storage', handleLanguageChange);
+    return () => window.removeEventListener('storage', handleLanguageChange);
+  }, []);
   if (loading) {
-    return <div className="col-span-12 text-center py-4">Cargando información de explotaciones...</div>;
+    return <div className="col-span-12 text-center py-4">{t('dashboard.loading_exploitations', currentLang)}</div>;
   }
   
   if (error) {
@@ -48,12 +67,12 @@ const ExplotacionesSection: React.FC<ExplotacionesSectionProps> = ({
   }
   
   if (!explotaciones || explotaciones.length === 0) {
-    return <div className="col-span-12 text-center py-4">No hay datos de explotaciones disponibles</div>;
+    return <div className="col-span-12 text-center py-4">{t('dashboard.no_exploitations_data', currentLang)}</div>;
   }
 
   return (
     <DashboardCard 
-      title="Explotaciones" 
+      title={t('dashboard.exploitations', currentLang)} 
       darkMode={darkMode}
       className="col-span-12"
     >
@@ -75,56 +94,56 @@ const ExplotacionesSection: React.FC<ExplotacionesSectionProps> = ({
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Explotación</th>
+              }}>{t('dashboard.exploitation', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Total Activos</th>
+              }}>{t('dashboard.total_active', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Toros Activos</th>
+              }}>{t('dashboard.active_bulls', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Vacas amamantando 1 ternero</th>
+              }}>{t('dashboard.cows_nursing_one', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Vacas amamantando 2 terneros</th>
+              }}>{t('dashboard.cows_nursing_two', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Vacas no amamantando</th>
+              }}>{t('dashboard.cows_not_nursing', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Partos</th>
+              }}>{t('dashboard.births', currentLang)}</th>
               <th style={{
                 padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 color: darkMode ? '#f9fafb' : '#111827'
-              }}>Ratio</th>
+              }}>{t('dashboard.ratio', currentLang)}</th>
             </tr>
           </thead>
           <tbody>
