@@ -11,6 +11,37 @@ const {
   version = "1.0.0"
 } = Astro.props;
 
+// Importar config de idioma
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor para la renderización inicial
+const serverLang = getCurrentLanguage();
+
+// Traducciones para el footer
+const translations = {
+  es: {
+    rights_reserved: "Todos los derechos reservados",
+    version: "Versión",
+    about: "Acerca de",
+    help: "Ayuda",
+    privacy: "Privacidad",
+    terms: "Términos"
+  },
+  ca: {
+    rights_reserved: "Tots els drets reservats",
+    version: "Versió",
+    about: "Sobre nosaltres",
+    help: "Ajuda",
+    privacy: "Privacitat",
+    terms: "Termes"
+  }
+};
+
+// Función para obtener traducción
+function t(key: string): string {
+  return translations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
 // Obtener el año actual
 const currentYear = new Date().getFullYear();
 ---
@@ -23,11 +54,11 @@ const currentYear = new Date().getFullYear();
         <img src="/images/logo_masclet.png" alt="Masclet Imperi" class="h-8 w-auto mr-3">
         <div>
           <p class="text-sm text-gray-600 dark:text-gray-300">
-            &copy; {currentYear} Masclet Imperi - Todos los derechos reservados
+            &copy; {currentYear} Masclet Imperi - {t('rights_reserved')}
           </p>
           {showVersion && (
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Versión {version}
+              {t('version')} {version}
             </p>
           )}
         </div>
@@ -36,16 +67,16 @@ const currentYear = new Date().getFullYear();
       <!-- Enlaces útiles -->
       <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 md:mb-0">
         <a href="/about" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
-          Acerca de
+          {t('about')}
         </a>
         <a href="/help" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
-          Ayuda
+          {t('help')}
         </a>
         <a href="/privacy" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
-          Privacidad
+          {t('privacy')}
         </a>
         <a href="/terms" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
-          Términos
+          {t('terms')}
         </a>
       </div>
       
@@ -66,6 +97,77 @@ const currentYear = new Date().getFullYear();
 </footer>
 
 <script>
+  // Traducciones para el cliente
+  const translations = {
+    es: {
+      rights_reserved: "Todos los derechos reservados",
+      version: "Versión",
+      about: "Acerca de",
+      help: "Ayuda",
+      privacy: "Privacidad",
+      terms: "Términos"
+    },
+    ca: {
+      rights_reserved: "Tots els drets reservats",
+      version: "Versió",
+      about: "Sobre nosaltres",
+      help: "Ajuda",
+      privacy: "Privacitat",
+      terms: "Termes"
+    }
+  };
+
+  // Función para obtener traducción
+  function t(key, lang) {
+    return translations[lang]?.[key] || key;
+  }
+
+  // Función para traducir el footer
+  function translateFooter() {
+    const currentLang = localStorage.getItem('userLanguage') || 'es';
+    
+    // Traducir los derechos reservados
+    const rightsText = document.querySelector('.text-sm.text-gray-600.dark\\:text-gray-300');
+    if (rightsText) {
+      const yearText = rightsText.textContent.split('-')[0].trim();
+      rightsText.textContent = `${yearText} - ${t('rights_reserved', currentLang)}`;
+    }
+    
+    // Traducir la versión
+    const versionText = document.querySelector('.text-xs.text-gray-500');
+    if (versionText) {
+      const versionNumber = versionText.textContent.split(' ').pop();
+      versionText.textContent = `${t('version', currentLang)} ${versionNumber}`;
+    }
+    
+    // Traducir los enlaces
+    const links = document.querySelectorAll('.flex.flex-wrap.justify-center a');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === '/about') {
+        link.textContent = t('about', currentLang);
+      } else if (href === '/help') {
+        link.textContent = t('help', currentLang);
+      } else if (href === '/privacy') {
+        link.textContent = t('privacy', currentLang);
+      } else if (href === '/terms') {
+        link.textContent = t('terms', currentLang);
+      }
+    });
+  }
+  
+  // Ejecutar traducción inicial
+  document.addEventListener('DOMContentLoaded', () => {
+    translateFooter();
+  });
+  
+  // Retraducir cuando cambie el idioma
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'userLanguage') {
+      translateFooter();
+    }
+  });
+
   // Setup del botón de contraste en el footer
   const footerContrastToggle = document.getElementById('footer-contrast-toggle');
   

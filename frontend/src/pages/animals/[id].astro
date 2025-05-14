@@ -2,12 +2,127 @@
 // Importar el layout y componentes
 import MainLayout from '../../components/layout/MainLayout.astro';
 import animalService from '../../services/animalService';
+import { getCurrentLanguage } from '../../i18n/config';
 
 // Obtener el ID del animal de los parámetros de la URL
 const { id } = Astro.params;
 
+// Obtener el idioma actual para renderizado en servidor
+const serverLang = getCurrentLanguage();
+
+// Traducciones para la ficha de animal
+const translations = {
+  es: {
+    title: "Ficha de Animal",
+    back_to_list: "Volver al listado",
+    animal_id: "ID Animal",
+    loading: "Cargando datos del animal...",
+    error_title: "Error",
+    retry: "Reintentar",
+    active: "Activo",
+    inactive: "Baja",
+    dead: "Fallecido",
+    update: "Actualizar",
+    code: "Código",
+    name: "Nombre",
+    serial_number: "Número de Serie",
+    gender: "Sexo",
+    male: "Macho",
+    female: "Hembra",
+    birth_date: "Fecha de nacimiento",
+    not_available: "No disponible",
+    incorrect_date: "Fecha incorrecta",
+    status: "Estado",
+    exploitation: "Explotación",
+    stable: "Cuadra",
+    not_assigned: "No asignada",
+    father: "Padre",
+    mother: "Madre",
+    nursing_status: "Estado de amamantamiento",
+    not_nursing: "No amamanta",
+    nursing_one: "Amamanta a un ternero",
+    nursing_two: "Amamanta a dos terneros",
+    back_to_animal_list: "Volver al listado de animales",
+    complete_info_tab: "Información Completa",
+    birth_history_tab: "Historial de Partos",
+    changes_history_tab: "Historial de Cambios",
+    identification_data: "Datos de Identificación",
+    general_data: "Datos Generales",
+    birth_history: "Historial de Partos",
+    birth_registry: "Registro de todos los partos del animal",
+    no_births: "Este animal no tiene partos registrados",
+    date: "Fecha",
+    gender_label: "Género",
+    observations: "Observaciones",
+    changes_history: "Historial de Cambios",
+    changes_registry: "Registro de cambios realizados al animal",
+    no_changes: "No hay cambios registrados para este animal",
+    changes_date: "Fecha",
+    changes_user: "Usuario",
+    changes_field: "Campo",
+    changes_old_value: "Valor anterior",
+    changes_new_value: "Valor nuevo"
+  },
+  ca: {
+    title: "Fitxa d'Animal",
+    back_to_list: "Tornar al llistat",
+    animal_id: "ID Animal",
+    loading: "Carregant dades de l'animal...",
+    error_title: "Error",
+    retry: "Reintentar",
+    active: "Actiu",
+    inactive: "Baixa",
+    dead: "Mort",
+    update: "Actualitzar",
+    code: "Codi",
+    name: "Nom",
+    serial_number: "Número de Sèrie",
+    gender: "Sexe",
+    male: "Mascle",
+    female: "Femella",
+    birth_date: "Data de naixement",
+    not_available: "No disponible",
+    incorrect_date: "Data incorrecta",
+    status: "Estat",
+    exploitation: "Explotació",
+    stable: "Quadra",
+    not_assigned: "No assignada",
+    father: "Pare",
+    mother: "Mare",
+    nursing_status: "Estat d'alletament",
+    not_nursing: "No alleta",
+    nursing_one: "Alleta un vedell",
+    nursing_two: "Alleta dos vedells",
+    back_to_animal_list: "Tornar al llistat d'animals",
+    complete_info_tab: "Informació Completa",
+    birth_history_tab: "Historial de Parts",
+    changes_history_tab: "Historial de Canvis",
+    identification_data: "Dades d'Identificació",
+    general_data: "Dades Generals",
+    birth_history: "Historial de Parts",
+    birth_registry: "Registre de tots els parts de l'animal",
+    no_births: "Aquest animal no té parts registrats",
+    date: "Data",
+    gender_label: "Gènere",
+    observations: "Observacions",
+    changes_history: "Historial de Canvis",
+    changes_registry: "Registre de canvis realitzats a l'animal",
+    no_changes: "No hi ha canvis registrats per a aquest animal",
+    changes_date: "Data",
+    changes_user: "Usuari",
+    changes_field: "Camp",
+    changes_old_value: "Valor anterior",
+    changes_new_value: "Valor nou"
+  }
+};
+
+// Función para obtener traducción según idioma
+function t(key) {
+  return translations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
 // Definir título y rol de usuario
-const title = "Ficha de Animal";
+const title = t('title');
 const userRole = "administrador"; // Simulación de rol
 
 // Variables para almacenar datos y estado
@@ -51,18 +166,18 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   <div class="mb-6">
     <div class="flex items-center gap-2 mb-2">
       <a href="/animals" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
-        <span class="mr-1">←</span> Volver al listado
+        <span class="mr-1">←</span> {t('back_to_list')}
       </a>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-300">ID Animal: {id}</p>
+    <p class="text-gray-600 dark:text-gray-300">{t('animal_id')}: {id}</p>
   </div>
 
   {loading && (
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center">
       <div class="flex items-center space-x-2">
         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-        <p>Cargando datos del animal...</p>
+        <p>{t('loading')}</p>
       </div>
     </div>
   )}
@@ -74,7 +189,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           ⚠️
         </div>
         <div class="ml-3">
-          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">Error</h3>
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">{t('error_title')}</h3>
           <div class="mt-2 text-red-700 dark:text-red-200">
             <p>{error}</p>
           </div>
@@ -83,7 +198,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               id="retry-button"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
-              ↻ Reintentar
+              ↻ {t('retry')}
             </button>
           </div>
         </div>
@@ -109,7 +224,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <div class="flex flex-col items-center md:items-start">
             <div class="text-6xl mb-3">{icon}</div>
             <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
-              {animal.estat === 'ACT' ? 'Activo' : 'Baja'}
+              {animal.estat === 'ACT' ? t('active') : t('inactive')}
             </span>
           </div>
           
@@ -118,15 +233,15 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
-                <p class="font-medium">{animal.cod || 'No disponible'}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('code')}</p>
+                <p class="font-medium">{animal.cod || t('not_available')}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('gender')}</p>
+                <p class="font-medium">{animal.genere === 'M' ? t('male') : t('female')}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('birth_date')}</p>
                 <p class="font-medium">
                   {animal.dob ? 
                     (() => {
@@ -154,28 +269,28 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                         
                         return String(animal.dob);
                       } catch (e) {
-                        return 'Fecha incorrecta';
+                        return t('incorrect_date');
                       }
                     })() 
-                    : 'No disponible'
+                    : t('not_available')
                   }
                 </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
-                <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('exploitation')}</p>
+                <p class="font-medium">{animal.explotacio || t('not_available')}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
-                <p class="font-medium">{animal.quadra || 'No asignada'}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
+                <p class="font-medium">{animal.quadra || t('not_assigned')}</p>
               </div>
               {animal.genere === 'F' && (
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Estado amamantamiento</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{t('nursing_status')}</p>
                   <p class="font-medium">
-                    {animal.alletar === '0' ? 'No amamanta' : 
-                     animal.alletar === '1' ? 'Amamanta un ternero' : 
-                     animal.alletar === '2' ? 'Amamanta dos terneros' : 'No disponible'}
+                    {animal.alletar === '0' ? t('not_nursing') : 
+                     animal.alletar === '1' ? t('nursing_one') : 
+                     animal.alletar === '2' ? t('nursing_two') : t('not_available')}
                   </p>
                 </div>
               )}
@@ -185,7 +300,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <!-- Acciones -->
           <div class="flex flex-col gap-2">
             <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-              ↻ Actualizar
+              ↻ {t('update')}
             </a>
           </div>
         </div>
@@ -196,15 +311,15 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         <!-- Pestañas de navegación -->
         <div class="flex border-b border-gray-200 dark:border-gray-700">
           <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
-            Información Completa
+            {t('complete_info_tab')}
           </button>
           {showPartosTab && (
             <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-              Historial de Partos
+              {t('birth_history_tab')}
             </button>
           )}
           <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-            Historial de Cambios
+            {t('changes_history_tab')}
           </button>
         </div>
 
@@ -214,32 +329,32 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <div id="content-info">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos de Identificación</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('identification_data')}</h3>
                 <div class="space-y-3">
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
-                    <p class="font-medium">{animal.cod || 'No disponible'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('code')}</p>
+                    <p class="font-medium">{animal.cod || t('not_available')}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Nombre</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('name')}</p>
                     <p class="font-medium">{animal.nom}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Serie</p>
-                    <p class="font-medium">{animal.num_serie || 'No disponible'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('serial_number')}</p>
+                    <p class="font-medium">{animal.num_serie || t('not_available')}</p>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Datos Generales</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('general_data')}</h3>
                 <div class="space-y-3">
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                    <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('gender')}</p>
+                    <p class="font-medium">{animal.genere === 'M' ? t('male') : t('female')}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('birth_date')}</p>
                     <p class="font-medium">
                       {animal.dob ? 
                         (() => {
@@ -256,16 +371,16 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                             }
                             return String(animal.dob);
                           } catch (e) {
-                            return 'Fecha incorrecta';
+                            return t('incorrect_date');
                           }
                         })() 
-                        : 'No disponible'
+                        : t('not_available')
                       }
                     </p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
-                    <p class="font-medium">{animal.estado === 'OK' ? 'Activo' : 'Fallecido'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('status')}</p>
+                    <p class="font-medium">{animal.estado === 'OK' ? t('active') : t('dead')}</p>
                   </div>
                 </div>
               </div>
@@ -274,12 +389,12 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                 <!-- Eliminado encabezado de Ubicación -->
                 <div class="space-y-3">
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
-                    <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('exploitation')}</p>
+                    <p class="font-medium">{animal.explotacio || t('not_available')}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Cuadra</p>
-                    <p class="font-medium">{animal.quadra || 'No asignada'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
+                    <p class="font-medium">{animal.quadra || t('not_assigned')}</p>
                   </div>
                 </div>
               </div>
@@ -288,20 +403,20 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                 <!-- Eliminado encabezado de Parentesco -->
                 <div class="space-y-3">
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Padre</p>
-                    <p class="font-medium">{animal.pare || 'No disponible'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('father')}</p>
+                    <p class="font-medium">{animal.pare || t('not_available')}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Madre</p>
-                    <p class="font-medium">{animal.mare || 'No disponible'}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('mother')}</p>
+                    <p class="font-medium">{animal.mare || t('not_available')}</p>
                   </div>
                   {animal.genere === 'F' && (
                     <div>
-                      <p class="text-sm text-gray-500 dark:text-gray-400">Estado de amamantamiento</p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">{t('nursing_status')}</p>
                       <p class="font-medium">
-                        {animal.alletar === '0' ? 'No amamanta' : 
-                         animal.alletar === '1' ? 'Amamanta a un ternero' : 
-                         animal.alletar === '2' ? 'Amamanta a dos terneros' : 'No disponible'}
+                        {animal.alletar === '0' ? t('not_nursing') : 
+                         animal.alletar === '1' ? t('nursing_one') : 
+                         animal.alletar === '2' ? t('nursing_two') : t('not_available')}
                       </p>
                     </div>
                   )}
@@ -311,7 +426,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               <!-- Botón Volver al listado al final de la pestaña Información -->
               <div class="mt-6 text-center">
                 <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  <span class="mr-2">←</span> Volver al listado de animales
+                  <span class="mr-2">←</span> {t('back_to_animal_list')}
                 </a>
               </div>
             </div>
@@ -320,8 +435,8 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
           <div id="content-partos" class="hidden">
             <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos</h3>
-              <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{t('birth_history')}</h3>
+              <p class="text-gray-500 dark:text-gray-400">{t('birth_registry')}</p>
             </div>
             {showPartosTab && (
               
@@ -330,11 +445,11 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                   <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-fecha">
-                        Fecha <span class="ml-1 sort-indicator">↑</span>
+                        {t('date')} <span class="ml-1 sort-indicator">↑</span>
                       </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Observaciones</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">{t('gender_label')}</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">{t('status')}</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('observations')}</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -431,7 +546,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
             )}
             <div class="p-6 text-center text-gray-500 dark:text-gray-400">
               {!showPartosTab && (
-                <p>Este animal no tiene partos registrados</p>
+                <p>{t('no_births')}</p>
               )}
               
               <!-- Botón Volver al listado al final de la pestaña Partos -->
@@ -446,18 +561,17 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
           <div id="content-changes" class="hidden">
             <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Cambios</h3>
-              <p class="text-gray-500 dark:text-gray-400">Actualmente no se registran cambios históricos en la ficha del animal</p>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{t('changes_history')}</h3>
+              <p class="text-gray-500 dark:text-gray-400">{t('changes_registry')}</p>
             </div>
-            
             <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-              <p>No hay datos históricos disponibles</p>
+              <p>{t('no_changes')}</p>
             </div>
             
             <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
             <div class="mt-6 text-center">
               <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                <span class="mr-2">←</span> Volver al listado de animales
+                <span class="mr-2">←</span> {t('back_to_animal_list')}
               </a>
             </div>
           </div>
@@ -475,9 +589,325 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 </MainLayout>
 
 <script>
-  // Script para manejar interacciones de la página
+  // Script para manejar interacciones de la página y traducciones
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente cargado y analizado');
+    
+    // Traducciones del lado del cliente
+    const translations = {
+      es: {
+        title: "Ficha de Animal",
+        back_to_list: "Volver al listado",
+        animal_id: "ID Animal",
+        loading: "Cargando datos del animal...",
+        error_title: "Error",
+        retry: "Reintentar",
+        active: "Activo",
+        inactive: "Baja",
+        dead: "Fallecido",
+        update: "Actualizar",
+        code: "Código",
+        name: "Nombre",
+        serial_number: "Número de Serie",
+        gender: "Sexo",
+        male: "Macho",
+        female: "Hembra",
+        birth_date: "Fecha de nacimiento",
+        not_available: "No disponible",
+        incorrect_date: "Fecha incorrecta",
+        status: "Estado",
+        exploitation: "Explotación",
+        stable: "Cuadra",
+        not_assigned: "No asignada",
+        father: "Padre",
+        mother: "Madre",
+        nursing_status: "Estado de amamantamiento",
+        not_nursing: "No amamanta",
+        nursing_one: "Amamanta a un ternero",
+        nursing_two: "Amamanta a dos terneros",
+        back_to_animal_list: "Volver al listado de animales",
+        complete_info_tab: "Información Completa",
+        birth_history_tab: "Historial de Partos",
+        changes_history_tab: "Historial de Cambios",
+        identification_data: "Datos de Identificación",
+        general_data: "Datos Generales",
+        birth_history: "Historial de Partos",
+        birth_registry: "Registro de todos los partos del animal",
+        no_births: "Este animal no tiene partos registrados",
+        date: "Fecha",
+        gender_label: "Género",
+        observations: "Observaciones",
+        changes_history: "Historial de Cambios",
+        changes_registry: "Registro de cambios realizados al animal",
+        no_changes: "No hay cambios registrados para este animal",
+        changes_date: "Fecha",
+        changes_user: "Usuario",
+        changes_field: "Campo",
+        changes_old_value: "Valor anterior",
+        changes_new_value: "Valor nuevo"
+      },
+      ca: {
+        title: "Fitxa d'Animal",
+        back_to_list: "Tornar al llistat",
+        animal_id: "ID Animal",
+        loading: "Carregant dades de l'animal...",
+        error_title: "Error",
+        retry: "Reintentar",
+        active: "Actiu",
+        inactive: "Baixa",
+        dead: "Mort",
+        update: "Actualitzar",
+        code: "Codi",
+        name: "Nom",
+        serial_number: "Número de Sèrie",
+        gender: "Sexe",
+        male: "Mascle",
+        female: "Femella",
+        birth_date: "Data de naixement",
+        not_available: "No disponible",
+        incorrect_date: "Data incorrecta",
+        status: "Estat",
+        exploitation: "Explotació",
+        stable: "Quadra",
+        not_assigned: "No assignada",
+        father: "Pare",
+        mother: "Mare",
+        nursing_status: "Estat d'alletament",
+        not_nursing: "No alleta",
+        nursing_one: "Alleta un vedell",
+        nursing_two: "Alleta dos vedells",
+        back_to_animal_list: "Tornar al llistat d'animals",
+        complete_info_tab: "Informació Completa",
+        birth_history_tab: "Historial de Parts",
+        changes_history_tab: "Historial de Canvis",
+        identification_data: "Dades d'Identificació",
+        general_data: "Dades Generals",
+        birth_history: "Historial de Parts",
+        birth_registry: "Registre de tots els parts de l'animal",
+        no_births: "Aquest animal no té parts registrats",
+        date: "Data",
+        gender_label: "Gènere",
+        observations: "Observacions",
+        changes_history: "Historial de Canvis",
+        changes_registry: "Registre de canvis realitzats a l'animal",
+        no_changes: "No hi ha canvis registrats per a aquest animal",
+        changes_date: "Data",
+        changes_user: "Usuari",
+        changes_field: "Camp",
+        changes_old_value: "Valor anterior",
+        changes_new_value: "Valor nou"
+      }
+    };
+
+    // Función para obtener traducción
+    function t(key, lang) {
+      return translations[lang]?.[key] || key;
+    }
+
+    // Función para traducir la ficha de animal
+    function translateAnimalFile() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Traducir título y encabezados principales
+      document.querySelector('h1.text-3xl').textContent = t('title', currentLang);
+      
+      // Corregir problema del enlace de volver al listado
+      const backLink = document.querySelector('a.flex.items-center.text-primary');
+      if (backLink) {
+        // Restablecer contenido correcto
+        backLink.innerHTML = `<span class="mr-1">←</span> ${t('back_to_list', currentLang)}`;
+      }
+      
+      // Corregir problema de ID duplicado
+      const idElement = document.querySelector('.text-gray-600.dark\\:text-gray-300');
+      if (idElement) {
+        const animalId = idElement.textContent.split(':')[1]?.trim() || '';
+        idElement.textContent = `${t('animal_id', currentLang)}: ${animalId}`;
+      }
+      
+      // Traducir elementos básicos
+      const elements = [
+        { selector: '.text-gray-600.dark\\:text-gray-300', key: 'animal_id', prefix: true },
+        { selector: '.animate-spin + p', key: 'loading', prefix: false },
+        { selector: '.text-lg.font-medium.text-red-800', key: 'error_title', prefix: false },
+        { selector: '#retry-button', key: 'retry', prefix: true },
+        { selector: 'a[href^="/animals/update"]', key: 'update', prefix: true },
+      ];
+      
+      elements.forEach(el => {
+        const element = document.querySelector(el.selector);
+        if (element) {
+          if (el.prefix) {
+            // Si tiene un prefijo (como un ícono), preservarlo
+            const text = element.innerHTML;
+            const iconPrefix = text.match(/.*?[^\w\s]/); // Captura todo hasta el primer no alfanumérico
+            if (iconPrefix) {
+              element.innerHTML = iconPrefix[0] + ' ' + t(el.key, currentLang);
+            } else {
+              element.textContent = t(el.key, currentLang);
+            }
+          } else {
+            element.textContent = t(el.key, currentLang);
+          }
+        }
+      });
+
+      // Traducir estado del animal
+      const estadoElement = document.querySelector('.px-3.py-1.rounded-full');
+      if (estadoElement) {
+        // Determinar si está activo o inactivo basado en la clase CSS
+        const isActive = estadoElement.classList.contains('bg-green-100') || 
+                         estadoElement.classList.contains('text-green-800');
+        estadoElement.textContent = isActive ? t('active', currentLang) : t('inactive', currentLang);
+      }
+      
+      // Traducir información del animal (resumen y detalle)
+      document.querySelectorAll('.text-sm.text-gray-500').forEach(label => {
+        const labelText = label.textContent.trim();
+        
+        // Mapear etiquetas a claves de traducción
+        let translationKey = '';
+        if (labelText.includes('Código') || labelText.includes('Codi')) translationKey = 'code';
+        else if (labelText.includes('Nombre') || labelText.includes('Nom')) translationKey = 'name';
+        else if (labelText.includes('Número de Serie') || labelText.includes('Número de Sèrie')) translationKey = 'serial_number';
+        else if (labelText.includes('Sexo') || labelText.includes('Sexe')) translationKey = 'gender';
+        else if (labelText.includes('Fecha de nacimiento') || labelText.includes('Data de naixement')) translationKey = 'birth_date';
+        else if (labelText.includes('Estado') || labelText.includes('Estat')) translationKey = 'status';
+        else if (labelText.includes('Explotación') || labelText.includes('Explotació')) translationKey = 'exploitation';
+        else if (labelText.includes('Cuadra') || labelText.includes('Quadra')) translationKey = 'stable';
+        else if (labelText.includes('Padre') || labelText.includes('Pare')) translationKey = 'father';
+        else if (labelText.includes('Madre') || labelText.includes('Mare')) translationKey = 'mother';
+        else if (labelText.includes('amamantamiento') || labelText.includes('alletament')) translationKey = 'nursing_status';
+        
+        if (translationKey) {
+          label.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir pestañas de navegación
+      document.querySelectorAll('button[id^="tab-"]').forEach(tab => {
+        if (tab.id === 'tab-info') {
+          tab.textContent = t('complete_info_tab', currentLang);
+        } else if (tab.id === 'tab-partos') {
+          tab.textContent = t('birth_history_tab', currentLang);
+        } else if (tab.id === 'tab-changes') {
+          tab.textContent = t('changes_history_tab', currentLang);
+        }
+      });
+      
+      // Traducir encabezados de secciones
+      document.querySelectorAll('h3.text-lg.font-medium').forEach(header => {
+        const headerText = header.textContent.trim();
+        
+        let translationKey = '';
+        if (headerText.includes('Datos de Identificación') || headerText.includes('Dades d\'Identificació')) {
+          translationKey = 'identification_data';
+        } else if (headerText.includes('Datos Generales') || headerText.includes('Dades Generals')) {
+          translationKey = 'general_data';
+        } else if (headerText.includes('Historial de Partos') || headerText.includes('Historial de Parts')) {
+          translationKey = 'birth_history';
+        } else if (headerText.includes('Historial de Cambios') || headerText.includes('Historial de Canvis')) {
+          translationKey = 'changes_history';
+        }
+        
+        if (translationKey) {
+          header.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir descripciones de secciones
+      document.querySelectorAll('.mb-4 p.text-gray-500, .p-6.text-center p').forEach(desc => {
+        const descText = desc.textContent.trim();
+        
+        let translationKey = '';
+        if (descText.includes('Registro de todos los partos') || descText.includes('Registre de tots els parts')) {
+          translationKey = 'birth_registry';
+        } else if (descText.includes('No tiene partos registrados') || descText.includes('no té parts registrats')) {
+          translationKey = 'no_births';
+        } else if (descText.includes('Registro de cambios') || descText.includes('Registre de canvis')) {
+          translationKey = 'changes_registry';
+        } else if (descText.includes('No hay cambios registrados') || descText.includes('No hi ha canvis registrats')) {
+          translationKey = 'no_changes';
+        }
+        
+        if (translationKey) {
+          desc.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir encabezados de tablas
+      document.querySelectorAll('th.px-6.py-3').forEach(th => {
+        const headerText = th.textContent.trim();
+        let translationKey = '';
+        
+        if (headerText.includes('Fecha') || headerText.includes('Data')) {
+          translationKey = 'date';
+          // Conservar el indicador de ordenación
+          const sortIndicator = th.querySelector('.sort-indicator');
+          if (sortIndicator) {
+            th.innerHTML = t(translationKey, currentLang) + ' <span class="ml-1 sort-indicator">' + sortIndicator.innerHTML + '</span>';
+            return;
+          }
+        } else if (headerText.includes('Género') || headerText.includes('Gènere')) {
+          translationKey = 'gender_label';
+        } else if (headerText.includes('Estado') || headerText.includes('Estat')) {
+          translationKey = 'status';
+        } else if (headerText.includes('Observaciones') || headerText.includes('Observacions')) {
+          translationKey = 'observations';
+        }
+        
+        if (translationKey) {
+          th.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir botones de volver al listado
+      document.querySelectorAll('a[href="/animals"].inline-flex').forEach(button => {
+        // Preservar el icono de flecha
+        const arrowSpan = button.querySelector('span.mr-2');
+        if (arrowSpan) {
+          button.innerHTML = `<span class="mr-2">←</span> ${t('back_to_animal_list', currentLang)}`;
+        }
+      });
+      
+      // Traducir textos en el contenido dinámico
+      document.querySelectorAll('.font-medium').forEach(value => {
+        const valueText = value.textContent.trim();
+        
+        // Solo traducir valores específicos que sabemos que necesitan traducción
+        if (valueText === 'No disponible') {
+          value.textContent = t('not_available', currentLang);
+        } else if (valueText === 'No asignada') {
+          value.textContent = t('not_assigned', currentLang);
+        } else if (valueText === 'Fecha incorrecta') {
+          value.textContent = t('incorrect_date', currentLang);
+        } else if (valueText === 'Macho') {
+          value.textContent = t('male', currentLang);
+        } else if (valueText === 'Hembra') {
+          value.textContent = t('female', currentLang);
+        } else if (valueText === 'Activo') {
+          value.textContent = t('active', currentLang);
+        } else if (valueText === 'Fallecido') {
+          value.textContent = t('dead', currentLang);
+        } else if (valueText === 'No amamanta') {
+          value.textContent = t('not_nursing', currentLang);
+        } else if (valueText.includes('Amamanta un ternero')) {
+          value.textContent = t('nursing_one', currentLang);
+        } else if (valueText.includes('Amamanta dos terneros')) {
+          value.textContent = t('nursing_two', currentLang);
+        }
+      });
+    }
+    
+    // Ejecutar traducción inicial
+    translateAnimalFile();
+    
+    // Retraducir cuando cambie el idioma
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        translateAnimalFile();
+      }
+    });
     
     // Botón de reintentar carga
     const retryButton = document.getElementById('retry-button');
