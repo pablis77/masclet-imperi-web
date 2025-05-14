@@ -24,7 +24,7 @@ const serverLang = getCurrentLanguage();
 // Traducciones integradas ampliadas
 const translations = {
   es: {
-    dashboard: "Dashboard",
+    dashboard: "Dashboard Masclet Imperi",
     animals: "Animales",
     exploitations: "Explotaciones",
     users: "Usuarios",
@@ -37,7 +37,7 @@ const translations = {
     logout: "Cerrar sesión"
   },
   ca: {
-    dashboard: "Tauler de control",
+    dashboard: "Tauler de control Masclet Imperi",
     animals: "Animals",
     exploitations: "Explotacions",
     users: "Usuaris",
@@ -76,7 +76,15 @@ const isActive = (itemUrl: string) => {
   <div class="container mx-auto px-3 py-3 flex justify-between items-center">
     <!-- Título de la página actual -->
     <div class="font-bold text-xl" id="page-title">
-      {currentPath === '/animals/[id]' ? t('animal_file') : (title || 'Masclet Imperi')}
+      {(() => {
+        if (currentPath === '/animals/[id]') {
+          return t('animal_file');
+        } else if (currentPath === '/' || currentPath === '/dashboard') {
+          return serverLang === 'ca' ? translations.ca.dashboard : translations.es.dashboard;
+        } else {
+          return title || 'Masclet Imperi';
+        }
+      })()}
     </div>
 
     <!-- Menú de navegación (visible solo en escritorio) -->
@@ -335,8 +343,37 @@ const isActive = (itemUrl: string) => {
       
       // Traducir título de la página en el Navbar
       const navbarTitle = document.getElementById('page-title');
-      if (navbarTitle && window.location.pathname.includes('/animals/')) {
-        navbarTitle.textContent = t('animal_file', currentLang);
+      
+      // Traducir títulos según la página actual
+      if (navbarTitle) {
+        // Para página de detalle de animal
+        if (window.location.pathname.includes('/animals/')) {
+          navbarTitle.textContent = t('animal_file', currentLang);
+        } 
+        // Para página de dashboard
+        else if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+          navbarTitle.textContent = currentLang === 'ca' ? 
+            "Tauler de control Masclet Imperi" : 
+            "Dashboard Masclet Imperi";
+        }
+        // Para página de explotaciones
+        else if (window.location.pathname.includes('/explotaciones')) {
+          navbarTitle.textContent = currentLang === 'ca' ? 
+            "Explotacions" : 
+            "Explotaciones";
+        }
+        // Para página de importación
+        else if (window.location.pathname.includes('/imports')) {
+          navbarTitle.textContent = currentLang === 'ca' ? 
+            "Importació de Dades" : 
+            "Importación de Datos";
+        }
+        // Para página de backup
+        else if (window.location.pathname.includes('/backup')) {
+          navbarTitle.textContent = currentLang === 'ca' ? 
+            "Còpies de seguretat del Sistema" : 
+            "Backup del Sistema";
+        }
       }
       
       // Traducir los elementos del menú principal

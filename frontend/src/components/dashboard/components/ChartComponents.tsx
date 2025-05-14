@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pie, Bar, Line } from 'react-chartjs-2';
+import { t } from '../../../i18n/config';
 
 // Componentes de gráficos extraídos directamente del dashboard original
 
 // Renderizar gráfico de distribución por género
 export const GenderChart = ({ data, darkMode }: { data: Record<string, number> | undefined, darkMode: boolean }) => {
+  // Estado para el idioma actual
+  const [currentLang, setCurrentLang] = useState('es');
+  
+  // Obtener el idioma actual del localStorage
+  useEffect(() => {
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+    
+    // Escuchar cambios de idioma
+    const handleLanguageChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+    
+    window.addEventListener('storage', handleLanguageChange);
+    return () => window.removeEventListener('storage', handleLanguageChange);
+  }, []);
+  
   if (!data) return null;
   
   // Si el objeto está vacío o todos los valores son 0, mostrar un gráfico con valores de ejemplo
@@ -12,9 +32,9 @@ export const GenderChart = ({ data, darkMode }: { data: Record<string, number> |
   if (Object.keys(data).length === 0 || totalValue === 0) {
     console.log('No hay datos para el gráfico de género, mostrando plantilla');
     data = {
-      'Toros': 0,
-      'Vacas': 0,
-      'Fallecidos': 0
+      [t('dashboard.males', currentLang)]: 0,
+      [t('dashboard.females', currentLang)]: 0,
+      [t('dashboard.deceased', currentLang)]: 0
     };
   }
   
@@ -25,7 +45,7 @@ export const GenderChart = ({ data, darkMode }: { data: Record<string, number> |
     labels,
     datasets: [
       {
-        label: 'Distribución Poblacional',
+        label: t('dashboard.population_analysis', currentLang),
         data: Object.values(data),
         backgroundColor: [
           'rgba(59, 130, 246, 0.7)', // Azul - Toros
@@ -47,6 +67,25 @@ export const GenderChart = ({ data, darkMode }: { data: Record<string, number> |
 
 // Renderizar gráfico de distribución por género de crías
 export const GenderCriaChart = ({ data, darkMode }: { data: Record<string, number> | undefined, darkMode: boolean }) => {
+  // Estado para el idioma actual
+  const [currentLang, setCurrentLang] = useState('es');
+  
+  // Obtener el idioma actual del localStorage
+  useEffect(() => {
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+    
+    // Escuchar cambios de idioma
+    const handleLanguageChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+    
+    window.addEventListener('storage', handleLanguageChange);
+    return () => window.removeEventListener('storage', handleLanguageChange);
+  }, []);
+
   if (!data) return null;
   
   // Imprimir los datos que llegan para depuración
@@ -92,9 +131,9 @@ export const GenderCriaChart = ({ data, darkMode }: { data: Record<string, numbe
   
   // Preparar etiquetas amigables para el usuario
   const labelsMap: Record<string, string> = {
-    'M': 'Machos',
-    'F': 'Hembras',
-    'esforrada': 'Otros'
+    'M': t('dashboard.males', currentLang),
+    'F': t('dashboard.females', currentLang),
+    'esforrada': t('dashboard.others', currentLang)
   };
   
   const labels = Object.keys(formattedData).map(key => labelsMap[key] || key);
