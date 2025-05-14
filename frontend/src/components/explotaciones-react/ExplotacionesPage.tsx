@@ -557,7 +557,7 @@ const ExplotacionesPage: React.FC = () => {
 
   // Renderizar el componente principal
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full py-6">
       {/* 1. Sección de búsqueda y filtros - exactamente igual al HTML existente */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="mb-3 sm:mb-4">
