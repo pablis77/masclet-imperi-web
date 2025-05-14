@@ -4,22 +4,46 @@ import MainLayout from '../../components/layout/MainLayout.astro';
 import ImportContainer from '../../components/imports/ImportContainer';
 import ResetDatabaseButton from '../../components/admin/ResetDatabaseButton';
 
+// Obtener el idioma del usuario (del localStorage en el cliente)
+let currentLang = 'es'; // Valor predeterminado
+
+// Definir traducciones
+const translations = {
+  es: {
+    title: "Importación de Datos",
+    subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
+    importAnimals: "Importar Animales",
+    selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
+    downloadTemplate: "Descargar Plantilla",
+    reset: "Reiniciar",
+    import: "Importar"
+  },
+  ca: {
+    title: "Importació de Dades",
+    subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
+    importAnimals: "Importar Animals",
+    selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
+    downloadTemplate: "Descarregar Plantilla",
+    reset: "Reiniciar",
+    import: "Importar"
+  }
+};
+
 // Definir título y rol de usuario
-const title = "Importación de Datos";
 const userRole = "administrador"; // Simulación de rol
 ---
 
-<MainLayout title={title} userRole={userRole} currentPath="/imports">
+<MainLayout title={translations[currentLang].title} userRole={userRole} currentPath="/imports">
   <div class="mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
-    <p class="text-sm md:text-base text-gray-600 dark:text-gray-300">Importa datos masivos desde archivos CSV</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white" id="imports-title">{translations[currentLang].title}</h1>
+    <p class="text-sm md:text-base text-gray-600 dark:text-gray-300" id="imports-subtitle">{translations[currentLang].subtitle}</p>
   </div>
 
   <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
     <!-- Importación de Animales -->
     <div class="import-container">
-      <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Importar Animales</h2>
-      <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4">Selecciona un archivo CSV con el formato correcto para importar animales al sistema.</p>
+      <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white" id="import-animals-title">{translations[currentLang].importAnimals}</h2>
+      <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4" id="import-animals-desc">{translations[currentLang].selectFile}</p>
       
       <!-- Botones de acción para importación - Reorganizados según la imagen -->
       <div class="flex flex-wrap justify-between mb-6">
@@ -27,12 +51,12 @@ const userRole = "administrador"; // Simulación de rol
         <div class="flex flex-wrap gap-3 mb-3 sm:mb-0">
           <a href="/templates/plantilla_animales.csv" download class="import-btn download-btn">
             <span class="icon">📥</span>
-            <span class="text">Descargar Plantilla</span>
+            <span class="text" id="download-template">{translations[currentLang].downloadTemplate}</span>
           </a>
           
           <button id="reset-import" class="import-btn reset-btn">
             <span class="icon">🔄</span>
-            <span class="text">Reiniciar</span>
+            <span class="text" id="reset-text">{translations[currentLang].reset}</span>
           </button>
         </div>
         
@@ -40,7 +64,7 @@ const userRole = "administrador"; // Simulación de rol
         <div class="flex flex-wrap gap-3">
           <button id="import-btn" class="import-btn import-action-btn">
             <span class="icon">✅</span>
-            <span class="text">Importar</span>
+            <span class="text" id="import-text">{translations[currentLang].import}</span>
           </button>
         </div>
       </div>
@@ -59,6 +83,55 @@ const userRole = "administrador"; // Simulación de rol
     </p>
     <ResetDatabaseButton client:load />
   </div>
+  <script>
+    // Obtener el idioma del usuario del localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      const updateLanguage = () => {
+        const userLang = localStorage.getItem('userLanguage') || 'es';
+        
+        // Textos traducibles
+        const translations = {
+          es: {
+            title: "Importación de Datos",
+            subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
+            importAnimals: "Importar Animales",
+            selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
+            downloadTemplate: "Descargar Plantilla",
+            reset: "Reiniciar",
+            import: "Importar"
+          },
+          ca: {
+            title: "Importació de Dades",
+            subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
+            importAnimals: "Importar Animals",
+            selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
+            downloadTemplate: "Descarregar Plantilla",
+            reset: "Reiniciar",
+            import: "Importar"
+          }
+        };
+        
+        // Aplicar traducciones
+        document.getElementById('imports-title').textContent = translations[userLang].title;
+        document.getElementById('imports-subtitle').textContent = translations[userLang].subtitle;
+        document.getElementById('import-animals-title').textContent = translations[userLang].importAnimals;
+        document.getElementById('import-animals-desc').textContent = translations[userLang].selectFile;
+        document.getElementById('download-template').textContent = translations[userLang].downloadTemplate;
+        document.getElementById('reset-text').textContent = translations[userLang].reset;
+        document.getElementById('import-text').textContent = translations[userLang].import;
+      };
+      
+      // Actualizar idioma inmediatamente
+      updateLanguage();
+      
+      // Escuchar cambios de idioma
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'userLanguage') {
+          updateLanguage();
+        }
+      });
+    });
+  </script>
 </MainLayout>
 
 <style>
