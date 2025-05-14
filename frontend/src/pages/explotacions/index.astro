@@ -3,7 +3,7 @@ import MainLayout from '../../components/layout/MainLayout.astro';
 
 // Obtener datos de la sesión del usuario
 const userRole = Astro.cookies.get('userRole')?.value || 'admin';
-const title = 'Explotaciones';
+const title = "Explotaciones";
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/explotacions">
@@ -13,197 +13,145 @@ const title = 'Explotaciones';
       <p class="text-sm text-gray-600 dark:text-gray-300">Agrupaciones de animales por explotación</p>
     </div>
 
-    <!-- Buscador -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
-      <div class="mb-3 sm:mb-4">
-        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
-          Búsqueda y Filtros
-        </h2>
-        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
-          Utiliza los filtros para encontrar explotaciones específicas. Puedes buscar por código de explotación.
-        </p>
-      </div>
-
-      <!-- Buscador con botones -->
-      <div>
-        <div class="mb-3">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Buscar
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="search-explotacion"
-              value=""
-              placeholder="Buscar por código de explotación..."
-              class="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-            />
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span class="text-gray-500 dark:text-gray-400">🔍</span>
+    <!-- Controles y filtros -->
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Filtrado -->
+      <div class="col-span-1 md:col-span-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative grow max-w-md">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+              </svg>
             </div>
+            <input 
+              type="search" 
+              id="search-input"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+              placeholder="Buscar por nombre o código de explotación" 
+            />
           </div>
         </div>
+      </div>
 
-        <!-- Botones -->
-        <div class="flex justify-end space-x-2 mt-2">
-          <button
-            type="button"
-            id="clear-button"
-            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            Limpiar
-          </button>
-          <button
-            type="button"
-            id="search-button"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            BUSCAR
-          </button>
+      <!-- Información y estadísticas -->
+      <div class="col-span-1 flex justify-end items-center whitespace-nowrap">
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          <span id="total-count">0</span> explotaciones encontradas
         </div>
       </div>
     </div>
 
-    <!-- Información y estadísticas -->
-    <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-      <div>
-        <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total: <span id="total-count" class="font-semibold">0</span> explotaciones</span>
+    <!-- Loading indicator -->
+    <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        <p class="text-center mt-4 text-gray-700">Cargando datos...</p>
       </div>
-      <!-- Se eliminó el botón de exportar datos -->
     </div>
 
-    <!-- Contenedor para tarjetas de explotaciones -->
-    <div id="explotacionCards" class="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <!-- Las tarjetas se generarán dinámicamente con JavaScript -->
+    <!-- Sin resultados -->
+    <div id="no-results" class="hidden">
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
+        <p class="text-center py-4">No se encontraron explotaciones que coincidan con tu búsqueda.</p>
+      </div>
     </div>
 
-    <!-- Vista de detalle para mostrar animales de una explotación -->
+    <!-- Vista de explotaciones en tarjetas -->
+    <div id="explotacionCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
+
+    <!-- Vista de detalle de explotación -->
     <div id="explotacion-detail" class="hidden mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
       <div class="flex items-center justify-between mb-4 text-lg font-medium">
         <h3 class="text-gray-900 dark:text-white">Animales de <span id="explotacion-code"></span></h3>
         <div class="flex gap-2">
-          <button id="export-csv" class="btn btn-primary text-sm flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Exportar CSV
-          </button>
           <button id="back-button" class="btn btn-secondary text-sm flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
             Volver
           </button>
         </div>
       </div>
 
-      <!-- Tabs para categorías de animales -->
+      <!-- Pestañas para categorías de animales -->
       <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
           <li class="mr-2">
-            <button class="animal-tab inline-block p-2 border-b-2 border-primary text-primary dark:text-primary-light" data-category="todos">
-              Todos los animales <span class="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">0</span>
+            <button data-category="toros" class="animal-tab inline-flex items-center justify-center p-3 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group active">
+              <span class="text-blue-600 dark:text-blue-500">Toros</span>
+              <span id="count-toros" class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">0</span>
             </button>
           </li>
           <li class="mr-2">
-            <button class="animal-tab inline-block p-2 border-b-2 border-transparent hover:border-primary hover:text-primary dark:hover:text-primary-light" data-category="toros">
-              Toros <span class="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">0</span>
+            <button data-category="vacas" class="animal-tab inline-flex items-center justify-center p-3 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group">
+              <span class="text-pink-600 dark:text-pink-500">Vacas</span>
+              <span id="count-vacas" class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-pink-800 bg-pink-100 rounded-full">0</span>
             </button>
           </li>
           <li class="mr-2">
-            <button class="animal-tab inline-block p-2 border-b-2 border-transparent hover:border-primary hover:text-primary dark:hover:text-primary-light" data-category="vacas-amam">
-              Vacas amamantando <span class="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">0</span>
-            </button>
-          </li>
-          <li class="mr-2">
-            <button class="animal-tab inline-block p-2 border-b-2 border-transparent hover:border-primary hover:text-primary dark:hover:text-primary-light" data-category="vacas-no-amam">
-              Vacas no amamantando <span class="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">0</span>
+            <button data-category="terneros" class="animal-tab inline-flex items-center justify-center p-3 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group">
+              <span class="text-yellow-600 dark:text-yellow-500">Terneros</span>
+              <span id="count-terneros" class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">0</span>
             </button>
           </li>
         </ul>
       </div>
 
       <!-- Lista de animales -->
-      <div id="animal-list" class="min-h-[300px] relative overflow-auto max-h-[600px]"></div>
-    </div>
-
-    <!-- Placeholder para cuando no hay explotaciones -->
-    <div id="no-results" class="hidden col-span-full py-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-      <div class="flex flex-col items-center justify-center">
-        <div class="text-3xl mb-3">🏡</div>
-        <p class="mb-2 text-sm">No hay explotaciones que coincidan con tu búsqueda.</p>
-        <p class="text-xs">Prueba con otro código de explotación.</p>
-      </div>
-    </div>
-
-    <!-- Cargando -->
-    <div id="loading" class="py-8 text-center text-gray-500 dark:text-gray-400">
-      <div class="flex flex-col items-center justify-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        <p class="mt-2 text-sm">Cargando explotaciones...</p>
-      </div>
+      <div id="animal-list" class="bg-white dark:bg-gray-800 rounded-lg"></div>
     </div>
   </div>
 </MainLayout>
 
 <script>
-  // Enfoque directo para compatibilidad con LocalTunnel
-  // No usamos importación de módulos para evitar problemas de hydratación en Astro
+  // Usar exactamente el mismo servicio que se usa en animals/index
+  import animalService from '../../services/animalService';
   
-  // Obtener elementos del DOM
-  const searchInput = document.getElementById('search-explotacion');
-  const searchButton = document.getElementById('search-button');
-  const clearButton = document.getElementById('clear-button');
+  // Elementos del DOM
+  const searchInput = document.getElementById('search-input');
   const totalCountElement = document.getElementById('total-count');
-  const loadingElement = document.getElementById('loading');
   const noResultsElement = document.getElementById('no-results');
+  const loadingElement = document.getElementById('loading');
+  const explotacionCardsContainer = document.getElementById('explotacionCards');
   
-  // El código ya tiene estas variables definidas en otra parte
-  // No necesitamos declararlas de nuevo
-  
-  // Configuración y variables de depuración
-  let API_BASE_URL = '';
-  
-  // Función para detectar el entorno y obtener la URL base
-  function getApiBaseUrl() {
-    // Detectar si estamos en un entorno de túnel
-    const hostname = window.location.hostname;
-    const isTunnel = hostname.includes('loca.lt');
-    
-    // Registrar información de depuración
-    console.log('[Explotaciones] Detección de entorno:');
-    console.log(`- Hostname: ${hostname}`);
-    console.log(`- Es túnel: ${isTunnel}`);
-    console.log(`- UserAgent: ${navigator.userAgent}`);
-    
-    // Determinar la URL base según el entorno
-    if (isTunnel) {
-      // Para túnel, usamos la API del túnel
-      return 'https://api-masclet-imperi.loca.lt/api/v1';
-    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // Para desarrollo local
-      return 'http://localhost:8000/api/v1';
-    } else {
-      // Para producción
-      return 'https://masclet-imperi-web-backend.onrender.com/api/v1';
+  // Cargar datos iniciales
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      console.log('Cargando datos iniciales');
+      
+      // Mostrar indicador de carga
+      if (loadingElement) {
+        loadingElement.style.display = 'flex';
+      }
+      
+      // Cargar datos iniciales
+      await loadInitialData();
+      
+      // Configurar eventos
+      setupEventListeners();
+      
+    } catch (error) {
+      console.error('Error al cargar datos iniciales:', error);
+      
+      // Mostrar mensaje de error
+      if (noResultsElement) {
+        noResultsElement.style.display = 'block';
+        noResultsElement.innerHTML = `<p class="text-center py-4">Error al cargar datos: ${error.message}</p>`;
+      }
+    } finally {
+      // Ocultar indicador de carga
+      if (loadingElement) {
+        loadingElement.style.display = 'none';
+      }
     }
-  }
-  
-  // Obtener la URL base y almacenarla
-  API_BASE_URL = getApiBaseUrl();
-  console.log(`[Explotaciones] URL base de API seleccionada: ${API_BASE_URL}`);
-  
-  // Cargar datos iniciales cuando se cargue el DOM
-  document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar un mensaje de depuración en la consola
-    console.log('[Explotaciones] Página cargada, iniciando carga de datos...');
-    loadInitialData();
   });
+  
+  // Cargar datos iniciales
   async function loadInitialData() {
     try {
-      console.log('######## INICIO CARGA DE DATOS DE EXPLOTACIONES ########');
-      console.log(`Usando API directamente con URL base: ${API_BASE_URL}`);
-      
       // Mostrar indicador de carga
       if (loadingElement) {
         loadingElement.style.display = 'flex';
@@ -212,211 +160,113 @@ const title = 'Explotaciones';
         noResultsElement.style.display = 'none';
       }
       
-      // Verificar token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No hay token de autenticación');
-        window.location.href = '/login';
-        return;
-      }
+      console.log('Cargando datos de explotaciones');
       
-      // Verificar token de autenticación
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No hay token de autenticación');
-        // Redirigir al login o mostrar error
-        throw new Error('No autenticado');
-      }
-      
-      // Obtener todos los animales del backend con un límite razonable
-      console.log(`Realizando petición GET a ${API_BASE_URL}/animals?page=1&limit=100`);
-      
-      // Usar fetch directamente para evitar problemas con la importación de módulos
-      const response = await fetch(`${API_BASE_URL}/animals?page=1&limit=100`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
+      // 1. Cargar lista de explotaciones
+      const response = await fetch('http://127.0.0.1:8000/api/v1/dashboard/explotacions');
       
       if (!response.ok) {
-        console.error(`Error en la respuesta: ${response.status} ${response.statusText}`);
-        throw new Error(`Error en la petición: ${response.status}`);
+        throw new Error(`Error al obtener explotaciones: ${response.status} ${response.statusText}`);
       }
       
-      // Procesar la respuesta
-      const data = await response.json();
-      console.log('Respuesta recibida y procesada:', data);
+      // Parsear respuesta JSON
+      const explotacionesBasicas = await response.json();
+      console.log('Lista de explotaciones obtenida:', explotacionesBasicas);
       
-      // Verificar la estructura de la respuesta
-      if (!data.data || !data.data.items || !Array.isArray(data.data.items)) {
-        console.error('Formato de respuesta incorrecto:', data);
-        throw new Error('Formato de respuesta incorrecto');
-      }
-      
-      const allAnimals = data.data.items;
-      console.log(`Obtenidos ${allAnimals.length} animales`);
-      
-      // Agrupar animales por explotación
-      const explotacionesMap = {};
-      
-      allAnimals.forEach(animal => {
-        if (!animal.explotacio) return; // Ignorar animales sin explotación
-        
-        // Si la explotación no existe en el mapa, la añadimos
-        if (!explotacionesMap[animal.explotacio]) {
-          explotacionesMap[animal.explotacio] = {
-            explotacio: animal.explotacio,
-            animales: []
-          };
+      // Si no hay datos, mostrar mensaje
+      if (!explotacionesBasicas || !Array.isArray(explotacionesBasicas) || explotacionesBasicas.length === 0) {
+        console.warn('No hay datos de explotaciones');
+        if (noResultsElement) {
+          noResultsElement.style.display = 'block';
+          noResultsElement.innerHTML = '<p class="text-center py-4">No se encontraron explotaciones</p>';
         }
-        
-        // Añadir animal a la explotación
-        explotacionesMap[animal.explotacio].animales.push(animal);
-      });
+        if (loadingElement) {
+          loadingElement.style.display = 'none';
+        }
+        if (totalCountElement) {
+          totalCountElement.textContent = '0';
+        }
+        return [];
+      }
       
-      // Calcular estadísticas para cada explotación
-      const explotacionesData = Object.values(explotacionesMap).map(exp => {
-        const animales = exp.animales;
-        const toros = animales.filter(a => a.genere === 'M').length;
-        const vacas = animales.filter(a => a.genere === 'F').length;
-        // Contar las vacas amamantando (alletar 1 o 2)
-        const vacasAletar1 = animales.filter(a => a.genere === 'F' && (a.alletar === '1' || a.alletar === 1)).length;
-        const vacasAletar2 = animales.filter(a => a.genere === 'F' && (a.alletar === '2' || a.alletar === 2)).length;
-        const amamantando = vacasAletar1 + vacasAletar2;
-        
-        // Vacas que no están amamantando (alletar 0 o null)
-        const noAmamantando = animales.filter(a => a.genere === 'F' && (a.alletar === '0' || a.alletar === 0 || a.alletar === null)).length;
-        
-        // Inicializar partos con 0, luego se actualizará
-        let partosAprox = 0;
-        
-        // Cálculo correcto de terneros: cada vaca con alletar=1 amamanta 1 ternero y cada vaca con alletar=2 amamanta 2 terneros
-        const terneros = vacasAletar1 + (vacasAletar2 * 2);
-        
-        return {
-          explotacio: exp.explotacio,
-          total: animales.length,
-          toros: toros,
-          vacas: vacas,
-          amamantando: amamantando,
-          noAmamantando: noAmamantando,
-          terneros: terneros,
-          partos: partosAprox
-        };
-      });
+      // Actualizar contador total
+      if (totalCountElement) {
+        totalCountElement.textContent = explotacionesBasicas.length;
+      }
       
-      // Ahora hacemos llamadas API para obtener el conteo correcto de partos para cada explotación
-      const updatedExplotacionesData = await Promise.all(explotacionesData.map(async (exp) => {
+      // 2. Para cada explotación, cargar sus estadísticas detalladas
+      const explotacionesCompletas = await Promise.all(explotacionesBasicas.map(async (exp) => {
         try {
-          // Obtener detalles de la explotación usando la API del dashboard
-          const dashboardEndpoint = `${API_BASE_URL}/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`;
-          console.log(`Solicitando detalles de explotación: ${dashboardEndpoint}`);
+          // Obtener código de explotación
+          const codigo = exp.explotacio;
           
-          // Hacer la petición para obtener los detalles de la explotación
-          const explotacionResponse = await fetch(dashboardEndpoint, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-          
-          if (!explotacionResponse.ok) {
-            console.error(`Error al obtener explotación ${exp.explotacio}: ${explotacionResponse.status}`);
-            throw new Error(`Error en la petición: ${explotacionResponse.status}`);
+          // Obtener token de autenticación
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.error('No hay token de autenticación');
+            return exp; // Devolver explotación básica sin estadísticas
           }
           
-          const explotacionData = await explotacionResponse.json();
-          console.log(`Datos recibidos para explotación ${exp.explotacio}:`, explotacionData);
-          
-          // Obtener estadísticas detalladas de la explotación
-          const statsEndpoint = `${API_BASE_URL}/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
-          console.log(`Solicitando estadísticas: ${statsEndpoint}`);
-          
-          const statsResponse = await fetch(statsEndpoint, {
-            method: 'GET',
+          // Cargar estadísticas desde el endpoint específico con autenticación
+          const statsResponse = await fetch(`http://127.0.0.1:8000/api/v1/dashboard/explotacions/${encodeURIComponent(codigo)}/stats`, {
             headers: {
               'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
+              'Content-Type': 'application/json'
             }
           });
           
           if (!statsResponse.ok) {
-            console.error(`Error al obtener estadísticas ${exp.explotacio}: ${statsResponse.status}`);
-            throw new Error(`Error en la petición: ${statsResponse.status}`);
+            console.warn(`Error al obtener estadísticas para ${codigo}: ${statsResponse.status}`);
+            return exp; // Devolver explotación básica sin estadísticas
           }
           
-          const statsData = await statsResponse.json();
-          console.log(`Estadísticas recibidas para ${exp.explotacio}:`, statsData);
+          const stats = await statsResponse.json();
+          console.log(`Estadísticas para ${codigo}:`, stats);
           
-          // Inicializar objeto con datos actualizados
-          let updatedExp = {...exp};
+          // Extraer datos correctamente según la estructura real de la respuesta
+          const animales = stats.animales || {};
+          const partos = stats.partos || {};
           
-          // Actualizar el conteo de partos con el valor correcto de la API
-          if (explotacionData && explotacionData.total_partos !== undefined) {
-            updatedExp = {
-              ...updatedExp,
-              partos: explotacionData.total_partos
-            };
-          }
+          // Mostrar en consola para depuración los datos exactos
+          console.log(`Datos detallados para ${codigo}:`, {
+            total: animales.total,
+            toros: animales.toros,
+            vacas: animales.vacas,
+            terneros: animales.terneros,
+            amam: animales.vacas_amamantando,
+            noAmam: animales.vacas_no_amamantando,
+            partos: partos.total
+          });
           
-          // Extraer datos detallados de estadísticas
-          const animales = statsData.animales || {};
-          const partos = statsData.partos || {};
-          
-          // Actualizar con los datos estadísticos completos
-          updatedExp = {
-            ...updatedExp,
-            toros: animales.toros || updatedExp.toros,
-            vacas: animales.vacas || updatedExp.vacas,
-            terneros: animales.terneros || updatedExp.terneros,
-            amamantando: animales.vacas_amamantando || updatedExp.amamantando,
-            noAmamantando: animales.vacas_no_amamantando || updatedExp.noAmamantando,
-            partos: partos.total || updatedExp.partos
+          // Actualizar objeto de explotación con las estadísticas
+          return {
+            ...exp,
+            totalAnimales: animales.total || 0,
+            toros: animales.toros || 0,
+            vacas: animales.vacas || 0,
+            terneros: animales.terneros || 0,
+            vacasAmam: animales.vacas_amamantando || 0,
+            vacasNoAmam: animales.vacas_no_amamantando || 0,
+            partos: partos.total || 0
           };
-          
-          // Devolver la explotación con todos los datos actualizados
-          return updatedExp;
         } catch (error) {
-          console.error(`Error obteniendo información para ${exp.explotacio}:`, error);
-          // Loguear detalles del error para diagnóstico
-          console.error(`Error detallado: ${error.message}`);
-          if (error.response) {
-            console.error(`Status: ${error.response.status}, Data:`, error.response.data);
-          }
-          // Si hay un error, devolver los datos originales
-          return exp;
+          console.error(`Error al procesar explotación ${exp.explotacio}:`, error);
+          return exp; // Devolver explotación básica en caso de error
         }
       }));
-      
-      // Reemplazar los datos originales con los datos actualizados
-      explotacionesData.length = 0;
-      explotacionesData.push(...updatedExplotacionesData);
-      
-      // Ordenar por nombre de explotación
-      explotacionesData.sort((a, b) => a.explotacio.localeCompare(b.explotacio));
-      
-      // Renderizar tarjetas con los datos reales
-      renderExplotacionCards(explotacionesData);
-      
-      // Actualizar contador total
-      if (totalCountElement) {
-        totalCountElement.textContent = explotacionesData.length;
-      }
       
       // Ocultar indicador de carga
       if (loadingElement) {
         loadingElement.style.display = 'none';
       }
       
+      // 3. Renderizar tarjetas con los datos completos
+      console.log('Datos completos de explotaciones:', explotacionesCompletas);
+      renderExplotacionCards(explotacionesCompletas);
+      
+      return explotacionesCompletas;
     } catch (error) {
-      console.error('Error al cargar datos iniciales de explotaciones:', error);
-      console.error('Detalle del error:', error.stack || 'No hay stack disponible');
+      console.error('Error al cargar datos iniciales:', error);
       
       // Ocultar indicador de carga
       if (loadingElement) {
@@ -426,13 +276,138 @@ const title = 'Explotaciones';
       // Mostrar mensaje de error
       if (noResultsElement) {
         noResultsElement.style.display = 'block';
-        noResultsElement.innerHTML = `<div class="text-center py-4 text-red-500">Error al cargar datos: ${error.message}</div>`;
-        noResultsElement.innerHTML += `<div class="text-center text-sm text-gray-500">Si estás usando el túnel, verifica que la API esté disponible en: ${API_BASE_URL}</div>`;
+        noResultsElement.innerHTML = `<p class="text-center py-4">Error al cargar datos: ${error.message}</p>`;
       }
+      
+      return [];
+    }
+  }
+  
+  // Configurar eventos
+  function setupEventListeners() {
+    // Escuchar eventos del componente AnimalFilters
+    document.addEventListener('filters-applied', (event) => {
+      const filters = event.detail;
+      handleSearch(filters.search || '');
+    });
+    
+    // Escuchar evento para recargar datos
+    document.addEventListener('reload-animals', () => {
+      handleSearch('');
+    });
+    
+    // Configurar evento de click en tarjetas
+    if (explotacionCardsContainer) {
+      explotacionCardsContainer.addEventListener('click', (event) => {
+        const card = event.target.closest('.explotacion-card');
+        if (card) {
+          const explotacionCode = card.getAttribute('data-explotacion');
+          if (explotacionCode) {
+            showExplotacionDetail(explotacionCode);
+          }
+        }
+      });
+    }
+    
+    // Configurar evento de click en botón de volver
+    const backButton = document.getElementById('back-button');
+    if (backButton) {
+      backButton.addEventListener('click', () => {
+        // Ocultar vista de detalle
+        if (explotacionDetail) {
+          explotacionDetail.style.display = 'none';
+        }
+        
+        // Mostrar vista de tarjetas
+        if (explotacionCardsContainer) {
+          explotacionCardsContainer.style.display = 'grid';
+        }
+      });
+    }
+    
+    // Configurar evento de click en pestañas de animales
+    const animalTabs = document.querySelectorAll('.animal-tab');
+    if (animalTabs) {
+      animalTabs.forEach(tab => {
+        tab.addEventListener('click', (event) => {
+          // Remover clase active de todas las pestañas
+          animalTabs.forEach(t => t.classList.remove('active'));
+          
+          // Añadir clase active a la pestaña clickeada
+          event.currentTarget.classList.add('active');
+          
+          // Obtener categoría
+          const category = event.currentTarget.getAttribute('data-category');
+          
+          // Mostrar animales de la categoría seleccionada
+          showAnimalsByCategory(category);
+        });
+      });
+    }
+  }
+  
+  // Función para manejar la búsqueda
+  function handleSearch(event) {
+    const searchTerm = event.target.value.trim().toLowerCase();
+    console.log(`Buscando: "${searchTerm}"`);
+    
+    // Obtener todas las tarjetas
+    const cards = document.querySelectorAll('.explotacion-card');
+    
+    // Si no hay término de búsqueda, mostrar todas las tarjetas
+    if (!searchTerm) {
+      cards.forEach(card => {
+        card.style.display = 'block';
+      });
+      
+      // Actualizar contador
+      if (totalCountElement) {
+        totalCountElement.textContent = cards.length;
+      }
+      
+      // Ocultar mensaje de sin resultados
+      if (noResultsElement) {
+        noResultsElement.style.display = 'none';
+      }
+      
       return;
     }
+    
+    // Buscar coincidencia exacta
+    const exactMatch = findExactExplotacion(searchTerm);
+    if (exactMatch) {
+      console.log(`Búsqueda exacta encontrada para: ${exactMatch}`);
+      showExplotacionDetail(exactMatch);
+      return;
+    }
+    
+    // Filtrar tarjetas según término de búsqueda
+    let visibleCards = 0;
+    
+    cards.forEach(card => {
+      const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+      const code = card.getAttribute('data-explotacion')?.toLowerCase() || '';
+      
+      if (title.includes(searchTerm) || code.includes(searchTerm)) {
+        card.style.display = 'block';
+        visibleCards++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+    
+    // Actualizar contador
+    if (totalCountElement) {
+      totalCountElement.textContent = visibleCards;
+    }
+    
+    // Mostrar mensaje de sin resultados si no hay coincidencias
+    if (noResultsElement) {
+      noResultsElement.style.display = visibleCards === 0 ? 'block' : 'none';
+    }
+  }
   
-  // Función que renderiza las tarjetas de explotaciones
+  // Renderizar tarjetas de explotaciones
   function renderExplotacionCards(explotacionesData) {
     // Obtener el contenedor donde se renderizarán las tarjetas
     const cardsContainer = document.getElementById('explotacionCards');
@@ -444,90 +419,104 @@ const title = 'Explotaciones';
     // Limpiar el contenedor
     cardsContainer.innerHTML = '';
     
-    // Verificar si hay datos
-    if (!explotacionesData || !Array.isArray(explotacionesData) || explotacionesData.length === 0) {
-      console.warn('No hay datos de explotaciones para mostrar');
-      if (noResultsElement) {
-        noResultsElement.style.display = 'block';
-        noResultsElement.innerHTML = '<p class="text-center py-4">No se encontraron explotaciones</p>';
-      }
-      return;
-    }
+    console.log('Datos para renderizar tarjetas:', explotacionesData);
     
-    // Ocultar mensaje de no resultados si lo hay
-    if (noResultsElement) {
-      noResultsElement.style.display = 'none';
-    }
-    
-    // Renderizar cada tarjeta
+    // Iterar sobre los datos y crear tarjetas
     explotacionesData.forEach(explotacion => {
-      // Crear la tarjeta
+      // Verificar que existe la propiedad explotacio
+      if (!explotacion.explotacio) {
+        console.warn('Elemento de explotación sin código de explotación:', explotacion);
+        return;
+      }
+      
+      // Extraer datos o usar valores por defecto
+      const codigo = explotacion.explotacio;
+      const totalAnimales = explotacion.totalAnimales || 0;
+      const partos = explotacion.partos || 0;
+      const toros = explotacion.toros || 0;
+      const vacas = explotacion.vacas || 0;
+      const terneros = explotacion.terneros || 0;
+      const vacasAmam = explotacion.vacasAmam || 0;
+      const vacasNoAmam = explotacion.vacasNoAmam || 0;
+      
+      // Crear el elemento de tarjeta
       const card = document.createElement('div');
-      card.className = 'bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg cursor-pointer';
-      card.onclick = function() {
-        // Llamar a la función que muestra el detalle de la explotación
-        showExplotacionDetail(explotacion.explotacio);
-      };
+      card.className = 'explotacion-card rounded-lg shadow overflow-hidden cursor-pointer';
+      card.setAttribute('data-explotacion', codigo);
       
-      // Crear el elemento título por separado para poder añadirle el evento
-      const cardHeader = document.createElement('div');
-      cardHeader.className = 'bg-primary p-4 text-white';
-      
-      const title = document.createElement('h3');
-      title.className = 'text-xl font-bold';
-      title.textContent = explotacion.explotacio;
-      title.onclick = function(event) {
-        event.stopPropagation(); // Evita que se propague al contenedor
-        showExplotacionDetail(explotacion.explotacio);
-      };
-      
-      cardHeader.appendChild(title);
-      card.appendChild(cardHeader);
-      
-      // Contenido de la tarjeta
-      const cardContent = document.createElement('div');
-      cardContent.className = 'p-4';
-      cardContent.innerHTML = `
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div class="text-center">
-              <p class="text-sm text-gray-600">Total Animales</p>
-              <p class="text-2xl font-bold text-primary">${explotacion.total}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-sm text-gray-600">Partos</p>
-              <p class="text-2xl font-bold text-primary">${explotacion.partos}</p>
+      // Crear contenido de la tarjeta 
+      card.innerHTML = `
+        <div class="bg-primary p-4">
+          <h3 class="card-title text-lg font-semibold text-white">${codigo}</h3>
+        </div>
+        <!-- Búsqueda y filtros -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
+          <div class="mb-3 sm:mb-4">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
+              Búsqueda y Filtros
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
+              Utiliza los filtros para encontrar animales específicos. Puedes buscar por nombre, código o explotación.
+            </p>
+          </div>
+          
+          <!-- Componente de filtros - Exactamente igual que en animals/index.astro -->
+          <AnimalFilters id="animal-filters" client:load />
+
+          <div class="flex justify-between items-center mt-4">
+            <div id="total-count" class="text-sm text-gray-600 dark:text-gray-400">
+              Total: <span id="total-counter">0</span> explotaciones
             </div>
           </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div class="text-center bg-blue-50 p-2 rounded">
-              <p class="text-xs text-gray-600">Toros</p>
-              <p class="text-lg font-bold text-blue-600">${explotacion.toros}</p>
+        </div>
+        
+        <div class="border-t border-gray-200 my-2 pt-2">
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <p class="text-xs text-gray-600">Total Animales</p>
+              <p class="text-xl font-bold text-primary">${totalAnimales}</p>
             </div>
-            <div class="text-center bg-pink-50 p-2 rounded">
-              <p class="text-xs text-gray-600">Vacas</p>
-              <p class="text-lg font-bold text-pink-600">${explotacion.vacas}</p>
-            </div>
-            <div class="text-center bg-yellow-50 p-2 rounded">
-              <p class="text-xs text-gray-600">Terneros</p>
-              <p class="text-lg font-bold text-yellow-600">${explotacion.terneros}</p>
+            <div>
+              <p class="text-xs text-gray-600">Partos</p>
+              <p class="text-xl font-bold text-primary">${partos}</p>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-gray-200">
+          <div class="border-t border-gray-200 my-2 pt-2">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <p class="text-xs text-gray-600">Toros</p>
+                <p class="text-lg font-bold text-blue-600">${toros}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-600">Vacas</p>
+                <p class="text-lg font-bold text-pink-600">${vacas}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-600">Terneros</p>
+                <p class="text-lg font-bold text-yellow-600">${terneros}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 mt-2 pt-2">
             <div class="grid grid-cols-2 gap-2">
-              <div class="text-center bg-green-50 p-2 rounded">
+              <div>
                 <p class="text-xs text-gray-600">Vacas Amamantando</p>
-                <p class="text-lg font-bold text-green-600">${explotacion.amamantando}</p>
+                <p class="text-lg font-bold text-green-600">${vacasAmam}</p>
               </div>
-              <div class="text-center bg-purple-50 p-2 rounded">
+              <div>
                 <p class="text-xs text-gray-600">Vacas No Amamantando</p>
-                <p class="text-lg font-bold text-purple-600">${explotacion.noAmamantando}</p>
+                <p class="text-lg font-bold text-gray-600">${vacasNoAmam}</p>
               </div>
             </div>
           </div>
+        </div>
       `;
       
-      // Añadir el contenido a la tarjeta
-      card.appendChild(cardContent);
+      // Añadir evento de clic a la tarjeta
+      card.addEventListener('click', () => {
+        viewExplotacionDetail(codigo);
+      });
       
       // Añadir la tarjeta al contenedor
       cardsContainer.appendChild(card);
@@ -556,355 +545,92 @@ const title = 'Explotaciones';
   const animalTabs = document.querySelectorAll('.animal-tab');
   const backButton = document.getElementById('back-button');
   
-  // Función para manejar la búsqueda de explotaciones
-  function handleSearch() {
-    const searchTerm = searchInput ? searchInput.value.trim() : '';
-    console.log(`Buscando: "${searchTerm}"`);
-    
-    if (!searchTerm) {
-      // Si la búsqueda está vacía, volver al modo de tarjetas
-      if (explotacionDetail) {
-        explotacionDetail.style.display = 'none';
-      }
-      if (document.getElementById('explotacionCards')) {
-        document.getElementById('explotacionCards').style.display = 'grid';
-      }
-      if (noResultsElement) {
-        noResultsElement.style.display = 'none';
-      }
-      return;
-    }
-    
-    // Modo detalle: mostrar todos los animales de la explotación
-    console.log(`Buscando explotación: ${searchTerm}`);
-    showExplotacionDetail(searchTerm);
-  }
-  
   // Buscar coincidencia exacta de explotación
-  function findExactExplotacionMatch(searchTerm) {
+  function findExactExplotacion(searchTerm) {
     if (!searchTerm) return null;
     
-    // Buscar entre las tarjetas por coincidencia exacta
-    const cards = document.querySelectorAll('#explotacionCards > div');
+    const cards = document.querySelectorAll('.explotacion-card');
     for (const card of cards) {
-      const title = card.querySelector('h3').textContent;
+      const title = card.querySelector('.card-title')?.textContent || '';
       if (title.toLowerCase() === searchTerm.toLowerCase()) {
-        return title; // Devuelve el nombre exacto con la capitalización correcta
+        return title;
       }
     }
     
-    // Incluso si no hay coincidencia exacta en las tarjetas, permitimos buscar
-    return searchTerm;
+    return null;
   }
   
-  // Función para mostrar detalle de una explotación
-  async function showExplotacionDetail(explotacionCode) {
+  // Redirigir a la página de detalle de explotación (si es necesario implementar esta funcionalidad)
+  function viewExplotacionDetail(explotacionCode) {
     if (!explotacionCode) return;
     
-    currentExplotacion = explotacionCode;
-    
-    // Ocultar el contenedor de tarjetas y mostrar el detalle
-    if (document.getElementById('explotacionCards')) {
-      document.getElementById('explotacionCards').style.display = 'none';
-    }
-    
-    // Mostrar el contenedor de detalle
-    if (explotacionDetail) {
-      explotacionDetail.style.display = 'block';
-    }
-    
-    // Actualizar elementos del DOM
-    if (explotacionCodeElement) {
-      explotacionCodeElement.textContent = explotacionCode;
-    }
-    
-    // Mostrar indicador de carga
-    if (loadingElement) {
-      loadingElement.style.display = 'flex';
-    }
-    if (noResultsElement) {
-      noResultsElement.style.display = 'none';
-    }
-    
+    // Redirigir a página de detalle (puedes implementar esta lógica si es necesario)
+    console.log(`Ver detalles de explotación: ${explotacionCode}`);
+    // window.location.href = `/explotacions/${explotacionCode}`;
+  }
+  
+  // Función para mostrar detalles de explotación usando animalService
+  async function showExplotacionDetail(explotacionCode) {
     try {
-      // Obtener datos de los animales de esta explotación
-      const endpoint = `animals/?explotacio=${encodeURIComponent(explotacionCode)}`;
-      const response = await apiService.get(endpoint);
-      
-      // Los datos ya vienen procesados a través de apiService
-      const data = response;
-      
-      // Verificar la estructura de la respuesta
-      if (!data.data || !data.data.items || !Array.isArray(data.data.items)) {
-        throw new Error('Formato de respuesta incorrecto');
-      }
-      
-      // Obtener los animales de la respuesta
-      const allAnimals = result.data.items.filter(animal => 
-        animal.explotacio && animal.explotacio.toLowerCase() === explotacionCode.toLowerCase()
-      );
-      
-      console.log(`Se encontraron ${allAnimals.length} animales en la explotación ${explotacionCode}`);
-      
-      if (!allAnimals || allAnimals.length === 0) {
-        console.log('No se encontraron animales para esta explotación');
-        
-        // Mostrar mensaje de no resultados
-        if (noResultsElement) {
-          noResultsElement.style.display = 'block';
-          noResultsElement.innerHTML = `<p class="text-center py-4">No se encontraron animales en la explotación "${explotacionCode}"</p>`;
-        }
-        
-        // Ocultar indicador de carga
-        if (loadingElement) {
-          loadingElement.style.display = 'none';
-        }
-        
-        return;
+      // Mostrar indicador de carga
+      if (loadingElement) {
+        loadingElement.style.display = 'flex';
       }
 
-      // Calcular estadísticas reales usando el mismo método que en las tarjetas
-      const vacasAletar1 = allAnimals.filter(a => a.genere === 'F' && (a.alletar === '1' || a.alletar === 1)).length;
-      const vacasAletar2 = allAnimals.filter(a => a.genere === 'F' && (a.alletar === '2' || a.alletar === 2)).length;
-      const amamantando = vacasAletar1 + vacasAletar2;
+      console.log(`Obteniendo animales de la explotación: ${explotacionCode} usando animalService`);
       
-      // Vacas que no están amamantando (alletar 0 o null)
-      const noAmamantando = allAnimals.filter(a => a.genere === 'F' && (a.alletar === '0' || a.alletar === 0 || a.alletar === null)).length;
+      // Usar animalService como en la página de animales para obtener DATOS REALES
+      const animalsResponse = await animalService.getAnimals({
+        // Filtrar por el código de explotación
+        explotacio: explotacionCode,
+        page: 1,
+        limit: 1000 // Pedir muchos para tenerlos todos
+      });
       
-      // Cálculo correcto de terneros: cada vaca con alletar=1 amamanta 1 ternero y cada vaca con alletar=2 amamanta 2 terneros
-      const terneros = vacasAletar1 + (vacasAletar2 * 2);
+      // Obtener los animales de la respuesta
+      const animalsData = animalsResponse.items || [];
       
-      const stats = {
-        total: allAnimals.length,
-        toros: allAnimals.filter(a => a.genere === 'M').length,
-        vacas: allAnimals.filter(a => a.genere === 'F').length,
-        amamantando: amamantando,
-        noAmamantando: noAmamantando,
-        terneros: terneros
-      };
+      console.log(`Obtenidos ${animalsData.length} animales REALES para la explotación ${explotacionCode}`);
+
+      // Contar animales por categoría para actualizar las pestañas
+      const toros = animalsData.filter(a => a.genere === 'M' && a.estado !== 'DEF').length;
+      const vacas = animalsData.filter(a => a.genere === 'F' && a.estado !== 'DEF').length;
+      const vacasAmam = animalsData.filter(a => a.genere === 'F' && (a.alletar === '1' || a.alletar === '2') && a.estado !== 'DEF').length;
+      const vacasNoAmam = animalsData.filter(a => a.genere === 'F' && a.alletar === '0' && a.estado !== 'DEF').length;
       
-      // Actualizamos contadores en las pestañas (si existen)
-      // Primero recogemos todos los elementos de las pestañas
-      const animalTabs = document.querySelectorAll('.animal-tab');
-      const animalTabsCount = document.querySelectorAll('.tab-count');
+      console.log('Información de animales encontrados:', {
+        total: animalsData.length,
+        toros,
+        vacas,
+        vacasAmam,
+        vacasNoAmam
+      });
       
-      // Actualizar el contenido de texto en las pestañas si existen
-      if (animalTabs) {
-        animalTabs.forEach(tab => {
-          const countSpan = tab.querySelector('.tab-count');
-          if (countSpan) {
-            const category = tab.dataset.category;
-            if (category === 'todos') {
-              countSpan.textContent = stats.total;
-            } else if (category === 'toros') {
-              countSpan.textContent = stats.toros;
-            } else if (category === 'vacas') {
-              countSpan.textContent = stats.vacas;
-            } else if (category === 'amamantando' || category === 'vacas-amam') {
-              countSpan.textContent = stats.amamantando;
-            } else if (category === 'noAmamantando' || category === 'vacas-no-amam') {
-              countSpan.textContent = stats.noAmamantando;
-            } else if (category === 'terneros') {
-              countSpan.textContent = stats.terneros;
-            }
-          }
-        });
-      }
-      
-      // Usar los selectores para los contadores sin redefinir las variables
-      const countTorosEl = document.querySelector('#count-toros');
-      const countVacasEl = document.querySelector('#count-vacas');
-      const countAmamantandoEl = document.querySelector('#count-amamantando');
-      const countTotalEl = document.querySelector('#count-total');
-      
-      console.log('Estadísticas calculadas:', stats);
-      
-      // Ya tenemos los datos en allAnimals, ahora vamos a mostrarlos directamente como en la página de animals
-      
-      console.log(`Encontrados ${allAnimals.length} animales para la explotación ${explotacionCode}`);
-      
-      // Actualizar contadores en la interfaz
-      if (countTorosEl) countTorosEl.textContent = stats.toros;
-      if (countVacasEl) countVacasEl.textContent = stats.vacas;
-      if (countAmamantandoEl) countAmamantandoEl.textContent = stats.amamantando;
-      if (countTotalEl) countTotalEl.textContent = stats.total;
-      
-      // Ocultar tarjetas y mostrar detalle
-      const cardsContainer = document.getElementById('explotacionCards');
-      if (cardsContainer) {
-        cardsContainer.style.display = 'none';
-      }
+      // Mostrar vista de detalle
       if (explotacionDetail) {
+        // Actualizar código de explotación en la vista
+        const explotacionCodeElement = document.getElementById('explotacion-code');
+        if (explotacionCodeElement) {
+          explotacionCodeElement.textContent = explotacionCode;
+        }
+        
+        // Ocultar contenedor de tarjetas
+        if (explotacionCardsContainer) {
+          explotacionCardsContainer.style.display = 'none';
+        }
+        
+        // Mostrar vista de detalle
         explotacionDetail.style.display = 'block';
+        
+        // Mostrar lista de animales con datos REALES
+        renderAnimalsList(animalsData, 'toros');
       }
-      if (noResultsElement) {
-        noResultsElement.style.display = 'none';
-      }
-      
-      // Variable global para almacenar los animales filtrados
-      window.allAnimalsData = allAnimals;
-      window.currentCategory = 'todos';
-      
-      // Añadir manejadores de eventos para las pestañas si no existen
-      const setupTabEvents = () => {
-        const tabs = document.querySelectorAll('.animal-tab');
-        tabs.forEach(tab => {
-          // Eliminar event listeners previos si existen
-          const newTab = tab.cloneNode(true);
-          tab.parentNode.replaceChild(newTab, tab);
-          
-          // Añadir nuevo event listener
-          newTab.addEventListener('click', function() {
-            // Obtener categoría de la pestaña
-            const category = this.dataset.category;
-            window.currentCategory = category;
-            
-            // Actualizar estilo de pestañas (quitar estilo activo de todas)
-            tabs.forEach(t => {
-              t.classList.remove('border-primary', 'text-primary', 'dark:text-primary-light');
-              t.classList.add('border-transparent', 'hover:border-primary', 'hover:text-primary', 'dark:hover:text-primary-light');
-            });
-            
-            // Añadir estilo activo a la pestaña actual
-            this.classList.remove('border-transparent', 'hover:border-primary', 'hover:text-primary', 'dark:hover:text-primary-light');
-            this.classList.add('border-primary', 'text-primary', 'dark:text-primary-light');
-            
-            // Filtrar y mostrar animales de la categoría seleccionada
-            renderFilteredAnimals(category);
-          });
-        });
-      };
-      
-      // Función para filtrar y mostrar animales por categoría
-      const renderFilteredAnimals = (category) => {
-        // Limpiar contenedor
-        animalList.innerHTML = '';
-        
-        // Filtrar animales por categoría
-        let filteredAnimals = [];
-        
-        if (category === 'todos') {
-          filteredAnimals = window.allAnimalsData;
-        } else if (category === 'toros') {
-          filteredAnimals = window.allAnimalsData.filter(animal => animal.genere === 'M');
-        } else if (category === 'vacas-amam') {
-          filteredAnimals = window.allAnimalsData.filter(animal => 
-            animal.genere === 'F' && (animal.alletar === '1' || animal.alletar === 1 || animal.alletar === '2' || animal.alletar === 2));
-        } else if (category === 'vacas-no-amam') {
-          filteredAnimals = window.allAnimalsData.filter(animal => 
-            animal.genere === 'F' && (animal.alletar === '0' || animal.alletar === 0 || animal.alletar === null));
-        }
-        
-        // Si no hay animales en esta categoría
-        if (filteredAnimals.length === 0) {
-          animalList.innerHTML = `
-            <div class="flex justify-center items-center h-[200px]">
-              <p class="text-gray-500 dark:text-gray-400">No hay animales en esta categoría</p>
-            </div>
-          `;
-          return;
-        }
-        
-        // Crear tabla con los animales filtrados
-        renderAnimalTable(filteredAnimals);
-      };
-      
-      // Función para renderizar la tabla de animales
-      const renderAnimalTable = (animals) => {
-        // Si no hay animales
-        if (!animals || animals.length === 0) {
-          animalList.innerHTML = `
-            <div class="flex justify-center items-center h-[200px]">
-              <p class="text-gray-500 dark:text-gray-400">No hay animales en esta categoría</p>
-            </div>
-          `;
-          return;
-        }
-        
-        // Crear tabla
-        const table = document.createElement('table');
-        table.className = 'min-w-full divide-y divide-gray-200 dark:divide-gray-700';
-        
-        // Cabecera
-        const thead = document.createElement('thead');
-        thead.className = 'bg-gray-50 dark:bg-gray-700';
-        thead.innerHTML = `
-          <tr>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Género</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amamantando</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">F. Nacimiento</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
-          </tr>
-        `;
-        
-        // Cuerpo
-        const tbody = document.createElement('tbody');
-        tbody.className = 'bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700';
-        
-        // Ordenar por nombre
-        animals.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
-        
-        animals.forEach((animal, index) => {
-          const row = document.createElement('tr');
-          row.className = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
-          row.style.cursor = 'pointer';
-          
-          // Añadir evento para ver detalle del animal
-          row.addEventListener('click', () => {
-            window.location.href = `/animals/${animal.id}`;
-          });
-          
-          // Formatos para estados especiales
-          let alletar = '-';
-          if (animal.genere === 'F') {
-            if (animal.alletar === '1' || animal.alletar === 1) {
-              alletar = 'Sí (1 ternero)';
-            } else if (animal.alletar === '2' || animal.alletar === 2) {
-              alletar = 'Sí (2 terneros)';
-            } else {
-              alletar = 'No';
-            }
-          }
-          
-          // Formatear fecha
-          let fechaNac = animal.dob || '-';
-          if (fechaNac && fechaNac !== '-') {
-            try {
-              const fecha = new Date(fechaNac);
-              fechaNac = fecha.toLocaleDateString('es-ES');
-            } catch (error) {
-              console.error('Error al formatear fecha:', error);
-            }
-          }
-          
-          row.innerHTML = `
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-white">${animal.nom || '-'}</td>
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${animal.genere === 'M' ? 'Toro' : 'Vaca'}</td>
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${alletar}</td>
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${fechaNac}</td>
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${animal.estado === 'OK' ? 'Activo' : 'Fallecido'}</td>
-          `;
-          
-          tbody.appendChild(row);
-        });
-        
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        animalList.appendChild(table);
-      };
-        
-      // Configurar los eventos de las pestañas
-      setupTabEvents();
-      
-      // Mostrar inicialmente todos los animales
-      renderFilteredAnimals('todos');
-      
     } catch (error) {
-      console.error('Error al cargar detalle de explotación:', error);
+      console.error('Error al obtener detalles de la explotación:', error);
+      // Mostrar mensaje de error
       if (noResultsElement) {
         noResultsElement.style.display = 'block';
-        noResultsElement.innerHTML = `<p class="text-center py-4">Error al cargar datos: ${error.message}</p>`;
+        noResultsElement.innerHTML = `<p class="text-center py-4">Error al obtener animales: ${error.message}</p>`;
       }
     } finally {
       // Ocultar indicador de carga
@@ -914,6 +640,109 @@ const title = 'Explotaciones';
     }
   }
   
+  // Función para renderizar la lista de animales con datos REALES
+  function renderAnimalsList(animalsData, category = 'todos') {
+    const animalList = document.getElementById('animal-list');
+    if (!animalList) return;
+    
+    // Limpiar lista actual
+    animalList.innerHTML = '';
+    
+    // Filtrar animales según la categoría seleccionada
+    let filteredAnimals = [];
+    
+    switch (category) {
+      case 'toros':
+        filteredAnimals = animalsData.filter(a => a.genere === 'M' && a.estado !== 'DEF');
+        break;
+      case 'vacas':
+        filteredAnimals = animalsData.filter(a => a.genere === 'F' && a.estado !== 'DEF');
+        break;
+      case 'terneros':
+        // En este ejemplo, consideramos terneros a los animales con parte = 0
+        filteredAnimals = animalsData.filter(a => a.parte === 0 && a.estado !== 'DEF');
+        break;
+      default:
+        filteredAnimals = animalsData.filter(a => a.estado !== 'DEF');
+    }
+    
+    // Actualizar contadores en pestañas
+    if (countTorosElement) {
+      countTorosElement.textContent = animalsData.filter(a => a.genere === 'M' && a.estado !== 'DEF').length;
+    }
+    
+    if (countVacasElement) {
+      countVacasElement.textContent = animalsData.filter(a => a.genere === 'F' && a.estado !== 'DEF').length;
+    }
+    
+    if (countTernerosElement) {
+      countTernerosElement.textContent = animalsData.filter(a => a.parte === 0 && a.estado !== 'DEF').length;
+    }
+    
+    // Si no hay animales en la categoría seleccionada
+    if (filteredAnimals.length === 0) {
+      animalList.innerHTML = `<p class="text-center py-4">No hay animales en esta categoría</p>`;
+      return;
+    }
+    
+    // Crear tabla de animales
+    const table = document.createElement('table');
+    table.className = 'min-w-full divide-y divide-gray-200 dark:divide-gray-700';
+    
+    // Crear encabezado
+    const thead = document.createElement('thead');
+    thead.className = 'bg-gray-50 dark:bg-gray-800';
+    
+    thead.innerHTML = `
+      <tr>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nombre</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Género</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amamantando</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+      </tr>
+    `;
+    
+    // Crear cuerpo de la tabla
+    const tbody = document.createElement('tbody');
+    tbody.className = 'bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700';
+    
+    // Iterar sobre los animales filtrados
+    filteredAnimals.forEach((animal, index) => {
+      const row = document.createElement('tr');
+      row.className = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
+      
+      row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm font-medium text-gray-900 dark:text-white">${animal.nom}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm text-gray-500 dark:text-gray-400">${animal.genere === 'M' ? 'Macho' : 'Hembra'}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            ${animal.genere === 'F' ? (animal.alletar === '1' || animal.alletar === '2' ? 'Sí' : 'No') : '-'}
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${animal.estado === 'OK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+            ${animal.estado === 'OK' ? 'Activo' : 'Fallecido'}
+          </span>
+        </td>
+      `;
+      
+      tbody.appendChild(row);
+    });
+    
+    // Añadir encabezado y cuerpo a la tabla
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    
+    // Añadir tabla al contenedor
+    animalList.appendChild(table);
+    
+    console.log(`Encontrados ${filteredAnimals.length} animales para la explotación ${currentExplotacion}`);
+  }
+  
   // Función para mostrar animales por categoría
   function showAnimalsByCategory(category) {
     if (!animalList) return;
@@ -921,343 +750,21 @@ const title = 'Explotaciones';
     currentCategory = category;
     let filteredAnimals = [];
     
-    // Filtrar por categoría
     switch (category) {
       case 'toros':
-        filteredAnimals = allAnimals.filter(animal => animal.genere === 'M' && animal.estado !== 'DEF');
+        filteredAnimals = allAnimals.filter(a => a.genere === 'M' && a.estado !== 'DEF');
         break;
-      case 'vacas-amam':
-        filteredAnimals = allAnimals.filter(animal => animal.genere === 'F' && (animal.alletar === '1' || animal.alletar === '2') && animal.estado !== 'DEF');
+      case 'vacas':
+        filteredAnimals = allAnimals.filter(a => a.genere === 'F' && a.estado !== 'DEF');
         break;
-      case 'vacas-no-amam':
-        filteredAnimals = allAnimals.filter(animal => animal.genere === 'F' && animal.alletar === '0' && animal.estado !== 'DEF');
-        break;
-      case 'todos':
-        filteredAnimals = [...allAnimals];
+      case 'terneros':
+        filteredAnimals = allAnimals.filter(a => a.parte === 0 && a.estado !== 'DEF');
         break;
       default:
-        filteredAnimals = allAnimals.filter(animal => animal.estado !== 'DEF');
+        filteredAnimals = allAnimals.filter(a => a.estado !== 'DEF');
     }
     
-    // Ordenar por nombre
-    filteredAnimals.sort((a, b) => a.nom.localeCompare(b.nom));
-    
-    // Limpiar contenedor
-    animalList.innerHTML = '';
-    
-    // Si no hay animales en la categoría
-    if (filteredAnimals.length === 0) {
-      animalList.innerHTML = `
-        <div class="flex justify-center items-center h-[200px]">
-          <p class="text-gray-500 dark:text-gray-400">No hay animales en esta categoría</p>
-        </div>
-      `;
-      return;
-    }
-    
-    // Crear tabla
-    const table = document.createElement('table');
-    table.className = 'min-w-full divide-y divide-gray-200 dark:divide-gray-700';
-    
-    // Cabecera
-    const thead = document.createElement('thead');
-    thead.className = 'bg-gray-50 dark:bg-gray-700';
-    thead.innerHTML = `
-      <tr>
-        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Género</th>
-        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amamantando</th>
-        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">F. Nacimiento</th>
-        <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estado</th>
-      </tr>
-    `;
-    
-    // Cuerpo
-    const tbody = document.createElement('tbody');
-    tbody.className = 'bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700';
-    
-    filteredAnimals.forEach((animal, index) => {
-      const row = document.createElement('tr');
-      row.className = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
-      row.style.cursor = 'pointer';
-      
-      // Añadir evento para ver detalle del animal
-      row.addEventListener('click', () => {
-        window.location.href = `/animals/${animal.id}`;
-      });
-      
-      row.innerHTML = `
-        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-white">${animal.nom || '-'}</td>
-        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${animal.genere === 'M' ? 'Toro' : 'Vaca'}</td>
-        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-          ${animal.genere === 'F' ? (animal.alletar === '1' || animal.alletar === '2' ? 'Sí' : 'No') : '-'}
-        </td>
-        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${animal.dob || '-'}</td>
-        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-          ${animal.estado === 'OK' ? 
-            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Activo</span>' : 
-            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Fallecido</span>'}
-        </td>
-      `;
-      
-      tbody.appendChild(row);
-    });
-    
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    animalList.appendChild(table);
+    // Renderizar lista de animales
+    renderAnimalsList(filteredAnimals, category);
   }
-  
-  // Establecer pestaña activa
-  function setActiveTab(category) {
-    if (!animalTabs) return;
-    
-    animalTabs.forEach(tab => {
-      if (tab.dataset.category === category) {
-        tab.classList.add('border-primary', 'text-primary', 'dark:text-primary-light');
-        tab.classList.remove('border-transparent', 'hover:border-primary', 'hover:text-primary', 'dark:hover:text-primary-light');
-      } else {
-        tab.classList.remove('border-primary', 'text-primary', 'dark:text-primary-light');
-        tab.classList.add('border-transparent', 'hover:border-primary', 'hover:text-primary', 'dark:hover:text-primary-light');
-      }
-    });
-  }
-  
-  // Obtener datos de explotación de las tarjetas ya renderizadas
-  function getExplotacionFromCards(explotacionCode) {
-    if (!explotacionCode) return null;
-    
-    const normalizedSearch = explotacionCode.toLowerCase().trim();
-    const cards = document.querySelectorAll('#explotacionCards > div');
-    
-    // Buscar la tarjeta que corresponde con la explotación buscada
-    for (const card of cards) {
-      const title = card.querySelector('h3')?.textContent?.toLowerCase()?.trim() || '';
-      
-      if (title === normalizedSearch) {
-        // Extraer información de la tarjeta
-        const stats = {};
-        
-        // Obtener datos estadísticos de la tarjeta
-        const counters = card.querySelectorAll('.counter');
-        counters.forEach(counter => {
-          const label = counter.closest('.stat-item')?.querySelector('.stat-label')?.textContent || '';
-          const value = parseInt(counter.textContent || '0', 10);
-          
-          // Almacenar datos relevantes
-          if (label.includes('Toros')) stats.toros = value;
-          if (label.includes('Vacas')) stats.vacas = value;
-          if (label.includes('Terneros')) stats.terneros = value;
-          if (label.includes('Partos')) stats.partos = value;
-          if (label.includes('Total')) stats.total = value;
-        });
-        
-        // Crear una estructura de datos similar a la que esperamos de la API
-        return {
-          explotacio: explotacionCode,
-          stats: stats,
-          // Crear datos de animales de muestra basados en las estadísticas
-          animals: generateSampleAnimals(explotacionCode, stats),
-        };
-      }
-    }
-    
-    return null;
-  }
-  
-  // Generar datos de muestra basados en las estadísticas
-  function generateSampleAnimals(explotacionCode, stats) {
-    const animals = [];
-    const toros = stats.toros || 0;
-    const vacasAmam = Math.floor((stats.vacas || 0) / 2) || 0;
-    const vacasNoAmam = (stats.vacas || 0) - vacasAmam;
-    
-    // Crear toros de muestra
-    for (let i = 1; i <= toros; i++) {
-      animals.push({
-        id: `t${i}`,
-        nom: `Toro ${i}`,
-        genere: 'M',
-        estado: 'OK',
-        explotacio: explotacionCode,
-        alletar: '0',
-        dob: `${10 + i}/05/20${20 - i % 5}`
-      });
-    }
-    
-    // Crear vacas amamantando
-    for (let i = 1; i <= vacasAmam; i++) {
-      animals.push({
-        id: `va${i}`,
-        nom: `Vaca Amamantando ${i}`,
-        genere: 'F',
-        estado: 'OK',
-        explotacio: explotacionCode,
-        alletar: '1',
-        dob: `${5 + i}/02/20${18 - i % 5}`
-      });
-    }
-    
-    // Crear vacas no amamantando
-    for (let i = 1; i <= vacasNoAmam; i++) {
-      animals.push({
-        id: `vn${i}`,
-        nom: `Vaca ${i}`,
-        genere: 'F',
-        estado: 'OK',
-        explotacio: explotacionCode,
-        alletar: '0',
-        dob: `${15 + i}/06/20${17 - i % 5}`
-      });
-    }
-    
-    // Añadir un animal fallecido para ejemplo
-    if (animals.length > 0) {
-      animals.push({
-        id: 'def1',
-        nom: 'Animal Fallecido',
-        genere: Math.random() > 0.5 ? 'M' : 'F',
-        estado: 'DEF',
-        explotacio: explotacionCode,
-        alletar: '0',
-        dob: '10/10/2010'
-      });
-    }
-    
-    return animals;
-  }
-  
-  // Exportar animales a CSV
-  function exportToCSV(explotacionCode) {
-    if (!allAnimals || allAnimals.length === 0) {
-      alert('No hay animales para exportar');
-      return;
-    }
-    
-    // Columnas para el CSV
-    const columns = [
-      'ID', 'Nombre', 'Explotación', 'Género', 'Estado', 
-      'Amamantando', 'Fecha Nacimiento', 'Padre', 'Madre', 'Cuadra'
-    ];
-    
-    // Mapear los datos de animales a filas CSV
-    const rows = allAnimals.map(animal => [
-      animal.id || '',
-      animal.nom || '',
-      animal.explotacio || '',
-      animal.genere === 'M' ? 'Toro' : 'Vaca',
-      animal.estado === 'OK' ? 'Activo' : 'Fallecido',
-      animal.genere === 'F' ? 
-        (animal.alletar === '0' ? 'No' : 'Sí') : 
-        'N/A',
-      animal.dob || '',
-      animal.pare || '',
-      animal.mare || '',
-      animal.quadra || ''
-    ]);
-    
-    // Crear contenido CSV
-    let csvContent = columns.join(',') + '\n';
-    
-    // Añadir filas
-    rows.forEach(row => {
-      // Escapar comas y comillas en los valores
-      const formattedRow = row.map(value => {
-        const stringValue = String(value || '');
-        // Si contiene comas o comillas, encerrarlo entre comillas
-        if (stringValue.includes(',') || stringValue.includes('"')) {
-          return `"${stringValue.replace(/"/g, '""')}"`;  // Escapar comillas duplicando
-        }
-        return stringValue;
-      });
-      
-      csvContent += formattedRow.join(',') + '\n';
-    });
-    
-    // Crear blob con BOM para que Excel reconozca UTF-8
-    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // Crear link de descarga
-    const downloadLink = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    downloadLink.setAttribute('href', url);
-    downloadLink.setAttribute('download', `animales_${explotacionCode}_${new Date().toISOString().split('T')[0]}.csv`);
-    downloadLink.style.display = 'none';
-    
-    // Añadir al DOM, simular clic y limpiar
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    
-    console.log(`Exportados ${rows.length} animales a CSV`);
-  }
-  
-  // Limpiar búsqueda
-  function clearSearch() {
-    if (searchInput) {
-      searchInput.value = '';
-      handleSearch();
-    }
-  }
-  
-  // Configurar eventos cuando el DOM esté listo
-  document.addEventListener('DOMContentLoaded', () => {
-    // Configurar evento de búsqueda
-    if (searchInput) {
-      searchInput.addEventListener('input', handleSearch);
-      searchButton.addEventListener('click', handleSearch);
-    }
-    
-    // Configurar botón de limpiar
-    if (clearButton) {
-      clearButton.addEventListener('click', clearSearch);
-    }
-    
-    // Configurar pestañas para filtrar animales
-    if (animalTabs) {
-      animalTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const category = tab.dataset.category;
-          showAnimalsByCategory(category);
-          setActiveTab(category);
-        });
-      });
-    }
-    
-    // Configurar botón para volver a la vista general
-    if (backButton) {
-      backButton.addEventListener('click', () => {
-        // Ocultar vista de detalle
-        if (explotacionDetail) {
-          explotacionDetail.style.display = 'none';
-        }
-        
-        // Mostrar todas las tarjetas
-        const cardsContainer = document.getElementById('explotacionCards');
-        if (cardsContainer) {
-          cardsContainer.style.display = 'grid';
-        }
-        
-        // Limpiar búsqueda
-        if (searchInput) {
-          searchInput.value = '';
-          handleSearch();
-        }
-      });
-    }
-    
-    // Configurar botón para exportar a CSV
-    const exportCsvButton = document.getElementById('export-csv');
-    if (exportCsvButton) {
-      exportCsvButton.addEventListener('click', () => {
-        if (currentExplotacion) {
-          exportToCSV(currentExplotacion);
-        } else {
-          alert('No hay explotación seleccionada');
-        }
-      });
-    }
-  });
 </script>
