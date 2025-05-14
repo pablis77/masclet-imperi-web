@@ -716,53 +716,59 @@ const ExplotacionesPage: React.FC = () => {
               >
                 {/* Cabecera con el nombre de la explotación */}
                 <div className="card-header bg-primary text-white p-3">
-                  <h3 className="text-lg font-bold">{exp.explotacio}</h3>
+                  <h3 className="text-lg font-bold text-center">{exp.explotacio}</h3>
                 </div>
                 
                 {/* Cuerpo de la tarjeta */}
                 <div className="card-body p-4">
                   {/* Primera fila: Total y Partos */}
                   <div className="total-stats grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <div className="stat-label">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
-                      <div className="stat-value total">{exp.total || 0}</div>
+                    <div className="text-center">
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
+                      <div className="stat-value total font-bold text-xl">{exp.total || 0}</div>
                     </div>
-                    <div>
-                      <div className="stat-label">{currentLang === 'ca' ? "Parts" : "Partos"}</div>
-                      <div className="stat-value partos">{exp.partos || 0}</div>
+                    <div className="text-center">
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Parts" : "Partos"}</div>
+                      <div className="stat-value partos font-bold text-xl">{exp.partos || 0}</div>
                     </div>
                   </div>
                   
                   {/* Segunda fila: Toros, Vacas, Terneros */}
-                  <div className="animal-stats">
+                  <div className="animal-stats grid grid-cols-3 gap-1 text-center mb-3">
                     <div>
-                      <div className="stat-label">{currentLang === 'ca' ? "Toros" : "Toros"}</div>
-                      <div className="stat-value toros">{exp.toros || 0}</div>
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Toros" : "Toros"}</div>
+                      <div className="stat-value toros font-bold text-primary">{exp.toros || 0}</div>
                     </div>
                     <div>
-                      <div className="stat-label">{currentLang === 'ca' ? "Vaques" : "Vacas"}</div>
-                      <div className="stat-value vacas">{exp.vacas || 0}</div>
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Vaques" : "Vacas"}</div>
+                      <div className="stat-value vacas font-bold text-pink-500">{exp.vacas || 0}</div>
                     </div>
                     <div>
-                      <div className="stat-label">{currentLang === 'ca' ? "Vedells" : "Terneros"}</div>
-                      <div className="stat-value terneros">{exp.terneros || 0}</div>
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Vedells" : "Terneros"}</div>
+                      <div className="stat-value terneros font-bold text-orange-500">{exp.terneros || 0}</div>
                     </div>
                   </div>
                   
                   {/* Tercera fila: Amamantando */}
-                  <div className="card-footer">
-                    <span className="amam-count">
-                      {currentLang === 'ca' ? "Alletant" : "Amamantando"}: <b>{exp.amamantando || 0}</b>
-                    </span>
-                    <button 
-                      className="details-link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        showExplotacionDetail(exp.explotacio);
-                      }}
-                    >
-                      {currentLang === 'ca' ? "Veure detalls" : "Ver detalles"} &rarr;
-                    </button>
+                  <div className="card-footer grid grid-cols-3 gap-1 text-center pt-2 border-t border-gray-100">
+                    <div className="text-center">
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Alletant" : "Amamantando"}</div>
+                      <div className="font-bold text-blue-600">{exp.amamantando || 0}</div>
+                    </div>
+                    <div className="col-span-2 text-center flex flex-col justify-center items-center">
+                      <div className="stat-label font-medium">&nbsp;</div>
+                      <div>
+                        <button 
+                          className="details-link text-green-600 font-medium hover:text-green-700 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showExplotacionDetail(exp.explotacio);
+                          }}
+                        >
+                          {currentLang === 'ca' ? "Veure detalls" : "Ver detalles"} &rarr;
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
