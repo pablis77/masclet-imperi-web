@@ -760,7 +760,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="vacas-amam"
                   onClick={() => filterAnimalsByCategory('vacas-amam')}
                 >
-                  {currentLang === 'ca' ? "Vaques alletant" : "Vacas amamantando"}
+                  {currentLang === 'ca' ? "Vaques alletant" : "Vacas amamantando"} <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{filteredAnimals.filter(a => a.genere === 'F' && ['1', 1, '2', 2].includes(a.alletar as any)).length}</span>
                 </button>
               </li>
               
@@ -770,7 +770,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="vacas-no-amam"
                   onClick={() => filterAnimalsByCategory('vacas-no-amam')}
                 >
-                  {currentLang === 'ca' ? "Vaques sense alletar" : "Vacas no amamantando"}
+                  {currentLang === 'ca' ? "Vaques sense alletar" : "Vacas no amamantando"} <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{filteredAnimals.filter(a => a.genere === 'F' && (['0', 0].includes(a.alletar as any) || a.alletar === null)).length}</span>
                 </button>
               </li>
             </ul>
