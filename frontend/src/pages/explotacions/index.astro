@@ -147,8 +147,8 @@ const title = 'Explotaciones';
 </MainLayout>
 
 <script>
-  // Importar el servicio API
-  import apiService from '../../services/apiService';
+  // Enfoque directo para compatibilidad con LocalTunnel
+  // No usamos importación de módulos para evitar problemas de hydratación en Astro
   
   // Obtener elementos del DOM
   const searchInput = document.getElementById('search-explotacion');
@@ -161,16 +161,48 @@ const title = 'Explotaciones';
   // El código ya tiene estas variables definidas en otra parte
   // No necesitamos declararlas de nuevo
   
-  // Mostrar información de depuración
-  console.log(`[Explotaciones] API Base URL: ${apiService.getBaseUrl()}`);
-
-  // Cargar datos iniciales automaticamente
+  // Configuración y variables de depuración
+  let API_BASE_URL = '';
+  
+  // Función para detectar el entorno y obtener la URL base
+  function getApiBaseUrl() {
+    // Detectar si estamos en un entorno de túnel
+    const hostname = window.location.hostname;
+    const isTunnel = hostname.includes('loca.lt');
+    
+    // Registrar información de depuración
+    console.log('[Explotaciones] Detección de entorno:');
+    console.log(`- Hostname: ${hostname}`);
+    console.log(`- Es túnel: ${isTunnel}`);
+    console.log(`- UserAgent: ${navigator.userAgent}`);
+    
+    // Determinar la URL base según el entorno
+    if (isTunnel) {
+      // Para túnel, usamos la API del túnel
+      return 'https://api-masclet-imperi.loca.lt/api/v1';
+    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // Para desarrollo local
+      return 'http://localhost:8000/api/v1';
+    } else {
+      // Para producción
+      return 'https://masclet-imperi-web-backend.onrender.com/api/v1';
+    }
+  }
+  
+  // Obtener la URL base y almacenarla
+  API_BASE_URL = getApiBaseUrl();
+  console.log(`[Explotaciones] URL base de API seleccionada: ${API_BASE_URL}`);
+  
+  // Cargar datos iniciales cuando se cargue el DOM
   document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar un mensaje de depuración en la consola
+    console.log('[Explotaciones] Página cargada, iniciando carga de datos...');
     loadInitialData();
   });
   async function loadInitialData() {
     try {
-      console.log('Cargando datos iniciales');
+      console.log('######## INICIO CARGA DE DATOS DE EXPLOTACIONES ########');
+      console.log(`Usando API directamente con URL base: ${API_BASE_URL}`);
       
       // Mostrar indicador de carga
       if (loadingElement) {
@@ -188,18 +220,44 @@ const title = 'Explotaciones';
         return;
       }
       
-      // Obtener todos los animales del backend con un límite razonable
-      const response = await apiService.get('animals/?page=1&limit=100');
+      // Verificar token de autenticación
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No hay token de autenticación');
+        // Redirigir al login o mostrar error
+        throw new Error('No autenticado');
+      }
       
-      // Los datos ya vienen procesados a través de apiService
-      const data = response;
+      // Obtener todos los animales del backend con un límite razonable
+      console.log(`Realizando petición GET a ${API_BASE_URL}/animals?page=1&limit=100`);
+      
+      // Usar fetch directamente para evitar problemas con la importación de módulos
+      const response = await fetch(`${API_BASE_URL}/animals?page=1&limit=100`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+        throw new Error(`Error en la petición: ${response.status}`);
+      }
+      
+      // Procesar la respuesta
+      const data = await response.json();
+      console.log('Respuesta recibida y procesada:', data);
       
       // Verificar la estructura de la respuesta
       if (!data.data || !data.data.items || !Array.isArray(data.data.items)) {
+        console.error('Formato de respuesta incorrecto:', data);
         throw new Error('Formato de respuesta incorrecto');
       }
       
       const allAnimals = data.data.items;
+      console.log(`Obtenidos ${allAnimals.length} animales`);
       
       // Agrupar animales por explotación
       const explotacionesMap = {};
@@ -254,56 +312,85 @@ const title = 'Explotaciones';
       const updatedExplotacionesData = await Promise.all(explotacionesData.map(async (exp) => {
         try {
           // Obtener detalles de la explotación usando la API del dashboard
-          const dashboardEndpoint = `dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`;
-          const explotacionResponse = await apiService.get(dashboardEndpoint);
+          const dashboardEndpoint = `${API_BASE_URL}/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`;
+          console.log(`Solicitando detalles de explotación: ${dashboardEndpoint}`);
+          
+          // Hacer la petición para obtener los detalles de la explotación
+          const explotacionResponse = await fetch(dashboardEndpoint, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!explotacionResponse.ok) {
+            console.error(`Error al obtener explotación ${exp.explotacio}: ${explotacionResponse.status}`);
+            throw new Error(`Error en la petición: ${explotacionResponse.status}`);
+          }
+          
+          const explotacionData = await explotacionResponse.json();
+          console.log(`Datos recibidos para explotación ${exp.explotacio}:`, explotacionData);
           
           // Obtener estadísticas detalladas de la explotación
-          const statsEndpoint = `dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
-          const statsResponse = await apiService.get(statsEndpoint);
+          const statsEndpoint = `${API_BASE_URL}/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
+          console.log(`Solicitando estadísticas: ${statsEndpoint}`);
+          
+          const statsResponse = await fetch(statsEndpoint, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!statsResponse.ok) {
+            console.error(`Error al obtener estadísticas ${exp.explotacio}: ${statsResponse.status}`);
+            throw new Error(`Error en la petición: ${statsResponse.status}`);
+          }
+          
+          const statsData = await statsResponse.json();
+          console.log(`Estadísticas recibidas para ${exp.explotacio}:`, statsData);
           
           // Inicializar objeto con datos actualizados
           let updatedExp = {...exp};
           
-          // Procesar respuesta básica de explotación
-          if (explotacionResponse.ok) {
-            const explotacionInfo = await explotacionResponse.json();
-            console.log(`Información de explotación ${exp.explotacio}:`, explotacionInfo);
-            
-            // Actualizar el conteo de partos con el valor correcto de la API
-            if (explotacionInfo && explotacionInfo.total_partos !== undefined) {
-              updatedExp = {
-                ...updatedExp,
-                partos: explotacionInfo.total_partos
-              };
-            }
-          }
-          
-          // Procesar respuesta de estadísticas
-          if (statsResponse.ok) {
-            const statsInfo = await statsResponse.json();
-            console.log(`Estadísticas detalladas para ${exp.explotacio}:`, statsInfo);
-            
-            // Extraer datos detallados de estadísticas
-            const animales = statsInfo.animales || {};
-            const partos = statsInfo.partos || {};
-            
-            // Actualizar con los datos estadísticos completos
+          // Actualizar el conteo de partos con el valor correcto de la API
+          if (explotacionData && explotacionData.total_partos !== undefined) {
             updatedExp = {
               ...updatedExp,
-              toros: animales.toros || updatedExp.toros,
-              vacas: animales.vacas || updatedExp.vacas,
-              terneros: animales.terneros || updatedExp.terneros,
-              amamantando: animales.vacas_amamantando || updatedExp.amamantando,
-              noAmamantando: animales.vacas_no_amamantando || updatedExp.noAmamantando,
-              partos: partos.total || updatedExp.partos
+              partos: explotacionData.total_partos
             };
           }
+          
+          // Extraer datos detallados de estadísticas
+          const animales = statsData.animales || {};
+          const partos = statsData.partos || {};
+          
+          // Actualizar con los datos estadísticos completos
+          updatedExp = {
+            ...updatedExp,
+            toros: animales.toros || updatedExp.toros,
+            vacas: animales.vacas || updatedExp.vacas,
+            terneros: animales.terneros || updatedExp.terneros,
+            amamantando: animales.vacas_amamantando || updatedExp.amamantando,
+            noAmamantando: animales.vacas_no_amamantando || updatedExp.noAmamantando,
+            partos: partos.total || updatedExp.partos
+          };
           
           // Devolver la explotación con todos los datos actualizados
           return updatedExp;
         } catch (error) {
           console.error(`Error obteniendo información para ${exp.explotacio}:`, error);
-          return exp; // En caso de error, devolver la explotación sin cambios
+          // Loguear detalles del error para diagnóstico
+          console.error(`Error detallado: ${error.message}`);
+          if (error.response) {
+            console.error(`Status: ${error.response.status}, Data:`, error.response.data);
+          }
+          // Si hay un error, devolver los datos originales
+          return exp;
         }
       }));
       
@@ -329,6 +416,7 @@ const title = 'Explotaciones';
       
     } catch (error) {
       console.error('Error al cargar datos iniciales de explotaciones:', error);
+      console.error('Detalle del error:', error.stack || 'No hay stack disponible');
       
       // Ocultar indicador de carga
       if (loadingElement) {
@@ -338,10 +426,11 @@ const title = 'Explotaciones';
       // Mostrar mensaje de error
       if (noResultsElement) {
         noResultsElement.style.display = 'block';
-        noResultsElement.innerHTML = `<p class="text-center py-4">Error al cargar datos: ${error.message}</p>`;
+        noResultsElement.innerHTML = `<div class="text-center py-4 text-red-500">Error al cargar datos: ${error.message}</div>`;
+        noResultsElement.innerHTML += `<div class="text-center text-sm text-gray-500">Si estás usando el túnel, verifica que la API esté disponible en: ${API_BASE_URL}</div>`;
       }
+      return;
     }
-  }
   
   // Función que renderiza las tarjetas de explotaciones
   function renderExplotacionCards(explotacionesData) {
