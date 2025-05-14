@@ -143,6 +143,14 @@
     "population_analysis": "Anàlisi Poblacional",
     "male_female_ratio": "Ràtio Mascles/Femelles"
   },
+  "footer": {
+    "rights_reserved": "Tots els drets reservats",
+    "version": "Versió",
+    "about": "Sobre nosaltres",
+    "help": "Ajuda",
+    "privacy": "Privacitat",
+    "terms": "Termes"
+  },
   "imports": {
     "title": "Importacions",
     "new": "Nova importació",

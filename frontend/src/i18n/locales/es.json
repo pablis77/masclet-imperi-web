@@ -143,6 +143,14 @@
     "population_analysis": "Análisis Poblacional",
     "male_female_ratio": "Ratio Machos/Hembras"
   },
+  "footer": {
+    "rights_reserved": "Todos los derechos reservados",
+    "version": "Versión",
+    "about": "Acerca de",
+    "help": "Ayuda",
+    "privacy": "Privacidad",
+    "terms": "Términos"
+  },
   "imports": {
     "title": "Importaciones",
     "new": "Nueva importación",
