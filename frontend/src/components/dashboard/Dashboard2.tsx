@@ -58,11 +58,14 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
       setLoading(true);
       
       // Obtener lista de explotaciones
+      console.log('📥 [Dashboard] Obteniendo lista de explotaciones...');
       const explotacionesData = await getExplotaciones();
+      console.log('💡 [Dashboard] Explotaciones obtenidas:', explotacionesData);
       setExplotaciones(explotacionesData);
       
       // Establecer la explotación seleccionada si no hay ninguna seleccionada
       if (!selectedExplotacion && explotacionesData.length > 0) {
+        console.log('🚨 [Dashboard] Seleccionando primera explotación automáticamente:', explotacionesData[0].id);
         setSelectedExplotacion(explotacionesData[0].id);
       }
       
@@ -70,26 +73,31 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
       const params = {
         explotacioId: selectedExplotacion || undefined
       };
+      console.log('🔎 [Dashboard] Parámetros para obtener datos:', params);
       
       // Obtener estadísticas generales
+      console.log('📊 [Dashboard] Obteniendo estadísticas generales...');
       const dashboardData = await getDashboardStats(params);
+      console.log('📊 [Dashboard] Datos del dashboard recibidos:', JSON.stringify(dashboardData, null, 2));
       setStats(dashboardData);
       
       // Obtener actividades recientes
+      console.log('💬 [Dashboard] Obteniendo actividades recientes...');
       const activitiesData = await getRecentActivities();
+      console.log('💬 [Dashboard] Actividades recientes recibidas:', activitiesData);
       setActivities(activitiesData.activities || []);
       
       console.log('✅ [Dashboard] Datos cargados correctamente');
       setError(null);
     } catch (error: any) {
       console.error('❌ [Dashboard] Error al cargar datos:', error);
-      setError({ message: 'Error al cargar datos de la explotación' });
+      setError({ message: `Error al cargar datos: ${error.message || 'Error desconocido'}` });
       setActivities([
         { 
           id: '0', 
           type: 'error', 
           title: 'Error',
-          description: 'Error al cargar actividades', 
+          description: `Error al cargar actividades: ${error.message || 'Error desconocido'}`, 
           timestamp: new Date().toISOString() 
         }
       ]);
@@ -100,6 +108,7 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
 
   // Cargar datos al montar el componente o cuando cambia la explotación
   useEffect(() => {
+    console.log('📊 [Dashboard] Efecto de carga activado, explotación seleccionada:', selectedExplotacion);
     loadDashboardData();
   }, [selectedExplotacion]);
 
@@ -132,6 +141,8 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
   const calcularTotalTerneros = () => {
     if (!stats) return 0;
     
+    console.log('🐄 [Dashboard] Calculando total de terneros, datos por_alletar:', stats.animales.por_alletar);
+    
     // Si existe la propiedad por_alletar, la usamos para calcular el total de terneros
     if (stats.animales.por_alletar) {
       let total = 0;
@@ -141,15 +152,23 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
       // Una vaca amamantando 2 terneros = 2 terneros
       if (stats.animales.por_alletar['1']) {
         total += stats.animales.por_alletar['1']; // Vacas con 1 ternero
+        console.log(`🐄 [Dashboard] Vacas con 1 ternero: ${stats.animales.por_alletar['1']}`);
+      } else {
+        console.log('🐄 [Dashboard] No hay vacas con 1 ternero');
       }
       
       if (stats.animales.por_alletar['2']) {
         total += stats.animales.por_alletar['2'] * 2; // Vacas con 2 terneros (cada una cuenta como 2)
+        console.log(`🐄 [Dashboard] Vacas con 2 terneros: ${stats.animales.por_alletar['2']} (contando como ${stats.animales.por_alletar['2'] * 2})`);
+      } else {
+        console.log('🐄 [Dashboard] No hay vacas con 2 terneros');
       }
       
+      console.log(`🐄 [Dashboard] Total de terneros calculado: ${total}`);
       return total;
     }
     
+    console.log('🐄 [Dashboard] No hay datos de por_alletar, devolviendo 0 terneros');
     return 0;
   };
 
@@ -472,14 +491,43 @@ const Dashboard2: React.FC<{ showDebugInfo?: boolean }> = ({ showDebugInfo = fal
       )}
       
       {/* Información de depuración */}
-      {showDebugInfo && (
-        <div className="debug-info bg-gray-100 p-4 rounded-md mt-6">
-          <h2 className="text-lg font-semibold mb-2">Información de Depuración</h2>
-          <p>Número de llamadas a la API: {apiCalls}</p>
-          <p>Estado de carga: {loading ? 'Cargando...' : 'Completado'}</p>
-          {error && <p className="text-red-500">Error: {error.message}</p>}
+      <div className="debug-info bg-gray-100 p-4 rounded-lg shadow-md mt-6">
+        <h2 className="text-lg font-semibold mb-2">Información de Depuración</h2>
+        <p className="mb-1">Número de llamadas a la API: {apiCalls}</p>
+        <p className="mb-1">Explotación seleccionada: {selectedExplotacion || 'Ninguna'}</p>
+        <p className="mb-1">Total explotaciones disponibles: {explotaciones.length}</p>
+        
+        <div className="mt-4">
+          <h3 className="text-md font-semibold mb-2">Estado de las propiedades clave:</h3>
+          <ul className="list-disc pl-5">
+            <li>stats: {stats ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.animales: {stats?.animales ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.animales.por_alletar: {stats?.animales?.por_alletar ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.animales.por_estado: {stats?.animales?.por_estado ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.animales.por_quadra: {stats?.animales?.por_quadra ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.partos: {stats?.partos ? '✅ Presente' : '❌ No disponible'}</li>
+            <li>stats.partos.por_mes: {stats?.partos?.por_mes ? '✅ Presente' : '❌ No disponible'}</li>
+          </ul>
         </div>
-      )}
+        
+        {stats && (
+          <>
+            <h3 className="text-md font-semibold mt-4 mb-2">Datos completos:</h3>
+            <pre className="bg-gray-200 p-3 rounded-md overflow-auto max-h-60 text-xs">
+              {JSON.stringify(stats, null, 2)}
+            </pre>
+          </>
+        )}
+        
+        {activities && activities.length > 0 && (
+          <>
+            <h3 className="text-md font-semibold mt-4 mb-2">Actividades:</h3>
+            <pre className="bg-gray-200 p-3 rounded-md overflow-auto max-h-60 text-xs">
+              {JSON.stringify(activities, null, 2)}
+            </pre>
+          </>
+        )}
+      </div>
     </div>
   );
 };
