@@ -9,12 +9,31 @@ declare module 'axios' {
     putData: (endpoint: string, data?: Record<string, any>) => Promise<any>;
     deleteData: (endpoint: string, data?: Record<string, any>) => Promise<any>;
     handleApiError: (error: any, setError: (message: string) => void, defaultMessage?: string) => void;
+    patchData: (endpoint: string, data?: Record<string, any>) => Promise<any>;
   }
 }
 
-// Configuración base
-const baseURL = 'http://localhost:8000/api/v1';
+// Detectar si estamos en LocalTunnel o entorno local
+const isLocalTunnel = typeof window !== 'undefined' && window.location.hostname.includes('loca.lt');
+
+// Configuración base según el entorno
+const baseURL = isLocalTunnel 
+    ? 'https://api-masclet-imperi.loca.lt/api/v1' 
+    : 'http://localhost:8000/api/v1';
+    
 const API_BASE_URL = '/api'; // Para el proxy local
+
+// Funciones de utilidad
+function normalizePath(path: string): string {
+    // Eliminar barra inicial si existe
+    path = path.startsWith('/') ? path.substring(1) : path;
+    // Asegurar barra final
+    return path.endsWith('/') ? path : `${path}/`;
+}
+
+// Logs para depuración
+console.log('🌐 Modo de conexión:', isLocalTunnel ? 'Local Tunnel' : 'Local');
+console.log('🔌 API Base URL:', baseURL);
 
 // Crear instancia de axios con configuración base
 const api = axios.create({
@@ -22,8 +41,9 @@ const api = axios.create({
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json',
+        'X-Environment': isLocalTunnel ? 'tunnel' : 'local'
     },
-    withCredentials: false, // Evita problemas con CORS
+    withCredentials: false // Evita problemas con CORS
 });
 
 // Interceptor para agregar el token JWT a las solicitudes
@@ -90,7 +110,7 @@ api.interceptors.response.use(
 );
 
 /**
- * Realiza una petición GET a la API a través del proxy local
+ * Realiza una petición GET a la API
  * @param endpoint Endpoint de la API
  * @param params Parámetros de la petición
  * @returns Promesa con la respuesta
@@ -99,7 +119,6 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
   try {
     // Construir la URL con los parámetros
     const queryParams = new URLSearchParams();
-    queryParams.append('endpoint', endpoint);
     
     // Añadir parámetros adicionales a la URL
     Object.entries(params).forEach(([key, value]) => {
@@ -107,23 +126,47 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
         queryParams.append(key, String(value));
       }
     });
+    
+    // Construir la URL según el entorno
+    let url;
+    if (isLocalTunnel) {
+      // En LocalTunnel, llamamos directamente al backend
+      const normalizedEndpoint = normalizePath(endpoint);
+      url = `${baseURL}${normalizedEndpoint}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    } else {
+      // En local, usamos el proxy
+      queryParams.append('endpoint', endpoint);
+      url = `${API_BASE_URL}/proxy?${queryParams.toString()}`;
+    }
+    
+    console.log(`🔍 Fetching data [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url);
 
-    const url = `${API_BASE_URL}/proxy?${queryParams.toString()}`;
-    console.log(`Fetching data from: ${url}`);
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers
+    });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error ${response.status}: ${JSON.stringify(errorData)}`);
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      console.error(`❌ Error ${response.status} en GET ${endpoint}:`, errorData);
       throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log(`✅ Respuesta GET ${endpoint}:`, data);
+    return data;
   } catch (error: any) {
-    console.error(`Error en fetchData (${endpoint}):`, error);
+    console.error(`❌ Error en fetchData (${endpoint}):`, error);
     throw {
-      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifica tu conexión.',
       status: error.status || 0,
       code: error.code || 'NETWORK_ERROR'
     };
@@ -131,51 +174,13 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
 }
 
 /**
- * Realiza una petición POST a la API a través del proxy local
+ * Realiza una petición POST a la API
  * @param endpoint Endpoint de la API
  * @param data Datos a enviar
  * @param method Método HTTP (POST, PUT, DELETE)
  * @returns Promesa con la respuesta
  */
 export async function postData(endpoint: string, data: Record<string, any> = {}, method: string = 'POST'): Promise<any> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/proxy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        endpoint,
-        data,
-        method
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error ${response.status}: ${JSON.stringify(errorData)}`);
-      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error: any) {
-    console.error(`Error en postData (${endpoint}):`, error);
-    throw {
-      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifique su conexión.',
-      status: error.status || 0,
-      code: error.code || 'NETWORK_ERROR'
-    };
-  }
-}
-
-/**
- * Realiza una petición PATCH a la API a través del proxy local
- * @param endpoint Endpoint de la API
- * @param data Datos a enviar
- * @returns Promesa con la respuesta
- */
-export async function patchData(endpoint: string, data: Record<string, any> = {}): Promise<any> {
-  console.log(`Enviando petición PATCH a ${endpoint} con datos:`, data);
   try {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
@@ -186,20 +191,96 @@ export async function patchData(endpoint: string, data: Record<string, any> = {}
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PATCH',
+    let url;
+    let requestBody;
+    
+    if (isLocalTunnel) {
+      // En LocalTunnel, llamamos directamente al backend
+      const normalizedEndpoint = normalizePath(endpoint);
+      url = `${baseURL}${normalizedEndpoint}`;
+      requestBody = JSON.stringify(data);
+    } else {
+      // En local, usamos el proxy
+      url = `${API_BASE_URL}/proxy`;
+      requestBody = JSON.stringify({
+        endpoint,
+        data,
+        method
+      });
+    }
+    
+    console.log(`📤 ${method} [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url, data);
+    
+    const response = await fetch(url, {
+      method: isLocalTunnel ? method : 'POST',
       headers,
-      body: JSON.stringify(data),
+      body: requestBody
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error ${response.status} en PATCH ${endpoint}:`, errorData);
-      throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      console.error(`❌ Error ${response.status} en ${method} ${endpoint}:`, errorData);
+      throw new Error(errorData.message || errorData.detail || `Error ${response.status}: ${response.statusText}`);
     }
     
     const responseData = await response.json();
-    console.log(`Respuesta exitosa de PATCH ${endpoint}:`, responseData);
+    console.log(`✅ Respuesta ${method} ${endpoint}:`, responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error(`❌ Error en ${method} (${endpoint}):`, error);
+    throw {
+      message: error.message || 'No se pudo conectar con el servidor. Por favor, verifica tu conexión.',
+      status: error.status || 0,
+      code: error.code || 'NETWORK_ERROR'
+    };
+  }
+}
+
+/**
+ * Realiza una petición PATCH a la API
+ * @param endpoint Endpoint de la API
+ * @param data Datos a enviar
+ * @returns Promesa con la respuesta
+ */
+export async function patchData(endpoint: string, data: Record<string, any> = {}): Promise<any> {
+  try {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    let url;
+    let requestBody = JSON.stringify(data);
+    
+    if (isLocalTunnel) {
+      // En LocalTunnel, llamamos directamente al backend
+      const normalizedEndpoint = normalizePath(endpoint);
+      url = `${baseURL}${normalizedEndpoint}`;
+    } else {
+      // En local, usamos el proxy
+      url = `${API_BASE_URL}${endpoint}`;
+    }
+    
+    console.log(`🔧 PATCH [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url, data);
+    
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: requestBody
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      console.error(`❌ Error ${response.status} en PATCH ${endpoint}:`, errorData);
+      throw new Error(errorData.message || errorData.detail || `Error ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log(`✅ Respuesta PATCH ${endpoint}:`, responseData);
     return responseData;
   } catch (error: any) {
     console.error(`Error en patchData (${endpoint}):`, error);
@@ -245,7 +326,8 @@ export function handleApiError(error: any, setError: (message: string) => void, 
   } else if (error.message) {
     setError(error.message);
   } else {
-    setError(defaultMessage);
+    // Error general
+    setError(error.message || defaultMessage);
   }
 }
 
@@ -255,13 +337,6 @@ api.postData = postData;
 api.putData = putData;
 api.deleteData = deleteData;
 api.handleApiError = handleApiError;
-
-// Agregar método PATCH
-declare module 'axios' {
-  interface AxiosInstance {
-    patchData: (endpoint: string, data?: Record<string, any>) => Promise<any>;
-  }
-}
 api.patchData = patchData;
 
 export default api;
