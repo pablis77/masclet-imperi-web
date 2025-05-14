@@ -1,0 +1,29 @@
+
+src\components\animals\AnimalCard.astro:61:          <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+src\components\animals\AnimalDetails.astro:36:          <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+src\components\animals\AnimalForm.astro:81:          <option value="M" selected={animal.genere === 'M'}>Macho</option>
+src\components\animals\AnimalInfoTab.astro:35:          <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+src\components\animals\AnimalPartosTab.astro:360:                ${parto.GenereT === 'M' ? 'Macho' : 
+src\components\animals\CreateAnimalForm.astro:69:          <option value="M">Macho</option>
+src\components\animals\CreateAnimalForm.astro:282:          // Si es macho, eliminar alletar
+src\components\animals\HabitualesForm.astro:87:              <option value="M">Macho</option>
+src\components\animals\PartoForm.astro:79:                  {parto.GenereT === 'M' ? 'Macho' : parto.GenereT === 'F' ? 'Hembra' : 'Esforrada'}
+src\components\animals\PartoModal.astro:51:          <option value="M">Macho</option>
+src\pages\animals\partos\edit\[id].astro:138:              <option value="M" selected={parto.GenereT === 'M'}>Macho</option>
+src\pages\animals\[id].astro:14:const txtMacho = serverLang === 'ca' ? 'Mascle' : 'Macho';
+src\pages\animals\[id].astro:38:    male: "Macho",
+src\pages\animals\[id].astro:524:                              {parto.GenereT === 'M' ? txtMacho : 
+src\pages\animals\[id].astro:621:        male: "Macho",
+src\pages\animals\[id].astro:894:        } else if (valueText === 'Macho') {
+src\pages\animals\[id].astro:944:          if (texto === 'Macho') {
+src\pages\animals\[id].astro:945:            celda.innerHTML = currentLang === 'ca' ? 'Mascle' : 'Macho';
+src\pages\animals\[id].astro:946:            console.log('[DEBUG] Traducido Macho→Mascle');
+src\pages\animals\id_part2.astro:74:              genero = 'Macho';
+src\pages\explotacions\_new_index.astro:545:          <div class="text-sm text-gray-500 dark:text-gray-400">${animal.genere === 'M' ? 'Macho' : 'Hembra'}</div>
+src\pages\explotacions\[id].astro:86:              <div class="text-sm text-green-600 dark:text-green-300">Machos / Hembras</div>
+src\pages\explotacions\[id].astro:213:          document.getElementById('stat-genero').textContent = `${stats.total_machos || '0'} / ${stats.total_hembras || '0'}`;
+src\pages\explotacions\[id].astro:265:            const generoTexto = animal.genere === 'M' ? 'Macho' : 'Hembra';
+src\pages\explotacions\index.astro:709:          <div class="text-sm text-gray-500 dark:text-gray-400">${animal.genere === 'M' ? 'Macho' : 'Hembra'}</div>
+src_10 mayo 2025\pages\animals\partos\edit\[id].astro:138:              <option value="M" selected={parto.GenereT === 'M'}>Macho</option>
+src_10 mayo 2025\pages\animals\id_part2.astro:102:                  ${parto.GenereT === 'M' ? 'Macho' : 
+

@@ -3,6 +3,10 @@ import axios from 'axios';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 
+// Importar traducciones
+import esTranslations from '../../i18n/locales/es.json';
+import caTranslations from '../../i18n/locales/ca.json';
+
 // Registrar componentes Chart.js necesarios
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -44,6 +48,40 @@ const DashboardNew: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardResumen | null>(null);
   const [requestLogs, setRequestLogs] = useState<string[]>([]);
+  const [currentLang, setCurrentLang] = useState<string>('es');
+  
+  // Función para obtener traducciones
+  const t = (key: string) => {
+    const translationsMap: {[key: string]: any} = {
+      'es': esTranslations,
+      'ca': caTranslations
+    };
+    
+    // Función auxiliar para obtener un valor anidado
+    const getNestedValue = (obj: any, path: string) => {
+      const keys = path.split('.');
+      return keys.reduce((o, k) => (o || {})[k], obj) || key;
+    };
+    
+    return getNestedValue(translationsMap[currentLang], key);
+  };
+  
+  // Efecto para detectar cambios de idioma
+  useEffect(() => {
+    // Obtener idioma inicial
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+    
+    // Escuchar cambios en el idioma
+    const handleLanguageChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+    
+    window.addEventListener('storage', handleLanguageChange);
+    return () => window.removeEventListener('storage', handleLanguageChange);
+  }, []);
 
   // Función para añadir logs de depuración
   const addLog = (message: string) => {
@@ -131,21 +169,21 @@ const DashboardNew: React.FC = () => {
     
     const cards = [
       {
-        title: "Total Animales",
+        title: t('dashboard.animals_count'),
         value: data.total_animales,
         icon: "🐄",
         color: "bg-blue-100 border-blue-500",
         textColor: "text-blue-700"
       },
       {
-        title: "Total Terneros",
+        title: t('dashboard.terneros_count') || "Total Terneros",
         value: data.total_terneros,
         icon: "🐑",
         color: "bg-green-100 border-green-500",
         textColor: "text-green-700"
       },
       {
-        title: "Total Partos",
+        title: t('dashboard.partos_count'),
         value: data.total_partos,
         icon: "🔄",
         color: "bg-purple-100 border-purple-500",
@@ -237,19 +275,19 @@ const DashboardNew: React.FC = () => {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-3">Tendencias de Partos</h3>
+          <h2 className="text-xl font-bold mt-8 mb-4">{t('dashboard.trends')}</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="bg-gray-50 p-3 rounded-md">
-              <h4 className="text-gray-600 text-sm font-medium">Partos mes anterior</h4>
+              <h4 className="text-gray-600 text-sm font-medium">{t('dashboard.previous_month_births')}</h4>
               <p className="text-xl font-bold">{data.tendencias.partos_mes_anterior}</p>
             </div>
             <div className="bg-gray-50 p-3 rounded-md">
-              <h4 className="text-gray-600 text-sm font-medium">Partos mes actual</h4>
+              <h4 className="text-gray-600 text-sm font-medium">{t('dashboard.current_month_births')}</h4>
               <p className="text-xl font-bold">{data.tendencias.partos_actual}</p>
             </div>
             <div className="bg-gray-50 p-3 rounded-md">
-              <h4 className="text-gray-600 text-sm font-medium">Variación</h4>
+              <h4 className="text-gray-600 text-sm font-medium">{t('dashboard.variation')}</h4>
               <p className={`text-xl font-bold ${variacionColor}`}>{variacionIcono} {Math.abs(parseFloat(variacion))}%</p>
             </div>
           </div>
@@ -260,7 +298,7 @@ const DashboardNew: React.FC = () => {
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-3">Distribución de Animales</h3>
+          <h2 className="text-xl font-bold mb-4">{t('dashboard.animals_distribution')}</h2>
           
           <div className="flex items-center justify-center h-60">
             <Pie data={pieData} />
@@ -268,7 +306,7 @@ const DashboardNew: React.FC = () => {
           
           <div className="mt-4 text-center">
             <p className="text-gray-600">
-              Nacimientos promedio mensual: <span className="font-bold">{data.tendencias.nacimientos_promedio}</span>
+              {t('dashboard.average_births_per_month')}: <span className="font-bold">{data.tendencias.nacimientos_promedio}</span>
             </p>
           </div>
         </div>
@@ -284,23 +322,23 @@ const DashboardNew: React.FC = () => {
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold mb-2">Periodo de Análisis</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('dashboard.analysis_period')}</h3>
             <p className="text-gray-700">
-              Desde <span className="font-medium text-indigo-700">{data.periodo.inicio}</span> hasta <span className="font-medium text-indigo-700">{data.periodo.fin}</span>
+              {t('dashboard.from')} <span className="font-medium text-indigo-700">{data.periodo.inicio}</span> {t('dashboard.to')} <span className="font-medium text-indigo-700">{data.periodo.fin}</span>
             </p>
           </div>
           
           <div className="text-right">
-            <h3 className="text-lg font-semibold mb-2">Explotaciones</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('dashboard.exploitations')}</h3>
             <p className="text-gray-700">
-              Total: <span className="font-medium text-indigo-700">{data.explotaciones.count}</span>
+              {t('dashboard.total')}: <span className="font-medium text-indigo-700">{data.explotaciones.count}</span>
             </p>
           </div>
         </div>
       </div>
     );
   };
-  
+
   // Renderizar resumen adicional de actividad
   const renderResumenActividad = () => {
     if (!data) return null;
@@ -312,25 +350,25 @@ const DashboardNew: React.FC = () => {
       
     return (
       <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow mb-6">
-        <h3 className="text-xl font-semibold mb-3">Resumen de Actividad</h3>
+        <h2 className="text-xl font-bold mb-4">{t('dashboard.summary')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <p className="text-blue-100 mb-1">Proporción de Terneros</p>
+            <p className="text-blue-100 mb-1">{t('dashboard.calves_proportion')}</p>
             <p className="text-2xl font-bold">{porcentajeTerneros}%</p>
-            <p className="text-sm text-blue-200 mt-1">{data.total_terneros} de {data.total_animales} animales</p>
+            <p className="text-sm text-blue-200 mt-1">{data.total_terneros} de {data.total_animales} {t('dashboard.animals')}</p>
           </div>
           
           <div>
-            <p className="text-blue-100 mb-1">Promedio de Partos por Vaca</p>
+            <p className="text-blue-100 mb-1">{t('dashboard.average_births_per_cow')}</p>
             <p className="text-2xl font-bold">{data.ratio_partos_animal}</p>
-            <p className="text-sm text-blue-200 mt-1">Total partos: {data.total_partos}</p>
+            <p className="text-sm text-blue-200 mt-1">{t('dashboard.total_births')}: {data.total_partos}</p>
           </div>
           
           <div>
-            <p className="text-blue-100 mb-1">Explotaciones Activas</p>
+            <p className="text-blue-100 mb-1">{t('dashboard.active_exploitations')}</p>
             <p className="text-2xl font-bold">{data.explotaciones.count}</p>
-            <p className="text-sm text-blue-200 mt-1">Con actividad en el periodo</p>
+            <p className="text-sm text-blue-200 mt-1">{t('dashboard.with_activity_in_period')}</p>
           </div>
         </div>
       </div>
@@ -341,7 +379,7 @@ const DashboardNew: React.FC = () => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Dashboard Masclet Imperi</h2>
+        <h2 className="text-2xl font-bold">{t('dashboard.title')}</h2>
         <button 
           onClick={fetchDashboardData}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center space-x-2"
@@ -349,7 +387,7 @@ const DashboardNew: React.FC = () => {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
           </svg>
-          <span>Actualizar</span>
+          <span>{t('dashboard.refresh')}</span>
         </button>
       </div>
       
@@ -360,7 +398,7 @@ const DashboardNew: React.FC = () => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="text-gray-600">Cargando datos del dashboard...</p>
+            <p className="text-gray-600">{t('dashboard.loading_data')}</p>
           </div>
         </div>
       ) : error ? (

@@ -10,6 +10,14 @@ const { id } = Astro.params;
 // Obtener el idioma actual para renderizado en servidor
 const serverLang = getCurrentLanguage();
 
+// Variables de traducción directas 
+const txtMacho = serverLang === 'ca' ? 'Mascle' : 'Macho';
+const txtHembra = serverLang === 'ca' ? 'Femella' : 'Hembra';
+const txtNoDisponible = serverLang === 'ca' ? 'No disponible' : 'No disponible';
+const txtObservaciones = serverLang === 'ca' ? 'Sense observacions' : 'Sin observaciones';
+const txtVivo = serverLang === 'ca' ? 'Viu' : 'Vivo';
+const txtMuerto = serverLang === 'ca' ? 'Mort' : 'Fallecido';
+
 // Traducciones para la ficha de animal
 const translations = {
   es: {
@@ -165,12 +173,12 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
   <div class="mb-6">
     <div class="flex items-center gap-2 mb-2">
-      <a href="/animals" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+      <a href="/animals" id="back-to-list-link" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
         <span class="mr-1">←</span> {t('back_to_list')}
       </a>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
-    <p class="text-gray-600 dark:text-gray-300">{t('animal_id')}: {id}</p>
+    <p class="text-gray-600 dark:text-gray-300" id="animal-id-text">{t('animal_id')}: {id}</p>
   </div>
 
   {loading && (
@@ -425,7 +433,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               
               <!-- Botón Volver al listado al final de la pestaña Información -->
               <div class="mt-6 text-center">
-                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
                   <span class="mr-2">←</span> {t('back_to_animal_list')}
                 </a>
               </div>
@@ -513,20 +521,20 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                               }
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parto.GenereT === 'M' ? 'Macho' : 
-                               parto.GenereT === 'F' ? 'Hembra' : 
-                               parto.GenereT === 'esforrada' ? 'Esforrá' : parto.GenereT || 'No disponible'}
+                              {parto.GenereT === 'M' ? txtMacho : 
+                               parto.GenereT === 'F' ? txtHembra : 
+                               parto.GenereT === 'esforrada' ? 'Esforrá' : txtNoDisponible}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                               <span class={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 parto.EstadoT === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
                                 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
                               }`}>
-                                {parto.EstadoT === 'OK' ? 'Vivo' : 'Fallecido'}
+                                {parto.EstadoT === 'OK' ? txtVivo : txtMuerto}
                               </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {parto.observacions || parto.observaciones || parto.obs || 'Sin observaciones'}
+                              {parto.observacions || parto.observaciones || parto.obs || txtObservaciones}
                             </td>
                           </tr>
                         ));
@@ -570,7 +578,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
             
             <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
             <div class="mt-6 text-center">
-              <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+              <a href="/animals" id="changes-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
                 <span class="mr-2">←</span> {t('back_to_animal_list')}
               </a>
             </div>
@@ -712,17 +720,19 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
       document.querySelector('h1.text-3xl').textContent = t('title', currentLang);
       
       // Corregir problema del enlace de volver al listado
-      const backLink = document.querySelector('a.flex.items-center.text-primary');
+      const backLink = document.getElementById('back-to-list-link');
       if (backLink) {
         // Restablecer contenido correcto
         backLink.innerHTML = `<span class="mr-1">←</span> ${t('back_to_list', currentLang)}`;
       }
       
       // Corregir problema de ID duplicado
-      const idElement = document.querySelector('.text-gray-600.dark\\:text-gray-300');
+      const idElement = document.getElementById('animal-id-text');
       if (idElement) {
-        const animalId = idElement.textContent.split(':')[1]?.trim() || '';
-        idElement.textContent = `${t('animal_id', currentLang)}: ${animalId}`;
+        // Obtener el ID de animal (desde la URL)
+        const animalIdFromUrl = window.location.pathname.split('/').pop();
+        // Actualizar el texto con el formato e ID correcto
+        idElement.textContent = `${t('animal_id', currentLang)}: ${animalIdFromUrl}`;
       }
       
       // Traducir elementos básicos
@@ -906,7 +916,86 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
     window.addEventListener('storage', function(e) {
       if (e.key === 'userLanguage') {
         translateAnimalFile();
+        translateTableButtons();
       }
+    });
+
+    // SOLUCIÓN AGRESIVA PARA FORZAR LAS TRADUCCIONES
+    document.addEventListener('DOMContentLoaded', function() {
+      // Función de fuerza bruta para traducir todo, con selección directa de elementos
+      function traducirTodoForzado() {
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        console.log('[DEBUG] Aplicando traducción forzada, idioma: ' + currentLang);
+        
+        // Botones de eliminar
+        document.querySelectorAll('button').forEach(btn => {
+          if (btn.textContent.trim() === 'Eliminar') {
+            if (currentLang === 'ca') {
+              btn.title = 'Eliminar part';
+            } else {
+              btn.title = 'Eliminar parto';
+            }
+          }
+        });
+        
+        // Textos de género
+        document.querySelectorAll('td').forEach(celda => {
+          const texto = celda.textContent.trim();
+          if (texto === 'Macho') {
+            celda.innerHTML = currentLang === 'ca' ? 'Mascle' : 'Macho';
+            console.log('[DEBUG] Traducido Macho→Mascle');
+          } 
+          if (texto === 'Hembra') {
+            celda.innerHTML = currentLang === 'ca' ? 'Femella' : 'Hembra';
+            console.log('[DEBUG] Traducido Hembra→Femella');
+          }
+        });
+        
+        // Sin observaciones
+        document.querySelectorAll('td').forEach(celda => {
+          const texto = celda.textContent.trim();
+          if (texto === 'Sin observaciones' || texto === 'animals.no_observations') {
+            celda.innerHTML = currentLang === 'ca' ? 'Sense observacions' : 'Sin observaciones';
+            console.log('[DEBUG] Traducido observaciones');
+          }
+        });
+        
+        // Estados (Vivo/Fallecido)
+        document.querySelectorAll('span.inline-flex').forEach(span => {
+          const texto = span.textContent.trim();
+          if (texto === 'Vivo') {
+            span.innerHTML = currentLang === 'ca' ? 'Viu' : 'Vivo';
+            console.log('[DEBUG] Traducido Vivo→Viu');
+          }
+          if (texto === 'Fallecido') {
+            span.innerHTML = currentLang === 'ca' ? 'Mort' : 'Fallecido';
+            console.log('[DEBUG] Traducido Fallecido→Mort');
+          }
+        });
+      }
+      
+      // Ejecutar inmediatamente
+      traducirTodoForzado();
+      
+      // Repetir cada 500ms durante los primeros 10 segundos
+      for (let i = 1; i <= 20; i++) {
+        setTimeout(traducirTodoForzado, i * 500);
+      }
+      
+      // Establecer un intervalo permanente para seguir traduciéndolo
+      setInterval(traducirTodoForzado, 2000);
+      
+      // Cuando cambie el idioma
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'userLanguage') {
+          console.log('[DEBUG] Cambio de idioma detectado');
+          // Aplicar inmediatamente y luego con retrasos
+          traducirTodoForzado();
+          for (let i = 1; i <= 10; i++) {
+            setTimeout(traducirTodoForzado, i * 200);
+          }
+        }
+      });
     });
     
     // Botón de reintentar carga

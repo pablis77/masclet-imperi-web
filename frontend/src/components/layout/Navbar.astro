@@ -75,8 +75,8 @@ const isActive = (itemUrl: string) => {
 <header class="bg-primary text-white shadow-md relative z-30">
   <div class="container mx-auto px-3 py-3 flex justify-between items-center">
     <!-- Título de la página actual -->
-    <div class="font-bold text-xl">
-      {title}
+    <div class="font-bold text-xl" id="page-title">
+      {currentPath === '/animals/[id]' ? t('animal_file') : (title || 'Masclet Imperi')}
     </div>
 
     <!-- Menú de navegación (visible solo en escritorio) -->
@@ -305,7 +305,8 @@ const isActive = (itemUrl: string) => {
         admin: "ADMINISTRACIÓN",
         management_system: "Sistema de Gestión Ganadera",
         profile: "Perfil",
-        logout: "Cerrar sesión"
+        logout: "Cerrar sesión",
+        animal_file: "Ficha de Animal"
       },
       ca: {
         dashboard: "Tauler de control",
@@ -318,7 +319,8 @@ const isActive = (itemUrl: string) => {
         admin: "ADMINISTRACIÓ",
         management_system: "Sistema de Gestió Ramadera",
         profile: "Perfil",
-        logout: "Tancar sessió"
+        logout: "Tancar sessió",
+        animal_file: "Fitxa d'Animal"
       }
     };
 
@@ -330,6 +332,12 @@ const isActive = (itemUrl: string) => {
     // Función para traducir la navegación
     function translateNavigation() {
       const currentLang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Traducir título de la página en el Navbar
+      const navbarTitle = document.getElementById('page-title');
+      if (navbarTitle && window.location.pathname.includes('/animals/')) {
+        navbarTitle.textContent = t('animal_file', currentLang);
+      }
       
       // Traducir los elementos del menú principal
       document.querySelectorAll('nav a').forEach(link => {
