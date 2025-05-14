@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/apiService';
 import { t } from '../../i18n/config';
+import jsPDF from 'jspdf';
+// @ts-ignore - jspdf-autotable no proporciona tipos TS correctos
+import autoTable from 'jspdf-autotable';
 
 // Tipos para los datos
 interface ExplotacionInfo {
@@ -427,43 +430,129 @@ const ExplotacionesPage: React.FC = () => {
       </div>
     );
   };
-  // Función para exportar a CSV
-  const exportToCSV = () => {
+  // Función para exportar a PDF con formato atractivo
+  const exportToPDF = () => {
     if (!filteredAnimals || !filteredAnimals.length) return;
     
-    // Preparar datos para el CSV
+    // Crear un documento PDF nuevo
+    const doc = new jsPDF();
+    
+    // Configurar títulos y encabezados
+    const title = currentLang === 'ca' 
+      ? `Llistat d'Animals - ${currentExplotacion}`
+      : `Listado de Animales - ${currentExplotacion}`;
+    
     const headers = currentLang === 'ca' 
-      ? ['ID', 'Nom', 'Gènere', 'Estat', 'Data Naixement', 'Alletant']
-      : ['ID', 'Nombre', 'Género', 'Estado', 'Fecha Nacimiento', 'Amamantando'];
+      ? [['ID', 'Nom', 'Gènere', 'Estat', 'Data Naixement', 'Alletant']]
+      : [['ID', 'Nombre', 'Género', 'Estado', 'Fecha Nacimiento', 'Amamantando']];
     
-    // Convertir los datos a formato CSV
-    const csvContent = [
-      headers.join(','),
-      ...filteredAnimals.map(animal => [
-        animal.id,
-        animal.nom,
-        animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
-        animal.estado === 'OK' ? (currentLang === 'ca' ? 'Actiu' : 'Activo') : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
-        animal.dob || (currentLang === 'ca' ? 'No disponible' : 'No disponible'),
-        animal.genere === 'F' ? 
-          (animal.alletar === '1' ? (currentLang === 'ca' ? '1 vedell' : '1 ternero') : 
-          animal.alletar === '2' ? (currentLang === 'ca' ? '2 vedells' : '2 terneros') : 
-          (currentLang === 'ca' ? 'Sense alletar' : 'No amamantando')) : 'N/A'
-      ].join(','))
-    ].join('\n');
+    // Preparar los datos para la tabla
+    const data = filteredAnimals.map(animal => [
+      animal.id,
+      animal.nom,
+      animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
+      animal.estado === 'OK' ? (currentLang === 'ca' ? 'Actiu' : 'Activo') : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
+      animal.dob || (currentLang === 'ca' ? 'No disponible' : 'No disponible'),
+      animal.genere === 'F' ? 
+        (animal.alletar === '1' ? (currentLang === 'ca' ? '1 vedell' : '1 ternero') : 
+        animal.alletar === '2' ? (currentLang === 'ca' ? '2 vedells' : '2 terneros') : 
+        (currentLang === 'ca' ? 'Sense alletar' : 'No amamantando')) : 'N/A'
+    ]);
     
-    // Crear el objeto Blob para la descarga
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    // Añadir una cabecera atractiva al PDF
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text(title, 105, 15, { align: 'center' });
     
-    // Crear un elemento <a> para la descarga
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `animales_${currentExplotacion || 'todas'}_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Añadir fecha
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const date = new Date().toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES');
+    doc.text(
+      currentLang === 'ca' ? `Data: ${date}` : `Fecha: ${date}`, 
+      195, 20, { align: 'right' }
+    );
+    
+    // Añadir logo/ícono de animal (dibujo básico de un toro/vaca usando gráficos vectoriales)
+    doc.setDrawColor(0);
+    doc.setFillColor(65, 105, 225); // Color azul para el icono
+    
+    // Dibujar silueta simple de animal (círculo para la cabeza y óvalo para el cuerpo)
+    doc.circle(30, 25, 5, 'F'); // Cabeza
+    doc.ellipse(40, 25, 10, 5, 'F'); // Cuerpo
+    
+    // Añadir cuernos si corresponde (para darle más estilo)
+    doc.setLineWidth(0.5);
+    doc.line(27, 21, 25, 19); // Cuerno izquierdo
+    doc.line(33, 21, 35, 19); // Cuerno derecho
+    
+    // Añadir estadísticas resumen
+    doc.setFontSize(12);
+    doc.setTextColor(40, 40, 40);
+    
+    const statTitles = currentLang === 'ca' 
+      ? ['Total Animals:', 'Toros:', 'Vaques:', 'Alletant:']
+      : ['Total Animales:', 'Toros:', 'Vacas:', 'Amamantando:'];
+      
+    const stats = [
+      filteredAnimals.length,
+      filteredAnimals.filter(a => a.genere === 'M').length,
+      filteredAnimals.filter(a => a.genere === 'F').length,
+      filteredAnimals.filter(a => a.genere === 'F' && ['1', 1, '2', 2].includes(a.alletar as any)).length
+    ];
+    
+    let yPosition = 40;
+    for (let i = 0; i < statTitles.length; i++) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(statTitles[i], 20, yPosition);
+      doc.setFont('helvetica', 'normal');
+      doc.text(stats[i].toString(), 60, yPosition);
+      yPosition += 7;
+    }
+    
+    // Añadir tabla de animales usando jspdf-autotable
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: 70,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { 
+        fillColor: [65, 105, 225], 
+        textColor: 255,
+        fontStyle: 'bold' 
+      },
+      alternateRowStyles: { fillColor: [240, 240, 240] },
+      columnStyles: {
+        0: { cellWidth: 20 }, // ID
+        1: { cellWidth: 40 }, // Nombre
+        2: { cellWidth: 25 }, // Género
+        3: { cellWidth: 30 }, // Estado
+        4: { cellWidth: 35 }, // Fecha Nacimiento
+        5: { cellWidth: 40 }  // Amamantando
+      },
+      margin: { top: 70 }
+    });
+    
+    // Añadir pie de página
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        'Masclet Imperi - ' + (currentLang === 'ca' ? 'Sistema de Gestió Ramadera' : 'Sistema de Gestión Ganadera'), 
+        105, doc.internal.pageSize.height - 10, { align: 'center' }
+      );
+      doc.text(
+        currentLang === 'ca' ? `Pàgina ${i} de ${pageCount}` : `Página ${i} de ${pageCount}`, 
+        195, doc.internal.pageSize.height - 10, { align: 'right' }
+      );
+    }
+    
+    // Guardar el PDF
+    const fileName = `animales_${currentExplotacion || 'todas'}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
   };
 
   // Renderizar el componente principal
@@ -622,12 +711,12 @@ const ExplotacionesPage: React.FC = () => {
                 <button 
                   id="export-csv" 
                   className="btn btn-primary text-sm flex items-center"
-                  onClick={exportToCSV}
+                  onClick={exportToPDF}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  {currentLang === 'ca' ? "Exportar CSV" : "Exportar CSV"}
+                  {currentLang === 'ca' ? "Exportar PDF" : "Exportar PDF"}
                 </button>
                 
                 <button 
