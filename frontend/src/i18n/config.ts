@@ -3,37 +3,20 @@ export const defaultLang = 'es';
 export const supportedLanguages = ['es', 'ca'];
 
 // Definición de tipos para evitar errores
-type TranslationDict = Record<string, Record<string, string>>;
+type TranslationDict = Record<string, Record<string, any>>;
 
-// Traducción en Español
-const es: TranslationDict = {
-  common: {
-    welcome: "Bienvenido a Masclet Imperi",
-    dashboard: "Dashboard",
-    animals: "Animales",
-    exploitations: "Explotaciones",
-    users: "Usuarios",
-    settings: "Configuración"
-  },
-  imports: {
-    title: "Importación"
-  }
-};
+// Importar directamente las traducciones desde los archivos JSON
+import * as esTranslations from './locales/es.json';
+import * as caTranslations from './locales/ca.json';
 
-// Traducción en Catalán
-const ca: TranslationDict = {
-  common: {
-    welcome: "Benvingut a Masclet Imperi",
-    dashboard: "Tauler de control",
-    animals: "Animals",
-    exploitations: "Explotacions",
-    users: "Usuaris",
-    settings: "Configuració"
-  },
-  imports: {
-    title: "Importació"
-  }
-};
+// Usar las traducciones importadas
+const es: TranslationDict = esTranslations as unknown as TranslationDict;
+const ca: TranslationDict = caTranslations as unknown as TranslationDict;
+
+// Asegurar que las traducciones se han cargado correctamente
+console.log('[i18n] Traducciones cargadas:', 
+  'ES:', Object.keys(es).length, 'secciones', 
+  'CA:', Object.keys(ca).length, 'secciones');
 
 // Función simple pero efectiva para las traducciones
 export function t(key: string, lang = defaultLang): string {

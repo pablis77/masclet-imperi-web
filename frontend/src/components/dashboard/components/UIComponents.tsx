@@ -1,15 +1,22 @@
 import React from 'react';
+import { t } from '../../../i18n/config';
 
 // Componentes UI extraídos directamente del Dashboard original
 // IMPORTANTE: Mantienen EXACTAMENTE la misma apariencia visual
 
 // Renderizar tarjeta de estadísticas
-export const StatCard = ({ title, value, color, darkMode }: { 
+export const StatCard = ({ title, value, color, darkMode, translationKey }: { 
   title: string, 
   value: number | string, 
   color: string,
-  darkMode: boolean
+  darkMode: boolean,
+  translationKey?: string // Nueva propiedad opcional para traducción
 }) => {
+  // Obtener idioma actual del localStorage
+  const currentLang = localStorage.getItem('userLanguage') || 'es';
+  
+  // Usar traducción si hay clave disponible
+  const displayTitle = translationKey ? t(translationKey, currentLang) : title;
   return (
     <div 
       className={`${color}`} 
@@ -25,18 +32,24 @@ export const StatCard = ({ title, value, color, darkMode }: {
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
       }}
     >
-      <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{title}</h3>
+      <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{displayTitle}</h3>
       <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{value}</p>
     </div>
   );
 };
 
 // Renderizar título de sección con número circular
-export const SectionTitle = ({ number, title, darkMode }: { 
+export const SectionTitle = ({ number, title, darkMode, translationKey }: { 
   number: string, 
   title: string,
-  darkMode: boolean 
+  darkMode: boolean,
+  translationKey?: string // Nueva propiedad opcional para traducción
 }) => {
+  // Obtener idioma actual del localStorage
+  const currentLang = localStorage.getItem('userLanguage') || 'es';
+  
+  // Usar traducción si hay clave disponible
+  const displayTitle = translationKey ? t(translationKey, currentLang) : title;
   return (
     <div style={{
       display: 'flex',
@@ -67,7 +80,7 @@ export const SectionTitle = ({ number, title, darkMode }: {
         fontSize: '1.25rem',
         fontWeight: 'bold',
         color: 'white', // Texto blanco para ambos modos
-      }}>{title}</h2>
+      }}>{displayTitle}</h2>
     </div>
   );
 };
