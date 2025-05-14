@@ -363,7 +363,9 @@ const ExplotacionesPage: React.FC = () => {
     if (!filteredAnimals || filteredAnimals.length === 0) {
       return (
         <div className="flex justify-center items-center h-[200px]">
-          <p className="text-gray-500 dark:text-gray-400">No hay animales que mostrar en esta categoría</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            {currentLang === 'ca' ? "No hi ha animals per mostrar en aquesta categoria" : "No hay animales que mostrar en esta categoría"}
+          </p>
         </div>
       );
     }
@@ -374,12 +376,12 @@ const ExplotacionesPage: React.FC = () => {
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
             <tr>
               <th className="px-4 py-2">ID</th>
-              <th className="px-4 py-2">Nombre</th>
-              <th className="px-4 py-2">Género</th>
-              <th className="px-4 py-2">Estado</th>
-              <th className="px-4 py-2">Fecha Nacimiento</th>
-              <th className="px-4 py-2">Amamantando</th>
-              <th className="px-4 py-2">Acciones</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Nom" : "Nombre"}</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Gènere" : "Género"}</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Estat" : "Estado"}</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Data Naixement" : "Fecha Nacimiento"}</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Alletant" : "Amamantando"}</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Accions" : "Acciones"}</th>
             </tr>
           </thead>
           <tbody>
@@ -387,21 +389,21 @@ const ExplotacionesPage: React.FC = () => {
               <tr key={animal.id} className="border-b dark:border-gray-700">
                 <td className="px-4 py-2">{animal.id}</td>
                 <td className="px-4 py-2 font-medium">{animal.nom}</td>
-                <td className="px-4 py-2">{animal.genere === 'M' ? 'Toro' : 'Vaca'}</td>
+                <td className="px-4 py-2">{animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca')}</td>
                 <td className="px-4 py-2">
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     animal.estado === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
                     'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                   }`}>
-                    {animal.estado === 'OK' ? 'Activo' : 'Fallecido'}
+                    {animal.estado === 'OK' ? (currentLang === 'ca' ? 'Actiu' : 'Activo') : (currentLang === 'ca' ? 'Mort' : 'Fallecido')}
                   </span>
                 </td>
-                <td className="px-4 py-2">{animal.dob || 'No disponible'}</td>
+                <td className="px-4 py-2">{animal.dob || (currentLang === 'ca' ? 'No disponible' : 'No disponible')}</td>
                 <td className="px-4 py-2">
                   {animal.genere === 'F' ? (
-                    animal.alletar === '1' ? '1 ternero' : 
-                    animal.alletar === '2' ? '2 terneros' : 
-                    'No amamantando'
+                    animal.alletar === '1' ? (currentLang === 'ca' ? '1 vedell' : '1 ternero') : 
+                    animal.alletar === '2' ? (currentLang === 'ca' ? '2 vedells' : '2 terneros') : 
+                    (currentLang === 'ca' ? 'Sense alletar' : 'No amamantando')
                   ) : 'N/A'}
                 </td>
                 <td className="px-4 py-2">
@@ -409,13 +411,13 @@ const ExplotacionesPage: React.FC = () => {
                     href={`/animals/${animal.id}`}
                     className="text-primary hover:underline dark:text-primary-light mr-2"
                   >
-                    Ver
+                    {currentLang === 'ca' ? 'Veure' : 'Ver'}
                   </a>
                   <a 
                     href={`/animals/update/${animal.id}`}
                     className="text-primary hover:underline dark:text-primary-light"
                   >
-                    Editar
+                    {currentLang === 'ca' ? 'Editar' : 'Editar'}
                   </a>
                 </td>
               </tr>
@@ -430,7 +432,9 @@ const ExplotacionesPage: React.FC = () => {
     if (!filteredAnimals || !filteredAnimals.length) return;
     
     // Preparar datos para el CSV
-    const headers = ['ID', 'Nombre', 'Género', 'Estado', 'Fecha Nacimiento', 'Amamantando'];
+    const headers = currentLang === 'ca' 
+      ? ['ID', 'Nom', 'Gènere', 'Estat', 'Data Naixement', 'Alletant']
+      : ['ID', 'Nombre', 'Género', 'Estado', 'Fecha Nacimiento', 'Amamantando'];
     
     // Convertir los datos a formato CSV
     const csvContent = [
@@ -438,13 +442,13 @@ const ExplotacionesPage: React.FC = () => {
       ...filteredAnimals.map(animal => [
         animal.id,
         animal.nom,
-        animal.genere === 'M' ? 'Toro' : 'Vaca',
-        animal.estado === 'OK' ? 'Activo' : 'Fallecido',
-        animal.dob || 'No disponible',
+        animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
+        animal.estado === 'OK' ? (currentLang === 'ca' ? 'Actiu' : 'Activo') : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
+        animal.dob || (currentLang === 'ca' ? 'No disponible' : 'No disponible'),
         animal.genere === 'F' ? 
-          (animal.alletar === '1' ? '1 ternero' : 
-          animal.alletar === '2' ? '2 terneros' : 
-          'No amamantando') : 'N/A'
+          (animal.alletar === '1' ? (currentLang === 'ca' ? '1 vedell' : '1 ternero') : 
+          animal.alletar === '2' ? (currentLang === 'ca' ? '2 vedells' : '2 terneros') : 
+          (currentLang === 'ca' ? 'Sense alletar' : 'No amamantando')) : 'N/A'
       ].join(','))
     ].join('\n');
     
@@ -558,11 +562,11 @@ const ExplotacionesPage: React.FC = () => {
                   {/* Primera fila: Total y Partos */}
                   <div className="total-stats">
                     <div>
-                      <div className="stat-label">Total Animales</div>
+                      <div className="stat-label">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
                       <div className="stat-value total">{exp.total || 0}</div>
                     </div>
                     <div>
-                      <div className="stat-label">Partos</div>
+                      <div className="stat-label">{currentLang === 'ca' ? "Parts" : "Partos"}</div>
                       <div className="stat-value partos">{exp.partos || 0}</div>
                     </div>
                   </div>
@@ -570,15 +574,15 @@ const ExplotacionesPage: React.FC = () => {
                   {/* Segunda fila: Toros, Vacas, Terneros */}
                   <div className="animal-stats">
                     <div>
-                      <div className="stat-label">Toros</div>
+                      <div className="stat-label">{currentLang === 'ca' ? "Toros" : "Toros"}</div>
                       <div className="stat-value toros">{exp.toros || 0}</div>
                     </div>
                     <div>
-                      <div className="stat-label">Vacas</div>
+                      <div className="stat-label">{currentLang === 'ca' ? "Vaques" : "Vacas"}</div>
                       <div className="stat-value vacas">{exp.vacas || 0}</div>
                     </div>
                     <div>
-                      <div className="stat-label">Terneros</div>
+                      <div className="stat-label">{currentLang === 'ca' ? "Vedells" : "Terneros"}</div>
                       <div className="stat-value terneros">{exp.terneros || 0}</div>
                     </div>
                   </div>
@@ -586,7 +590,7 @@ const ExplotacionesPage: React.FC = () => {
                   {/* Tercera fila: Amamantando */}
                   <div className="card-footer">
                     <span className="amam-count">
-                      Amamantando: <b>{exp.amamantando || 0}</b>
+                      {currentLang === 'ca' ? "Alletant" : "Amamantando"}: <b>{exp.amamantando || 0}</b>
                     </span>
                     <button 
                       className="details-link"
@@ -595,7 +599,7 @@ const ExplotacionesPage: React.FC = () => {
                         showExplotacionDetail(exp.explotacio);
                       }}
                     >
-                      Ver detalles &rarr;
+                      {currentLang === 'ca' ? "Veure detalls" : "Ver detalles"} &rarr;
                     </button>
                   </div>
                 </div>
@@ -611,7 +615,7 @@ const ExplotacionesPage: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4 text-lg font-medium">
               <h3 className="text-gray-900 dark:text-white">
-                Animales de <span id="explotacion-code">{currentExplotacion}</span>
+                {currentLang === 'ca' ? "Animals de" : "Animales de"} <span id="explotacion-code">{currentExplotacion}</span>
               </h3>
               
               <div className="flex gap-2">
@@ -623,7 +627,7 @@ const ExplotacionesPage: React.FC = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Exportar CSV
+                  {currentLang === 'ca' ? "Exportar CSV" : "Exportar CSV"}
                 </button>
                 
                 <button 
@@ -634,7 +638,7 @@ const ExplotacionesPage: React.FC = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                   </svg>
-                  Volver
+                  {currentLang === 'ca' ? "Tornar" : "Volver"}
                 </button>
               </div>
             </div>
@@ -647,7 +651,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="todos"
                   onClick={() => filterAnimalsByCategory('todos')}
                 >
-                  Todos los animales <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{allAnimals.length}</span>
+                  {currentLang === 'ca' ? "Tots els animals" : "Todos los animales"} <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{allAnimals.length}</span>
                 </button>
               </li>
               
@@ -657,7 +661,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="toros"
                   onClick={() => filterAnimalsByCategory('toros')}
                 >
-                  Toros <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{stats.toros}</span>
+                  {currentLang === 'ca' ? "Toros" : "Toros"} <span className="tab-count ml-1 bg-primary-light/20 px-1.5 py-0.5 rounded-full text-xs">{stats.toros}</span>
                 </button>
               </li>
               
@@ -667,7 +671,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="vacas-amam"
                   onClick={() => filterAnimalsByCategory('vacas-amam')}
                 >
-                  Vacas amamantando
+                  {currentLang === 'ca' ? "Vaques alletant" : "Vacas amamantando"}
                 </button>
               </li>
               
@@ -677,7 +681,7 @@ const ExplotacionesPage: React.FC = () => {
                   data-category="vacas-no-amam"
                   onClick={() => filterAnimalsByCategory('vacas-no-amam')}
                 >
-                  Vacas no amamantando
+                  {currentLang === 'ca' ? "Vaques sense alletar" : "Vacas no amamantando"}
                 </button>
               </li>
             </ul>
