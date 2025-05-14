@@ -336,15 +336,25 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                                 (() => {
                                   try {
                                     if (typeof parto.part === 'string') {
-                                      const fecha = new Date(parto.part);
-                                      // Verificar si es una fecha válida
-                                      if (!isNaN(fecha.getTime())) {
-                                        // Formatear DD/MM/YYYY
-                                        return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                                      }
-                                      // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
+                                      // Primero verificar si ya viene en formato español DD/MM/YYYY
                                       if (new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(parto.part)) {
+                                        // Interpretar como DD/MM/YYYY (formato español)
+                                        const partes = parto.part.split(/[\/\-]/);
+                                        if (partes.length === 3) {
+                                          // Asegurar que se interprete como día/mes/año
+                                          const fecha = new Date(parseInt(partes[2]), parseInt(partes[1])-1, parseInt(partes[0]));
+                                          if (!isNaN(fecha.getTime())) {
+                                            return `${partes[0].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[2]}`;
+                                          }
+                                        }
+                                        // Si no pudimos procesar pero tiene el formato adecuado, lo mostramos como está
                                         return parto.part;
+                                      } else {
+                                        // Intentar procesar otros formatos de fecha
+                                        const fecha = new Date(parto.part);
+                                        if (!isNaN(fecha.getTime())) {
+                                          return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                                        }
                                       }
                                     }
                                     return String(parto.part);
