@@ -21,6 +21,79 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10);
+  const [currentLang, setCurrentLang] = useState<string>('es');
+
+  // Traducciones
+  const translations = {
+    es: {
+      loadingError: "No se pudo cargar el historial de importaciones",
+      noImports: "No hay importaciones registradas",
+      filename: "Nombre de archivo",
+      importDate: "Fecha de importación",
+      status: "Estado",
+      records: "Registros",
+      actions: "Acciones",
+      loading: "Cargando historial...",
+      viewDetails: "Ver detalles",
+      downloadReport: "Descargar reporte",
+      statusCompleted: "Completado",
+      statusCompletedErrors: "Completado con errores",
+      statusFailed: "Error",
+      statusProcessing: "Procesando",
+      statusPending: "Pendiente",
+      prev: "Anterior",
+      next: "Siguiente",
+      page: "Página",
+      of: "de",
+      total: "Total",
+      first: "Primera"
+    },
+    ca: {
+      loadingError: "No s'ha pogut carregar l'historial d'importacions",
+      noImports: "No hi ha importacions registrades",
+      filename: "Nom d'arxiu",
+      importDate: "Data d'importació",
+      status: "Estat",
+      records: "Registres",
+      actions: "Accions", 
+      loading: "Carregant historial...",
+      viewDetails: "Veure detalls",
+      downloadReport: "Descarregar informe",
+      statusCompleted: "Completat",
+      statusCompletedErrors: "Completat amb errors",
+      statusFailed: "Error",
+      statusProcessing: "Processant",
+      statusPending: "Pendent",
+      prev: "Anterior",
+      next: "Següent",
+      page: "Pàgina",
+      of: "de",
+      total: "Total",
+      first: "Primera"
+    }
+  };
+  
+  // Efecto para detectar cambios de idioma
+  useEffect(() => {
+    // Obtener el idioma inicial
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+
+    // Función para actualizar el idioma cuando cambia en localStorage
+    const handleLangChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+
+    // Escuchar cambios
+    window.addEventListener('storage', handleLangChange);
+
+    // Limpiar
+    return () => {
+      window.removeEventListener('storage', handleLangChange);
+    };
+  }, []);
 
   // Cargar historial de importaciones
   const loadHistory = async () => {
@@ -46,7 +119,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       setTotalPages(response.totalPages);
     } catch (err) {
       console.error('Error al cargar el historial de importaciones:', err);
-      setError('No se pudo cargar el historial de importaciones');
+      setError(translations[currentLang as keyof typeof translations]?.loadingError || translations.es.loadingError);
     } finally {
       setIsLoading(false);
     }
@@ -84,27 +157,27 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       case 'completed':
         bgColor = 'bg-green-100 dark:bg-green-800';
         textColor = 'text-green-800 dark:text-green-100';
-        text = 'Completado';
+        text = translations[currentLang as keyof typeof translations]?.statusCompleted || translations.es.statusCompleted;
         break;
       case 'completed_err':
         bgColor = 'bg-amber-100 dark:bg-amber-800'; 
         textColor = 'text-amber-800 dark:text-amber-100';
-        text = 'Completado con errores';
+        text = translations[currentLang as keyof typeof translations]?.statusCompletedErrors || translations.es.statusCompletedErrors;
         break;
       case 'failed':
         bgColor = 'bg-red-100 dark:bg-red-800';
         textColor = 'text-red-800 dark:text-red-100';
-        text = 'Error';
+        text = translations[currentLang as keyof typeof translations]?.statusFailed || translations.es.statusFailed;
         break;
       case 'processing':
         bgColor = 'bg-blue-100 dark:bg-blue-800';
         textColor = 'text-blue-800 dark:text-blue-100';
-        text = 'Procesando';
+        text = translations[currentLang as keyof typeof translations]?.statusProcessing || translations.es.statusProcessing;
         break;
       case 'pending':
         bgColor = 'bg-amber-100 dark:bg-amber-800';
         textColor = 'text-amber-800 dark:text-amber-100';
-        text = 'Pendiente';
+        text = translations[currentLang as keyof typeof translations]?.statusPending || translations.es.statusPending;
         break;
       default:
         bgColor = 'bg-gray-100 dark:bg-gray-700';
@@ -160,7 +233,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       
     } catch (err) {
       console.error('Error al descargar errores:', err);
-      setError('No se pudieron descargar los errores');
+      setError(translations[currentLang as keyof typeof translations]?.loadingError || translations.es.loadingError);
     } finally {
       setIsLoading(false);
     }
@@ -177,12 +250,12 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-8 text-gray-600 dark:text-gray-300">
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-          <p className="mt-4 font-medium">Cargando historial...</p>
+          <p className="mt-4 font-medium">{translations[currentLang as keyof typeof translations]?.loading || translations.es.loading}</p>
         </div>
       ) : history.length === 0 ? (
         <div className="p-8 text-center text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
           <div className="text-4xl mb-3">📋</div>
-          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">No hay importaciones en el historial</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">{translations[currentLang as keyof typeof translations]?.noImports || translations.es.noImports}</p>
           <p className="text-gray-500 dark:text-gray-400">Las importaciones que realices aparecerán aquí.</p>
         </div>
       ) : (
@@ -192,11 +265,11 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Archivo</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Registros</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.filename || translations.es.filename}</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.importDate || translations.es.importDate}</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.records || translations.es.records}</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.status || translations.es.status}</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.actions || translations.es.actions}</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -238,7 +311,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 transition-colors"
                           onClick={() => handleDownloadErrors(item.id)}
                         >
-                          Descargar errores
+                          {translations[currentLang as keyof typeof translations]?.downloadReport || translations.es.downloadReport}
                         </button>
                       )}
                     </td>
@@ -259,7 +332,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
                             ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
                             : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
               >
-                <span className="sr-only">Primera</span>
+                <span className="sr-only">{translations[currentLang as keyof typeof translations]?.first || 'Primera'}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                 </svg>
@@ -272,7 +345,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
                             ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
                             : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
               >
-                <span className="sr-only">Anterior</span>
+                <span className="sr-only">{translations[currentLang as keyof typeof translations]?.prev || translations.es.prev}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>

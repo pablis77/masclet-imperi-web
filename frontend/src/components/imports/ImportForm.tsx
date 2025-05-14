@@ -20,6 +20,55 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>("");
+  const [currentLang, setCurrentLang] = useState<string>('es');
+
+  // Traducciones
+  const translations = {
+    es: {
+      selectFile: "Seleccionar archivo CSV",
+      dragDrop: "Arrastra un archivo CSV o haz clic para seleccionar",
+      fileTooBig: "El archivo es demasiado grande. Tamaño máximo: 10MB",
+      selectFileFirst: "Debes seleccionar un archivo CSV primero",
+      mustBeCSV: "El archivo debe tener extensión .csv",
+      fileSelected: "Archivo seleccionado",
+      size: "Tamaño",
+      type: "Tipo",
+      bytes: "bytes"
+    },
+    ca: {
+      selectFile: "Seleccionar arxiu CSV",
+      dragDrop: "Arrossega un arxiu CSV o fes clic per seleccionar",
+      fileTooBig: "L'arxiu és massa gran. Mida màxima: 10MB",
+      selectFileFirst: "Has de seleccionar un arxiu CSV primer",
+      mustBeCSV: "L'arxiu ha de tenir extensió .csv",
+      fileSelected: "Arxiu seleccionat",
+      size: "Mida",
+      type: "Tipus",
+      bytes: "bytes"
+    }
+  };
+  
+  // Efecto para detectar cambios de idioma
+  useEffect(() => {
+    // Obtener el idioma inicial
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+
+    // Función para actualizar el idioma cuando cambia en localStorage
+    const handleLangChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+
+    // Escuchar cambios
+    window.addEventListener('storage', handleLangChange);
+
+    // Limpiar
+    return () => {
+      window.removeEventListener('storage', handleLangChange);
+    };
+  }, []);
 
 
 
@@ -33,7 +82,8 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
       setFile(files[0]);
       setResult(null);
       setError(null);
-      setDebugInfo(`Archivo seleccionado: ${files[0].name}\nTamaño: ${files[0].size} bytes\nTipo: ${files[0].type}`);
+      const t = translations[currentLang as keyof typeof translations] || translations.es;
+      setDebugInfo(`${t.fileSelected}: ${files[0].name}\n${t.size}: ${files[0].size} ${t.bytes}\n${t.type}: ${files[0].type}`);
     }
   };
   
@@ -82,7 +132,7 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
   // Manejador para importar datos
   const handleImport = async () => {
     if (!file) {
-      setError('Debes seleccionar un archivo CSV primero');
+      setError(translations[currentLang as keyof typeof translations]?.selectFileFirst || translations.es.selectFileFirst);
       return;
     }
     
@@ -93,14 +143,14 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
     
     // Validar extensión del archivo
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError('El archivo debe tener extensión .csv');
+      setError(translations[currentLang as keyof typeof translations]?.mustBeCSV || translations.es.mustBeCSV);
       return;
     }
     
     // Validar tamaño máximo (10MB)
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB en bytes
     if (file.size > MAX_SIZE) {
-      setError(`El archivo es demasiado grande. Tamaño máximo: 10MB`);
+      setError(translations[currentLang as keyof typeof translations]?.fileTooBig || translations.es.fileTooBig);
       return;
     }
 
@@ -199,7 +249,7 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
       {/* Selector de archivo */}
       <div className="mb-6">
         <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Seleccionar archivo CSV
+          {translations[currentLang as keyof typeof translations]?.selectFile || translations.es.selectFile}
         </label>
         
         <div className="flex flex-col sm:flex-row gap-3">
@@ -218,7 +268,7 @@ const ImportForm: React.FC<ImportFormProps> = ({ onImportComplete }) => {
               <div className="text-center">
                 <div className="text-2xl mb-2">📁</div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {file ? file.name : `Arrastra un archivo CSV o haz clic para seleccionar`}
+                  {file ? file.name : (translations[currentLang as keyof typeof translations]?.dragDrop || translations.es.dragDrop)}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                   {file 
