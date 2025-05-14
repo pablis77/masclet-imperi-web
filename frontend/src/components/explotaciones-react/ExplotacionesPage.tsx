@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/apiService';
+import { t } from '../../i18n/config';
 
 // Tipos para los datos
 interface ExplotacionInfo {
@@ -36,6 +37,26 @@ interface Animal {
 }
 
 const ExplotacionesPage: React.FC = () => {
+  // Estado para el idioma actual
+  const [currentLang, setCurrentLang] = useState('es');
+
+  // Efecte para obtener y manejar el idioma
+  useEffect(() => {
+    // Obtener el idioma inicial
+    const storedLang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(storedLang);
+
+    // Escuchar cambios de idioma
+    const handleLangChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
+      }
+    };
+
+    window.addEventListener('storage', handleLangChange);
+    return () => window.removeEventListener('storage', handleLangChange);
+  }, []);
+
   // Estados
   const [explotacionesData, setExplotacionesData] = useState<ExplotacionInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -448,10 +469,13 @@ const ExplotacionesPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="mb-3 sm:mb-4">
           <h2 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
-            Búsqueda y Filtros
+            {currentLang === 'ca' ? 'Cerca i Filtres' : 'Búsqueda y Filtros'}
           </h2>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
-            Utiliza los filtros para encontrar explotaciones específicas. Puedes buscar por código de explotación.
+            {currentLang === 'ca' 
+              ? 'Utilitza els filtres per trobar explotacions específiques. Pots cercar per codi d\'explotació.'
+              : 'Utiliza los filtros para encontrar explotaciones específicas. Puedes buscar por código de explotación.'
+            }
           </p>
         </div>
         
@@ -459,7 +483,7 @@ const ExplotacionesPage: React.FC = () => {
         <div>
           <div className="mb-3">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Buscar
+              {currentLang === 'ca' ? 'Cercar' : 'Buscar'}
             </label>
             <div className="relative">
               <input 
@@ -467,7 +491,7 @@ const ExplotacionesPage: React.FC = () => {
                 id="search-explotacion" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por código de explotación..." 
+                placeholder={currentLang === 'ca' ? "Cercar per codi d'explotació..." : "Buscar por código de explotación..."} 
                 className="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white" 
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -483,13 +507,13 @@ const ExplotacionesPage: React.FC = () => {
               onClick={handleSearch}
               className="btn btn-primary"
             >
-              Buscar
+              {currentLang === 'ca' ? 'Cercar' : 'Buscar'}
             </button>
             <button 
               onClick={handleClear}
               className="btn btn-secondary"
             >
-              Limpiar
+              {currentLang === 'ca' ? 'Netejar' : 'Limpiar'}
             </button>
           </div>
         </div>
