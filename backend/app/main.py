@@ -36,19 +36,35 @@ app = FastAPI(
     redoc_url="/api/v1/redoc",
 )
 
-# Configurar CORS para permitir todos los orígenes temporalmente
-# Esto soluciona problema de acceso desde el frontend en Render
-logger.info("Configurando CORS para permitir todos los orígenes (solución temporal)")
+# Configurar CORS para permitir orígenes específicos, incluido LocalTunnel
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://masclet-imperi-web.netlify.app",
+    "https://masclet-imperi-web-frontend.onrender.com",
+    "https://api-masclet-imperi.loca.lt",            # Backend LocalTunnel
+    "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+    "https://*.loca.lt",                              # Cualquier subdominio de loca.lt
+]
 
-# IMPORTANTE: No se puede usar allow_origins=["*"] junto con allow_credentials=True
-# Es una restricción de seguridad del estándar CORS
-logger.info("Ajustando configuración CORS: allow_credentials=False para compatibilidad con wildcard origins")
+# Detectar si estamos en modo desarrollo para permitir todos los orígenes
+is_dev = os.getenv("DEV_MODE", "true").lower() == "true"
+if is_dev:
+    logger.info("Modo desarrollo detectado: permitiendo todos los orígenes (CORS *)") 
+    origins = ["*"]
+    allow_creds = False
+else:
+    logger.info(f"Modo producción: permitiendo orígenes específicos: {origins}")
+    allow_creds = True
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permitir todos los orígenes
-    allow_credentials=False,  # No se puede usar True con allow_origins=["*"]
-    allow_methods=["*"],
+    allow_origins=origins,
+    allow_credentials=allow_creds,  # En desarrollo: False para permitir "*", en producción: True
+    allow_methods=["*"],  # Permitir todos los métodos
     allow_headers=["*"],
     expose_headers=["*"]
 )
@@ -56,14 +72,25 @@ app.add_middleware(
 # Configurar medidas de seguridad
 setup_security(app)
 
-# Middleware para manejar LocalTunnel
+# Middleware mejorado para manejar LocalTunnel y problemas de CORS
 @app.middleware("http")
 async def localtunnel_fix(request: Request, call_next):
-    # Arreglar URLs duplicadas que vienen de LocalTunnel
+    # Registrar origen para depuración
+    origin = request.headers.get("origin", "No origin header")
+    host = request.headers.get("host", "No host header")
+    referer = request.headers.get("referer", "No referer header")
+    method = request.method
     path = request.url.path
+    
+    # Log detallado en modo desarrollo
+    if is_dev and ("loca.lt" in origin or "loca.lt" in host or "loca.lt" in referer):
+        logger.info(f"[LocalTunnel] Recibida solicitud: {method} {path}")
+        logger.info(f"[LocalTunnel] Origin: {origin}, Host: {host}, Referer: {referer}")
+    
+    # Arreglar URLs duplicadas que vienen de LocalTunnel
     if 'https,' in path or 'http,' in path:
         # Detectar y limpiar URLs malformadas desde el túnel
-        logger.info(f"Solicitud recibida con URL duplicada: {path}")
+        logger.info(f"[LocalTunnel] Solicitud recibida con URL duplicada: {path}")
         
         # Extraer la última parte de la URL (la parte correcta)
         if '/api/v1/' in path:
@@ -74,10 +101,34 @@ async def localtunnel_fix(request: Request, call_next):
                 clean_path = f"/api/v1/{parts[-1]}"
                 # Modificar la URL de la petición
                 request.scope["path"] = clean_path
-                logger.info(f"URL limpiada: {clean_path}")
+                logger.info(f"[LocalTunnel] URL limpiada: {clean_path}")
+        else:
+            # Para otras URLs malformadas, intentar extraer la parte útil
+            # Buscar el patrón común: https,<url_real>
+            parts = path.split(",")
+            if len(parts) > 1:
+                clean_path = parts[-1]  # Tomar la última parte después de la coma
+                request.scope["path"] = clean_path
+                logger.info(f"[LocalTunnel] URL genérica limpiada: {clean_path}")
     
-    # Continuar con la solicitud
-    return await call_next(request)
+    # Añadir encabezados CORS para solicitudes OPTIONS
+    # Esto asegura compatibilidad con navegadores en dispositivos móviles
+    response = await call_next(request)
+    
+    # Para solicitudes desde LocalTunnel, asegurar que los encabezados CORS son correctos
+    if "loca.lt" in (origin or host or referer or ""):
+        # Añadir encabezados CORS manualmente para asegurar compatibilidad
+        response.headers["Access-Control-Allow-Origin"] = origin or "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        if is_dev:
+            # En desarrollo, no necesitamos credentials
+            response.headers["Access-Control-Allow-Credentials"] = "false"
+        else:
+            # En producción, sí las necesitamos
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
 
 # Middleware de depuración para diagnóstico de errores
 @app.middleware("http")
