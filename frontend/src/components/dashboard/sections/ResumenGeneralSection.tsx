@@ -59,7 +59,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
     <>
       {/* Tarjeta de resumen de animales */}
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
-        <h3 className="text-lg font-semibold mb-4">Resumen de Animales</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('dashboard.section_animals_summary', currentLang)}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
           <div style={{
             backgroundColor: "#3b82f6",
@@ -67,7 +67,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Total Animales</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.animals_count', currentLang)}</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.total}</div>
           </div>
           <div style={{
@@ -76,7 +76,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Animales Activos</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.active_animals', currentLang)}</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
               {statsData.animales.por_estado?.OK || 0}
             </div>
@@ -87,7 +87,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Machos (♂)</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.males', currentLang)} (♂)</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.machos}</div>
           </div>
           <div style={{
@@ -96,7 +96,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Hembras (♀)</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.females', currentLang)} (♀)</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.hembras}</div>
           </div>
         </div>
@@ -104,9 +104,9 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
         {/* No mostramos Ratio aquí ya que irá en Análisis Poblacional */}
       </div>
       
-      {/* Tarjeta de Estado de Amamantamiento */}
+      {/* Tarjeta de estado de amamantamiento */}
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
-        <h3 className="text-lg font-semibold mb-4">Estado de Amamantamiento</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('dashboard.section_nursing_status', currentLang)}</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           {/* Calculamos la proporción de vacas activas respecto al total */}
           {(() => {
@@ -140,7 +140,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Vacas Sin Amamantar (Activas)</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.not_nursing', currentLang)}</div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar0Activas}</div>
                 </div>
                 
@@ -150,7 +150,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Vacas con Un Ternero (Activas)</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.nursing_one', currentLang)}</div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar1Activas}</div>
                 </div>
                 
@@ -170,7 +170,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
         </div>
       </div>
       
-      {/* Tarjeta de Análisis Poblacional */}
+      {/* Tarjeta de análisis poblacional */}
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.population_analysis', currentLang)}</h3>
         <div className="h-64 flex items-center justify-center">

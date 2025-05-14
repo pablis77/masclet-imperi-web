@@ -5,13 +5,34 @@ import MainLayout from '../components/layout/MainLayout.astro';
 // Importar el nuevo componente Dashboard que funciona con datos reales
 import DashboardNew from '../components/dashboard/DashboardNew';
 
+// Importar funciones de i18n
+import { getCurrentLanguage } from '../i18n/config';
+
 // Definir rol de usuario (esto eventualmente vendrá de la autenticación)
 const userRole = "administrador"; // Simulación de rol
+
+// Obtener el idioma actual para el servidor
+const currentLang = getCurrentLanguage();
+
+// Traducciones
+const translations = {
+  es: {
+    title: "Panel de Control"
+  },
+  ca: {
+    title: "Tauler de Control"
+  }
+};
+
+// Función para obtener la traducción
+function t(key) {
+  return translations[currentLang]?.[key] || key;
+}
 ---
 
 <MainLayout title="Dashboard" userRole={userRole} currentPath="/dashboard">
   <div class="mx-auto px-4 py-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">Panel de Control</h1>
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">{t('title')}</h1>
     
     <!-- Nuevo componente Dashboard mejorado - Renderizado solo en el cliente -->
     <DashboardNew client:only="react" />
