@@ -113,6 +113,21 @@
   > **Estado**: Completado. Implementado `SecurityHeadersMiddleware` que añade automáticamente cabeceras de seguridad como X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Content-Security-Policy, HSTS y Permissions-Policy.
   >
 
+### 1.4. Conectividad y Acceso Remoto
+
+- ✅ Habilitar túneles seguros para desarrollo y testing
+  > **Estado**: Completado. Implementada solución para uso de LocalTunnel con autenticación manual optimizada y mensajes visuales informativos.
+  > **Detalles**: El sistema detecta automáticamente cuando se accede desde un túnel y muestra un mensaje claro al usuario para autenticar manualmente ambos túneles, evitando errores 511.
+  > **Comandos**: 
+  > - Frontend: `lt --port 3000 --subdomain masclet-imperi-web-frontend-2025 --allow-invalid-cert --local-host 0.0.0.0 --allow-public-access --print-requests`
+  > - Backend: `lt --port 8000 --subdomain api-masclet-imperi --allow-invalid-cert --local-host 0.0.0.0 --allow-public-access --print-requests`
+  >
+- ✅ Resolver problemas de CORS en entornos mixtos
+  > **Estado**: Completado. Implementada solución que gestiona correctamente los prefijos de URL en túneles para evitar duplicaciones de `/api/v1`, resolviendo problemas de autenticación y CORS.
+  >
+- ✅ Configurar acceso seguro a APIs desde redes externas
+  > **Estado**: Completado. Sistema implementado en `apiService.ts` para manejar diferentes entornos (local, desarrollo, túnel, producción) con enrutamiento inteligente.
+  >
 ## 2. Selección de Plataforma de Hosting
 
 ### 2.1. Análisis de Opciones para Backend

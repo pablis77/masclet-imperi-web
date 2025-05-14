@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { GenderChart, StatusChart } from '../components/ChartComponents';
 import { StatCard, DashboardCard, CardLabel } from '../components/UIComponents';
 import type { DashboardStats } from '../types';
+import { t } from '../../../i18n/config';
 
 // Sección de Resumen General extraída directamente del dashboard original
 // EXACTAMENTE con la misma estructura visual
@@ -18,14 +19,34 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
   loading, 
   error 
 }) => {
+  // Obtener idioma actual del localStorage
+  const [currentLang, setCurrentLang] = useState('es');
+  
+  // Obtener idioma actual cuando se carga el componente
+  useEffect(() => {
+    const lang = localStorage.getItem('userLanguage') || 'es';
+    setCurrentLang(lang);
+    
+    // Escuchar cambios en el idioma
+    const handleStorageChange = () => {
+      const newLang = localStorage.getItem('userLanguage') || 'es';
+      if (newLang !== currentLang) {
+        setCurrentLang(newLang);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
   if (loading) {
-    return <div className="col-span-12 text-center py-4">Cargando resumen general...</div>;
+    return <div className="col-span-12 text-center py-4">{t('dashboard.loading', currentLang)}</div>;
   }
   
   if (error) {
     return (
       <div className="col-span-12 text-center py-4 text-red-500">
-        Error al cargar estadísticas: {error}
+        {t('dashboard.loading_error', currentLang)}: {error}
       </div>
     );
   }
@@ -139,7 +160,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>Vacas con Dos Terneros (Activas)</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.cows_with_two_calves', currentLang)}</div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar2Activas}</div>
                 </div>
               </>
@@ -151,7 +172,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
       
       {/* Tarjeta de Análisis Poblacional */}
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
-        <h3 className="text-lg font-semibold mb-4">Análisis Poblacional</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('dashboard.population_analysis', currentLang)}</h3>
         <div className="h-64 flex items-center justify-center">
           <GenderChart 
             data={{
@@ -163,7 +184,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
           />
         </div>
         <div style={{ textAlign: "center", marginTop: "0.5rem", fontSize: "0.875rem", color: darkMode ? "#9ca3af" : "#6b7280" }}>
-          Ratio Machos/Hembras: <span style={{ fontWeight: "bold" }}>{statsData.animales.ratio_m_h.toFixed(2)}</span>
+          {t('dashboard.male_female_ratio', currentLang)}: <span style={{ fontWeight: "bold" }}>{statsData.animales.ratio_m_h.toFixed(2)}</span>
         </div>
       </div>
     </>

@@ -1,6 +1,63 @@
 import React, { useState, useEffect, useRef } from 'react';
 import animalService from '../../services/animalService';
 import type { Animal, AnimalFilters, PaginatedResponse } from '../../services/animalService';
+// import { t } from '../../i18n/config';
+
+// Implementación directa de traducciones para solucionar problemas de importación
+const translations = {
+  es: {
+    'animals.table.type': 'Tipo',
+    'animals.table.name': 'Nombre',
+    'animals.table.code': 'Código',
+    'animals.table.exploitation': 'Explotación',
+    'animals.table.status': 'Estado',
+    'animals.table.actions': 'Acciones',
+    'animals.table.view': 'Ver',
+    'animals.table.update': 'Actualizar',
+    'animals.table.active': 'Activo',
+    'animals.table.inactive': 'Baja',
+    'animals.male': 'Macho',
+    'animals.female': 'Hembra'
+  },
+  ca: {
+    'animals.table.type': 'Tipus',
+    'animals.table.name': 'Nom',
+    'animals.table.code': 'Codi',
+    'animals.table.exploitation': 'Explotació',
+    'animals.table.status': 'Estat',
+    'animals.table.actions': 'Accions',
+    'animals.table.view': 'Veure',
+    'animals.table.update': 'Actualitzar',
+    'animals.table.active': 'Actiu',
+    'animals.table.inactive': 'Baixa',
+    'animals.male': 'Mascle',
+    'animals.female': 'Femella'
+  }
+};
+
+// Función de traducción directa con diagnóstico
+function t(key: string, lang: string): string {
+  // Forzamos españól si no es un idioma válido
+  if (lang !== 'es' && lang !== 'ca') {
+    lang = 'es';
+  }
+  
+  try {
+    // Traducciones directas para cada idioma
+    const translationsForLang = translations[lang as 'es' | 'ca'];
+    
+    // Verificar si la clave existe en el diccionario de traducciones
+    if (key in translationsForLang) {
+      return translationsForLang[key];
+    } else {
+      console.warn(`[Translation] Clave no encontrada: ${key} para idioma: ${lang}`);
+      return key; // Devolvemos la clave si no hay traducción
+    }
+  } catch (error) {
+    console.error(`[Translation] Error al traducir ${key}:`, error);
+    return key;
+  }
+}
 
 interface AnimalTableProps {
   initialFilters?: AnimalFilters;
@@ -27,6 +84,29 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Configuración para multilenguaje - Solución simplificada
+  const [currentLang, setCurrentLang] = useState(() => {
+    // Obtener el idioma directamente al inicializar el estado
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem('userLanguage') || 'es';
+    }
+    return 'es';
+  });
+  
+  // Sistema de idioma simple v2 - 2025-05-14-20:10
+  useEffect(() => {
+    const userLang = localStorage.getItem('userLanguage') || 'es';
+    console.log('[AnimalTable] Idioma detectado:', userLang);
+    setCurrentLang(userLang);
+  }, []); // Se ejecuta solo al montar el componente
+  
+  // Función auxiliar para formatear texto con variables
+  const formatText = (text: string, ...args: any[]) => {
+    return text.replace(/{(\d+)}/g, (match, number) => {
+      return typeof args[number] !== 'undefined' ? args[number].toString() : match;
+    });
+  };
 
   const loadAnimals = async () => {
     try {
@@ -326,7 +406,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>
-        {animal.estado === 'OK' ? 'Activo' : 'Baja'}
+        {animal.estado === 'OK' ? t('animals.table.active', currentLang) : t('animals.table.inactive', currentLang)}
       </span>
     );
   };
@@ -387,25 +467,25 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
         <>
           <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gray-100 dark:bg-gray-800">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Tipo
+                    {currentLang === 'ca' ? 'Tipus' : 'Tipo'}
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Nombre
+                    {currentLang === 'ca' ? 'Nom' : 'Nombre'}
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Código
+                    {currentLang === 'ca' ? 'Codi' : 'Código'}
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Explotación
+                    {currentLang === 'ca' ? 'Explotació' : 'Explotación'}
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Estado
+                    {currentLang === 'ca' ? 'Estat' : 'Estado'}
                   </th>
                   <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                    Acciones
+                    {currentLang === 'ca' ? 'Accions' : 'Acciones'}
                   </th>
                 </tr>
               </thead>
@@ -422,7 +502,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                         {animal.nom}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {animal.genere === 'M' ? 'Macho' : 'Hembra'}
+                        {animal.genere === 'M' ? t('animals.male', currentLang) : t('animals.female', currentLang)}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
@@ -457,7 +537,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          Ver
+                          {t('animals.table.view', currentLang)}
                         </a>
                         {canEdit && animal.estado === 'OK' && (
                           <a 
@@ -467,7 +547,7 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Actualizar
+                            {t('animals.table.update', currentLang)}
                           </a>
                         )}
                       </div>
