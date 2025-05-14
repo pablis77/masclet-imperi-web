@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './mobile.css'; // Importamos estilos específicos para móvil
 import apiService from '../../services/apiService';
 import { t } from '../../i18n/config';
 import jsPDF from 'jspdf';
@@ -705,7 +706,7 @@ const ExplotacionesPage: React.FC = () => {
           {/* Vista de tarjetas de explotaciones */}
           <div 
             id="explotacionCards" 
-            className="grid grid-cols-1 gap-0 mb-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 sm:gap-4 mb-6"
             style={{ display: currentExplotacion ? 'none' : 'grid' }}
           >
             {displayExplotaciones.map((exp) => (
