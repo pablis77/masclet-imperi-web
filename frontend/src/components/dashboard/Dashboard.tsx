@@ -115,7 +115,35 @@ const Dashboard: React.FC = () => {
   // Estado para indicar si el dashboard está completamente cargado
   const [dashboardReady, setDashboardReady] = useState<boolean>(false);
 
-  // Efecto para sincronizar con el tema global al cargar
+  // Estado para mostrar el panel de depuración avanzado
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+  
+  // Estado para almacenar información de depuración adicional
+  const [debugInfo, setDebugInfo] = useState<{
+    apiUrl: string;
+    isLocalTunnel: boolean;
+    networkRequests: Array<{endpoint: string; status: string; time: string; error?: string}>;
+    connectionInfo: {
+      localIP: string;
+      publicIP: string | null;
+      userAgent: string;
+      timeLastSuccess: string | null;
+      isOnline: boolean;
+    };
+  }>({  
+    apiUrl: '',
+    isLocalTunnel: false,
+    networkRequests: [],
+    connectionInfo: {
+      localIP: '',
+      publicIP: null,
+      userAgent: '',
+      timeLastSuccess: null,
+      isOnline: navigator.onLine
+    }
+  });
+
+  // Efecto para sincronizar con el tema global al cargar y recopilar información de depuración
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     setDarkMode(isDarkMode);
@@ -132,17 +160,111 @@ const Dashboard: React.FC = () => {
     
     observer.observe(document.documentElement, { attributes: true });
     
-    return () => observer.disconnect();
+    // Recopilar información de depuración
+    const collectDebugInfo = async () => {
+      // Detectar si estamos en LocalTunnel
+      const hostname = window.location.hostname;
+      const isLocalTunnel = hostname.includes('loca.lt');
+      
+      // Obtener URL base de la API de apiService
+      const apiBaseUrl = apiService.getBaseUrl ? apiService.getBaseUrl() : '';
+      
+      // Recopilar información del navegador y sistema
+      setDebugInfo(prev => ({
+        ...prev,
+        apiUrl: apiBaseUrl,
+        isLocalTunnel: isLocalTunnel,
+        connectionInfo: {
+          ...prev.connectionInfo,
+          localIP: window.location.hostname,
+          userAgent: navigator.userAgent,
+          isOnline: navigator.onLine
+        }
+      }));
+      
+      // Intentar obtener la IP pública para depuración
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        if (data && data.ip) {
+          setDebugInfo(prev => ({
+            ...prev,
+            connectionInfo: {
+              ...prev.connectionInfo,
+              publicIP: data.ip
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('No se pudo obtener la IP pública:', error);
+      }
+    };
+    
+    collectDebugInfo();
+    
+    // Monitorear estado de conexión
+    const handleOnline = () => {
+      setDebugInfo(prev => ({
+        ...prev,
+        connectionInfo: {
+          ...prev.connectionInfo,
+          isOnline: true
+        }
+      }));
+      addLog('✅ Conexión a Internet restaurada');
+    };
+    
+    const handleOffline = () => {
+      setDebugInfo(prev => ({
+        ...prev,
+        connectionInfo: {
+          ...prev.connectionInfo,
+          isOnline: false
+        }
+      }));
+      addLog('❌ Conexión a Internet perdida');
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  // Función para añadir logs de depuración - solo en desarrollo
-  const addLog = (message: string) => {
+  // Función mejorada para añadir logs de depuración - solo en desarrollo
+  const addLog = (message: string, isError: boolean = false) => {
     const timestamp = new Date().toISOString();
-    setRequestLogs(prev => [`[${timestamp}] ${message}`, ...prev]);
-    // Solo mostrar logs en modo desarrollo
-    if (import.meta.env.DEV) {
-      console.log(`[Dashboard] ${message}`);
+    const formattedMessage = `[${timestamp}] ${isError ? '❌ ' : ''}${message}`;
+    setRequestLogs(prev => [formattedMessage, ...prev]);
+    
+    // Solo mostrar logs en modo desarrollo o si es un error
+    if (import.meta.env.DEV || isError) {
+      if (isError) {
+        console.error(`[Dashboard] ${message}`);
+      } else {
+        console.log(`[Dashboard] ${message}`);
+      }
     }
+  };
+  
+  // Función para registrar información de peticiones HTTP
+  const trackNetworkRequest = (endpoint: string, status: string, error?: string) => {
+    const time = new Date().toISOString();
+    setDebugInfo(prev => ({
+      ...prev,
+      networkRequests: [
+        { endpoint, status, time, error },
+        ...prev.networkRequests.slice(0, 19) // Mantener solo las últimas 20 peticiones
+      ],
+      connectionInfo: {
+        ...prev.connectionInfo,
+        timeLastSuccess: status === 'success' ? time : prev.connectionInfo.timeLastSuccess
+      }
+    }));
   };
 
   // Funciones para obtener datos de los diferentes endpoints
@@ -165,7 +287,7 @@ const Dashboard: React.FC = () => {
       
       // Verificar token (no es necesario, apiService ya lo maneja)
       if (!localStorage.getItem('token')) {
-        addLog('⚠️ No se encontró token en localStorage');
+        addLog('❌ No hay token en localStorage', true);
         setError(prev => ({ ...prev, resumen: 'No hay token de autenticación' }));
         setLoading(prev => ({ ...prev, resumen: false }));
         return null;
@@ -174,14 +296,19 @@ const Dashboard: React.FC = () => {
       console.log('Endpoint a utilizar:', endpoint);
       
       // Usar apiService que detecta automáticamente la IP
-      const response = await apiService.get(endpoint);
+      addLog(`Realizando petición GET a ${endpoint}`);
+      trackNetworkRequest(endpoint, 'pending');
       
+      const response = await apiService.get(endpoint);
+      trackNetworkRequest(endpoint, 'success');
       addLog('✅ Datos de resumen recibidos');
       console.log('Datos de resumen recibidos:', response);
       
       // Validar estructura de datos
       if (!response || typeof response !== 'object') {
-        throw new Error('Formato de respuesta inválido - datos vacíos');
+        const error = 'Formato de respuesta inválido - datos vacíos';
+        trackNetworkRequest(endpoint, 'error', error);
+        throw new Error(error);
       }
       
       // Definir valores predeterminados para campos requeridos
@@ -465,11 +592,24 @@ const Dashboard: React.FC = () => {
       setLoading(prev => ({ ...prev, partos: false }));
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        addLog(`❌ Error en partos: ${err.message}`);
+        const errorMsg = `Error en partos: ${err.message}`;
+        addLog(errorMsg, true);
         setError(prev => ({ ...prev, partos: `Error: ${err.message}` }));
+        trackNetworkRequest('/dashboard/partos', 'error', errorMsg);
+        
+        // Información detallada del error para depuración
+        if (err.response) {
+          // La solicitud fue realizada y el servidor respondió con un código de estado fuera del rango 2xx
+          addLog(`Detalles del error - Status: ${err.response.status}, Data: ${JSON.stringify(err.response.data || {})}`, true);
+        } else if (err.request) {
+          // La solicitud fue realizada pero no se recibió respuesta
+          addLog(`Error: No se recibió respuesta del servidor`, true);
+        }
       } else {
-        addLog(`❌ Error desconocido en partos: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        const errorMsg = `Error desconocido en partos: ${err instanceof Error ? err.message : 'Error sin detalles'}`;
+        addLog(errorMsg, true);
         setError(prev => ({ ...prev, partos: 'Error procesando datos de partos' }));
+        trackNetworkRequest('/dashboard/partos', 'error', errorMsg);
       }
       setLoading(prev => ({ ...prev, partos: false }));
     };
@@ -486,12 +626,24 @@ const Dashboard: React.FC = () => {
       setLoading(prev => ({ ...prev, combined: false }));
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        addLog(`❌ Error en combined: ${err.message}`);
+        const errorMsg = `Error en combined: ${err.message}`;
+        addLog(errorMsg, true);
         setError(prev => ({ ...prev, combined: `Error: ${err.message}` }));
+        trackNetworkRequest('/dashboard/combined', 'error', errorMsg);
+        
+        // Información detallada del error para depuración
+        if (err.response) {
+          // La solicitud fue realizada y el servidor respondió con un código de estado fuera del rango 2xx
+          addLog(`Detalles del error - Status: ${err.response.status}, Data: ${JSON.stringify(err.response.data || {})}`, true);
+        } else if (err.request) {
+          // La solicitud fue realizada pero no se recibió respuesta
+          addLog(`Error: No se recibió respuesta del servidor`, true);
+        }
       } else {
-        console.error('Error procesando datos combinados:', err);
-        addLog(`❌ Error desconocido en combined: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        const errorMsg = `Error desconocido en combined: ${err instanceof Error ? err.message : 'Error sin detalles'}`;
+        addLog(errorMsg, true);
         setError(prev => ({ ...prev, combined: 'Error procesando datos combinados' }));
+        trackNetworkRequest(endpoint, 'error', errorMsg);
       }
       setLoading(prev => ({ ...prev, combined: false }));
     }
@@ -805,10 +957,12 @@ const Dashboard: React.FC = () => {
       
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        addLog(`❌ Error en autenticación: ${err.message}`);
+        const errorMsg = `Error en autenticación: ${err.message}`;
+        addLog(errorMsg, true);
         throw new Error(`Error de autenticación: ${err.message}`);
       } else {
-        addLog(`❌ Error desconocido en autenticación`);
+        const errorMsg = `Error desconocido en autenticación`;
+        addLog(errorMsg, true);
         throw new Error('Error desconocido en autenticación');
       }
     }
@@ -990,6 +1144,11 @@ const Dashboard: React.FC = () => {
   // Comprobar si todas las llamadas han finalizado (con éxito o error)
   const allLoaded = Object.values(loading).every(isLoading => isLoading === false);
 
+  // Función para mostrar/ocultar panel de depuración
+  const toggleDebugPanel = () => {
+    setShowDebugPanel(prev => !prev);
+  };
+
   return (
     <div 
       className={`dashboard-container ${darkMode ? 'theme-dark' : 'theme-light'} ${allLoaded ? 'dashboard-ready' : ''}`}
@@ -1015,16 +1174,177 @@ const Dashboard: React.FC = () => {
       >
         {darkMode ? '☀️' : '🌙'}
       </button>
-      {/* Sección de logs para desarrollo - COMPLETAMENTE ELIMINADA */}
-      {false && (
-        <div className="log-container" style={{ maxHeight: '200px', overflow: 'auto' }}>
-          <h3 className="text-lg font-bold mb-2">Logs de desarrollo</h3>
-          {requestLogs.map((log, index) => (
-            <div key={index} className="text-sm mb-1">{log}</div>
-          ))}
+      {/* Botón para mostrar/ocultar panel de depuración avanzado */}
+      <button 
+        onClick={toggleDebugPanel} 
+        style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          zIndex: 9999,
+          padding: '5px 10px',
+          background: showDebugPanel ? '#ff4757' : '#2ed573',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '12px'
+        }}
+      >
+        {showDebugPanel ? 'Ocultar Debug' : 'Mostrar Debug'}
+      </button>
+
+      {/* Panel de depuración avanzado - visible siempre pero toggle */}
+      {showDebugPanel && (
+        <div className="debug-container" style={{
+          position: 'fixed',
+          bottom: '50px',
+          right: '10px',
+          width: '400px',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          background: '#f1f2f6',
+          border: '1px solid #dfe4ea',
+          borderRadius: '8px',
+          padding: '15px',
+          zIndex: 9998,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          fontSize: '12px',
+          color: '#333'
+        }}>
+          <h3 style={{ borderBottom: '1px solid #ddd', paddingBottom: '8px', marginTop: 0 }}>Panel de Depuración Avanzado</h3>
+          
+          <div className="connection-info" style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '5px' }}>Información de Conexión</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td><strong>Estado:</strong></td>
+                  <td>{debugInfo.connectionInfo.isOnline ? '🟢 Online' : '🔴 Offline'}</td>
+                </tr>
+                <tr>
+                  <td><strong>LocalTunnel:</strong></td>
+                  <td>{debugInfo.isLocalTunnel ? '✅ Sí' : '❌ No'}</td>
+                </tr>
+                <tr>
+                  <td><strong>URL API:</strong></td>
+                  <td style={{ wordBreak: 'break-word' }}>{debugInfo.apiUrl}</td>
+                </tr>
+                <tr>
+                  <td><strong>IP Local:</strong></td>
+                  <td>{debugInfo.connectionInfo.localIP}</td>
+                </tr>
+                <tr>
+                  <td><strong>IP Pública:</strong></td>
+                  <td>{debugInfo.connectionInfo.publicIP || 'Desconocida'}</td>
+                </tr>
+                <tr>
+                  <td><strong>Última conexión exitosa:</strong></td>
+                  <td>{debugInfo.connectionInfo.timeLastSuccess || 'Ninguna'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="loading-status" style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '5px' }}>Estado de carga por sección:</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {Object.entries(loading).map(([key, value]) => (
+                  <tr key={key}>
+                    <td><strong>{key}:</strong></td>
+                    <td>{value ? '⏳ Cargando...' : '✅ Completado'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="error-status" style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '5px' }}>Errores:</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {Object.entries(error).map(([key, value]) => (
+                  <tr key={key}>
+                    <td><strong>{key}:</strong></td>
+                    <td style={{ color: value ? '#ff4757' : '#2ed573' }}>{value || 'Sin errores'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="network-requests" style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '5px' }}>Últimas peticiones:</h4>
+            <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '5px' }}>
+              {debugInfo.networkRequests.length > 0 ? (
+                debugInfo.networkRequests.map((req, index) => (
+                  <div key={index} style={{ 
+                    padding: '4px', 
+                    borderBottom: '1px solid #eee',
+                    color: req.status === 'error' ? '#ff4757' : req.status === 'success' ? '#2ed573' : '#70a1ff'
+                  }}>
+                    [{req.time.substring(11, 19)}] {req.endpoint} - {req.status}
+                    {req.error && <div style={{ color: '#ff4757', marginTop: '2px' }}>{req.error}</div>}
+                  </div>
+                ))
+              ) : (
+                <p>No hay peticiones registradas</p>
+              )}
+            </div>
+          </div>
+          
+          <div className="request-logs" style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '5px' }}>Logs de peticiones:</h4>
+            <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', padding: '5px' }}>
+              {requestLogs.map((log, index) => (
+                <div 
+                  key={index} 
+                  className="log-entry" 
+                  style={{ 
+                    padding: '3px 0', 
+                    borderBottom: '1px solid #eee',
+                    color: log.includes('❌') ? '#ff4757' : log.includes('✅') ? '#2ed573' : 'inherit',
+                    fontSize: '11px'
+                  }}
+                >
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="actions" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <button 
+              onClick={() => setRequestLogs([])} 
+              style={{
+                padding: '5px 10px',
+                background: '#ff6b81',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Limpiar logs
+            </button>
+            <button 
+              onClick={toggleDebugPanel} 
+              style={{
+                padding: '5px 10px',
+                background: '#5352ed',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       )}
-
+      
       {/* SECCIÓN 1: Resumen General - Estadísticas clave */}
       <SectionTitle number="1" title="Resumen General" darkMode={darkMode} />
       <div className="stats-grid-lg">

@@ -495,14 +495,20 @@ export async function login(username: string, password: string) {
   }
 }
 
+// Función para obtener la URL base de la API (para depuración)
+const getBaseUrl = (): string => {
+  return API_BASE_URL;
+};
+
 export default {
   get,
   post,
   put,
   patch,
-  delete: del,
-  configureApi,
+  del,
   isAuthenticated,
   getUserInfo,
-  login
+  login,
+  configureApi,
+  getBaseUrl
 };
