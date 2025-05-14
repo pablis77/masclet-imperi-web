@@ -147,6 +147,9 @@ const title = 'Explotaciones';
 </MainLayout>
 
 <script>
+  // Importar el servicio API
+  import apiService from '../../services/apiService';
+  
   // Obtener elementos del DOM
   const searchInput = document.getElementById('search-explotacion');
   const searchButton = document.getElementById('search-button');
@@ -158,9 +161,13 @@ const title = 'Explotaciones';
   // El código ya tiene estas variables definidas en otra parte
   // No necesitamos declararlas de nuevo
   
-  // Cargar datos iniciales al montar el componente
-  document.addEventListener('DOMContentLoaded', loadInitialData);
-  
+  // Mostrar información de depuración
+  console.log(`[Explotaciones] API Base URL: ${apiService.getBaseUrl()}`);
+
+  // Cargar datos iniciales automaticamente
+  document.addEventListener('DOMContentLoaded', function() {
+    loadInitialData();
+  });
   async function loadInitialData() {
     try {
       console.log('Cargando datos iniciales');
@@ -182,25 +189,17 @@ const title = 'Explotaciones';
       }
       
       // Obtener todos los animales del backend con un límite razonable
-      const response = await fetch('http://localhost:8000/api/v1/animals/?page=1&limit=100', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiService.get('animals/?page=1&limit=100');
       
-      if (!response.ok) {
-        throw new Error(`Error en la petición: ${response.status}`);
-      }
-      
-      const result = await response.json();
+      // Los datos ya vienen procesados a través de apiService
+      const data = response;
       
       // Verificar la estructura de la respuesta
-      if (!result.data || !result.data.items || !Array.isArray(result.data.items)) {
+      if (!data.data || !data.data.items || !Array.isArray(data.data.items)) {
         throw new Error('Formato de respuesta incorrecto');
       }
       
-      const allAnimals = result.data.items;
+      const allAnimals = data.data.items;
       
       // Agrupar animales por explotación
       const explotacionesMap = {};
@@ -255,22 +254,12 @@ const title = 'Explotaciones';
       const updatedExplotacionesData = await Promise.all(explotacionesData.map(async (exp) => {
         try {
           // Obtener detalles de la explotación usando la API del dashboard
-          const dashboardEndpoint = `http://localhost:8000/api/v1/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`;
-          const explotacionResponse = await fetch(dashboardEndpoint, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          const dashboardEndpoint = `dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`;
+          const explotacionResponse = await apiService.get(dashboardEndpoint);
           
           // Obtener estadísticas detalladas de la explotación
-          const statsEndpoint = `http://localhost:8000/api/v1/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
-          const statsResponse = await fetch(statsEndpoint, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          const statsEndpoint = `dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`;
+          const statsResponse = await apiService.get(statsEndpoint);
           
           // Inicializar objeto con datos actualizados
           let updatedExp = {...exp};
@@ -550,33 +539,14 @@ const title = 'Explotaciones';
     
     try {
       // Obtener datos de los animales de esta explotación
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No hay token de autenticación');
-        return;
-      }
+      const endpoint = `animals/?explotacio=${encodeURIComponent(explotacionCode)}`;
+      const response = await apiService.get(endpoint);
       
-      console.log(`Obteniendo datos para explotación ${explotacionCode}`);
-      
-      // Usar el mismo endpoint que se usa en la página de animales
-      const url = `http://localhost:8000/api/v1/animals/?page=1&limit=100&search=${encodeURIComponent(explotacionCode)}`;
-      console.log(`Usando URL: ${url}`);
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error en la petición: ${response.status}`);
-      }
-      
-      const result = await response.json();
+      // Los datos ya vienen procesados a través de apiService
+      const data = response;
       
       // Verificar la estructura de la respuesta
-      if (!result.data || !result.data.items || !Array.isArray(result.data.items)) {
+      if (!data.data || !data.data.items || !Array.isArray(data.data.items)) {
         throw new Error('Formato de respuesta incorrecto');
       }
       
