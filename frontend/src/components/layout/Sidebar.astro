@@ -11,22 +11,72 @@ const {
   currentPath = "/"
 } = Astro.props;
 
+// Importar config de idioma
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor para la renderización inicial
+const serverLang = getCurrentLanguage();
+
+// Traducciones para títulos de secciones
+const sectionTitles = {
+  es: {
+    navigation: "NAVEGACIÓN",
+    admin: "ADMINISTRACIÓN"
+  },
+  ca: {
+    navigation: "NAVEGACIÓ",
+    admin: "ADMINISTRACIÓ"
+  }
+};
+
+// Traducciones para items del menú
+const menuTranslations = {
+  es: {
+    dashboard: "Dashboard",
+    animals: "Animales",
+    exploitations: "Explotaciones",
+    users: "Usuarios",
+    imports: "Importación",
+    backup: "Copias de seguridad",
+    management_system: "Sistema de Gestión Ganadera"
+  },
+  ca: {
+    dashboard: "Tauler de control",
+    animals: "Animals",
+    exploitations: "Explotacions",
+    users: "Usuaris",
+    imports: "Importació",
+    backup: "Còpies de seguretat",
+    management_system: "Sistema de Gestió Ramadera"
+  }
+};
+
+// Función para obtener traducción
+function t(key: string, section = 'menu'): string {
+  if (section === 'section') {
+    return sectionTitles[serverLang as 'es' | 'ca']?.[key] || key;
+  }
+  return menuTranslations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
 // Definir las secciones del menú según roles
 const menuSections = [
   {
-    title: "NAVEGACIÓN",
+    title: t("navigation", 'section'),
+    key: "navigation",
     items: [
-      { name: "Dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
-      { name: "Explotaciones", url: "/explotaciones-react", icon: "🏡", roles: ["administrador", "gerente", "editor", "usuario"] },
-      { name: "Animales", url: "/animals", icon: "🐄", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("dashboard"), key: "dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("exploitations"), key: "exploitations", url: "/explotaciones-react", icon: "🏡", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("animals"), key: "animals", url: "/animals", icon: "🐄", roles: ["administrador", "gerente", "editor", "usuario"] },
     ]
   },
   {
-    title: "ADMINISTRACIÓN",
+    title: t("admin", 'section'),
+    key: "admin",
     items: [
-      { name: "Importación", url: "/imports", icon: "📥", roles: ["administrador"] },
-      { name: "Usuarios", url: "/users", icon: "👥", roles: ["administrador", "gerente"] },
-      { name: "Backup", url: "/backup", icon: "💾", roles: ["administrador"] },
+      { name: t("imports"), key: "imports", url: "/imports", icon: "📥", roles: ["administrador"] },
+      { name: t("users"), key: "users", url: "/users", icon: "👥", roles: ["administrador", "gerente"] },
+      { name: t("backup"), key: "backup", url: "/backup", icon: "💾", roles: ["administrador"] },
     ]
   }
 ];
@@ -88,8 +138,92 @@ const isActive = (itemUrl: string) => {
 </aside>
 
 <script>
-  // Script para manejar el cierre del sidebar en móvil
+  // Script para manejar el cierre del sidebar en móvil y traducir elementos
   document.addEventListener('DOMContentLoaded', () => {
+    // Traducciones del menú para cliente
+    const translations = {
+      es: {
+        dashboard: "Dashboard",
+        animals: "Animales",
+        exploitations: "Explotaciones",
+        users: "Usuarios",
+        imports: "Importación",
+        backup: "Copias de seguridad",
+        management_system: "Sistema de Gestión Ganadera",
+        navigation: "NAVEGACIÓN",
+        admin: "ADMINISTRACIÓN"
+      },
+      ca: {
+        dashboard: "Tauler de control",
+        animals: "Animals",
+        exploitations: "Explotacions",
+        users: "Usuaris",
+        imports: "Importació",
+        backup: "Còpies de seguretat",
+        management_system: "Sistema de Gestió Ramadera",
+        navigation: "NAVEGACIÓ",
+        admin: "ADMINISTRACIÓ"
+      }
+    };
+
+    // Función para traducir
+    function t(key, lang) {
+      return translations[lang]?.[key] || key;
+    }
+
+    // Función para traducir la barra lateral
+    function translateSidebar() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+
+      // Traducir los títulos de secciones
+      document.querySelectorAll('h3.px-6.mb-2.text-xs.font-semibold').forEach(header => {
+        const text = header.textContent.trim();
+        if (text === "NAVEGACIÓN") {
+          header.textContent = t('navigation', currentLang);
+        } else if (text === "ADMINISTRACIÓN") {
+          header.textContent = t('admin', currentLang);
+        }
+      });
+
+      // Traducir los elementos del menú lateral
+      document.querySelectorAll('nav a').forEach(link => {
+        const text = link.textContent.trim();
+        // Extraer el emoji si existe
+        const emoji = text.match(/^([\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}\u{24C2}\u{23E9}-\u{23EF}\u{25B6}\u{23F8}-\u{23FA}]+)/u);
+        const emojiPrefix = emoji ? emoji[0] + ' ' : '';
+
+        // Mapear los nombres del menú a claves de traducción
+        let translationKey = '';
+        if (text.includes('Dashboard')) translationKey = 'dashboard';
+        else if (text.includes('Animales')) translationKey = 'animals';
+        else if (text.includes('Explotaciones')) translationKey = 'exploitations';
+        else if (text.includes('Usuarios')) translationKey = 'users';
+        else if (text.includes('Importación')) translationKey = 'imports';
+        else if (text.includes('Backup') || text.includes('Copias')) translationKey = 'backup';
+
+        if (translationKey) {
+          link.innerHTML = `${emojiPrefix} ${t(translationKey, currentLang)}`;
+        }
+      });
+
+      // Traducir el texto del sistema de gestión
+      const systemText = document.querySelector('p.text-sm.text-gray-500.dark\\:text-gray-300.text-center');
+      if (systemText) {
+        systemText.textContent = t('management_system', currentLang);
+      }
+    }
+
+    // Ejecutar traducción inicial
+    translateSidebar();
+
+    // Retraducir cuando cambie el idioma
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        translateSidebar();
+      }
+    });
+
+    // Función para cerrar sidebar en móvil
     const closeSidebarButton = document.getElementById('close-sidebar');
     
     if (closeSidebarButton) {
