@@ -521,46 +521,59 @@ const ExplotacionesPage: React.FC = () => {
             {explotacionesData.map((exp) => (
               <div 
                 key={exp.explotacio} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="explotacion-card"
                 onClick={() => showExplotacionDetail(exp.explotacio)}
               >
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{exp.explotacio}</h3>
-                
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Total animales</div>
-                    <div className="font-medium text-gray-900 dark:text-white">{exp.total || 0}</div>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Toros</div>
-                    <div className="font-medium text-gray-900 dark:text-white">{exp.toros || 0}</div>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Vacas</div>
-                    <div className="font-medium text-gray-900 dark:text-white">{exp.vacas || 0}</div>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Partos</div>
-                    <div className="font-medium text-gray-900 dark:text-white">{exp.partos || 0}</div>
-                  </div>
+                {/* Cabecera con el nombre de la explotación */}
+                <div className="card-header">
+                  <h3>{exp.explotacio}</h3>
                 </div>
                 
-                <div className="mt-2 flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Amamantando: <b>{exp.amamantando || 0}</b>
-                  </span>
-                  <button 
-                    className="text-primary hover:underline dark:text-primary-light text-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      showExplotacionDetail(exp.explotacio);
-                    }}
-                  >
-                    Ver detalles &rarr;
-                  </button>
+                {/* Cuerpo de la tarjeta */}
+                <div className="card-body">
+                  {/* Primera fila: Total y Partos */}
+                  <div className="total-stats">
+                    <div>
+                      <div className="stat-label">Total Animales</div>
+                      <div className="stat-value total">{exp.total || 0}</div>
+                    </div>
+                    <div>
+                      <div className="stat-label">Partos</div>
+                      <div className="stat-value partos">{exp.partos || 0}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Segunda fila: Toros, Vacas, Terneros */}
+                  <div className="animal-stats">
+                    <div>
+                      <div className="stat-label">Toros</div>
+                      <div className="stat-value toros">{exp.toros || 0}</div>
+                    </div>
+                    <div>
+                      <div className="stat-label">Vacas</div>
+                      <div className="stat-value vacas">{exp.vacas || 0}</div>
+                    </div>
+                    <div>
+                      <div className="stat-label">Terneros</div>
+                      <div className="stat-value terneros">{exp.terneros || 0}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Tercera fila: Amamantando */}
+                  <div className="card-footer">
+                    <span className="amam-count">
+                      Amamantando: <b>{exp.amamantando || 0}</b>
+                    </span>
+                    <button 
+                      className="details-link"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        showExplotacionDetail(exp.explotacio);
+                      }}
+                    >
+                      Ver detalles &rarr;
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

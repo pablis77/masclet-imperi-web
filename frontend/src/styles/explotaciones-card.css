@@ -1,0 +1,115 @@
+/* Estilos para las tarjetas de explotaciones en la versión React */
+
+.explotacion-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.explotacion-card:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+.explotacion-card .card-header {
+  background-color: var(--color-primary, #8BC34A);
+  padding: 1rem;
+}
+
+.explotacion-card .card-header h3 {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.explotacion-card .card-body {
+  padding: 1rem;
+  background-color: white;
+}
+
+.explotacion-card .total-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.explotacion-card .animal-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.explotacion-card .amamantando-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.explotacion-card .stat-label {
+  font-size: 0.75rem;
+  color: #4B5563;
+}
+
+.explotacion-card .stat-value {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.explotacion-card .stat-value.total,
+.explotacion-card .stat-value.partos {
+  color: var(--color-primary, #8BC34A);
+}
+
+.explotacion-card .stat-value.toros {
+  color: #3B82F6; /* blue-500 */
+}
+
+.explotacion-card .stat-value.vacas {
+  color: #EC4899; /* pink-500 */
+}
+
+.explotacion-card .stat-value.terneros {
+  color: #F59E0B; /* yellow-500 */
+}
+
+.explotacion-card .stat-value.vacas-amam {
+  color: #10B981; /* green-500 */
+}
+
+.explotacion-card .stat-value.vacas-no-amam {
+  color: #6B7280; /* gray-500 */
+}
+
+.explotacion-card .card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.explotacion-card .card-footer .amam-count {
+  font-size: 0.75rem;
+  color: #4B5563;
+}
+
+.explotacion-card .card-footer .details-link {
+  color: var(--color-primary, #8BC34A);
+  font-size: 0.875rem;
+}
+
+.explotacion-card .card-footer .details-link:hover {
+  text-decoration: underline;
+}
