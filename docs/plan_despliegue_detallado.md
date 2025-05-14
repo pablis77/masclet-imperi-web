@@ -348,3 +348,39 @@
 - Plan para migrar datos de desarrollo a producción
 - Estrategia para futuras migraciones de plataforma
 - Proceso de respaldo antes de cambios mayores
+
+### 5.5. Modernización del Frontend
+
+#### 5.5.1. Migración Progresiva de Astro a React
+
+Siguiendo el éxito de la migración de Explotaciones a React, se identifican las siguientes secciones como candidatas para migrar de Astro a React en el futuro:
+
+1. **Ficha de Animales** (`animals\[id].astro`)
+   - Sección compleja con pestañas y estados múltiples
+   - Problemas de traducción identificados
+   - Manejo de datos dinámicos (partos, historial de cambios)
+   - Beneficio: mejor gestión de estado y experiencia de usuario con React
+2. **Listado de Animales** (`animals\index.astro`)
+   - Similar a Explotaciones ya migrada exitosamente
+   - Incluye tablas, filtros y acciones CRUD
+   - Beneficio: componentización y reutilización de código
+3. **Dashboard** (`dashboard.astro` y variantes)
+   - Pantalla principal de la aplicación (alto impacto)
+   - Gráficos y visualizaciones interactivas
+   - Beneficio: mejor renderizado de gráficos interactivos con React
+4. **Importaciones** (`imports\index.astro`)
+   - Manejo de carga de archivos y procesos asíncronos
+   - Beneficio: mejor gestión de estados de carga y errores
+5. **Gestión de Usuarios** (`users\index.astro`)
+   - Formularios y validaciones complejas
+   - Beneficio: hooks de React para validación de formularios
+6. **Gestión de Partos** (`partos\index.astro`)
+   - Sección con tablas y acciones CRUD
+   - Beneficio: consistencia con otras secciones ya migradas
+
+#### 5.5.2. Priorización de la Migración
+
+1. Dashboard (alta prioridad) - Mayor visibilidad e impacto para el usuario
+2. Ficha de Animales (alta prioridad) - Problemas actuales con traducciones
+3. Listado de Animales (media prioridad) - Continuidad con migración de Explotaciones
+4. Resto de secciones (baja prioridad) - Según necesidades y recursos disponibles
