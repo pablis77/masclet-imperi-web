@@ -4,6 +4,30 @@ import MainLayout from '../../components/layout/MainLayout.astro';
 import AnimalTable from '../../components/animals/AnimalTable';
 import AnimalFilters from '../../components/animals/AnimalFilters';
 import authService from '../../services/authService';
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor
+const currentLang = getCurrentLanguage();
+
+// Traducciones directas en variables simples para evitar problemas de hidratación
+let pageTitle = 'Gestión de Animales';
+let newAnimalText = 'Nuevo Animal';
+let refreshText = 'Actualizar';
+let searchTitleText = 'Búsqueda y Filtros';
+let searchDescriptionText = 'Utiliza los filtros para encontrar animales específicos. Puedes filtrar por explotación, género, estado y más.';
+let listTitleText = 'Listado de Animales';
+let loadingText = 'Cargando animales...';
+
+// Establecer las traducciones basadas en el idioma
+if (currentLang === 'ca') {
+  pageTitle = 'Gestió d\'Animals';
+  newAnimalText = 'Nou Animal';
+  refreshText = 'Actualitzar';
+  searchTitleText = 'Cerca i Filtres';
+  searchDescriptionText = 'Utilitza els filtres per trobar animals específics. Pots filtrar per explotació, gènere, estat i més.';
+  listTitleText = 'Llistat d\'Animals';
+  loadingText = 'Carregant animals...';
+}
 
 // Comprobar autenticación pero sin verificar permisos
 const isLoggedIn = true; // Forzamos a true durante el desarrollo
@@ -20,7 +44,7 @@ const canCreateAnimals = true;
 // }
 
 // Definir título y rol de usuario
-const title = "Gestión de Animales";
+const title = pageTitle;
 // En modo desarrollo, usamos un rol fijo
 const userRole = 'admin';
 
@@ -35,11 +59,11 @@ const userRole = 'admin';
       <div class="flex flex-wrap gap-2">
         <a href="/animals/new" class="btn btn-primary flex items-center">
           <span class="mr-1">+</span>
-          Nuevo Animal
+          {newAnimalText}
         </a>
         <button id="refreshBtn" class="btn btn-secondary flex items-center">
           <span class="mr-1">↻</span>
-          Actualizar
+          {refreshText}
         </button>
       </div>
     </div>
@@ -48,10 +72,10 @@ const userRole = 'admin';
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
       <div class="mb-3 sm:mb-4">
         <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
-          Búsqueda y Filtros
+          {searchTitleText}
         </h2>
         <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
-          Utiliza los filtros para encontrar animales específicos. Puedes filtrar por explotación, género, estado y más.
+          {searchDescriptionText}
         </p>
       </div>
       
@@ -63,10 +87,10 @@ const userRole = 'admin';
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
       <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-0">
-          Listado de Animales
+          {listTitleText}
         </h2>
         <div id="totalAnimalsContainer" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Cargando animales...
+          {loadingText}
         </div>
       </div>
       <div class="overflow-x-auto">
@@ -99,35 +123,89 @@ const userRole = 'admin';
   document.addEventListener('DOMContentLoaded', () => {
     // Elementos del DOM
     const refreshBtn = document.getElementById('refreshBtn');
+    const totalAnimalsContainer = document.getElementById('totalAnimalsContainer');
     
-    // Botón de actualizar
+    // Volver a cargar la página cuando se pulse el botón de actualizar
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
-        // Disparar evento para refrescar la tabla
-        document.dispatchEvent(new CustomEvent('refresh-animals'));
+        window.location.reload();
       });
     }
-  });
-  
-  // Manejar eventos de filtros aplicados
-  document.addEventListener('filters-applied', (event) => {
-    // Este evento lo emite el componente AnimalFilters
-    // Contiene los filtros que se deben aplicar a la tabla
-    document.dispatchEvent(new CustomEvent('apply-filters', {
-      detail: event.detail
-    }));
-  });
-  
-  // Actualizar contador de animales
-  document.addEventListener('animals-loaded', (event: any) => {
-    const totalAnimalsContainer = document.getElementById('totalAnimalsContainer');
-    if (totalAnimalsContainer && event.detail) {
-      const { total, filtered } = event.detail;
-      if (total === filtered) {
-        totalAnimalsContainer.innerHTML = `<span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total: ${total} animales</span>`;
-      } else {
-        totalAnimalsContainer.innerHTML = `<span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Mostrando ${filtered} de ${total} animales</span>`;
+    
+    // Escuchar eventos de la tabla de animales
+    document.addEventListener('animals-loaded', (e) => {
+      if (totalAnimalsContainer && e.detail && e.detail.total !== undefined) {
+        // Obtener idioma actual
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        const animalesText = currentLang === 'ca' ? 'animals' : 'animales';
+        
+        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-gray-400">
+          Total: ${e.detail.total} ${animalesText} 
+        </span>`;
+      }
+    });
+    
+    // Actualizar el título cuando se apliquen filtros
+    document.addEventListener('filters-applied', (e) => {
+      if (totalAnimalsContainer) {
+        // Obtener idioma actual
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        const filtrosText = currentLang === 'ca' ? 'Aplicant filtres...' : 'Aplicando filtros...';
+        
+        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-gray-400">
+          ${filtrosText}
+        </span>`;
+      }
+    });
+    
+    // TRADUCCIÓN DIRECTA DE LOS TEXTOS FIJOS - NUEVO
+    function translatePageTexts() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      if (currentLang === 'ca') {
+        // Traducir título principal
+        const mainTitle = document.querySelector('[data-astro-source-loc="56:79"]');
+        if (mainTitle) mainTitle.textContent = 'Gestió d\'Animals';
+        
+        // Traducir botón nuevo animal
+        const newAnimalBtn = document.querySelector('a[href="/animals/new"]');
+        if (newAnimalBtn) {
+          // Mantener el signo + pero cambiar el texto
+          const spanPlus = newAnimalBtn.querySelector('span');
+          if (spanPlus && spanPlus.nextSibling) {
+            spanPlus.nextSibling.textContent = ' Nou Animal';
+          }
+        }
+        
+        // Traducir botón actualizar
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+          // Mantener el icono pero cambiar el texto
+          const spanRefresh = refreshBtn.querySelector('span');
+          if (spanRefresh && spanRefresh.nextSibling) {
+            spanRefresh.nextSibling.textContent = ' Actualitzar';
+          }
+        }
+        
+        // Traducir encabezado de búsqueda
+        const searchHeader = document.querySelector('[data-astro-source-loc="74:97"]');
+        if (searchHeader) searchHeader.textContent = 'Cerca i Filtres';
+        
+        // Traducir descripción de búsqueda
+        const searchDesc = document.querySelector('[data-astro-source-loc="77:85"]');
+        if (searchDesc) searchDesc.textContent = 'Utilitza els filtres per trobar animals específics. Pots filtrar per explotació, gènere, estat i més.';
+        
+        // Traducir encabezado de listado
+        const listHeader = document.querySelector('[data-astro-source-loc="93:97"]');
+        if (listHeader) listHeader.textContent = 'Llistat d\'Animals';
       }
     }
+    
+    // Ejecutar traducción al cargar la página
+    translatePageTexts();
+    
+    // Escuchar cambios en el idioma (para cuando se cambia sin recargar)
+    window.addEventListener('storage', () => {
+      translatePageTexts();
+    });
   });
 </script>
