@@ -173,14 +173,30 @@ class Part(models.Model):
 
     async def to_dict(self) -> dict:
         """Convierte el modelo a diccionario"""
-        return {
-            "id": self.id,
-            "animal_id": self.animal_id,
-            "part": self.part.strftime("%d/%m/%Y") if self.part else None,
-            "GenereT": self.GenereT,
-            "EstadoT": self.EstadoT,
-            "numero_part": self.numero_part,
-            "observacions": self.observacions,
-            "created_at": self.created_at.strftime("%d/%m/%Y") if self.created_at else None,
-            "updated_at": self.updated_at.strftime("%d/%m/%Y") if self.updated_at else None
-        }
+        try:
+            # Tratamos cada valor para asegurar que sea serializable
+            return {
+                "id": self.id,
+                "animal_id": self.animal_id,
+                "part": self.part.strftime("%d/%m/%Y") if hasattr(self.part, 'strftime') and callable(self.part.strftime) else str(self.part) if self.part else None,
+                "GenereT": self.GenereT if not hasattr(self.GenereT, 'value') else self.GenereT.value,
+                "EstadoT": self.EstadoT if not hasattr(self.EstadoT, 'value') else self.EstadoT.value,
+                "numero_part": self.numero_part,
+                "observacions": self.observacions if self.observacions else None,
+                "created_at": self.created_at.strftime("%d/%m/%Y %H:%M:%S") if hasattr(self.created_at, 'strftime') and callable(self.created_at.strftime) else str(self.created_at) if self.created_at else None,
+                "updated_at": self.updated_at.strftime("%d/%m/%Y") if hasattr(self.updated_at, 'strftime') and callable(self.updated_at.strftime) else str(self.updated_at) if self.updated_at else None
+            }
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error en Part.to_dict(): {str(e)}")
+            
+            # Devolver un diccionario mínimo en caso de error
+            return {
+                "id": self.id if hasattr(self, 'id') else None,
+                "animal_id": self.animal_id if hasattr(self, 'animal_id') else None,
+                "part": str(self.part) if hasattr(self, 'part') else None,
+                "GenereT": str(self.GenereT) if hasattr(self, 'GenereT') else None,
+                "EstadoT": str(self.EstadoT) if hasattr(self, 'EstadoT') else None,
+                "error": f"Error de serialización: {str(e)}"
+            }

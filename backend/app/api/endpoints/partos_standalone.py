@@ -116,10 +116,27 @@ async def create_parto(parto_data: PartoCreate) -> dict:
             animal.alletar = 1
             await animal.save()
         
-        return {
-            "status": "success",
-            "data": await parto.to_dict()
-        }
+        # Preparar la respuesta manualmente para evitar problemas de serialización
+        try:
+            # Convertir manualmente para evitar errores con valores None
+            parto_dict = {
+                "id": parto.id,
+                "animal_id": parto.animal_id,
+                "part": parto.part.strftime("%d/%m/%Y") if parto.part else None,
+                "GenereT": parto.GenereT,
+                "EstadoT": parto.EstadoT, 
+                "numero_part": parto.numero_part,
+                "created_at": parto.created_at.strftime("%d/%m/%Y %H:%M:%S") if parto.created_at else None,
+                "observacions": parto.observacions if parto.observacions else None
+            }
+            
+            return {
+                "status": "success",
+                "data": parto_dict
+            }
+        except Exception as e:
+            logger.error(f"Error preparando la respuesta del parto: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error preparando la respuesta: {str(e)}")
         
     except HTTPException:
         raise
@@ -139,10 +156,27 @@ async def get_parto(parto_id: int) -> dict:
                 detail=f"Parto {parto_id} no encontrado"
             )
             
-        return {
-            "status": "success",
-            "data": await parto.to_dict()
-        }
+        # Preparar la respuesta manualmente para evitar problemas de serialización
+        try:
+            # Convertir manualmente para evitar errores con valores None
+            parto_dict = {
+                "id": parto.id,
+                "animal_id": parto.animal_id,
+                "part": parto.part.strftime("%d/%m/%Y") if parto.part else None,
+                "GenereT": parto.GenereT,
+                "EstadoT": parto.EstadoT, 
+                "numero_part": parto.numero_part,
+                "created_at": parto.created_at.strftime("%d/%m/%Y %H:%M:%S") if parto.created_at else None,
+                "observacions": parto.observacions if parto.observacions else None
+            }
+            
+            return {
+                "status": "success",
+                "data": parto_dict
+            }
+        except Exception as e:
+            logger.error(f"Error preparando la respuesta del parto: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error preparando la respuesta: {str(e)}")
         
     except HTTPException:
         raise

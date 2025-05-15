@@ -58,7 +58,7 @@ def validate_parto_date(parto_date_str: str, animal_dob: date) -> None:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/animals/{animal_id}/partos", response_model=PartoResponse, status_code=201)
+@router.post("/animals/{animal_id}/partos", response_model=None, status_code=201)
 async def create_parto(
     animal_id: int,
     parto_data: PartoCreate,
@@ -194,12 +194,31 @@ async def create_parto(
             logger.error(f"Error en verificación de duplicados con bloqueo: {str(e)}")
             # Continuar con otras verificaciones como respaldo
         
-        # b) Verificación por ORM estándar (respaldo) - CORREGIDO: usar animal__id en lugar de animal_id
+        # b) Verificación por ORM estándar (respaldo)
         try:
-            # La sintaxis correcta es animal__id, no animal_id
-            existing_parto_orm = await Part.filter(animal__id=animal_id, part=db_date).first()
+            # Usamos filter por animal_id directamente (no animal__id)
+            existing_parto_orm = await Part.filter(animal_id=animal_id, part=db_date).first()
             if existing_parto_orm:
                 logger.warning(f"DUPLICADO detectado (ORM): animal_id={animal_id}, fecha={db_date}, parto_id={existing_parto_orm.id}")
+                
+                # Si encontramos un duplicado, devolvemos directamente la respuesta
+                parto_dict = {
+                    "id": existing_parto_orm.id,
+                    "animal_id": existing_parto_orm.animal_id,
+                    "part": existing_parto_orm.part.strftime("%d/%m/%Y") if existing_parto_orm.part else None,
+                    "GenereT": existing_parto_orm.GenereT,
+                    "EstadoT": existing_parto_orm.EstadoT,
+                    "numero_part": existing_parto_orm.numero_part,
+                    "observacions": existing_parto_orm.observacions if existing_parto_orm.observacions else None,
+                    "created_at": existing_parto_orm.created_at.strftime("%d/%m/%Y %H:%M:%S") if existing_parto_orm.created_at else None
+                }
+                
+                return {
+                    "status": "warning",
+                    "message": "Ya existe un parto registrado con esta fecha para este animal",
+                    "data": parto_dict
+                }
+                
         except Exception as e:
             logger.error(f"Error en verificación ORM: {str(e)}")
             existing_parto_orm = None
@@ -210,6 +229,9 @@ async def create_parto(
             # Primero obtenemos todos los partos de este animal sin filtros de fecha
             query = """SELECT id, animal_id, part, "GenereT", "EstadoT", numero_part, observacions, created_at 
                       FROM part WHERE animal_id = $1 ORDER BY id DESC"""
+            
+            # Importar Tortoise connections para ejecutar consulta directa
+            from tortoise import connections
             
             # Ejecutar consulta con un solo parámetro (el ID del animal)
             result = await connections.get('default').execute_query(query, [animal_id])
@@ -350,9 +372,12 @@ async def create_parto(
         import traceback
         error_traceback = traceback.format_exc()
         logger.error(f"Error creando parto para animal ID {animal_id}: {str(e)}\nTraceback: {error_traceback}")
-        # Devolver el error completo con la traza en la respuesta
-        error_detail = f"Error interno del servidor: {str(e)}\nTraceback: {error_traceback}"
-        raise HTTPException(status_code=500, detail=error_detail)
+        
+        # Devolver un error más seguro y descriptivo sin exponer la traza completa
+        return {
+            "status": "error",
+            "message": f"Error al crear el parto: {str(e)}"
+        }
 
 @router.get("/animals/{animal_id}/partos", response_model=List[PartoData], summary="Lista los partos de un animal", status_code=status.HTTP_200_OK, tags=["partos"])
 async def get_partos(animal_id: int):
