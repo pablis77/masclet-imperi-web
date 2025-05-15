@@ -725,16 +725,20 @@ const ExplotacionesPage: React.FC = () => {
                 
                 {/* Cuerpo de la tarjeta */}
                 <div className="card-body p-4">
-                  {/* Primera fila: Total y Partos */}
-                  <div className="total-stats grid grid-cols-2 gap-4 mb-3">
+                  {/* Primera fila: Total de Animales alineado con Vacas */}
+                  <div className="grid grid-cols-3 mb-4 pb-3 border-b border-gray-100">
+                    {/* Columna izquierda vacía para alinear */}
+                    <div></div>
+                    {/* Columna central: Total Animales */}
                     <div className="text-center">
-                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
-                      <div className="stat-value total font-bold text-xl">{exp.total || 0}</div>
+                      <div className="stat-label font-bold text-gray-700 mb-2">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
+                      <div className="stat-value total font-bold text-3xl text-primary-dark">
+                        {/* Calcular total como suma de toros + vacas + terneros */}
+                        {(exp.toros || 0) + (exp.vacas || 0) + (exp.terneros || 0)}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Parts" : "Partos"}</div>
-                      <div className="stat-value partos font-bold text-xl">{exp.partos || 0}</div>
-                    </div>
+                    {/* Columna derecha vacía para alinear */}
+                    <div></div>
                   </div>
                   
                   {/* Segunda fila: Toros, Vacas, Terneros */}
