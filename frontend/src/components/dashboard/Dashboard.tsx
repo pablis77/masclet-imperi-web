@@ -1368,19 +1368,23 @@ const Dashboard: React.FC = () => {
         />
       </div>
       
-      {/* SECCIÓN 3: Principales Explotaciones */}
-      <SectionTitle number="3" title="Principales Explotaciones" darkMode={darkMode} translationKey="dashboard.exploitations" />
-      <div className="stats-grid-lg">
-        {/* Usamos el componente original, pero nos aseguramos de eliminar duplicados primero */}
-        <ExplotacionesSection 
-          explotaciones={explotaciones.filter((v, i, a) => 
-            a.findIndex(t => (t.explotacio === v.explotacio)) === i
-          )}
-          darkMode={darkMode} 
-          loading={loading.explotaciones} 
-          error={error.explotaciones} 
-        />
-      </div>
+      {/* SECCIÓN 3: Principales Explotaciones - TEMPORALMENTE OCULTA */}
+      {false && (
+        <>
+          <SectionTitle number="3" title="Principales Explotaciones" darkMode={darkMode} translationKey="dashboard.exploitations" />
+          <div className="stats-grid-lg">
+            {/* Usamos el componente original, pero nos aseguramos de eliminar duplicados primero */}
+            <ExplotacionesSection 
+              explotaciones={explotaciones.filter((v, i, a) => 
+                a.findIndex(t => (t.explotacio === v.explotacio)) === i
+              )}
+              darkMode={darkMode} 
+              loading={loading.explotaciones} 
+              error={error.explotaciones} 
+            />
+          </div>
+        </>
+      )}
       
       {/* Período de análisis con selectores */}
       <PeriodoAnalisisSection 
