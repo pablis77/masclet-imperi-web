@@ -455,7 +455,7 @@ const ExplotacionesPage: React.FC = () => {
         <table className="w-full text-sm text-left border-collapse">
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
             <tr>
-              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">{currentLang === 'ca' ? "Codi" : "Código"}</th>
               <th className="px-4 py-2">{currentLang === 'ca' ? "Nom" : "Nombre"}</th>
               <th className="px-4 py-2">{currentLang === 'ca' ? "Gènere" : "Género"}</th>
               <th className="px-4 py-2">{currentLang === 'ca' ? "Estat" : "Estado"}</th>
@@ -467,7 +467,7 @@ const ExplotacionesPage: React.FC = () => {
           <tbody>
             {filteredAnimals.map((animal) => (
               <tr key={animal.id} className="border-b dark:border-gray-700">
-                <td className="px-4 py-2">{animal.id}</td>
+                <td className="px-4 py-2">{animal.cod || '-'}</td>
                 <td className="px-4 py-2 font-medium">{animal.nom}</td>
                 <td className="px-4 py-2">{animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca')}</td>
                 <td className="px-4 py-2">
