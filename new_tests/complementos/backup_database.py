@@ -22,19 +22,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Agregar el directorio raíz al path para importar los módulos de la aplicación
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Importar configuración
 try:
-    from app.core.config import settings
+    from backend.app.core.config import settings
 except ImportError:
     logger.error("No se pudo importar la configuración. Asegúrate de estar en el directorio correcto.")
     sys.exit(1)
 
 # Configuración de respaldo
-DEFAULT_BACKUP_DIR = Path(__file__).parent.parent / "backups"
+DEFAULT_BACKUP_DIR = Path(__file__).parent.parent.parent / "backend" / "backups"
 BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", DEFAULT_BACKUP_DIR))
-RETENTION_DAYS = int(os.environ.get("BACKUP_RETENTION_DAYS", "30"))  # Días de retención
+RETENTION_DAYS = int(os.environ.get("BACKUP_RETENTION_DAYS", "7"))  # Días de retención
 
 # Nombre del contenedor Docker de PostgreSQL
 POSTGRES_CONTAINER = "masclet-db"

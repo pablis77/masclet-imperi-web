@@ -1,16 +1,17 @@
 """
 Endpoints para la gestión de animales
 """
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request, Response, Body
 from pydantic import ValidationError
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 from tortoise.expressions import Q
 
 from app.models.animal import Animal, Genere, Estado, Part, EstadoAlletar, AnimalHistory
-from app.core.date_utils import DateConverter, is_valid_date
-from app.schemas.animal import AnimalCreate, AnimalResponse
+from app.models.user import User
+from app.schemas.animal import AnimalResponse, AnimalCreate, AnimalUpdate
+import app.schemas.animal as schemas
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -278,11 +279,12 @@ async def list_animals(
         logger.error(f"Error listando animales: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.patch("/{animal_id}", response_model=AnimalResponse)
+@router.patch("/{animal_id}", response_model=schemas.AnimalResponse, summary="Actualizar animal (PATCH)")
 async def update_animal_patch(
-    animal_id: int, 
-    animal_data: AnimalUpdate,
-    current_user: User = Depends(get_current_user)
+    animal_id: int,
+    animal_data: schemas.AnimalUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """
     Actualizar parcialmente un animal por ID (método PATCH)
@@ -299,11 +301,37 @@ async def update_animal_patch(
     logger.info(f"Recibida solicitud PATCH para animal ID {animal_id}")
     logger.info(f"Datos recibidos (raw): {animal_data}")
     
-    # Obtener solo los campos que se enviaron explícitamente
-    # Asegurarnos de usar exclude_unset=True para que solo se incluyan los campos enviados
-    raw_data = animal_data.model_dump(exclude_unset=True)
-    logger.info(f"Datos procesados para actualización (dict): {raw_data}")
-    logger.info(f"Campos a actualizar: {list(raw_data.keys())}")
+    try:
+        # Obtener datos directamente del request en lugar de depender de Pydantic
+        request_data = await request.json()
+        logger.info(f"Datos recibidos directamente del request: {request_data}")
+        
+        # Filtrar solo los campos no nulos para la actualización
+        raw_data = {}
+        for field, value in request_data.items():
+            if value is not None:
+                raw_data[field] = value
+        
+        logger.info(f"Datos procesados para actualización (dict): {raw_data}")
+        logger.info(f"Campos a actualizar: {list(raw_data.keys())}")
+    except Exception as e:
+        # Si hay error leyendo el JSON, usar los datos de Pydantic como fallback
+        logger.warning(f"No se pudo leer JSON del request: {str(e)}. Usando datos de Pydantic.")
+        try:
+            # Intentar acceder a _json usando __dict__
+            if hasattr(animal_data, '__dict__'):
+                raw_data = {k: v for k, v in animal_data.__dict__.items() 
+                           if not k.startswith('_') and v is not None}
+            else:
+                raw_data = {k: getattr(animal_data, k) for k in animal_data.__fields__
+                          if getattr(animal_data, k) is not None}
+            logger.info(f"Datos desde Pydantic: {raw_data}")
+        except Exception as e2:
+            logger.error(f"Error al procesar datos de animal: {str(e2)}")
+            raw_data = {}
+            # Extraer manualmente los campos más importantes
+            if hasattr(animal_data, 'mare'):
+                raw_data['mare'] = animal_data.mare
     
     # Si no hay datos para actualizar, devolver el animal sin cambios
     if not raw_data:
