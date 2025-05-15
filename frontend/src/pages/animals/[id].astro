@@ -231,9 +231,11 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <!-- Icono y estado -->
           <div class="flex flex-col items-center md:items-start">
             <div class="text-6xl mb-3">{icon}</div>
-            <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
-              {animal.estat === 'ACT' ? t('active') : t('inactive')}
-            </span>
+            {animal.estado === 'DEF' && (
+              <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-sm font-medium">
+                Baja
+              </span>
+            )}
           </div>
           
           <!-- Información básica -->
