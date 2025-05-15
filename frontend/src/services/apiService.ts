@@ -53,14 +53,20 @@ const getApiUrl = (): string => {
     console.log(`[ApiService] SSR, usando ENVIRONMENT: ${ENVIRONMENT}, isLocal: ${isLocal}`);
   }
   
+  // FORZAR MODO TUNNEL SI LA URL INCLUYE loca.lt
+  if (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')) {
+    isTunnel = true;
+    console.log('[ApiService] Modo tunnel forzado porque la URL contiene loca.lt');
+  }
+  
   // Seleccionar configuración según entorno
   const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
   
   // SOLUCIÓN DIRECTA PARA TÚNELES: SIN PREFIJO PARA EVITAR DUPLICACIÓN
   if (isTunnel) {
-    // IMPORTANTE: URL sin /api/v1 para evitar duplicación, se añadirá en interceptor
-    const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt';
-    console.log(`[ApiService] Usando URL BASE del backend sin api/v1: ${tunnelBackendUrl}`);
+    // IMPORTANTE: URL completa para LocalTunnel incluyendo /api/v1
+    const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
+    console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${tunnelBackendUrl}`);
     return tunnelBackendUrl;
   }
   

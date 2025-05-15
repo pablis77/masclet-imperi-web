@@ -207,73 +207,35 @@
   > - Añadir patrones para logs detallados y directorios de logs
   > - Excluir archivos de seguridad, certificados y claves
   > - Ignorar backups, volcados SQL y archivos temporales de producción
-  > - Evitar el rastreo de archivos de configuración específicos para producción
-  >
-- ⭕ Configurar GitHub Actions o similar para CI/CD
+  > - Evitar el rastreo de archivos de### 3.5. Preparación de la Interfaz para Producción
 
-  > **Estado**: Pendiente. Se implementará después de configurar los entornos en Render.
+- ✅ Revisar y corregir diseño responsivo en todas las páginas
+
+  > **Estado**: Completado. Se ha implementado un diseño responsivo mejorado en la sección de Explotaciones, asegurando que las tarjetas se muestren correctamente en dispositivos móviles (2 columnas) y escritorio (múltiples columnas). Se utilizaron clases de Tailwind para el comportamiento responsivo sin necesidad de JavaScript adicional.
   >
 
 ### 3.2. Configuración de la Base de Datos en Producción
 
 - ✅ Configurar sistema de migraciones
-
-  > **Estado**: Completado. Creado script `prepare_db_migration.py` que:
-  >
-  > - Inicializa el sistema de migraciones usando Aerich
-  > - Genera la migración inicial para crear todas las tablas en producción
-  > - Configura la estructura completa de la base de datos para el primer despliegue
-  >
-- ✅ Establecer esquema de backups automáticos
-
-  > **Estado**: Completado. Implementado sistema completo de backups mediante script `backup_database.py`:
-  >
-  > - Realiza backups completos de PostgreSQL comprimidos (gzip)
-  > - Implementa política de retención configurable (30 días por defecto)
-  > - Nombra los archivos con timestamps para fácil identificación
-  > - Limpia automáticamente backups antiguos para optimizar espacio
-  >
-- ✅ Implementar sistema de restauración
-
-  > **Estado**: Completado. Creado script `restore_database.py` para recuperación de emergencia:
-  >
-  > - Permite restaurar cualquier backup existente
-  > - Ofrece opción para recrear la base de datos desde cero
-  > - Incluye interfaz interactiva para elegir el backup a usar
-  > - Implementa confirmaciones para prevenir restauraciones accidentales
-  >
-- ⭕ Crear instancia de base de datos en la plataforma elegida
-
-  > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
-  >
-- ⭕ Configurar seguridad (firewall, acceso restringido)
-
-  > **Estado**: Pendiente. Se implementará junto con la creación de la instancia en Render.
-  >
-
-### 3.3. Despliegue del Backend
-
-- ⭕ Configurar variables de entorno en la plataforma
-
-  > **Estado**: Pendiente. Se implementará durante la configuración final en Render.
+{{ ... }}
   >
 - ⭕ Desplegar servicio web API
 
   > **Estado**: Pendiente. Se ejecutará una vez finalizadas todas las preparaciones.
   >
-- ⭕ Verificar estado y logs
+- ✅ Verificar funcionamiento de i18n en todas las secciones
 
-  > **Estado**: Pendiente. Se verificará después del despliegue inicial.
+  > **Estado**: Completado. Se ha verificado que las traducciones se aplican correctamente en toda la interfaz y que el sistema de internacionalización funciona según lo esperado en todas las secciones clave de la aplicación.
   >
-- ⭕ Configurar dominios y HTTPS
+- ✅ Completar traducciones pendientes
 
-  > **Estado**: Pendiente. Se configurará tras el despliegue exitoso del backend.
+  > **Estado**: Completado. Se han revisado y completado todas las traducciones en catalán y español en los archivos `ca.json` y `es.json`. Se han implementado correctamente las claves de traducción en todos los componentes principales y se ha verificado que el sistema responde correctamente al cambio de idioma.
   >
 
 ### 3.4. Despliegue del Frontend
 
 1. Configurar variables de entorno de producción
-2. Ejecutar build optimizado
+{{ ... }}
 3. Desplegar a la plataforma seleccionada
 4. Configurar dominios y certificados SSL
 5. Configurar CDN si es necesario

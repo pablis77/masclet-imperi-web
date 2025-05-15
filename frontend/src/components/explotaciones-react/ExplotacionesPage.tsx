@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './mobile.css'; // Importamos estilos específicos para móvil
+// Mantenemos solo la importación necesaria sin CSS adicional
 import apiService from '../../services/apiService';
 import { t } from '../../i18n/config';
 import jsPDF from 'jspdf';
@@ -88,26 +88,29 @@ const ExplotacionesPage: React.FC = () => {
     loadInitialData();
   }, []);
   
-  // Efecto para detectar el ancho de la pantalla
+  // Efecto para detectar el ancho de la pantalla y ordenar correctamente en móvil
   useEffect(() => {
     const checkScreenWidth = () => {
       const isMobile = window.innerWidth < 640; // sm breakpoint en Tailwind es 640px
       setIsMobileView(isMobile);
-      
-      // Cuando cambiamos a móvil, asegurar que el orden es por total de animales
-      if (isMobile && (sortField !== 'total' || sortDirection !== 'desc')) {
-        setSortField('total');
-        setSortDirection('desc');
-      }
     };
     
-    // Comprobar al inicio
+    // Ejecutar al montar el componente
     checkScreenWidth();
     
-    // Añadir listener para cambios de tamaño
+    // Escuchar cambios en el tamaño de la ventana
     window.addEventListener('resize', checkScreenWidth);
     return () => window.removeEventListener('resize', checkScreenWidth);
-  }, [sortField, sortDirection]);
+  }, []);
+  
+  // Efecto para ordenar correctamente en móvil
+  useEffect(() => {
+    // En móvil, ordenar por total de animales (mayor a menor)
+    if (isMobileView && (sortField !== 'total' || sortDirection !== 'desc')) {
+      setSortField('total');
+      setSortDirection('desc');
+    }
+  }, [isMobileView, sortField, sortDirection]);
   
   // Función para ordenar las explotaciones
   const sortExplotaciones = (explotaciones: ExplotacionInfo[]) => {
@@ -706,7 +709,7 @@ const ExplotacionesPage: React.FC = () => {
           {/* Vista de tarjetas de explotaciones */}
           <div 
             id="explotacionCards" 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 sm:gap-4 mb-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
             style={{ display: currentExplotacion ? 'none' : 'grid' }}
           >
             {displayExplotaciones.map((exp) => (

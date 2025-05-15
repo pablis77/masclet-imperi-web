@@ -143,6 +143,26 @@ class AnimalUpdate(BaseModel):
         # Solo se incluirán en model_dump los campos que se enviaron explícitamente
         exclude_unset=True
     )
+    
+    def dict(self, **kwargs):
+        """Método de compatibilidad para código que usa la sintaxis antigua de Pydantic v1"""
+        result = {}
+        # Si exclude_unset=True, solo incluir campos con valores explícitos
+        exclude_unset = kwargs.get("exclude_unset", False)
+        
+        for field_name, field_value in self.__dict__.items():
+            # Excluir campos internos de Pydantic que empiezan con __
+            if field_name.startswith("__") or field_name.startswith("_"):
+                continue
+            
+            # Si estamos excluyendo campos no establecidos y el valor es None
+            # y el campo no se estableció explícitamente, lo saltamos
+            if exclude_unset and field_value is None and field_name not in self.__fields_set__:
+                continue
+                
+            result[field_name] = field_value
+            
+        return result
 
     @validator('dob')
     def validate_dob(cls, v):
