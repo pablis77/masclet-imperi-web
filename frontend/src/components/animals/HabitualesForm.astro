@@ -187,8 +187,30 @@ const { animal } = Astro.props;
           // Mostrar mensaje de proceso
           window.mostrarMensaje('Registrando nuevo parto...', 'info');
           
+          // Determinar la URL base de la API dinámicamente
+          let apiBaseUrl = '';
+          if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            const isTunnel = hostname.includes('loca.lt');
+            
+            if (isTunnel) {
+              apiBaseUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
+              console.log('Usando URL de túnel para API: ' + apiBaseUrl);
+            } else {
+              // Usar IP literal en vez de localhost para mayor estabilidad
+              apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
+              console.log('Usando URL local para API (IP literal): ' + apiBaseUrl);
+            }
+          } else {
+            apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
+          }
+          
+          // Añadir slash final para evitar redirecciones 307
+          const endpoint = `/animals/${animalId}/partos/`;
+          console.log(`Enviando petición a: ${apiBaseUrl}${endpoint}`);
+          
           // Enviar datos al servidor para crear el parto
-          const response = await fetch(`http://localhost:8000/api/v1/animals/${animalId}/partos`, {
+          const response = await fetch(`${apiBaseUrl}${endpoint}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

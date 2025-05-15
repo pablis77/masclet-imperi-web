@@ -9,7 +9,7 @@ let USE_MOCK_DATA: boolean = false; // Variable faltante
 const API_CONFIG = {
   development: {
     protocol: 'http',
-    host: 'localhost',
+    host: '127.0.0.1', // Usar IP literal en lugar de localhost para mayor estabilidad
     port: '8000',
     path: '/api/v1'  // En desarrollo mantenemos la ruta api/v1
   },
