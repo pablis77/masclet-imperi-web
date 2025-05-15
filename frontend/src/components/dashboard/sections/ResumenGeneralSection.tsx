@@ -140,7 +140,9 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.not_nursing', currentLang)}</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                    {currentLang === 'ca' ? 'vaques no alletant' : 'vacas no amamantando'}
+                  </div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar0Activas}</div>
                 </div>
                 
@@ -150,7 +152,9 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.nursing_one', currentLang)}</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                    {currentLang === 'ca' ? 'vaques alletant 1 vedell' : 'vacas amamantando 1 ternero'}
+                  </div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar1Activas}</div>
                 </div>
                 
@@ -160,7 +164,9 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                   borderRadius: "0.5rem",
                   color: "white"
                 }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.cows_with_two_calves', currentLang)}</div>
+                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                    {currentLang === 'ca' ? 'vaques alletant 2 vedells' : 'vacas amamantando 2 terneros'}
+                  </div>
                   <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar2Activas}</div>
                 </div>
               </>

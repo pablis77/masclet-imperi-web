@@ -62,11 +62,31 @@ const getApiUrl = (): string => {
   // Seleccionar configuración según entorno
   const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
   
-  // SOLUCIÓN DIRECTA PARA TÚNELES: SIN PREFIJO PARA EVITAR DUPLICACIÓN
+  // SOLUCIÓN DIRECTA PARA TÚNELES: DETECTAR DINÁMICAMENTE LA URL
   if (isTunnel) {
-    // IMPORTANTE: URL completa para LocalTunnel incluyendo /api/v1
+    // Obtener la URL del frontend y construir la URL del backend basada en ella
+    if (typeof window !== 'undefined') {
+      // Extraer el subdominio del frontend
+      const hostname = window.location.hostname;
+      // Si el frontend está en loca.lt, construir la URL del backend
+      if (hostname.includes('loca.lt')) {
+        // URL actual de LocalTunnel del backend (desde entorno o último conocido)
+        let backendTunnelUrl = import.meta.env.VITE_BACKEND_TUNNEL_URL || 'https://api-masclet-imperi.loca.lt/api/v1';
+        
+        // Si tenemos una URL de backend en el almacenamiento local, usarla
+        const savedBackendUrl = localStorage.getItem('backend_tunnel_url');
+        if (savedBackendUrl) {
+          backendTunnelUrl = savedBackendUrl;
+        }
+        
+        console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${backendTunnelUrl}`);
+        return backendTunnelUrl;
+      }
+    }
+    
+    // Fallback a la URL conocida si no podemos construirla dinámicamente
     const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
-    console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${tunnelBackendUrl}`);
+    console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL (fallback)!: ${tunnelBackendUrl}`);
     return tunnelBackendUrl;
   }
   
