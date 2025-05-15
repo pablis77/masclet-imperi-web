@@ -86,65 +86,103 @@ async def create_parto(
         if animal.dob:
             validate_parto_date(parto_data.part, animal.dob)
             
-        # Sistema de protección basado en marca de tiempo para evitar duplicados
-        # Verificar si ya se procesó una petición similar recientemente
+        # SISTEMA DE BLOQUEO MEJORADO PARA EVITAR DUPLICADOS
         import time
         import uuid
+        import threading
+        import hashlib
         from app.core.config import settings
         
-        # Verificamos si hay un token de envío en los datos
-        submission_token = None
-        if hasattr(parto_data, 'submission_token') and parto_data.submission_token:
-            submission_token = parto_data.submission_token
-            logger.info(f"Petición con token de envío: {submission_token}")
-        else:
-            # Generar un ID de petición si no se proporcionó uno
-            submission_token = str(uuid.uuid4())
-            logger.info(f"Generado token de petición: {submission_token}")
-            
-        # Definir una clave única para esta operación (animal + fecha + token)
-        operation_key = f"parto_{animal_id}_{parto_data.part}_{submission_token}"
+        # 1. Implementar un bloqueo a nivel de request basado en animal_id y fecha
+        # Esto para evitar que dos peticiones simultáneas puedan crear registros duplicados
         
-        # Simular un semaforo simple en memoria
-        # Esto es sólo para debugging, en producción se debería usar Redis o similar
-        import threading
+        # Variables globales para el sistema de bloqueo
+        global _active_requests, _active_requests_lock, _request_completion_times
         
-        # Bloqueo global para sincronización (usando variables globales en lugar de settings)
-        global _operation_semaphore, _operation_lock
-        if not '_operation_semaphore' in globals():
-            _operation_semaphore = {}
-        if not '_operation_lock' in globals():
-            _operation_lock = threading.Lock()
+        # Inicializar estructuras si no existen
+        if '_active_requests' not in globals():
+            _active_requests = set()
+        if '_active_requests_lock' not in globals():
+            _active_requests_lock = threading.RLock()
+        if '_request_completion_times' not in globals():
+            _request_completion_times = {}
+            
+        # Generar un hash único para este par animal+fecha (ignorando el token)
+        # Esto evita que dos peticiones diferentes para el mismo animal y fecha se procesen en paralelo
+        date_str = DateConverter.to_db_format(parto_data.part)
+        unique_request_id = f"animal_{animal_id}_date_{date_str}"
+        request_hash = hashlib.md5(unique_request_id.encode()).hexdigest()
         
-        # Verificar si la operación ya está en proceso o se completó recientemente
-        with _operation_lock:
-            current_time = time.time()
-            if operation_key in _operation_semaphore:
-                last_time = _operation_semaphore[operation_key]
-                # Si la operación se procesó en los últimos 5 segundos, considerarla duplicada
-                if current_time - last_time < 5:  # 5 segundos de ventana
-                    logger.warning(f"PETICIÓN DUPLICADA DETECTADA: {operation_key} - procesada hace {current_time - last_time:.2f} segundos")
-                    return {
-                        "status": "error",
-                        "message": "Se detectó una petición duplicada. Por favor, espere antes de intentar nuevamente."
-                    }
+        # Registrar información detallada para depuración
+        logger.info(f"[BLOQUEO] Evaluando petición: {unique_request_id} (hash: {request_hash})")
+        
+        # Variable para rastrear si debemos procesar esta petición
+        should_process = False
+        
+        # Usar un bloque try-finally para garantizar que se libere el bloqueo
+        try:
+            with _active_requests_lock:
+                # Si este hash ya está siendo procesado, rechazar la petición
+                if request_hash in _active_requests:
+                    logger.warning(f"[BLOQUEO] Rechazando petición duplicada concurrente: {unique_request_id}")
+                    
+                    # Verificar cuándo se completó la última petición similar (para mensajes)
+                    last_completion_time = None
+                    if request_hash in _request_completion_times:
+                        last_completion_time = _request_completion_times[request_hash]
+                        seconds_ago = time.time() - last_completion_time
+                        logger.info(f"[BLOQUEO] Petición similar completada hace {seconds_ago:.2f} segundos")
+                    
+                    # Si una petición similar se completó recientemente, informar esto al usuario
+                    if last_completion_time and (time.time() - last_completion_time) < 10:
+                        return {
+                            "status": "warning",
+                            "message": "Se acaba de registrar un parto con estos datos. Actualizando página..."
+                        }
+                    else:
+                        return {
+                            "status": "error",
+                            "message": "Hay otra petición en curso para este parto. Por favor, espere unos segundos."
+                        }
+                else:
+                    # Registrar esta petición como activa
+                    _active_requests.add(request_hash)
+                    should_process = True
+                    logger.info(f"[BLOQUEO] Petición aceptada para procesamiento: {unique_request_id}")
             
-            # Registrar esta operación con marca de tiempo actual
-            _operation_semaphore[operation_key] = current_time
-            logger.info(f"Registrando operación {operation_key} con marca de tiempo {current_time}")
-            
-        # Limpiar entradas antiguas (más de 60 segundos)
-        with _operation_lock:
-            keys_to_remove = []
-            for key, timestamp in _operation_semaphore.items():
-                if current_time - timestamp > 60:  # 60 segundos de retención
-                    keys_to_remove.append(key)
-
-            for key in keys_to_remove:
-                del _operation_semaphore[key]
+            # Si llegamos aquí sin retornar, continuamos con el procesamiento normal
+            if not should_process:
+                logger.error(f"[BLOQUEO] Estado inconsistente: should_process=False pero no se retornó respuesta")
+                return {
+                    "status": "error",
+                    "message": "Error en sistema de bloqueo de peticiones. Inténtelo de nuevo."
+                }
                 
-            if keys_to_remove:
-                logger.info(f"Limpiadas {len(keys_to_remove)} entradas antiguas del semáforo")
+            # Continuar con la verificación de duplicados en BD
+            # El resto del código se ejecuta solo si pasamos las verificaciones anteriores
+            
+        except Exception as e:
+            # Capturar cualquier error en el proceso de verificación
+            logger.error(f"[BLOQUEO] Error en sistema de bloqueo: {str(e)}")
+            # No retornamos aquí, dejamos que el proceso continúe con las otras verificaciones
+        finally:
+            # Al terminar el procesamiento, independientemente del resultado,
+            # registrar el tiempo de finalización y liberar el bloqueo
+            def release_lock():
+                try:
+                    with _active_requests_lock:
+                        if request_hash in _active_requests:
+                            _active_requests.remove(request_hash)
+                            _request_completion_times[request_hash] = time.time()
+                            logger.info(f"[BLOQUEO] Liberado bloqueo para: {unique_request_id}")
+                except Exception as e:
+                    logger.error(f"[BLOQUEO] Error al liberar bloqueo: {str(e)}")
+            
+            # Programar la liberación del bloqueo para cuando termine la función
+            # Esto es importante hacerlo con async
+            import asyncio
+            loop = asyncio.get_event_loop()
+            loop.create_task(asyncio.coroutine(release_lock)())
                 
         # SISTEMA DE BLOQUEO DE DUPLICADOS BASADO EN RESTRICCIÓN DE BASE DE DATOS
         # 1. Primero convertimos la fecha al formato de base de datos para comparación uniforme

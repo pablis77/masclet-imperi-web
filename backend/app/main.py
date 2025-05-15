@@ -64,11 +64,12 @@ else:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=allow_creds,  # En desarrollo: False para permitir "*", en producción: True
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  # Métodos explícitos
+    allow_origins=["*"],  # Forzar permitir todos los orígenes independientemente del modo
+    allow_credentials=False,  # Debe ser False cuando allow_origins es ["*"]
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],  # Incluir todos los métodos posibles
     allow_headers=["*"],
-    expose_headers=["*"]
+    expose_headers=["*"],
+    max_age=86400  # Cachear preflight por 24 horas para mejorar rendimiento
 )
 
 # Configurar medidas de seguridad
