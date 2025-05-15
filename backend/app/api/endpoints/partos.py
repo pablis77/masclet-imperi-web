@@ -940,7 +940,7 @@ async def list_animal_partos(
 # y deben mantenerse incluso si contienen errores. Sin embargo, en casos excepcionales
 # como registros duplicados, los administradores pueden eliminar partos.
 
-@router.delete("/animals/{animal_id}/partos/{parto_id}", response_model=PartoResponse)
+@router.delete("/animals/{animal_id}/partos/{parto_id}")
 async def delete_parto(animal_id: int, parto_id: int, current_user = Depends(get_current_user)):
     """
     Eliminar un parto.
@@ -1047,11 +1047,13 @@ async def delete_parto(animal_id: int, parto_id: int, current_user = Depends(get
             f"Usuario: {current_user.username} (ID: {current_user.id})"
         )
         
-        return PartoResponse(
-            status="success", 
-            message=f"Parto ID {parto_id} eliminado correctamente",
-            data=parto_dict
-        )
+        # Devolver un diccionario directamente en lugar de usar PartoResponse
+        # para evitar problemas de serialización
+        return {
+            "status": "success", 
+            "message": f"Parto ID {parto_id} eliminado correctamente",
+            "data": parto_dict
+        }
         
     except HTTPException:
         # Re-lanzar excepciones HTTP que ya hemos generado
