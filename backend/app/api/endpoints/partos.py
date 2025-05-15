@@ -181,8 +181,14 @@ async def create_parto(
             # Programar la liberación del bloqueo para cuando termine la función
             # Esto es importante hacerlo con async
             import asyncio
+            
+            # Convertir la función normal a una corrutina async usando un enfoque moderno
+            async def async_release_lock():
+                release_lock()
+                
+            # Obtener el bucle de eventos y programar la tarea
             loop = asyncio.get_event_loop()
-            loop.create_task(asyncio.coroutine(release_lock)())
+            loop.create_task(async_release_lock())
                 
         # SISTEMA DE BLOQUEO DE DUPLICADOS BASADO EN RESTRICCIÓN DE BASE DE DATOS
         # 1. Primero convertimos la fecha al formato de base de datos para comparación uniforme
