@@ -47,6 +47,8 @@ origins = [
     "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
+    "http://127.0.0.1:56271",                        # Puerto dinámico del frontend
+    "http://127.0.0.1",                              # Cualquier puerto en localhost IPv4
     "https://*.loca.lt",                              # Cualquier subdominio de loca.lt
 ]
 
