@@ -344,8 +344,8 @@ const ExplotacionesPage: React.FC = () => {
     
     try {
       // Obtener datos de los animales de esta explotación
-      const endpoint = `animals/?explotacio=${encodeURIComponent(explotacionCode)}`;
-      console.log(`Solicitando animales de explotación: ${endpoint}`);
+      const endpoint = `animals/?explotacio=${encodeURIComponent(explotacionCode)}&limit=100`;
+      console.log(`Solicitando animales de explotación (con límite 100): ${endpoint}`);
       
       const response = await apiService.get(endpoint);
       console.log(`Respuesta recibida para animales de ${explotacionCode}:`, response);
