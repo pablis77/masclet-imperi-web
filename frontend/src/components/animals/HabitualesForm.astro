@@ -51,13 +51,14 @@ const { animal } = Astro.props;
           </select>
         </div>
       )}
+      
+      <!-- Botón de guardar (alineado a la derecha) -->
+      <div class="mt-4 flex justify-end">
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+          Guardar Cambios
+        </button>
+      </div>
     </div>
-  </div>
-  
-  <div class="mt-6 mb-2">
-    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-      Guardar Cambios
-    </button>
   </div>
 
   {animal.genere === 'F' && (
