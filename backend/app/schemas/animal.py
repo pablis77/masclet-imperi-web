@@ -127,6 +127,7 @@ class AnimalUpdate(BaseModel):
     genere_t: Optional[str] = None
     estado_t: Optional[str] = None
     dob: Optional[str] = None
+    explotacio: Optional[str] = None
 
     model_config = ConfigDict(
         extra='forbid',
