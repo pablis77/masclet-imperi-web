@@ -45,9 +45,9 @@ const { animal } = Astro.props;
             data-original-value={animal.alletar !== null ? animal.alletar.toString() : ''}
             onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
           >
-            <option value="0" selected={animal.alletar === 0}>No amamanta</option>
-            <option value="1" selected={animal.alletar === 1}>Un ternero</option>
-            <option value="2" selected={animal.alletar === 2}>Dos terneros</option>
+            <option value="0" selected={animal.alletar === 0 || animal.alletar === '0'}>No amamanta</option>
+            <option value="1" selected={animal.alletar === 1 || animal.alletar === '1'}>Un ternero</option>
+            <option value="2" selected={animal.alletar === 2 || animal.alletar === '2'}>Dos terneros</option>
           </select>
         </div>
       )}
