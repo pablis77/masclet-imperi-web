@@ -15,8 +15,8 @@ let apiConfig = {
   // URL base para la API - SIEMPRE usar rutas relativas para evitar CORS
   baseURL: '/api/v1',  // Usar ruta relativa en todos los entornos (proxy)
   
-  // URL para el backend (sin /api/v1) - SIEMPRE usar ruta relativa
-  backendURL: '', // Siempre vacío para usar rutas relativas
+  // URL para el backend (sin /api/v1)
+  backendURL: IS_PRODUCTION ? '' : 'http://localhost:8000', // En desarrollo usar URL absoluta al backend
     
   // Configuración de headers por defecto
   headers: {
