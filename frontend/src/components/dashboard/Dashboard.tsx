@@ -241,8 +241,13 @@ const Dashboard: React.FC = () => {
     const formattedMessage = `[${timestamp}] ${isError ? '❌ ' : ''}${message}`;
     setRequestLogs(prev => [formattedMessage, ...prev]);
     
+    // Detección del entorno de desarrollo usando el hostname
+    const isDev = window.location.hostname === 'localhost' || 
+                 window.location.hostname === '127.0.0.1' ||
+                 window.location.hostname.includes('loca.lt');
+    
     // Solo mostrar logs en modo desarrollo o si es un error
-    if (import.meta.env.DEV || isError) {
+    if (isDev || isError) {
       if (isError) {
         console.error(`[Dashboard] ${message}`);
       } else {
@@ -643,7 +648,7 @@ const Dashboard: React.FC = () => {
         const errorMsg = `Error desconocido en combined: ${err instanceof Error ? err.message : 'Error sin detalles'}`;
         addLog(errorMsg, true);
         setError(prev => ({ ...prev, combined: 'Error procesando datos combinados' }));
-        trackNetworkRequest(endpoint, 'error', errorMsg);
+        trackNetworkRequest('/dashboard/combined', 'error', errorMsg);
       }
       setLoading(prev => ({ ...prev, combined: false }));
     }
