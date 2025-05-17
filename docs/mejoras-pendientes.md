@@ -35,6 +35,9 @@ Este documento sirve como registro centralizado de todas las mejoras, correccion
 - [ ] Implementar ordenación por múltiples columnas
 - [ ] Añadir vista de detalle rápido sin cambiar de página
 - [ ] Permitir selección múltiple para acciones masivas
+- [ ] Unificar la implementación entre `AnimalForm.astro` y `AnimalForm.tsx` (decidir qué versión mantener)
+- [ ] Consolidar entre `AnimalTable.tsx` y `AnimalTableFixed.tsx` para evitar duplicación
+- [ ] Reducir el número de tabs y componentes en el detalle de animal para mejorar mantenibilidad
 
 ### Página de Explotaciones
 
@@ -60,6 +63,9 @@ Este documento sirve como registro centralizado de todas las mejoras, correccion
 - [ ] Añadir validación previa de archivos CSV antes de importar
 - [ ] Mejorar feedback visual durante el proceso de importación
 - [ ] Implementar recuperación de errores para importaciones fallidas
+- [ ] Mover las interfaces y tipos a un archivo separado en la carpeta `types/`
+- [ ] Implementar un sistema de progreso en tiempo real para importaciones grandes
+- [ ] Añadir más logging para depuración en entornos de desarrollo
 - [ ] Crear plantillas descargables para cada tipo de importación
 - [ ] Añadir opción de programar importaciones automáticas
 
