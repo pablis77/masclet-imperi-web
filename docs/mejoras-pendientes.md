@@ -43,6 +43,9 @@ Este documento sirve como registro centralizado de todas las mejoras, correccion
 - [ ] Implementar filtrado avanzado en la lista de explotaciones
 - [ ] Añadir exportación de datos a Excel/CSV
 - [ ] Crear visualización de relaciones entre explotaciones (si aplica)
+- [ ] Consolidar los tres archivos CSS (ExplotacionStyles.css, mobile.css, responsive-fix.css) en uno solo
+- [ ] Eliminar el archivo backup ExplotacionesPage.tsx.part2
+- [ ] Refactorizar ExplotacionesPage.tsx para extraer componentes más pequeños y mejorar mantenibilidad
 
 ### Partos
 
