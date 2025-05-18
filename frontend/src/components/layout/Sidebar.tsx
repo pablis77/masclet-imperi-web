@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import OptimizedImage from '../ui/OptimizedImage';
 import { SidebarProps, MenuSection, UserRole } from './types';
 import { AnimalIcon } from '../icons';
 
@@ -107,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Cabecera del sidebar con logo */}
       <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center">
         <div className="w-16 h-16 md:w-20 md:h-20 mb-3">
-          <img src="/images/logo_masclet.png" alt="Masclet Imperi Logo" className="w-full h-full object-contain" />
+          <OptimizedImage src="/images/logo_masclet.png" alt="Masclet Imperi Logo" className="w-full h-full object-contain" priority={true} />
         </div>
         <p className="text-xs md:text-sm text-text-secondary dark:text-gray-300 text-center">Sistema de Gestión Ganadera</p>
       </div>

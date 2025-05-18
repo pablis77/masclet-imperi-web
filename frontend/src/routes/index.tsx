@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '../components/dashboard/Dashboard';
 import ImportCsv from '../components/imports/ImportCsv';
 import Explotaciones from '../components/Explotaciones';
+import IconosTest from '../pages/IconosTest';
 
 const AppRouter: React.FC = () => {
   return (
@@ -19,6 +20,9 @@ const AppRouter: React.FC = () => {
         
         {/* Explotaciones */}
         <Route path="/explotacions" element={<Explotaciones />} />
+        
+        {/* Página de prueba de iconos */}
+        <Route path="/iconos-test" element={<IconosTest />} />
         
         {/* Otras rutas se añadirán aquí */}
         

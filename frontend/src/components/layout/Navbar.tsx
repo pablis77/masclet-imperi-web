@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { NavbarProps, MenuItem, UserRole } from './types';
 import { AnimalIcon } from '../icons';
+import OptimizedImage from '../ui/OptimizedImage';
 
 /**
  * Barra de navegación principal con soporte para modo responsive
@@ -151,7 +152,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {/* Logo y título */}
         <div className="flex items-center space-x-2">
           <a href="/" className="font-bold text-xl flex items-center truncate">
-            <img src="/images/logo_masclet.png" alt="Masclet Imperi" className="h-10 w-auto mr-2" />
+            <OptimizedImage src="/images/logo_masclet.png" alt="Masclet Imperi" className="h-10 w-auto mr-2" priority={true} />
             <span className="hidden xs:inline">MASCLET IMPERI</span>
           </a>
         </div>
