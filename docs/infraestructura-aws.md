@@ -294,3 +294,63 @@ Esta propuesta optimizada refleja las necesidades reales de la aplicación segú
 
    - Arquitectura ya preparada para crecimiento
    - Posibilidad de evolucionar a microservicios si es necesario
+
+## 11. analisis preliminar de metricas generales antes de analizar nuestro nivel de interactividad
+
+Para definir claramente en números lo que constituye diferentes niveles de interactividad:
+
+1. **Baja interactividad** :
+
+* Menos de 1,000 interacciones diarias totales
+* Menos de 10 usuarios concurrentes
+* Actualizaciones de datos: 5-10 por hora
+* Operaciones en tiempo real: Pocas o ninguna
+
+1. **Interactividad moderada** (donde parece estar vuestro caso):
+   * 1,000-10,000 interacciones diarias totales
+   * 10-50 usuarios concurrentes ocasionales
+   * Actualizaciones de datos: 10-50 por hora
+   * Operaciones en tiempo real: Algunas (filtrado, ordenación)
+2. **Alta interactividad** :
+
+* Más de 10,000 interacciones diarias
+* Más de 50 usuarios concurrentes regulares
+* Actualizaciones de datos: más de 50 por hora
+* Operaciones en tiempo real: Frecuentes y complejas
+
+Según los datos que me has proporcionado (10-12 usuarios, mayormente consulta, picos ocasionales de 20-40 cambios), estáis claramente en el rango de  **interactividad moderada** . Esto confirma que no necesitáis optimizar para escenarios de uso extremadamente intensivos.
+
+### Implicaciones para AWS y costes
+
+Con este nivel de interactividad, las necesidades de infraestructura serían:
+
+* **Frontend** : AWS Amplify en plan básico (suficiente)
+* **Backend** : AWS Lightsail ($3.50-$5/mes) o EC2 t3.micro ($8-10/mes)
+* **Base de datos** : RDS t3.micro ($15-20/mes) o PostgreSQL en Docker en la misma instancia
+
+ **Coste mensual estimado** : $25-40 después del primer año gratuito.
+
+### Análisis profundo basado en la estructura real del proyecto
+
+Ahora con la exploración completa de la estructura de archivos, puedo ofrecerte un análisis más preciso:
+
+### Mezcla tecnológica actual
+
+1. **Astro (.astro)** :
+
+* Layout principal de páginas
+* Formularios básicos (HabitualesForm.astro, AnimalForm.astro)
+* Componentes informativos (AnimalDetails.astro)
+* Navegación y estructura
+
+1. **React (.tsx)** :
+
+* Dashboard completo (Dashboard.tsx y componentes relacionados)
+* Tablas interactivas (AnimalTable.tsx)
+* Explotaciones (ExplotacionesPage.tsx)
+* Importaciones (ImportForm.tsx, ImportHistory.tsx)
+
+1. **JavaScript vanilla** :
+
+* Scripts independientes (editar-parto-v2.js, editar-parto-v4.js)
+* Algunas funcionalidades específicas
