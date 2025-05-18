@@ -132,10 +132,11 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
       
       let response;
       try {
+        console.log(`Cargando animales - Página: ${currentPage}, Límite: 15`);
         response = await animalService.getAnimals({
           ...filters,
-          page: 1, // Siempre cargar la primera página
-          limit: 100 // Usar un límite que el backend pueda manejar
+          page: currentPage, // Usar la página actual seleccionada
+          limit: 15 // Mostrar 15 animales por página para mejor experiencia de usuario
         });
       } catch (error) {
         console.error('Error al obtener animales desde API:', error);
@@ -262,10 +263,10 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     };
   }, []);
 
+  // Efecto para cargar animales cuando cambia la página o los filtros
   useEffect(() => {
-    if (currentPage > 1 || Object.keys(filters).length > 0) {
-      loadAnimals();
-    }
+    // Cargar animales siempre que cambie la página o los filtros
+    loadAnimals();
   }, [filters, currentPage]);
 
   useEffect(() => {
@@ -362,8 +363,17 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     }
   }, [totalAnimals, loading, searchInfo, useMockData]);
 
+  // Función para manejar el cambio de página
   const handlePageChange = (page: number) => {
+    console.log(`Cambiando a página ${page}`);
+    
+    // No hacer nada si estamos en la misma página
+    if (page === currentPage) return;
+    
+    // Actualizar el estado de la página actual y forzar recarga
     setCurrentPage(page);
+    
+    // Hacer scroll hacia arriba cuando cambiamos de página
     if (tableRef.current) {
       tableRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -379,10 +389,105 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
     }
   };
 
-  // Paginación desactivada para mostrar todos los animales de una vez
+  
+  // Implementación de controles de paginación
   const renderPagination = () => {
-    // No mostrar los controles de paginación
-    return null;
+    // Solo mostrar controles si hay más de una página
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className="flex items-center justify-center mt-6 space-x-1">
+        {/* Botón primera página */}
+        <button 
+          onClick={() => handlePageChange(1)} 
+          disabled={currentPage === 1}
+          className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                    ${currentPage === 1 
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+        >
+          <span className="sr-only">Primera</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        {/* Botón anterior */}
+        <button 
+          onClick={() => handlePageChange(currentPage - 1)} 
+          disabled={currentPage === 1}
+          className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                    ${currentPage === 1 
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+        >
+          <span className="sr-only">Anterior</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        {/* Números de página */}
+        {[...Array(totalPages)].map((_, index) => {
+          const pageNumber = index + 1;
+          // Mostrar solo páginas relevantes
+          if (
+            pageNumber === 1 ||
+            pageNumber === totalPages ||
+            (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+          ) {
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`inline-flex items-center px-3 py-1 border text-sm font-medium rounded-md 
+                          ${pageNumber === currentPage 
+                            ? 'bg-primary/10 dark:bg-primary/30 text-primary border-primary/20 dark:border-primary/40' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                {pageNumber}
+              </button>
+            );
+          } else if (
+            pageNumber === currentPage - 2 ||
+            pageNumber === currentPage + 2
+          ) {
+            return <span key={`ellipsis-${pageNumber}`} className="px-1 text-gray-500 dark:text-gray-400">...</span>;
+          }
+          return null;
+        })}
+        
+        {/* Botón siguiente */}
+        <button 
+          onClick={() => handlePageChange(currentPage + 1)} 
+          disabled={currentPage === totalPages}
+          className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                    ${currentPage === totalPages 
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+        >
+          <span className="sr-only">Siguiente</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        
+        {/* Botón última página */}
+        <button 
+          onClick={() => handlePageChange(totalPages)} 
+          disabled={currentPage === totalPages}
+          className={`inline-flex items-center px-2 py-1 border rounded-md text-sm font-medium 
+                    ${currentPage === totalPages 
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+        >
+          <span className="sr-only">Última</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    );
   };
 
   const getAnimalIcon = (animal: Animal) => {

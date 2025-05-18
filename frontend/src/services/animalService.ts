@@ -232,8 +232,16 @@ const animalService = {
     try {
       // Construir parámetros de consulta
       const params = new URLSearchParams();
-      params.append('page', (filters.page || 1).toString());
-      params.append('limit', (filters.limit || 10).toString());
+      const page = filters.page || 1;
+      const limit = filters.limit || 10;
+      
+      // Convertir page a offset para el backend
+      // El backend espera offset en lugar de page
+      const offset = (page - 1) * limit;
+      
+      // Enviar offset y limit como espera el backend
+      params.append('offset', offset.toString());
+      params.append('limit', limit.toString());
       
       // Añadir filtros opcionales si están presentes
       if (filters.explotacio) params.append('explotacio', filters.explotacio);
