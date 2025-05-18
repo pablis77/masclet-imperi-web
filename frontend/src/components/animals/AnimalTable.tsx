@@ -493,9 +493,9 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
                 {animals.map((animal) => (
                   <tr key={animal.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className="text-2xl" title={animal.alletar === '0' ? 'No amamantando' : animal.alletar === '1' ? 'Amamantando 1 ternero' : 'Amamantando 2 terneros'}>
+                      <a href={`/animals/${animal.id}`} className="cursor-pointer hover:scale-110 transition-transform inline-block" title={animal.alletar === '0' ? 'No amamantando' : animal.alletar === '1' ? 'Amamantando 1 ternero' : 'Amamantando 2 terneros'}>
                         {getAnimalIcon(animal)}
-                      </span>
+                      </a>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-200">
