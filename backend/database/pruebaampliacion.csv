@@ -1,0 +1,9 @@
+alletar;explotacio;nom;genere;pare;mare;quadra;cod;num_serie;dob;estado;part;GenereT;EstadoT
+0;Madrid;angel;M;angel;asd;bermejo;45123582;es123098751;27/10/1977;OK;;;
+2;Madrid;elsa;F;asdaf;asfasf;Perez;23848234;es46354868493;28/07/1981;OK;23/01/2014;M;OK
+;Guadalajara;Pablo;M;alfonso;Emma;Martinez;4785;es1123456987;09/03/1977;DEF;;;
+;Prueba 2;Mario;M;Mario;Elisa;Martinez;4865;Es1452365489662;14/08/1976;OK;;;
+0;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4945;Es4587963211456;30/06/1977;OK;18/02/2012;F;OK
+0;Guadalajara;Marta;F;Jose ignacio;Elena;de Andres;4945;Es4587963211456;30/06/1977;OK;08/01/2010;M;OK
+;Madrid;Nico;M;Javi;Esther;Dorado;5825;es12341351;23/01/1981;OK;;;
+1;Madrid;Clara;F;Alfonso;Emma;Martinez;5905;es463573457;28/07/1981;OK;;;

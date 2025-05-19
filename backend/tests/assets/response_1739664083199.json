@@ -1,0 +1,53 @@
+{
+  "total_records": 2,
+  "sample_data": [
+    {
+      "Alletar": "si",
+      "explotaciÃ³": "Gurans",
+      "NOM": "TEST-1",
+      "Genere": "F",
+      "Pare": "P-123",
+      "Mare": "M-456",
+      "Quadra": "Q1",
+      "COD": 1,
+      "NÂº Serie": "ES001",
+      "DOB": "01/01/2023",
+      "Estado": "OK",
+      "part": "01/01/2024",
+      "GenereT": "M",
+      "EstadoT": "OK"
+    },
+    {
+      "Alletar": "no",
+      "explotaciÃ³": "Madrid",
+      "NOM": "TEST-2",
+      "Genere": "M",
+      "Pare": "",
+      "Mare": "",
+      "Quadra": "Q2",
+      "COD": 2,
+      "NÂº Serie": "ES002",
+      "DOB": "02/01/2023",
+      "Estado": "OK",
+      "part": "",
+      "GenereT": "",
+      "EstadoT": ""
+    }
+  ],
+  "columns_found": [
+    "Alletar",
+    "explotaciÃ³",
+    "NOM",
+    "Genere",
+    "Pare",
+    "Mare",
+    "Quadra",
+    "COD",
+    "NÂº Serie",
+    "DOB",
+    "Estado",
+    "part",
+    "GenereT",
+    "EstadoT"
+  ]
+}

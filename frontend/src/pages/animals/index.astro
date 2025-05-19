@@ -1,0 +1,211 @@
+---
+// Importar el layout y componentes
+import MainLayout from '../../components/layout/MainLayout.astro';
+import AnimalTable from '../../components/animals/AnimalTable';
+import AnimalFilters from '../../components/animals/AnimalFilters';
+import authService from '../../services/authService';
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor
+const currentLang = getCurrentLanguage();
+
+// Traducciones directas en variables simples para evitar problemas de hidratación
+let pageTitle = 'Gestión de Animales';
+let newAnimalText = 'Nuevo Animal';
+let refreshText = 'Actualizar';
+let searchTitleText = 'Búsqueda y Filtros';
+let searchDescriptionText = 'Utiliza los filtros para encontrar animales específicos. Puedes filtrar por explotación, género, estado y más.';
+let listTitleText = 'Listado de Animales';
+let loadingText = 'Cargando animales...';
+
+// Establecer las traducciones basadas en el idioma
+if (currentLang === 'ca') {
+  pageTitle = 'Gestió d\'Animals';
+  newAnimalText = 'Nou Animal';
+  refreshText = 'Actualitzar';
+  searchTitleText = 'Cerca i Filtres';
+  searchDescriptionText = 'Utilitza els filtres per trobar animals específics. Pots filtrar per explotació, gènere, estat i més.';
+  listTitleText = 'Llistat d\'Animals';
+  loadingText = 'Carregant animals...';
+}
+
+// Comprobar autenticación pero sin verificar permisos
+const isLoggedIn = true; // Forzamos a true durante el desarrollo
+// const isLoggedIn = isAuthenticated();
+
+// Comprobaciones simplificadas - siempre permitir todo para desarrollo rápido
+const canViewAnimals = true;
+const canEditAnimals = true;
+const canCreateAnimals = true;
+
+// En modo desarrollo, no redirigimos
+// if (!isLoggedIn) {
+//   return Astro.redirect('/login');
+// }
+
+// Definir título y rol de usuario
+const title = pageTitle;
+// En modo desarrollo, usamos un rol fijo
+const userRole = 'admin';
+
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <div class="w-full max-w-full px-2 sm:px-4 py-4 sm:py-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+        {title}
+      </h1>
+      <div class="flex flex-wrap gap-2">
+        <a href="/animals/new" class="btn btn-primary flex items-center">
+          <span class="mr-1">+</span>
+          {newAnimalText}
+        </a>
+        <button id="refreshBtn" class="btn btn-secondary flex items-center">
+          <span class="mr-1">↻</span>
+          {refreshText}
+        </button>
+      </div>
+    </div>
+
+    <!-- Card de búsqueda y filtros -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
+      <div class="mb-3 sm:mb-4">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-3">
+          {searchTitleText}
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
+          {searchDescriptionText}
+        </p>
+      </div>
+      
+      <!-- Componente de filtros -->
+      <AnimalFilters id="animal-filters" client:load />
+    </div>
+
+    <!-- Tabla de animales -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
+      <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <h2 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-0">
+          {listTitleText}
+        </h2>
+        <div id="totalAnimalsContainer" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          {loadingText}
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <AnimalTable 
+          client:load 
+          canEdit={canEditAnimals}
+          canCreate={canCreateAnimals}
+        />
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  .btn {
+    @apply px-3 py-2 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/80 focus:ring-primary;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+</style>
+
+<script>
+  // Script para manejar interacciones de la página
+  document.addEventListener('DOMContentLoaded', () => {
+    // Elementos del DOM
+    const refreshBtn = document.getElementById('refreshBtn');
+    const totalAnimalsContainer = document.getElementById('totalAnimalsContainer');
+    
+    // Volver a cargar la página cuando se pulse el botón de actualizar
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+    
+    // Escuchar eventos de la tabla de animales
+    document.addEventListener('animals-loaded', (e) => {
+      if (totalAnimalsContainer && e.detail && e.detail.total !== undefined) {
+        // Obtener idioma actual
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        const animalesText = currentLang === 'ca' ? 'animals' : 'animales';
+        
+        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-gray-400">
+          Total: ${e.detail.total} ${animalesText} 
+        </span>`;
+      }
+    });
+    
+    // Actualizar el título cuando se apliquen filtros
+    document.addEventListener('filters-applied', (e) => {
+      if (totalAnimalsContainer) {
+        // Obtener idioma actual
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        const filtrosText = currentLang === 'ca' ? 'Aplicant filtres...' : 'Aplicando filtros...';
+        
+        totalAnimalsContainer.innerHTML = `<span class="text-sm text-gray-500 dark:text-gray-400">
+          ${filtrosText}
+        </span>`;
+      }
+    });
+    
+    // TRADUCCIÓN DIRECTA DE LOS TEXTOS FIJOS - NUEVO
+    function translatePageTexts() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      if (currentLang === 'ca') {
+        // Traducir título principal
+        const mainTitle = document.querySelector('[data-astro-source-loc="56:79"]');
+        if (mainTitle) mainTitle.textContent = 'Gestió d\'Animals';
+        
+        // Traducir botón nuevo animal
+        const newAnimalBtn = document.querySelector('a[href="/animals/new"]');
+        if (newAnimalBtn) {
+          // Mantener el signo + pero cambiar el texto
+          const spanPlus = newAnimalBtn.querySelector('span');
+          if (spanPlus && spanPlus.nextSibling) {
+            spanPlus.nextSibling.textContent = ' Nou Animal';
+          }
+        }
+        
+        // Traducir botón actualizar
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+          // Mantener el icono pero cambiar el texto
+          const spanRefresh = refreshBtn.querySelector('span');
+          if (spanRefresh && spanRefresh.nextSibling) {
+            spanRefresh.nextSibling.textContent = ' Actualitzar';
+          }
+        }
+        
+        // Traducir encabezado de búsqueda
+        const searchHeader = document.querySelector('[data-astro-source-loc="74:97"]');
+        if (searchHeader) searchHeader.textContent = 'Cerca i Filtres';
+        
+        // Traducir descripción de búsqueda
+        const searchDesc = document.querySelector('[data-astro-source-loc="77:85"]');
+        if (searchDesc) searchDesc.textContent = 'Utilitza els filtres per trobar animals específics. Pots filtrar per explotació, gènere, estat i més.';
+        
+        // Traducir encabezado de listado
+        const listHeader = document.querySelector('[data-astro-source-loc="93:97"]');
+        if (listHeader) listHeader.textContent = 'Llistat d\'Animals';
+      }
+    }
+    
+    // Ejecutar traducción al cargar la página
+    translatePageTexts();
+    
+    // Escuchar cambios en el idioma (para cuando se cambia sin recargar)
+    window.addEventListener('storage', () => {
+      translatePageTexts();
+    });
+  });
+</script>

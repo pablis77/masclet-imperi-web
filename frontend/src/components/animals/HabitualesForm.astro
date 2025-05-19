@@ -1,0 +1,266 @@
+---
+/**
+ * Formulario para cambios habituales en animales
+ */
+interface Props {
+  animal: any;
+}
+
+const { animal } = Astro.props;
+---
+
+<form id="form-habituales" class="space-y-6">
+  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Estado y Amamantamiento</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Columna 1 -->
+    <div class="space-y-4">
+      <div>
+        <label for="estado_hab" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
+        <select 
+          id="estado_hab" 
+          name="estado_hab" 
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          data-original-value={animal.estado || ''}
+          onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+          disabled={animal.estado === 'DEF'}
+        >
+          <option value="OK" selected={animal.estado === 'OK'}>Activo</option>
+          <option value="DEF" selected={animal.estado === 'DEF'}>Fallecido</option>
+        </select>
+        {animal.estado === 'DEF' && (
+          <div class="text-xs text-red-500 mt-1">No se puede cambiar el estado de un animal fallecido a activo</div>
+        )}
+      </div>
+    </div>
+    
+    <!-- Columna 2 -->
+    <div class="space-y-4">
+      {animal.genere === 'F' && (
+        <div>
+          <label for="alletar" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado de amamantamiento</label>
+          <select 
+            id="alletar" 
+            name="alletar" 
+            class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            data-original-value={animal.alletar !== null ? animal.alletar.toString() : ''}
+            onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
+          >
+            <option value="0" selected={animal.alletar === 0 || animal.alletar === '0'}>No amamanta</option>
+            <option value="1" selected={animal.alletar === 1 || animal.alletar === '1'}>Un ternero</option>
+            <option value="2" selected={animal.alletar === 2 || animal.alletar === '2'}>Dos terneros</option>
+          </select>
+        </div>
+      )}
+      
+      <!-- Botón de guardar (alineado a la derecha) -->
+      <div class="mt-4 flex justify-end">
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {animal.genere === 'F' && (
+    <div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Registrar Nuevo Parto</h3>
+      
+      <div class="space-y-4">
+        <div>
+          <label for="part" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Parto</label>
+          <input 
+            type="date" 
+            id="part" 
+            name="part" 
+            class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+          >
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="GenereT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género Cría</label>
+            <select 
+              id="GenereT" 
+              name="GenereT" 
+              class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="M">Macho</option>
+              <option value="F">Hembra</option>
+              <option value="esforrada">Esforrada</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="EstadoT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado Cría</label>
+            <select 
+              id="EstadoT" 
+              name="EstadoT" 
+              class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="OK">Activo</option>
+              <option value="DEF">Fallecido</option>
+            </select>
+          </div>
+        </div>
+        
+        <div>
+          <label for="observacions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones</label>
+          <textarea 
+            id="observacions" 
+            name="observacions" 
+            rows="3"
+            class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          ></textarea>
+        </div>
+        
+        <div class="flex justify-end">
+          <button 
+            type="button" 
+            id="registrar-parto-btn"
+            class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+          >
+            Registrar Parto
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+</form>
+
+<script>
+  // Configurar el botón para registrar nuevo parto
+  document.addEventListener('DOMContentLoaded', function() {
+    const registrarPartoBtn = document.getElementById('registrar-parto-btn');
+    
+    if (registrarPartoBtn) {
+      console.log('Configurando botón de registro de partos...');
+      
+      registrarPartoBtn.addEventListener('click', async function() {
+        console.log('Botón de registrar parto clickeado');
+        
+        try {
+          // Obtener datos del formulario de partos
+          const part = document.getElementById('part')?.value;
+          const genereT = document.getElementById('GenereT')?.value;
+          const estadoT = document.getElementById('EstadoT')?.value;
+          const observacions = document.getElementById('observacions')?.value;
+          
+          console.log('Datos del parto:', { part, genereT, estadoT, observacions });
+          
+          // Validar que los campos requeridos tengan valor
+          if (!part || !genereT || !estadoT) {
+            window.mostrarMensaje('Por favor, completa todos los campos obligatorios (fecha, género y estado)', 'error');
+            return;
+          }
+          
+          // Formatear la fecha si es necesario (de YYYY-MM-DD a DD/MM/YYYY)
+          let fechaFormateada = part;
+          if (part.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [year, month, day] = part.split('-');
+            fechaFormateada = `${day}/${month}/${year}`;
+          }
+          
+          // Preparar datos para enviar
+          const datosParto = {
+            part: fechaFormateada,
+            GenereT: genereT,
+            EstadoT: estadoT
+          };
+          
+          // Añadir observaciones solo si tiene valor
+          if (observacions) {
+            datosParto.observacions = observacions;
+          }
+          
+          console.log('Datos del parto formateados:', datosParto);
+          
+          // Obtener token de autenticación e ID del animal
+          const token = localStorage.getItem('token') || 'admin123'; // Token para desarrollo
+          const animalId = window.animalId; // ID del animal establecido en la página principal
+          
+          if (!animalId) {
+            window.mostrarMensaje('Error: No se pudo determinar el ID del animal', 'error');
+            return;
+          }
+          
+          // Mostrar mensaje de proceso
+          window.mostrarMensaje('Registrando nuevo parto...', 'info');
+          
+          // Determinar la URL base de la API dinámicamente
+          let apiBaseUrl = '';
+          if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            const isTunnel = hostname.includes('loca.lt');
+            
+            if (isTunnel) {
+              apiBaseUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
+              console.log('Usando URL de túnel para API: ' + apiBaseUrl);
+            } else {
+              // Usar IP literal en vez de localhost para mayor estabilidad
+              apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
+              console.log('Usando URL local para API (IP literal): ' + apiBaseUrl);
+            }
+          } else {
+            apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
+          }
+          
+          // Añadir slash final para evitar redirecciones 307
+          const endpoint = `/animals/${animalId}/partos/`;
+          console.log(`Enviando petición a: ${apiBaseUrl}${endpoint}`);
+          
+          // Enviar datos al servidor para crear el parto
+          const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(datosParto)
+          });
+          
+          console.log(`Respuesta recibida: ${response.status} ${response.statusText}`);
+          
+          // Procesar respuesta
+          if (response.ok) {
+            const resultado = await response.json();
+            console.log('Respuesta de registro de parto:', resultado);
+            
+            window.mostrarMensaje('¡Parto registrado con éxito!', 'success');
+            
+            // Limpiar formulario
+            document.getElementById('part').value = '';
+            document.getElementById('GenereT').value = '';
+            document.getElementById('EstadoT').value = '';
+            if (document.getElementById('observacions')) {
+              document.getElementById('observacions').value = '';
+            }
+            
+            // Redirigir a la página de detalle después de un breve delay
+            setTimeout(() => {
+              window.location.href = `/animals/${animalId}`;
+            }, 1500);
+          } else {
+            // Si hay error, intentar obtener mensaje
+            let mensajeError = 'Error al registrar el parto';
+            try {
+              const errorData = await response.json();
+              mensajeError = errorData.detail || errorData.message || mensajeError;
+              console.error('Error detallado:', errorData);
+            } catch (e) {
+              console.error('Error al procesar respuesta de error:', e);
+            }
+            
+            window.mostrarMensaje(`Error: ${mensajeError}`, 'error');
+          }
+        } catch (error) {
+          console.error('Error en el registro de parto:', error);
+          window.mostrarMensaje(`Error: ${error.message || 'Error desconocido al registrar el parto'}`, 'error');
+        }
+      });
+    } else {
+      console.warn('No se encontró el botón de registrar parto');
+    }
+  });
+</script>

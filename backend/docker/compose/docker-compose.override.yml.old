@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    networks:
+      - masclet_net
+    volumes:
+      - backup_external:/backup_external:rw
+
+  backend:
+    networks:
+      - masclet_net
+    environment:
+      BACKUP_EXTERNAL_DIR: /backup_external
+      SMTP_DEBUG: "true"
+      LOG_LEVEL: DEBUG
+    volumes:
+      - backup_external:/backup_external:rw
+
+networks:
+  masclet_net:
+    name: masclet_net
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  backup_external:
+    name: masclet_backup_external
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/backups

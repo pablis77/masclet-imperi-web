@@ -1,0 +1,89 @@
+sequenceDiagram
+    actor U as Usuario
+    participant UI as Interfaz
+    participant AF as AuthFilter
+    participant DM as DataManager
+    participant VS as ValidatorService
+    participant BS as BackupService
+    participant FS as FileSystem
+    participant MS as MessageSystem
+
+    U->>UI: Accede a la aplicación
+    
+    rect rgb(200, 200, 255)
+        Note over U,MS: Proceso de Autenticación
+        UI->>AF: Verifica sesión guardada
+        AF->>FS: Consulta credentials.dat
+        
+        alt Sesión existente
+            FS-->>AF: Retorna credenciales
+            AF->>AF: Desencripta credenciales
+            AF-->>UI: Auto-login
+        else Sin sesión
+            UI->>U: Solicita credenciales
+            U->>UI: Introduce usuario/contraseña
+            UI->>AF: Valida credenciales
+            AF->>FS: Consulta users.json
+            FS-->>AF: Datos usuario
+            AF->>AF: Verifica hash
+        end
+    end
+
+    rect rgb(200, 255, 200)
+        Note over U,MS: Gestión de Fichas
+        
+        alt Consulta Ficha
+            U->>UI: Selecciona Consulta
+            UI->>DM: Solicita datos
+            DM->>VS: Valida permisos
+            DM->>FS: Lee matriz_master.csv
+            FS-->>DM: Datos ficha
+            DM->>UI: Formatea datos
+            UI->>U: Muestra información
+            
+        else Actualización Ficha
+            U->>UI: Modifica datos
+            UI->>VS: Valida cambios
+            VS->>VS: Aplica reglas negocio
+            VS-->>UI: Resultado validación
+            
+            alt Datos válidos
+                UI->>BS: Solicita backup
+                BS->>FS: Crea copia seguridad
+                UI->>DM: Actualiza datos
+                DM->>FS: Guarda cambios
+                FS-->>DM: Confirma guardado
+                DM->>MS: Notifica éxito
+                MS->>U: Muestra confirmación
+            else Datos inválidos
+                VS-->>MS: Error validación
+                MS->>U: Muestra error
+            end
+            
+        else Importación Masiva
+            U->>UI: Selecciona archivo
+            UI->>DM: Envía archivo
+            DM->>VS: Valida estructura
+            VS->>VS: Verifica formato
+            
+            alt Formato correcto
+                DM->>BS: Solicita backup
+                BS->>FS: Crea backup
+                DM->>DM: Procesa datos
+                DM->>FS: Guarda nuevos datos
+                FS-->>DM: Confirma guardado
+                DM->>MS: Notifica éxito
+                MS->>U: Muestra resultado
+            else Formato incorrecto
+                VS-->>MS: Error formato
+                MS->>U: Muestra error
+            end
+        end
+    end
+
+    rect rgb(255, 200, 200)
+        Note over U,MS: Estados Visuales
+        UI->>UI: Actualiza círculos estado
+        UI->>UI: Actualiza iconos género
+        UI->>UI: Refresca timestamp
+    end

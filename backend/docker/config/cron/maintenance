@@ -1,0 +1,31 @@
+# Configuración de tareas de mantenimiento para Masclet Imperi
+# Ubicación: /etc/cron.d/maintenance
+
+# Variables de entorno
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=admin@mascletimperi.com
+
+# Mantenimiento Diario (3:30 AM)
+30 3 * * * root /app/scripts/maintenance.sh daily >> /var/log/maintenance_daily.log 2>&1
+
+# Mantenimiento Semanal (Domingo 4:30 AM)
+30 4 * * 0 root /app/scripts/maintenance.sh weekly >> /var/log/maintenance_weekly.log 2>&1
+
+# Mantenimiento Mensual (Día 1 a las 5:30 AM)
+30 5 1 * * root /app/scripts/maintenance.sh monthly >> /var/log/maintenance_monthly.log 2>&1
+
+# Verificación de Espacio (Cada 6 horas)
+0 */6 * * * root /app/scripts/alert_space.sh --check >> /var/log/space_check.log 2>&1
+
+# Limpieza de Caché (2:30 AM)
+30 2 * * * root /app/scripts/cleanup_versions.sh --cache >> /var/log/cleanup_cache.log 2>&1
+
+# Rotación de Logs (1:30 AM)
+30 1 * * * root /usr/sbin/logrotate /etc/logrotate.d/masclet
+
+# Optimización DB (Sábado 3:30 AM)
+30 3 * * 6 root /app/scripts/maintenance.sh --optimize-db >> /var/log/db_optimize.log 2>&1
+
+# Reporte Semanal (Lunes 6 AM)
+0 6 * * 1 root /app/scripts/space_report.sh --full >> /var/log/space_report.log 2>&1

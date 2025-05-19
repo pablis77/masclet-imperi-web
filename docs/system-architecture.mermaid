@@ -1,0 +1,51 @@
+graph TD
+    subgraph Frontend["Frontend (React + Tailwind)"]
+        UI[Interfaz de Usuario]
+        Components[Componentes React]
+        State[Estado Global]
+    end
+
+    subgraph Backend["Backend (FastAPI)"]
+        API[API REST]
+        Auth[Autenticación]
+        Validators[Validadores]
+        Services[Servicios]
+    end
+
+    subgraph Storage["Almacenamiento"]
+        PG[(PostgreSQL 17)]
+        Redis[(Redis Cache)]
+        Files[Archivos CSV]
+    end
+
+    subgraph Infrastructure["Infraestructura Docker"]
+        Docker[Docker Compose]
+        Volumes[Volúmenes]
+        Networks[Redes]
+    end
+
+    subgraph Monitoring["Monitorización"]
+        Grafana[Dashboard Grafana]
+        Prometheus[Prometheus Metrics]
+        ELK[ELK Stack]
+    end
+
+    UI -->|HTTP/WebSocket| API
+    Components --> State
+    API -->|Query| PG
+    API -->|Cache| Redis
+    API -->|Import| Files
+    
+    Docker -->|Contiene| Backend
+    Docker -->|Contiene| PG
+    Docker -->|Contiene| Redis
+    
+    API -->|Métricas| Prometheus
+    Prometheus -->|Visualización| Grafana
+    API -->|Logs| ELK
+
+    style Frontend fill:#61DAFB
+    style Backend fill:#009688
+    style Storage fill:#336791
+    style Infrastructure fill:#0db7ed
+    style Monitoring fill:#E6522C

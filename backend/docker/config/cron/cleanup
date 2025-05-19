@@ -1,0 +1,30 @@
+# Tareas de limpieza automática para Masclet Imperi
+# Ubicación: /etc/cron.d/cleanup
+
+# Variables de entorno
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Limpieza diaria (3 AM)
+0 3 * * * root /app/scripts/cleanup_versions.sh --daily >> /var/log/cleanup_versions.log 2>&1
+
+# Limpieza semanal (Domingo 4 AM)
+0 4 * * 0 root /app/scripts/cleanup_versions.sh --weekly >> /var/log/cleanup_versions.log 2>&1
+
+# Reporte de espacio (5 AM)
+0 5 * * * root /app/scripts/space_report.sh >> /var/log/space_report.log 2>&1
+
+# Rotación de logs (2 AM)
+0 2 * * * root /usr/sbin/logrotate /etc/logrotate.d/masclet
+
+# Limpieza de archivos temporales (1 AM)
+0 1 * * * root find /tmp -name "masclet_*" -mtime +1 -delete
+
+# Optimización DB (Sábado 2 AM)
+0 2 * * 6 root /app/scripts/cleanup.sh --optimize-db >> /var/log/cleanup.log 2>&1
+
+# Mantenimiento mensual (Día 1 a las 3 AM)
+0 3 1 * * root /app/scripts/cleanup_versions.sh --monthly >> /var/log/cleanup_versions.log 2>&1
+
+# Verificación de espacio (Cada 6 horas)
+0 */6 * * * root /app/scripts/space_report.sh --check-only >> /var/log/space_check.log 2>&1

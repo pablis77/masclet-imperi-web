@@ -1,0 +1,78 @@
+﻿{
+    "message":  "Preview generado correctamente",
+    "type":  "success",
+    "data":  {
+                 "headers":  [
+                                 "Alletar",
+                                 "explotació",
+                                 "NOM",
+                                 "Genere",
+                                 "Pare",
+                                 "Mare",
+                                 "Quadra",
+                                 "COD",
+                                 "Nº Serie",
+                                 "DOB",
+                                 "Estado",
+                                 "part",
+                                 "GenereT",
+                                 "EstadoT"
+                             ],
+                 "preview":  [
+                                 {
+                                     "Alletar":  "si",
+                                     "explotació":  "Gurans",
+                                     "NOM":  "Test Vaca 1",
+                                     "Genere":  "F",
+                                     "Pare":  "Toro 123",
+                                     "Mare":  "Vaca 456",
+                                     "Quadra":  "Q1",
+                                     "COD":  "V001",
+                                     "Nº Serie":  "ES123456789",
+                                     "DOB":  "24/02/2024",
+                                     "Estado":  "OK",
+                                     "part":  null,
+                                     "GenereT":  null,
+                                     "EstadoT":  null
+                                 },
+                                 {
+                                     "Alletar":  "si",
+                                     "explotació":  "Gurans",
+                                     "NOM":  "Test Vaca 2",
+                                     "Genere":  "F",
+                                     "Pare":  "Toro 123",
+                                     "Mare":  "Vaca 457",
+                                     "Quadra":  "Q1",
+                                     "COD":  "V002",
+                                     "Nº Serie":  "ES123456790",
+                                     "DOB":  "25/02/2024",
+                                     "Estado":  "OK",
+                                     "part":  null,
+                                     "GenereT":  null,
+                                     "EstadoT":  null
+                                 },
+                                 {
+                                     "Alletar":  "no",
+                                     "explotació":  "Madrid",
+                                     "NOM":  "Test Toro 1",
+                                     "Genere":  "M",
+                                     "Pare":  "Toro 124",
+                                     "Mare":  "Vaca 458",
+                                     "Quadra":  "Q2",
+                                     "COD":  "T001",
+                                     "Nº Serie":  "ES123456791",
+                                     "DOB":  "26/02/2024",
+                                     "Estado":  "OK",
+                                     "part":  null,
+                                     "GenereT":  null,
+                                     "EstadoT":  null
+                                 }
+                             ],
+                 "total_rows":  3,
+                 "valid_rows":  3,
+                 "errors":  [
+
+                            ]
+             },
+    "status_code":  200
+}

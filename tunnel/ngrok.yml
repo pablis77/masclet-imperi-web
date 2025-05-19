@@ -1,0 +1,16 @@
+version: 2
+authtoken: 2wwZDVcZBQLUqdWJ8eDcFdxgjeV_7p23HQea5VxnBCPwcybSQ  # Reemplaza con tu token
+region: eu  # Europa para mejor rendimiento desde España
+console_ui: true  # Interface web de administración
+tunnels:
+  masclet-backend:
+    proto: http
+    addr: 8000  # Puerto de tu backend
+    subdomain: masclet-imperio-backend  # Esto será parte de la URL (puede cambiar según disponibilidad)
+    inspect: true
+    
+  masclet-frontend:
+    proto: http
+    addr: 3000  # Puerto de tu frontend
+    subdomain: masclet-imperio-app  # Esto será parte de la URL (puede cambiar según disponibilidad)
+    inspect: true

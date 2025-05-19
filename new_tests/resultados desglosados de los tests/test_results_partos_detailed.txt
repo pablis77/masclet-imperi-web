@@ -1,0 +1,283 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 21 items
+
+new_tests/partos/test_partos_anidados_get.py::test_get_parto_anidado 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 304, Nombre: Test_Female_77d8d41d
+Parto creado con ID: 212 para el animal ID: 304
+
+Test: Obteniendo parto ID 212 del animal ID 304 desde http://localhost:8000/api/v1/animals/304/partos/212/
+[OK] Código de estado 200 OK.
+Datos obtenidos: {'id': 212, 'animal_id': 304, 'part': '02/04/2025', 'GenereT': 'F', 'EstadoT': 'OK', 'numero_part': 1, 'created_at': '02/04/2025 15:08:19', 'observacions': 'Parto de prueba para tests'}
+[OK] Test completado exitosamente: El endpoint de obtención de parto individual funciona correctamente.
+PASSED
+new_tests/partos/test_partos_anidados_get.py::test_get_nonexistent_parto_anidado 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+Test: Intentando obtener parto inexistente ID 999999 del animal ID 446
+Código de respuesta actual: 404
+Respuesta correcta: 404 - Parto no encontrado
+Verificación exitosa: La API maneja correctamente la solicitud de partos inexistentes.
+PASSED
+new_tests/partos/test_partos_anidados_get.py::test_get_parto_anidado_wrong_animal 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Creando dos animales hembra para test de acceso a partos ---
+Animal 1 creado con ID: 305, Nombre: Test_Female_0de88f51
+Animal 2 creado con ID: 306, Nombre: Test_Female_b13cf20a
+Parto creado con ID: 213 para el animal ID: 305
+
+Test: Intentando obtener parto ID 213 desde el animal incorrecto ID 306
+Respuesta correcta: 404 - No se puede acceder a un parto desde un animal incorrecto
+Animal 1 (ID: 305) eliminado con código: 204
+Animal 2 (ID: 306) eliminado con código: 204
+Verificación exitosa: La API no permite acceder a partos desde un animal que no es su propietario.
+PASSED
+new_tests/partos/test_partos_anidados_update.py::test_update_parto_anidado 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 307, Nombre: Test_Female_498823cb
+Parto creado con ID: 214 para el animal ID: 307
+
+Test: Actualizando parto ID 214 del animal ID 307 con PATCH en URL anidada: http://localhost:8000/api/v1/animals/307/partos/214/
+Actualización rechazada correctamente (405) - Los partos son inmutables por regla de negocio
+PASSED
+new_tests/partos/test_partos_anidados_update.py::test_update_parto_anidado_completo 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 308, Nombre: Test_Female_512eb7ab
+Parto creado con ID: 215 para el animal ID: 308
+
+Test: Actualizando completamente parto ID 215 del animal ID 308 con PUT en URL anidada: http://localhost:8000/api/v1/animals/308/partos/215/
+Actualización completa rechazada correctamente (405) - Los partos son inmutables por regla de negocio
+PASSED
+new_tests/partos/test_partos_create.py::test_create_parto_success 
+Creando animal femenino de prueba...
+Animal femenino creado con ID: 309
+
+Probando crear un parto para animal femenino (ID: 309)...
+Código de estado: 201
+Parto creado con ID: 216
+Test de creación de parto completado con éxito.
+PASSEDEliminando animal femenino de prueba (ID: 309)...
+
+new_tests/partos/test_partos_create.py::test_create_parto_male_animal 
+Creando animal masculino de prueba...
+Animal masculino creado con ID: 310
+
+Probando crear un parto para animal masculino (ID: 310)...
+Código de estado: 400
+Error recibido (esperado): {"detail":"El animal 310 (Test_Male_91400f90) no es hembra y no puede tener partos"}
+Test de validación de género completado con éxito.
+PASSEDEliminando animal masculino de prueba (ID: 310)...
+
+new_tests/partos/test_partos_create.py::test_create_parto_invalid_date 
+Creando animal femenino de prueba...
+Animal femenino creado con ID: 311
+
+Probando crear un parto con fecha futura...
+Código de estado: 201
+La API acepta fechas futuras para partos. Este comportamiento podría revisarse en el futuro.
+
+Probando crear un parto con formato de fecha inválido...
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"value_error","loc":["body","part"],"msg":"Value error, Fecha inválida: Formato de fecha no válido. Formatos soportados: %d/%m/%Y, %Y-%m-%d, %d-%m-%Y, %Y/%m/%d","input":"fecha-invalida","ctx":{"error":{}}}]}
+Test de validación de fecha completado con éxito.
+PASSEDEliminando animal femenino de prueba (ID: 311)...
+
+new_tests/partos/test_partos_create.py::test_create_parto_invalid_genere 
+Creando animal femenino de prueba...
+Animal femenino creado con ID: 312
+
+Probando crear un parto con género de cría inválido...
+Código de estado: 422
+Error recibido (esperado): {"detail":[{"type":"enum","loc":["body","GenereT"],"msg":"Input should be 'M' or 'F'","input":"INVALID","ctx":{"expected":"'M' or 'F'"}}]}
+Test de validación de género de cría completado con éxito.
+PASSEDEliminando animal femenino de prueba (ID: 312)...
+
+new_tests/partos/test_partos_get.py::test_get_parto 
+Creando animal femenino de prueba...
+Animal femenino creado con ID: 313
+Creando parto de prueba...
+Parto creado con ID: 218
+
+Probando obtener detalles del parto: http://localhost:8000/api/v1/animals/313/partos/218/
+Código de estado: 200
+Test de obtención de parto completado con éxito.
+PASSEDEliminando animal de prueba (ID: 313)...
+
+new_tests/partos/test_partos_get.py::test_get_nonexistent_parto 
+Probando obtener parto inexistente: http://localhost:8000/api/v1/animals/446/partos/99999/
+Código de estado: 404
+Error recibido (esperado): {"detail":"Animal con ID 446 no encontrado"}
+Test de obtención de parto inexistente completado con éxito.
+PASSED
+new_tests/partos/test_partos_list.py::test_list_all_partos 
+Creando animal femenino de prueba 1...
+Animal femenino creado con ID: 314, Nombre: Test_Female_4ea6c3c1
+Creando parto 1 para animal 1...
+Parto creado con ID: 219
+Creando parto 2 para animal 1...
+Parto creado con ID: 220
+
+Creando animal femenino de prueba 2...
+Animal femenino creado con ID: 315, Nombre: Test_Female_d840c13c
+Creando parto 1 para animal 2...
+Parto creado con ID: 221
+Creando parto 2 para animal 2...
+Parto creado con ID: 222
+
+Probando listar todos los partos: http://localhost:8000/api/v1/partos/
+Código de estado: 200
+Test de listado de partos completado con éxito.
+PASSEDEliminando animal de prueba (ID: 314)...
+Eliminando animal de prueba (ID: 315)...
+
+new_tests/partos/test_partos_list.py::test_list_partos_by_animal 
+Creando animal femenino de prueba 1...
+Animal femenino creado con ID: 316, Nombre: Test_Female_61a4e6e0
+Creando parto 1 para animal 1...
+Parto creado con ID: 223
+Creando parto 2 para animal 1...
+Parto creado con ID: 224
+
+Creando animal femenino de prueba 2...
+Animal femenino creado con ID: 317, Nombre: Test_Female_46b398f0
+Creando parto 1 para animal 2...
+Parto creado con ID: 225
+Creando parto 2 para animal 2...
+Parto creado con ID: 226
+
+Probando listar partos por animal: http://localhost:8000/api/v1/partos/?animal_id=316
+Código de estado: 200
+Test de listado de partos por animal completado con éxito.
+PASSEDEliminando animal de prueba (ID: 316)...
+Eliminando animal de prueba (ID: 317)...
+
+new_tests/partos/test_partos_list.py::test_list_partos_by_genere_fill 
+Creando animal femenino de prueba 1...
+Animal femenino creado con ID: 318, Nombre: Test_Female_c0ee507d
+Creando parto 1 para animal 1...
+Parto creado con ID: 227
+Creando parto 2 para animal 1...
+Parto creado con ID: 228
+
+Creando animal femenino de prueba 2...
+Animal femenino creado con ID: 319, Nombre: Test_Female_848ff53b
+Creando parto 1 para animal 2...
+Parto creado con ID: 229
+Creando parto 2 para animal 2...
+Parto creado con ID: 230
+
+Probando listar partos por género de cría (M): http://localhost:8000/api/v1/partos/?GenereT=M
+Código de estado: 200
+
+Probando listar partos por género de cría (F): http://localhost:8000/api/v1/partos/?GenereT=F
+Código de estado: 200
+Test de listado de partos por género de cría completado con éxito.
+PASSEDEliminando animal de prueba (ID: 318)...
+Eliminando animal de prueba (ID: 319)...
+
+new_tests/partos/test_partos_list.py::test_list_partos_by_date_range 
+Creando animal femenino de prueba 1...
+Animal femenino creado con ID: 320, Nombre: Test_Female_f5fbb531
+Creando parto 1 para animal 1...
+Parto creado con ID: 231
+Creando parto 2 para animal 1...
+Parto creado con ID: 232
+
+Creando animal femenino de prueba 2...
+Animal femenino creado con ID: 321, Nombre: Test_Female_f75cd73b
+Creando parto 1 para animal 2...
+Parto creado con ID: 233
+Creando parto 2 para animal 2...
+Parto creado con ID: 234
+
+Probando listar partos por rango de fechas: http://localhost:8000/api/v1/partos/?start_date=03/03/2025&end_date=02/04/2025
+Código de estado: 200
+Test de listado de partos por rango de fechas completado con éxito.
+PASSEDEliminando animal de prueba (ID: 320)...
+Eliminando animal de prueba (ID: 321)...
+
+new_tests/partos/test_partos_operativos.py::test_create_parto_for_animal 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Buscando o creando animal para el test ---
+Creando animal de prueba: Test_Female_c891c3bb con URL: http://localhost:8000/api/v1/animals
+Respuesta de creación: {'status': 'success', 'data': {'nom': 'Test_Female_c891c3bb', 'genere': 'F', 'explotacio': 'Test', 'estado': 'OK', 'alletar': '0', 'dob': None, 'mare': None, 'pare': None, 'quadra': None, 'cod': None, 'num_serie': None, 'part': None, 'genere_t': None, 'estado_t': None, 'id': 322, 'partos': {'total': 0, 'ultimo': None, 'items': [], 'first_date': None, 'last_date': None}, 'created_at': '02/04/2025', 'updated_at': '02/04/2025'}}
+Animal hembra creado: Test_Female_c891c3bb (ID: 322)
+
+Test: Creando parto para animal ID 322 (Test_Female_c891c3bb) en http://localhost:8000/api/v1/animals/322/partos con datos: {'animal_id': 322, 'numero_part': 99, 'part': '02/04/2025', 'GenereT': 'F', 'EstadoT': 'OK', 'observacions': 'Parto operativo de prueba con ID'}
+Código de estado 201 OK.
+Respuesta recibida: {'status': 'success', 'data': {'id': 235, 'animal_id': 322, 'part': '02/04/2025', 'GenereT': 'F', 'EstadoT': 'OK', 'numero_part': 1, 'created_at': '02/04/2025', 'observacions': 'Parto operativo de prueba con ID'}}
+Parto creado y verificado con éxito.
+PASSED
+new_tests/partos/test_partos_operativos.py::test_list_partos_for_animal 
+Obteniendo token para admin...
+Token obtenido con éxito.
+
+--- Buscando o creando animal para el test ---
+Creando animal de prueba: Test_Female_f5f91571 con URL: http://localhost:8000/api/v1/animals
+Respuesta de creación: {'status': 'success', 'data': {'nom': 'Test_Female_f5f91571', 'genere': 'F', 'explotacio': 'Test', 'estado': 'OK', 'alletar': '0', 'dob': None, 'mare': None, 'pare': None, 'quadra': None, 'cod': None, 'num_serie': None, 'part': None, 'genere_t': None, 'estado_t': None, 'id': 323, 'partos': {'total': 0, 'ultimo': None, 'items': [], 'first_date': None, 'last_date': None}, 'created_at': '02/04/2025', 'updated_at': '02/04/2025'}}
+Animal hembra creado: Test_Female_f5f91571 (ID: 323)
+
+Test: Listando partos para animal ID 323 (Test_Female_f5f91571) desde http://localhost:8000/api/v1/partos con params={'animal_id': 323}
+Código de estado 200 OK.
+Respuesta recibida: {'status': 'success', 'data': {'total': 0, 'offset': 0, 'limit': 10, 'items': []}}
+Listado de partos por animal verificado con éxito.
+PASSED
+new_tests/partos/test_partos_update.py::test_update_parto_partial 
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 324, Nombre: Test_Female_f94c1b1f
+Parto creado con ID: 236 para el animal ID: 324
+
+Test: Intentando actualizar parto ID 236 con PATCH en http://localhost:8000/api/v1/partos/236
+Actualización rechazada correctamente (405) - Los partos son inmutables por regla de negocio
+PASSEDAnimal ID 324 eliminado después del test
+
+new_tests/partos/test_partos_update.py::test_update_parto_put 
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 325, Nombre: Test_Female_01247a13
+Parto creado con ID: 237 para el animal ID: 325
+
+Test: Intentando actualizar parto ID 237 con PUT en http://localhost:8000/api/v1/partos/237
+Actualización rechazada correctamente (405) - Los partos son inmutables por regla de negocio
+PASSEDAnimal ID 325 eliminado después del test
+
+new_tests/partos/test_partos_update.py::test_update_parto_invalid_date 
+--- Buscando o creando parto existente para el test ---
+Creando animal hembra para test de partos...
+Animal creado con ID: 326, Nombre: Test_Female_9cab9969
+Parto creado con ID: 238 para el animal ID: 326
+
+Test: Intentando actualizar parto ID 238 con fecha futura en http://localhost:8000/api/v1/partos/238
+Actualización rechazada correctamente (405) - Los partos son inmutables
+PASSEDAnimal ID 326 eliminado después del test
+
+new_tests/partos/test_partos_update.py::test_update_nonexistent_parto 
+Test: Intentando actualizar parto inexistente ID 99999
+Respuesta correcta (405) al intentar actualizar un parto inexistente
+PASSED
+
+============================= 21 passed in 4.30s ==============================

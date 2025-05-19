@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "source": "masclet_imperi_api 2.png",
+    "timestamp": "2025-02-22T17:55:56.246639",
+    "resolution": [
+      1177,
+      961
+    ]
+  },
+  "content": {
+    "raw_text": "partos “A\nJapilvifpartos/partos Create Paro Vv\n/api/vi/partos/aninals/{animal_id}/partos Get Animal Paros v\nJapi/vi/partos/ Cresie Paro v\nJapi/vi/partos/aninal/{animal_id} Get Paros Animal v\ndashboard a\nJapi/vi/dashboard/stats Get sists v\nJapi/vi/dashboard/resumen Obtenes Resumen v\nJapi/vi/dashboard/recientes Get Recent Actviy v\nexplotacions “A\n/api/v1/explotacions/explotacions/{id}/stats Get Expotacion Stas v\nimports “a\n/api/v1/imports/preview Preview imoort v\nJapi/vi/inports/import/csv impor Cs v\nauth aA\nJapi/vi/auth/auth/login Login v\n/api/vi/auth/auth/register Resiste: User v\nJapi/vi/auth/auth/me Get Curent User info av\n/api/vi/auth/auth/users Get Users av\ndefault a\n7 est v\nv\n\nFao IE\n\n",
+    "structured_data": {
+      "sections": [],
+      "links": [],
+      "buttons": [],
+      "forms": [],
+      "tables": [],
+      "navigation": [],
+      "headers": []
+    }
+  }
+}

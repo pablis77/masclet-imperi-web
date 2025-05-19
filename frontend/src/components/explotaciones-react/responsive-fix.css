@@ -1,0 +1,14 @@
+/* Fix para vista móvil - forzar una columna */
+@media (max-width: 639px) {
+  #explotacionCards {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Asegurar que en escritorio sea grid */
+@media (min-width: 640px) {
+  #explotacionCards {
+    display: grid !important;
+  }
+}

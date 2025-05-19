@@ -1,0 +1,198 @@
+---
+// Importar componentes de layout
+import Navbar from './Navbar.astro';
+import Sidebar from './Sidebar.astro';
+import Footer from './Footer.astro';
+
+// Props que pueden ser pasados al componente
+interface Props {
+  title?: string;
+  userRole?: string;
+}
+
+// Valores por defecto
+const { 
+  title = "Masclet Imperi",
+  userRole = "administrador"
+} = Astro.props;
+
+// Obtener la ruta actual
+const currentPath = Astro.url.pathname;
+
+// Determinar si se debe mostrar el sidebar (siempre true para desktop, controlado por JS para móvil)
+const showSidebar = true;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- Sidebar (siempre presente en el DOM, pero puede estar oculto en móvil) -->
+      <div id="sidebar-container" class="md:block hidden">
+        <Sidebar userRole={userRole} currentPath={currentPath} />
+      </div>
+      
+      <!-- Overlay para cerrar el sidebar en móvil -->
+      <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+      
+      <!-- Contenido principal -->
+      <div class="flex-1 flex flex-col min-h-screen md:ml-64"> <!-- Añadido margen izquierdo igual al ancho del sidebar -->
+        <!-- Navbar -->
+        <Navbar userRole={userRole} currentPath={currentPath} title={title} />
+        
+        <!-- Botón para abrir el sidebar en móvil -->
+        <button id="open-sidebar" class="fixed bottom-4 left-4 md:hidden bg-primary text-white p-3 rounded-full shadow-lg z-20">
+          <span class="text-xl">☰</span>
+        </button>
+        
+        <!-- Contenido de la página -->
+        <main style="width: 100%; padding: 0; margin: 0;">
+          <slot />
+        </main>
+        
+        <!-- Footer -->
+        <Footer />
+      </div>
+    </div>
+    
+    <script>
+      // Script para manejar el sidebar en móvil
+      document.addEventListener('DOMContentLoaded', () => {
+        const sidebarContainer = document.getElementById('sidebar-container');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const openSidebarButton = document.getElementById('open-sidebar');
+        
+        // Función para abrir el sidebar
+        const openSidebar = () => {
+          if (sidebarContainer && sidebarOverlay) {
+            sidebarContainer.classList.remove('hidden');
+            sidebarOverlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+          }
+        };
+        
+        // Función para cerrar el sidebar
+        const closeSidebar = () => {
+          if (sidebarContainer && sidebarOverlay && window.innerWidth < 768) {
+            sidebarContainer.classList.add('hidden');
+            sidebarOverlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+          }
+        };
+        
+        // Evento para abrir el sidebar
+        if (openSidebarButton) {
+          openSidebarButton.addEventListener('click', openSidebar);
+        }
+        
+        // Evento para cerrar el sidebar al hacer clic en el overlay
+        if (sidebarOverlay) {
+          sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+        
+        // Escuchar el evento personalizado para cerrar el sidebar
+        document.addEventListener('close-sidebar', closeSidebar);
+        
+        // Ajustar visibilidad del sidebar en cambios de tamaño de ventana
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 768) {
+            if (sidebarContainer) {
+              sidebarContainer.classList.remove('hidden');
+            }
+            if (sidebarOverlay) {
+              sidebarOverlay.classList.add('hidden');
+            }
+          } else {
+            if (sidebarContainer && !sidebarOverlay?.classList.contains('hidden')) {
+              // Mantener abierto si el overlay está visible (sidebar abierto en móvil)
+            } else {
+              if (sidebarContainer) {
+                sidebarContainer.classList.add('hidden');
+              }
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  /* Estilos globales */
+  :root {
+    --color-primary: #2c3e50;
+    --color-primary-dark: #1a252f;
+    --color-primary-light: #34495e;
+    --color-secondary: #e67e22;
+    --color-secondary-dark: #d35400;
+    --color-secondary-light: #f39c12;
+  }
+  
+  /* Estilos para tema claro */
+  :root {
+    --text-color: #333;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+  }
+  
+  /* Estilos para tema oscuro */
+  .dark {
+    --text-color: #e2e8f0;
+    --bg-color: #1a202c;
+    --card-bg: #2d3748;
+  }
+  
+  /* Estilos para tarjetas */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden;
+  }
+  
+  /* Estilos para botones primarios */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded transition-colors duration-200;
+  }
+  
+  /* Estilos para botones secundarios */
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary-dark text-white font-bold py-2 px-4 rounded transition-colors duration-200;
+  }
+  
+  /* Estilos para botones outline */
+  .btn-outline {
+    @apply border border-primary hover:bg-primary hover:text-white font-bold py-2 px-4 rounded transition-colors duration-200;
+  }
+  
+  /* Estilos para inputs */
+  .input {
+    @apply border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md py-2 px-4 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+  
+  /* Estilos para etiquetas */
+  .label {
+    @apply block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2;
+  }
+  
+  /* Utilidades adicionales */
+  .text-primary-custom {
+    color: #88c425;
+  }
+  
+  .text-secondary-custom {
+    color: #262626;
+  }
+  
+  .bg-primary-custom {
+    background-color: #88c425;
+  }
+  
+  .bg-secondary-custom {
+    background-color: #262626;
+  }
+</style>

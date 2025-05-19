@@ -1,0 +1,483 @@
+---
+// AnimalPartosTab.astro - Componente para mostrar la lista de partos en la segunda pestaña
+export interface Props {
+  animal: any;
+}
+
+const { animal } = Astro.props;
+
+// Determinar si hay partos y preparar el array
+let partosArray = [];
+let tienePartos = false;
+
+if (animal.partos && animal.partos.items && animal.partos.items.length > 0) {
+  // Estructura esperada: animal.partos.items[]
+  partosArray = animal.partos.items;
+  tienePartos = true;
+} else if (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) {
+  // Estructura alternativa: animal.partos[]
+  partosArray = animal.partos;
+  tienePartos = true;
+} else if (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) {
+  // Estructura antigua: animal.parts[]
+  partosArray = animal.parts;
+  tienePartos = true;
+}
+
+// El ID del animal (para uso en JavaScript)
+const animalId = animal.id;
+---
+
+<div class="mb-4">
+  <h3 class="text-lg font-medium text-gray-900 dark:text-white">Historial de Partos (API: http://localhost:8000)</h3>
+  <p class="text-gray-500 dark:text-gray-400">Registro de todos los partos del animal</p>
+  
+  <!-- Elemento oculto con datos del animal para JavaScript -->
+  <div id="animal-data" 
+    class="hidden" 
+    data-animal-id={animalId} 
+    data-tiene-partos={tienePartos ? 'true' : 'false'}>
+  </div>
+</div>
+
+<div class="overflow-x-auto">
+  <table id="tabla-partos" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead class="bg-gray-50 dark:bg-gray-700">
+      <tr>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-fecha">
+          Fecha <span class="ml-1 sort-indicator">↑</span>
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">Género</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">Estado</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Observaciones</th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="partos-table-body">
+      {partosArray.length === 0 ? (
+        <tr>
+          <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            No hay registros de partos para este animal
+          </td>
+        </tr>
+      ) : (
+        // El contenido se llenará con JavaScript
+        <tr>
+          <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            Cargando partos...
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Script para gestionar la carga y visualización de partos
+  document.addEventListener('DOMContentLoaded', function() {
+    // Escuchar evento de activación de la pestaña de partos
+    window.addEventListener('tabPartosActivated', cargarPartos);
+    
+    // Configuración para ordenar la tabla de partos
+    const sortFechaBtn = document.getElementById('sort-fecha');
+    const sortGeneroBtn = document.getElementById('sort-genero');
+    const newPartoBtn = document.getElementById('new-parto-btn');
+    if (newPartoBtn) {
+      // Eliminar cualquier event listener previo
+      const newBtn = newPartoBtn.cloneNode(true);
+      newPartoBtn.parentNode.replaceChild(newBtn, newPartoBtn);
+      
+      // Variable para prevenir múltiples clicks
+      let isProcessing = false;
+      let lastClickTime = 0;
+      
+      // Agregar nuevo event listener con protección anti-duplicados
+      newBtn.addEventListener('click', function(e) {
+        // Evitar múltiples clicks en corto tiempo
+        const now = Date.now();
+        
+        if (isProcessing) {
+          console.log('BLOQUEADO: Ya se está procesando un click en nuevo parto');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        if (now - lastClickTime < 2000) { // 2 segundos entre clicks
+          console.log('BLOQUEADO: Múltiples clicks detectados en botón nuevo parto');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        // Marcar como procesando y actualizar último click
+        isProcessing = true;
+        lastClickTime = now;
+        
+        // Deshabilitar el botón temporalmente
+        this.disabled = true;
+        const originalText = this.innerHTML;
+        this.innerHTML = 'Procesando...';
+        
+        // Abrir el modal
+        console.log('Abriendo modal de nuevo parto (con protección anti-duplicados)');
+        openNewPartoModal();
+        
+        // Restaurar el botón después de un tiempo
+        setTimeout(() => {
+          isProcessing = false;
+          this.disabled = false;
+          this.innerHTML = originalText;
+        }, 2000); // Esperar 2 segundos antes de re-habilitar
+      });
+    }
+    
+    if (sortGeneroBtn) {
+      sortGeneroBtn.addEventListener('click', function() {
+        sortTable('genero');
+      });
+    }
+    
+    if (sortEstadoBtn) {
+      sortEstadoBtn.addEventListener('click', function() {
+        sortTable('estado');
+      });
+    }
+  });
+  
+  // Variable para controlar si ya estamos cargando partos
+  let isLoadingPartos = false;
+  
+  // Función para cargar y mostrar los partos en la tabla
+  function cargarPartos(event) {
+    console.log('Función cargarPartos iniciada - VERSIÓN CORREGIDA CON BLOQUEO');
+    
+    // Si ya estamos cargando, abortar para evitar duplicados
+    if (isLoadingPartos) {
+      console.log('ABORTANDO: Ya hay una carga de partos en progreso');
+      return;
+    }
+    
+    // Activar bloqueo
+    isLoadingPartos = true;
+    
+    // Configurar mensaje de carga
+    const tablaPartosBody = document.getElementById('partos-table-body');
+    if (!tablaPartosBody) {
+      console.error('No se encontró el elemento tabla-partos-body');
+      isLoadingPartos = false; // Desactivar bloqueo
+      return;
+    };
+    
+    // Mostrar mensaje de carga
+    tablaPartosBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando partos...</td></tr>';
+    
+    // Obtenemos los datos del animal
+    const animalData = document.getElementById('animal-data');
+    if (!animalData) {
+      console.error('No se encontró el elemento animal-data');
+      tablaPartosBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">Error: No se pudieron cargar los datos del animal</td></tr>';
+      isLoadingPartos = false; // Desactivar bloqueo
+      return;
+    }
+    
+    console.log('animal-data encontrado:', animalData.dataset);
+    
+    // ID del animal desde el elemento animal-data o desde la URL
+    const animalId = animalData.dataset.animalId || window.location.pathname.split('/').pop();
+    console.log('ID del animal:', animalId);
+    
+    // Obtener los partos desde localStorage si están marcados para ocultar
+    const partosOcultos = JSON.parse(localStorage.getItem('partosOcultos') || '[]');
+    
+    // Fetch de los partos desde la API (URL FIJA HARDCODEADA)
+    const apiUrl = 'http://localhost:8000/api/v1/animals/' + animalId;
+    console.log('Obteniendo datos de URL FIJA:', apiUrl);
+    fetch(apiUrl)
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('Error al cargar los partos');
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        console.log('Datos recibidos:', data);
+        const animal = data.data || data;
+        
+        // Determinar la estructura correcta para acceder a los partos
+        let partosArray = [];
+        if (animal.partos && animal.partos.items && animal.partos.items.length > 0) {
+          console.log('Estructura encontrada: animal.partos.items');
+          partosArray = animal.partos.items;
+        } else if (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) {
+          console.log('Estructura encontrada: animal.partos[]');
+          partosArray = animal.partos;
+        } else if (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) {
+          console.log('Estructura encontrada: animal.parts[]');
+          partosArray = animal.parts;
+        }
+        
+        console.log('Partos encontrados:', partosArray.length);
+        
+        if (partosArray.length === 0) {
+          tablaPartosBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No hay registros de partos para este animal</td></tr>';
+          return;
+        }
+        
+        // En lugar de filtrar, marcamos los partos ocultos
+        const processedPartos = partosArray.map(function(parto) {
+          // Crear una copia del parto para modificarla
+          const partoCopy = {...parto};
+          
+          // Verificar si está en la lista de ocultados en localStorage
+          if (partosOcultos.includes(parto.id)) {
+            partoCopy._hidden = true;
+            partoCopy._hiddenReason = 'Oculto en localStorage';
+          }
+          
+          // Verificar si tiene etiquetas de ocultación en las observaciones
+          if (parto.observacions) {
+            const textoOcultar = ['[REEMPLAZADO POR NUEVO REGISTRO]', '[REGISTRO DUPLICADO - IGNORAR]'];
+            for (const texto of textoOcultar) {
+              if (parto.observacions.includes(texto)) {
+                partoCopy._hidden = true;
+                partoCopy._hiddenReason = texto;
+                break;
+              }
+            }
+          }
+          
+          return partoCopy;
+        });
+        
+        // Función auxiliar para convertir cualquier formato de fecha a objeto Date
+        function parseToDate(dateStr) {
+          if (!dateStr) return new Date(0);
+          
+          if (typeof dateStr === 'string') {
+            // Formato DD/MM/YYYY
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+              const parts = dateStr.split('/');
+              // En formato europeo, el primer valor es el día, el segundo el mes
+              return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            // Formato YYYY/MM/DD
+            else if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(dateStr)) {
+              const parts = dateStr.split('/');
+              return new Date(parts[0], parts[1] - 1, parts[2]);
+            }
+            // Formato YYYY-MM-DD
+            else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateStr)) {
+              return new Date(dateStr);
+            }
+          }
+          
+          // Cualquier otro caso, intentar con el constructor Date estándar
+          return new Date(dateStr);
+        }
+        
+        // Ordenar partos por fecha (de más antiguo a más reciente por defecto)
+        processedPartos.sort(function(a, b) {
+          const fechaA = parseToDate(a.part);
+          const fechaB = parseToDate(b.part);
+          return fechaA - fechaB; // Orden ascendente (más antiguo primero)
+        });
+        
+        // Crear las filas de la tabla
+        const rows = processedPartos.map(function(parto) {
+          // Formatear la fecha
+          let fechaFormateada;
+          try {
+            if (parto.part) {
+              // Detectar el formato de la fecha y convertirla adecuadamente
+              if (typeof parto.part === 'string') {
+                if (parto.part.includes('/')) {
+                  // Si ya tiene formato DD/MM/YYYY o similar con barras
+                  const partes = parto.part.split('/');
+                  // Asumimos que si la primera parte tiene 4 dígitos, es un año (formato YYYY/MM/DD)
+                  if (partes[0].length === 4) {
+                    fechaFormateada = `${partes[2].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[0]}`;
+                  } 
+                  // Si la última parte tiene 4 dígitos, asumimos formato DD/MM/YYYY o MM/DD/YYYY
+                  else if (partes[2].length === 4) {
+                    // Si la primera parte es > 12, probablemente es un día
+                    if (parseInt(partes[0]) > 12) {
+                      fechaFormateada = `${partes[0].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[2]}`;
+                    } else {
+                      // Aquí podría ser ambiguo (MM/DD/YYYY o DD/MM/YYYY), priorizamos DD/MM/YYYY
+                      fechaFormateada = `${partes[0].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[2]}`;
+                    }
+                  }
+                } else if (parto.part.includes('-')) {
+                  // Formato ISO YYYY-MM-DD
+                  const partes = parto.part.split('-');
+                  if (partes[0].length === 4) {
+                    fechaFormateada = `${partes[2].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[0]}`;
+                  }
+                } else {
+                  // Intentar con objeto Date como último recurso
+                  const fecha = new Date(parto.part);
+                  if (!isNaN(fecha.getTime())) {
+                    const dia = fecha.getDate().toString().padStart(2, '0');
+                    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                    const anio = fecha.getFullYear();
+                    fechaFormateada = `${dia}/${mes}/${anio}`;
+                  } else {
+                    fechaFormateada = parto.part; // Mantener como está si no podemos interpretar
+                  }
+                }
+              } else if (parto.part instanceof Date || !isNaN(new Date(parto.part).getTime())) {
+                // Si es un objeto Date válido
+                const fecha = new Date(parto.part);
+                const dia = fecha.getDate().toString().padStart(2, '0');
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const anio = fecha.getFullYear();
+                fechaFormateada = `${dia}/${mes}/${anio}`;
+              } else if (typeof parto.part === 'string' && /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(parto.part)) {
+                // Si ya está en formato DD/MM/YYYY, usarla directamente
+                fechaFormateada = parto.part;
+              } else {
+                fechaFormateada = String(parto.part);
+              }
+            } else {
+              fechaFormateada = 'N/A';
+            }
+          } catch (e) {
+            fechaFormateada = 'Fecha incorrecta';
+          }
+          
+          // Determinar si es un parto oculto
+          const esOculto = parto._hidden === true;
+          
+          // Crear la fila HTML con clases condicionales para partos ocultos
+          return `
+            <tr class="${esOculto ? 'bg-red-50 dark:bg-red-900/20' : ''}">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                ${fechaFormateada}
+                ${esOculto ? '<span class="ml-2 px-1 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 text-xs font-semibold rounded">[OCULTO]</span>' : ''}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                ${parto.GenereT === 'M' ? 'Macho' : 
+                  parto.GenereT === 'F' ? 'Hembra' : 
+                  parto.GenereT === 'esforrada' ? 'Esforrá' : parto.GenereT || 'No disponible'}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  parto.EstadoT === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
+                  'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                }">
+                  ${parto.EstadoT === 'OK' ? 'Vivo' : 'Fallecido'}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                ${esOculto ? `<span class="font-semibold text-red-600 dark:text-red-400">${parto._hiddenReason || ''}</span> ` : ''}
+                ${parto.observacions || '-'}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white flex space-x-2">
+                <button 
+                  class="edit-parto-btn bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100 p-1 rounded hover:bg-blue-200 dark:hover:bg-blue-600" 
+                  data-parto-id="${parto.id}"
+                  title="Editar parto">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button 
+                  class="delete-parto-btn bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 p-1 rounded hover:bg-red-200 dark:hover:bg-red-600" 
+                  data-parto-id="${parto.id}"
+                  title="Eliminar parto">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+        // Actualizar la tabla
+        tablaPartosBody.innerHTML = rows || '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No hay registros de partos para este animal</td></tr>';
+        
+        // Activar botones de edición/eliminación
+        document.dispatchEvent(new CustomEvent('partosLoaded'));
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+        tablaPartosBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">
+              Error al cargar los partos: ${error.message}
+            </td>
+          </tr>
+        `;
+      })
+      .finally(function() {
+        // Desactivar bloqueo al finalizar, ya sea con éxito o error
+        setTimeout(function() {
+          isLoadingPartos = false;
+          console.log('Bloqueo de carga de partos desactivado');
+        }, 1000); // Esperar 1 segundo adicional para asegurar
+      });
+  }
+  
+  function sortTable(column) {
+    const table = document.getElementById('tabla-partos');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Si solo hay una fila con mensaje de "No hay registros", no hacer nada
+    if (rows.length === 1 && rows[0].querySelector('td').colSpan === 5) {
+      return;
+    }
+    
+    // Determinar dirección actual
+    const sortIndicator = document.querySelector(`#sort-${column} .sort-indicator`);
+    const ascending = sortIndicator.textContent === '↑';
+    
+    // Ordenar filas
+    rows.sort(function(a, b) {
+      let valueA, valueB;
+      
+      if (column === 'fecha') {
+        valueA = a.cells[0].textContent.trim();
+        valueB = b.cells[0].textContent.trim();
+        
+        // Intentar convertir a fecha si es posible
+        const dateA = new Date(valueA.split('/').reverse().join('-'));
+        const dateB = new Date(valueB.split('/').reverse().join('-'));
+        
+        if (!isNaN(dateA) && !isNaN(dateB)) {
+          return ascending ? dateB - dateA : dateA - dateB;
+        }
+      } else if (column === 'genero') {
+        valueA = a.cells[1].textContent.trim();
+        valueB = b.cells[1].textContent.trim();
+      } else if (column === 'estado') {
+        valueA = a.cells[2].textContent.trim();
+        valueB = b.cells[2].textContent.trim();
+      }
+      
+      // Comparación de texto
+      if (ascending) {
+        return valueB.localeCompare(valueA);
+      } else {
+        return valueA.localeCompare(valueB);
+      }
+    });
+    
+    // Actualizar indicador de dirección
+    sortIndicator.textContent = ascending ? '↓' : '↑';
+    
+    // Restablecer otros indicadores
+    document.querySelectorAll('.sort-indicator').forEach(function(indicator) {
+      if (indicator !== sortIndicator) {
+        indicator.textContent = '↑';
+      }
+    });
+    
+    // Volver a añadir filas ordenadas
+    rows.forEach(function(row) {
+      tbody.appendChild(row);
+    });
+  }
+</script>

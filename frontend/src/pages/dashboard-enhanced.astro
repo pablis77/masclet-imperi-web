@@ -1,0 +1,49 @@
+---
+// Importar el layout completo
+import MainLayout from '../components/layout/MainLayout.astro';
+
+// Importar el nuevo componente Dashboard Mejorado
+import DashboardEnhanced from '../components/dashboard/DashboardEnhanced';
+
+// Importar el nuevo layout
+import Layout from '../layouts/Layout.astro';
+
+// Definir rol de usuario
+const userRole = "administrador";
+---
+
+<!-- Script para crear token JWT automáticamente en desarrollo -->
+<script>
+  // Crear token JWT para desarrollo
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('token')) {
+      console.log('Creando token JWT para desarrollo');
+      localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+      // Recargar para que el componente use el nuevo token
+      window.location.reload();
+    } else {
+      console.log('Token ya existe en localStorage');
+    }
+  });
+</script>
+
+<MainLayout title="Dashboard Mejorado - Masclet Imperi" userRole={userRole} currentPath="/dashboard-enhanced">
+  <div style="width: 100%; padding: 0; margin: 0;">
+    <h1 style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0; padding: 0 0.5rem;">Dashboard Masclet Imperi</h1>
+    
+    <!-- Componente Dashboard Mejorado - Renderizado solo en el cliente -->
+    <DashboardEnhanced client:load />
+    
+    <div class="mt-8 flex justify-center gap-4">
+      <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+        Ver Dashboard Principal
+      </a>
+      <a href="/dashboard-test" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors">
+        Ver Dashboard Test
+      </a>
+      <a href="/dashboard-simple" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md transition-colors">
+        Ver Dashboard Simple
+      </a>
+    </div>
+  </div>
+</MainLayout>

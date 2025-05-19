@@ -1,0 +1,91 @@
+---
+// Importar el layout completo
+import MainLayout from '../components/layout/MainLayout.astro';
+
+// Importar el componente Dashboard optimizado y funcional
+import Dashboard from '../components/dashboard/Dashboard';
+
+// Definir rol de usuario
+const userRole = "administrador";
+
+// Importar funciones de i18n
+import { getCurrentLanguage } from '../i18n/config';
+
+// Obtener el idioma actual para el servidor
+const currentLang = getCurrentLanguage();
+
+// Traducciones integradas
+const translations = {
+  es: {
+    welcome: "Bienvenido a Masclet Imperi"
+  },
+  ca: {
+    welcome: "Benvingut a Masclet Imperi"
+  }
+};
+
+// El texto de bienvenida según idioma
+const welcomeText = translations[currentLang]?.welcome || translations.es.welcome;
+
+// Crear script para actualizar el título cuando cambie el idioma
+const updateWelcomeScript = `
+document.addEventListener('DOMContentLoaded', () => {
+  const welcomeElement = document.querySelector('h1.welcome-title');
+  if (welcomeElement) {
+    // Actualizar título cuando cambie el idioma
+    const updateTitle = () => {
+      const lang = localStorage.getItem('userLanguage') || 'es';
+      welcomeElement.textContent = lang === 'ca' ? "${translations.ca.welcome}" : "${translations.es.welcome}";
+    };
+    
+    // Actualizar inmediatamente
+    updateTitle();
+    
+    // Escuchar cambios en el almacenamiento
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'userLanguage') {
+        updateTitle();
+      }
+    });
+  }
+});
+`;
+---
+
+<!-- Script para crear token JWT automáticamente en desarrollo con comprobación mejorada -->
+<script>
+  // Crear token JWT para desarrollo - versión mejorada
+  window.addEventListener('DOMContentLoaded', () => {
+    // Primero eliminar cualquier token antiguo para evitar problemas
+    localStorage.removeItem('token');
+    
+    // Crear token nuevo para asegurar funcionamiento correcto
+    console.log('Configurando token JWT para desarrollo');
+    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    console.log('Token JWT creado correctamente');
+    
+    // Comprobar que realmente se guardó
+    const token = localStorage.getItem('token');
+    if (token) {
+      console.log('✅ Token verificado en localStorage');
+    } else {
+      console.error('❌ Error: No se pudo guardar el token');
+      // Intentar de nuevo
+      localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    }
+  });
+</script>
+
+<!-- Script para actualizar el título cuando cambia el idioma -->
+<script set:html={updateWelcomeScript}></script>
+
+<MainLayout title="Dashboard Masclet Imperi" userRole={userRole} currentPath="/">
+  <div class="mx-auto px-4 py-6 bg-white dark:bg-gray-900">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8 welcome-title">{welcomeText}</h1>
+    
+    <!-- Componente Dashboard optimizado - Renderizado solo en el cliente -->
+    <Dashboard client:only="react" />
+    
+    <!-- Botones de prueba eliminados -->
+  </div>
+</MainLayout>

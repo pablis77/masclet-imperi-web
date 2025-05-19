@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant U as Usuario
+    participant F as Frontend
+    participant B as Backend
+    participant C as Cache
+    participant DB as PostgreSQL
+    participant S as Storage
+
+    U->>F: Sube CSV
+    F->>B: POST /import
+    B->>S: Guarda CSV
+    B->>B: Valida Estructura
+    B->>DB: Backup actual
+    B->>DB: Importa Datos
+    B->>C: Invalida Cache
+    B->>F: Retorna Resultado
+    F->>U: Muestra Resumen
+
+    U->>F: Consulta Datos
+    F->>B: GET /data
+    B->>C: Verifica Cache
+    alt Cache Hit
+        C->>B: Retorna Datos
+    else Cache Miss
+        B->>DB: Query
+        B->>C: Almacena en Cache
+    end
+    B->>F: Retorna Datos
+    F->>U: Muestra Datos

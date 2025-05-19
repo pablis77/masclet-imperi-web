@@ -1,0 +1,25 @@
+# Configuración cron para tareas de backup
+# Ubicación: backend/docker/config/cron/backup
+
+# Establecer variables de entorno
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+# Backups diarios - Cada día a las 2 AM
+0 2 * * * root /usr/local/bin/backup.sh daily >> /logs/backup.log 2>&1
+
+# Backups semanales - Cada domingo a las 3 AM
+0 3 * * 0 root /usr/local/bin/backup.sh weekly >> /logs/backup.log 2>&1
+
+# Backups mensuales - Primer día de cada mes a las 4 AM
+0 4 1 * * root /usr/local/bin/backup.sh monthly >> /logs/backup.log 2>&1
+
+# Verificación de backups - Cada día a las 5 AM
+0 5 * * * root /usr/local/bin/test-backup.sh >> /logs/test.log 2>&1
+
+# Limpieza de logs antiguos - Cada día a las 1 AM
+0 1 * * * root find /logs -name "*.log.*" -type f -mtime +30 -delete
+
+# Healthcheck de sistema de backup - Cada 6 horas
+0 */6 * * * root /usr/local/bin/notify.sh "Healthcheck" "Sistema de backup operativo" >> /logs/notifications.log 2>&1

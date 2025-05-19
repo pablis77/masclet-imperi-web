@@ -1,0 +1,30 @@
+{
+    "animal_1": {
+        "explotacio": "Granja Test",
+        "nom": "Toro Test",
+        "genere": "M",
+        "estado": "OK",
+        "alletar": false,
+        "cod": "TEST001",
+        "num_serie": "ES12345",
+        "dob": "01/01/2024"
+    },
+    "animal_2": {
+        "explotacio": "Granja Test",
+        "nom": "Vaca Test",
+        "genere": "F",
+        "estado": "OK",
+        "alletar": true,
+        "cod": "TEST002",
+        "num_serie": "ES12346",
+        "dob": "01/02/2024"
+    },
+    "animal_update": {
+        "nom": "Toro Test Actualizado",
+        "estado": "OK"
+    },
+    "search_test": {
+        "q": "Test",
+        "explotacio": "Granja Test"
+    }
+}

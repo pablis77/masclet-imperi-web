@@ -1,0 +1,793 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.11, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\Usuario\anaconda3\envs\masclet-imperi\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Proyectos\claude\masclet-imperi-web
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-0.25.3, cov-6.0.0, env-1.1.5, ordering-0.6
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function
+collecting ... collected 30 items
+
+new_tests/dashboard/test_dashboard.py::test_get_dashboard_stats 
+Probando obtener estadísticas del dashboard: http://localhost:8000/api/v1/dashboard/stats/
+Código de estado: 200
+Respuesta: {"animales":{"total":24,"machos":14,"hembras":10,"ratio_m_h":1.4,"por_estado":{"OK":24,"DEF":0},"por_alletar":{"0":20,"1":2,"2":2},"por_quadra":{},"edades":{"menos_1_año":0,"1_2_años":0,"2_5_años":0,"mas_5_años":0}},"partos":{"total":4,"ultimo_mes":4,"ultimo_año":4,"promedio_mensual":0.3333333333333333,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":4},"por_genero_cria":{"M":2,"F":4},"tasa_supervivencia":1.0,"distribucion_anual":{"2024":0,"2025":4}},"explotaciones":{"total":3,"activas":3,"inactivas":0,"por_provincia":{},"ranking_partos":[{"explotacio":"Test","nombre":"Test","partos":4},{"explotacio":"ExplotacioTest","nombre":"ExplotacioTest","partos":2},{"explotacio":"ExplotTest","nombre":"ExplotTest","partos":0}],"ranking_animales":[{"explotacio":"ExplotTest","nombre":"ExplotTest","animales":10},{"explotacio":"ExplotacioTest","nombre":"ExplotacioTest","animales":9},{"explotacio":"Test","nombre":"Test","animales":5}]},"comparativas":{"mes_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0,"animales_actual":0.0,"animales_anterior":0.0,"variacion_animales":0.0},"año_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0},"tendencia_partos":{"tendencia":4.0,"promedio":1.3333333333333333,"valores":4.0},"tendencia_animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"explotacio":null,"nombre_explotacio":null,"periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de estadísticas completado con éxito.
+PASSED   [  3%]
+new_tests/dashboard/test_dashboard.py::test_get_dashboard_stats_with_filter 
+Probando obtener estadísticas filtradas por explotación (Código: Test): http://localhost:8000/api/v1/dashboard/stats/?explotacio=Test
+Código de estado: 200
+Respuesta: {"animales":{"total":5,"machos":0,"hembras":5,"ratio_m_h":0.0,"por_estado":{"OK":5,"DEF":0},"por_alletar":{"0":5,"1":0,"2":0},"por_quadra":{},"edades":{"menos_1_año":0,"1_2_años":0,"2_5_años":0,"mas_5_años":0}},"partos":{"total":4,"ultimo_mes":4,"ultimo_año":4,"promedio_mensual":0.3333333333333333,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":4},"por_genero_cria":{"M":0,"F":4},"tasa_supervivencia":1.0,"distribucion_anual":{"2024":0,"2025":4}},"explotaciones":null,"comparativas":{"mes_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0,"animales_actual":0.0,"animales_anterior":0.0,"variacion_animales":0.0},"año_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0},"tendencia_partos":{"tendencia":4.0,"promedio":1.3333333333333333,"valores":4.0},"tendencia_animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"explotacio":"Test","nombre_explotacio":"Test","periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de estadísticas filtradas completado con éxito.
+PASSED [  6%]
+new_tests/dashboard/test_dashboard.py::test_get_explotacio_stats 
+Probando obtener estadísticas de la explotación Test: http://localhost:8000/api/v1/dashboard/explotacions/Test/stats
+Código de estado: 200
+Respuesta: {"explotacio":"Test","explotacion":{"explotacio":"Test","nombre":"Test"},"periodo":{"inicio":"2024-04-07","fin":"2025-04-07","dias":365},"animales":{"total":5,"machos":0,"hembras":5,"ratio_m_h":0.0,"por_estado":{"OK":5,"DEF":0},"por_alletar":{"0":5,"1":0,"2":0},"por_quadra":{},"por_edad":{"menos_1_año":0,"1_2_años":0,"2_5_años":0,"mas_5_años":0},"terneros":0},"partos":{"total":4,"ultimo_mes":4,"ultimo_año":4,"promedio_mensual":0.33,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":4}}}
+Test de estadísticas de explotación completado con éxito.
+PASSED  [ 10%]
+new_tests/dashboard/test_dashboard.py::test_get_dashboard_stats_unauthorized 
+Probando acceso no autorizado a estadísticas: http://localhost:8000/api/v1/dashboard/stats/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [ 13%]
+new_tests/dashboard/test_dashboard_combined.py::test_get_dashboard_combined 
+Probando obtener información combinada del dashboard: http://localhost:8000/api/v1/dashboard/combined/
+Código de estado: 200
+Respuesta: {"animales":{"total":24,"machos":14,"hembras":10,"ratio_m_h":1.4,"por_estado":{"OK":24,"DEF":0},"por_alletar":{"0":20,"1":2,"2":2},"por_quadra":{},"edades":{"menos_1_año":0,"1_2_años":0,"2_5_años":0,"mas_5_años":0}},"partos":{"total":4,"ultimo_mes":4,"ultimo_año":4,"promedio_mensual":0.3333333333333333,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":4},"por_genero_cria":{"M":2,"F":4},"tasa_supervivencia":1.0,"distribucion_anual":{"2024":0,"2025":4}},"explotaciones":{"total":3,"activas":3,"inactivas":0,"por_provincia":{},"ranking_partos":[{"explotacio":"Test","nombre":"Test","partos":4},{"explotacio":"ExplotacioTest","nombre":"ExplotacioTest","partos":2},{"explotacio":"ExplotTest","nombre":"ExplotTest","partos":0}],"ranking_animales":[{"explotacio":"ExplotTest","nombre":"ExplotTest","animales":10},{"explotacio":"ExplotacioTest","nombre":"ExplotacioTest","animales":9},{"explotacio":"Test","nombre":"Test","animales":5}]},"comparativas":{"mes_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0,"animales_actual":0.0,"animales_anterior":0.0,"variacion_animales":0.0},"año_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0},"tendencia_partos":{"tendencia":4.0,"promedio":1.3333333333333333,"valores":4.0},"tendencia_animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"por_quadra":{},"rendimiento_partos":{"promedio_partos_por_hembra":0.4,"partos_por_animal":0.16666666666666666,"eficiencia_reproductiva":0.0},"tendencias":{"partos":{"tendencia":4.0,"promedio":0.6666666666666666,"valores":4.0},"animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"explotacio":null,"nombre_explotacio":null,"periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de información combinada completado con éxito.
+PASSED [ 16%]
+new_tests/dashboard/test_dashboard_combined.py::test_get_dashboard_combined_with_filters 
+Probando filtrar información combinada por explotación Test: http://localhost:8000/api/v1/dashboard/combined/?explotacio=Test
+Código de estado: 200
+Respuesta: {"animales":{"total":5,"machos":0,"hembras":5,"ratio_m_h":0.0,"por_estado":{"OK":5,"DEF":0},"por_alletar":{"0":5,"1":0,"2":0},"por_quadra":{},"edades":{"menos_1_año":0,"1_2_años":0,"2_5_años":0,"mas_5_años":0}},"partos":{"total":4,"ultimo_mes":4,"ultimo_año":4,"promedio_mensual":0.3333333333333333,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":4},"por_genero_cria":{"M":0,"F":4},"tasa_supervivencia":1.0,"distribucion_anual":{"2024":0,"2025":4}},"explotaciones":null,"comparativas":{"mes_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0,"animales_actual":0.0,"animales_anterior":0.0,"variacion_animales":0.0},"año_actual_vs_anterior":{"partos_actual":4.0,"partos_anterior":0.0,"variacion_partos":0.0},"tendencia_partos":{"tendencia":4.0,"promedio":1.3333333333333333,"valores":4.0},"tendencia_animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"por_quadra":{},"rendimiento_partos":{"promedio_partos_por_hembra":0.8,"partos_por_animal":0.8,"eficiencia_reproductiva":0.0},"tendencias":{"partos":{"tendencia":4.0,"promedio":0.6666666666666666,"valores":4.0},"animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"explotacio":"Test","nombre_explotacio":"Test","periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de información combinada filtrada completado con éxito.
+PASSED [ 20%]
+new_tests/dashboard/test_dashboard_combined.py::test_get_dashboard_combined_unauthorized 
+Probando acceso no autorizado a información combinada: http://localhost:8000/api/v1/dashboard/combined/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [ 23%]
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_fields_nomenclature 
+=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===
+Obteniendo lista de explotaciones: http://localhost:8000/api/v1/dashboard/explotacions/
+Se encontraron 3 explotaciones
+
+=== RESULTADO: NOMENCLATURA DE CAMPOS CORRECTA ===
+FAILED [ 26%]
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_stats Estadísticas recibidas correctamente
+Campos en la respuesta: explotacio, explotacion, periodo, animales, partos
+
+Estructura de la respuesta de estadísticas:
+  - explotacio: Test (str)
+  - explotacion: {explotacio, nombre}
+    > explotacio: Test
+    > nombre: Test
+  - periodo: {inicio, fin, dias}
+    > inicio: 2024-04-07
+    > fin: 2025-04-07
+    > dias: 365
+  - animales: {total, machos, hembras, ratio_m_h, por_estado, por_alletar, por_quadra, por_edad, terneros}
+    > total: 5
+    > machos: 0
+    > hembras: 5
+    > ratio_m_h: 0.0
+    > por_estado: {'OK': 5, 'DEF': 0}
+    > por_alletar: {'0': 5, '1': 0, '2': 0}
+    > por_quadra: {}
+    > por_edad: {'menos_1_año': 0, '1_2_años': 0, '2_5_años': 0, 'mas_5_años': 0}
+    > terneros: 0
+  - partos: {total, ultimo_mes, ultimo_año, promedio_mensual, por_mes}
+    > total: 4
+    > ultimo_mes: 4
+    > ultimo_año: 4
+    > promedio_mensual: 0.33
+    > por_mes: {'2024-04': 0, '2024-05': 0, '2024-06': 0, '2024-07': 0, '2024-08': 0, '2024-09': 0, '2024-10': 0, '2024-11': 0, '2024-12': 0, '2025-01': 0, '2025-02': 0, '2025-03': 0, '2025-04': 4}
+
+DATO COMPLETO DE ESTADÍSTICAS:
+{
+  "explotacio": "Test",
+  "explotacion": {
+    "explotacio": "Test",
+    "nombre": "Test"
+  },
+  "periodo": {
+    "inicio": "2024-04-07",
+    "fin": "2025-04-07",
+    "dias": 365
+  },
+  "animales": {
+    "total": 5,
+    "machos": 0,
+    "hembras": 5,
+    "ratio_m_h": 0.0,
+    "por_estado": {
+      "OK": 5,
+      "DEF": 0
+    },
+    "por_alletar": {
+      "0": 5,
+      "1": 0,
+      "2": 0
+    },
+    "por_quadra": {},
+    "por_edad": {
+      "menos_1_año": 0,
+      "1_2_años": 0,
+      "2_5_años": 0,
+      "mas_5_años": 0
+    },
+    "terneros": 0
+  },
+  "partos": {
+    "total": 4,
+    "ultimo_mes": 4,
+    "ultimo_año": 4,
+    "promedio_mensual": 0.33,
+    "por_mes": {
+      "2024-04": 0,
+      "2024-05": 0,
+      "2024-06": 0,
+      "2024-07": 0,
+      "2024-08": 0,
+      "2024-09": 0,
+      "2024-10": 0,
+      "2024-11": 0,
+      "2024-12": 0,
+      "2025-01": 0,
+      "2025-02": 0,
+      "2025-03": 0,
+      "2025-04": 4
+    }
+  }
+}
+FAILED [ 30%]
+new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_animals 
+=== PRUEBA DE OBTENCIÓN DE ANIMALES POR EXPLOTACIÓN ===
+Consultando animales para explotación con ID: Test
+Datos de la explotación: {'explotacio': 'Test'}
+Tipo de respuesta de animales: <class 'dict'>
+
+Estructura de respuesta recibida:
+Es un diccionario, claves disponibles: status, data
+FAILED [ 33%]
+new_tests/dashboard/test_dashboard_explotacio_filter.py::test_list_explotaciones 
+=== EXPLOTACIONES DISPONIBLES ===
+Total explotaciones: 3
+Código: Test
+Código: ExplotacioTest
+Código: ExplotTest
+PASSED [ 36%]
+new_tests/dashboard/test_dashboard_explotacio_filter.py::test_global_dashboard 
+=== RESUMEN GLOBAL ===
+FAILED [ 40%]
+new_tests/dashboard/test_dashboard_explotacio_filter.py::test_filtered_dashboard FAILED [ 43%]
+new_tests/dashboard/test_dashboard_explotacio_filter.py::test_combined_dashboard_filter 
+=== DASHBOARD COMBINADO FILTRADO POR EXPLOTACIÓN: Test ===
+FAILED [ 46%]
+new_tests/dashboard/test_dashboard_explotacio_general.py::test_explotacio_fields_nomenclature 
+=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===
+Obteniendo lista de explotaciones: http://localhost:8000/api/v1/dashboard/explotacions/
+Total explotaciones: 3
+
+=== DATOS DE LA PRIMERA EXPLOTACIÓN ===
+{
+  "explotacio": "Test"
+}
+FAILED [ 50%]
+new_tests/dashboard/test_dashboard_explotacio_general.py::test_explotacio_stats_endpoint 
+=== PROBANDO ESTADÍSTICAS PARA EXPLOTACIÓN: Test (Test) ===
+Estadísticas recibidas correctamente
+FAILED [ 53%]
+new_tests/dashboard/test_dashboard_explotacio_general.py::test_combined_dashboard_with_explotacio 
+=== PROBANDO DASHBOARD COMBINADO PARA EXPLOTACIÓN: Test (Test) ===
+Dashboard combinado recibido correctamente
+FAILED [ 56%]
+new_tests/dashboard/test_dashboard_explotacions.py::test_list_dashboard_explotacions 
+Probando listar explotaciones para el dashboard: http://localhost:8000/api/v1/dashboard/explotacions/
+Código de estado: 200
+PASSED [ 60%]
+new_tests/dashboard/test_dashboard_explotacions.py::test_list_dashboard_explotacions_with_filters 
+Probando filtrar explotaciones por código Test: http://localhost:8000/api/v1/dashboard/explotacions/?explotacio=Test
+PASSED [ 63%]
+new_tests/dashboard/test_dashboard_explotacions.py::test_list_dashboard_explotacions_unauthorized 
+Probando acceso no autorizado a listado de explotaciones: http://localhost:8000/api/v1/dashboard/explotacions/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [ 66%]
+new_tests/dashboard/test_dashboard_partos.py::test_list_dashboard_partos 
+Probando listar partos para el dashboard: http://localhost:8000/api/v1/dashboard/partos/
+Código de estado: 200
+Respuesta: {"total":0,"por_mes":{"2024-04":0,"2024-05":0,"2024-06":0,"2024-07":0,"2024-08":0,"2024-09":0,"2024-10":0,"2024-11":0,"2024-12":0,"2025-01":0,"2025-02":0,"2025-03":0,"2025-04":0},"por_genero_cria":{"M":0,"F":0},"tasa_supervivencia":0.0,"distribucion_anual":{"2024":0,"2025":0},"tendencia":{"valores":0.0,"cambio_porcentual":0.0},"por_animal":[],"ultimo_mes":0,"ultimo_año":0,"promedio_mensual":0.0,"explotacio":null,"periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de listado de partos completado con éxito.
+PASSED [ 70%]
+new_tests/dashboard/test_dashboard_partos.py::test_dashboard_partos_unauthorized 
+Probando acceso no autorizado a partos: http://localhost:8000/api/v1/dashboard/partos/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [ 73%]
+new_tests/dashboard/test_dashboard_recientes.py::test_get_dashboard_recent_activity 
+Probando obtener actividad reciente: http://localhost:8000/api/v1/dashboard/recientes/
+Código de estado: 200
+Respuesta: {"recientes":{"animales":24,"partos":6,"periodo_dias":7}}
+Test de actividad reciente completado con éxito.
+PASSED [ 76%]
+new_tests/dashboard/test_dashboard_recientes.py::test_get_dashboard_recent_activity_with_limit 
+Probando obtener actividad reciente con límite 5: http://localhost:8000/api/v1/dashboard/recientes/?limit=5
+Código de estado: 200
+Test de actividad reciente con límite completado con éxito.
+PASSED [ 80%]
+new_tests/dashboard/test_dashboard_recientes.py::test_get_dashboard_recent_activity_with_type_filter 
+Probando obtener actividad reciente filtrada por tipo 'parto_registered': http://localhost:8000/api/v1/dashboard/recientes/?type=parto_registered
+Código de estado: 200
+Test de actividad reciente filtrada por tipo completado con éxito.
+PASSED [ 83%]
+new_tests/dashboard/test_dashboard_recientes.py::test_get_dashboard_recent_activity_unauthorized 
+Probando acceso no autorizado a actividad reciente: http://localhost:8000/api/v1/dashboard/recientes/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [ 86%]
+new_tests/dashboard/test_dashboard_resumen.py::test_get_dashboard_resumen 
+Probando obtener resumen del dashboard: http://localhost:8000/api/v1/dashboard/resumen/
+Código de estado: 200
+Respuesta: {"total_animales":24,"total_partos":4,"total_terneros":6,"ratio_partos_animal":0.17,"promedio_partos_mensual":0.33,"tendencias":{"partos":{"tendencia":4.0,"promedio":0.6666666666666666,"valores":4.0},"animales":{"tendencia":0.0,"promedio":0.0,"valores":0.0}},"explotacio":null,"nombre_explotacio":null,"periodo":{"inicio":"2024-04-07","fin":"2025-04-07"}}
+Test de resumen completado con éxito.
+PASSED [ 90%]
+new_tests/dashboard/test_dashboard_resumen.py::test_get_dashboard_resumen_with_filter 
+Probando obtener resumen filtrado por explotación: Test: http://localhost:8000/api/v1/dashboard/resumen/?explotacio=Test
+Código de estado: 200
+Test de resumen filtrado completado con éxito.
+PASSED [ 93%]
+new_tests/dashboard/test_dashboard_resumen.py::test_get_dashboard_resumen_by_date 
+Probando obtener resumen filtrado por fechas de 2025-03-08 a 2025-04-07: http://localhost:8000/api/v1/dashboard/resumen/?start_date=2025-03-08&end_date=2025-04-07
+Código de estado: 200
+Test de resumen filtrado por fechas completado con éxito.
+PASSED [ 96%]
+new_tests/dashboard/test_dashboard_resumen.py::test_get_dashboard_resumen_unauthorized 
+Probando acceso no autorizado a resumen: http://localhost:8000/api/v1/dashboard/resumen/
+Código de estado: 401
+Test de acceso no autorizado completado con éxito.
+PASSED [100%]
+
+================================== FAILURES ===================================
+_____________________ test_explotacio_fields_nomenclature _____________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOH0.EgdUdfY6WAWC_a6Z-fXbUUNo5qgiA2WcuGEd289e7Uc'}
+
+    @pytest.mark.asyncio
+    async def test_explotacio_fields_nomenclature(test_token):
+        """
+        Prueba para verificar la nomenclatura de campos en el modelo de explotación.
+    
+        REGLA DE NEGOCIO DOCUMENTADA:
+        - 'explotacio' es el único identificador/código válido para la explotación (string)
+        - 'id' es un campo técnico generado automáticamente por la base de datos
+        - NO debe existir campo 'nom' (solo para animales)
+        - NO debe existir campo 'activa' (no está en las reglas de negocio)
+        """
+        url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+    
+        print(f"\n=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===")
+        print(f"Obteniendo lista de explotaciones: {url}")
+    
+        response = requests.get(url, headers=test_token)
+        assert response.status_code == 200, f"Error al obtener explotaciones: {response.status_code} - {response.text}"
+    
+        explotaciones = response.json()
+        assert isinstance(explotaciones, list), f"Se esperaba una lista de explotaciones, se obtuvo: {type(explotaciones)}"
+        print(f"Se encontraron {len(explotaciones)} explotaciones")
+    
+        if not explotaciones:
+            pytest.skip("No hay explotaciones para verificar")
+    
+        # Verificar que cada explotación tiene los campos esperados según las reglas de negocio
+        for explotacion in explotaciones:
+            # Debe tener campo explotacio como identificador principal
+            assert "explotacio" in explotacion, f"Falta el campo 'explotacio' en: {explotacion}"
+    
+            # No debe tener campo 'id' (ya que ahora explotacio es el identificador principal)
+            # El 'id' técnico se ha eliminado como parte de la refactorización
+    
+            # No debe tener campo 'nom' (reservado para animales)
+            assert "nom" not in explotacion, f"El campo 'nom' no debe existir en explotaciones: {explotacion}"
+    
+            # NO debe tener campo 'activa' (no está en las reglas de negocio)
+            assert "activa" not in explotacion, f"El campo 'activa' no debe existir en explotaciones: {explotacion}"
+    
+        print("\n=== RESULTADO: NOMENCLATURA DE CAMPOS CORRECTA ===")
+>       print(f"\u2713 Campo 'explotacio' presente y es de tipo string: {explotaciones[0]['explotacio']}")
+
+new_tests\dashboard\test_dashboard_explotacio_detail.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = "\u2713 Campo 'explotacio' presente y es de tipo string: Test", final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== VERIFICACI\xd3N DE NOMENCLATURA DE CAMPOS ===\nObteniendo lista de explotaciones: http://localhost:8000/api/v1/dashboard/explotacions/\nSe encontraron 3 explotaciones\n\n=== RESULTADO: NOMENCLATURA DE CAMPOS CORRECTA ===\n\u2713 Campo 'explotacio' presente y es de tipo string: Test
+____________________________ test_explotacio_stats ____________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOH0.EgdUdfY6WAWC_a6Z-fXbUUNo5qgiA2WcuGEd289e7Uc'}
+
+    @pytest.mark.asyncio
+    async def test_explotacio_stats(test_token):
+        """
+        Prueba para verificar que las estadísticas de explotación funcionan correctamente.
+        Utiliza el primer ID de explotación disponible para obtener sus estadísticas.
+    
+        ESTRUCTURA ESPERADA:
+        - La respuesta debe contener estadísticas básicas sobre animales, partos, etc.
+        - Documentar la estructura actual para futuras referencias.
+        """
+        # Primero obtenemos una explotación para usar su código
+        url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        response = requests.get(url_explotacions, headers=test_token)
+        assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Tomar la primera explotación para la prueba
+        explotacion = explotaciones[0]
+        explotacio_value = explotacion["explotacio"]
+    
+        # Obtener estadísticas de esta explotación
+        stats_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
+        stats_response = requests.get(stats_url, headers=test_token)
+    
+        assert stats_response.status_code == 200, f"Error al obtener estadísticas: {stats_response.status_code} - {stats_response.text}"
+    
+        stats = stats_response.json()
+        print(f"Estadísticas recibidas correctamente")
+        print(f"Campos en la respuesta: {', '.join(stats.keys())}")
+    
+        # Verificar que las estadísticas contengan información básica
+        assert 'animales' in stats, "No se encontró 'animales' en las estadísticas"
+    
+        # Documentar estructura para referencia futura
+        print("\nEstructura de la respuesta de estadísticas:")
+        for key, value in stats.items():
+            if isinstance(value, dict):
+                sub_keys = ", ".join(value.keys())
+                print(f"  - {key}: {{{sub_keys}}}")
+                # Para mayor detalle, mostrar también algunos valores de muestra del diccionario
+                for sub_key, sub_value in value.items():
+                    print(f"    > {sub_key}: {sub_value}")
+            elif isinstance(value, list):
+                print(f"  - {key}: [lista con {len(value)} elementos]")
+                if len(value) > 0:
+                    item = value[0]
+                    if isinstance(item, dict):
+                        print(f"    > Ejemplo (primer elemento): {item}")
+                    else:
+                        print(f"    > Ejemplo (primeros 3 elementos): {value[:3]}")
+            else:
+                print(f"  - {key}: {value} ({type(value).__name__})")
+    
+        print("\nDATO COMPLETO DE ESTADÍSTICAS:")
+        print(json.dumps(stats, indent=2, ensure_ascii=False))
+    
+>       print("\u2705 Prueba de estad\xedsticas completada exitosamente")
+
+new_tests\dashboard\test_dashboard_explotacio_detail.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Prueba de estad\xedsticas completada exitosamente', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+Estad\xedsticas recibidas correctamente\nCampos en la respuesta: explotacio, explotacion, periodo, animales, partos\n\nEstructura de la respuesta de estad\xedsticas:\n  - explotacio: Test (str)\n  - explotacion: {explotacio, nombre}\n    > explotacio: Test\n    > nombre: Test\n  - periodo: {inicio, fin, dias}\n    > inicio: 2024-04-07\n    > fin: 2025-04-07\n    > dias: 365\n  - animales: {total, machos, hembras, ratio_m_h, por_estado, por_alletar, por_quadra, por_edad, terneros}\n    > total: 5\n    > machos: 0\n    > hembras: 5\n    > ratio_m_h: 0.0\n    > por_estado: {'OK': 5, 'DEF': 0}\n    > por_alletar: {'0': 5, '1': 0, '2': 0}\n    > por_quadra: {}\n    > por_edad: {'menos_1_a\xf1o': 0, '1_2_a\xf1os': 0, '2_5_a\xf1os': 0, 'mas_5_a\xf1os': 0}\n    > terneros: 0\n  - partos: {total, ultimo_mes, ultimo_a\xf1o, promedio_mensual, por_mes}\n    > total: 4\n    > ultimo_mes: 4\n    > ultimo_a\xf1o: 4\n    > promedio_mensual: 0.33\n    > por_mes: {'2024-04': 0, '2024-05': 0, '2024-06': 0, '2024-07': 0, '2024-08': 0, '2024-09': 0, '2024-10': 0, '2024-11': 0, '2024-12': 0, '2025-01': 0, '2025-02': 0, '2025-03': 0, '2025-04': 4}\n\nDATO COMPLETO DE ESTAD\xcdSTICAS:\n{\n  "explotacio": "Test",\n  "explotacion": {\n    "explotacio": "Test",\n    "nombre": "Test"\n  },\n  "periodo": {\n    "inicio": "2024-04-07",\n    "fin": "2025-04-07",\n    "dias": 365\n  },\n  "animales": {\n    "total": 5,\n    "machos": 0,\n    "hembras": 5,\n    "ratio_m_h": 0.0,\n    "por_estado": {\n      "OK": 5,\n      "DEF": 0\n    },\n    "por_alletar": {\n      "0": 5,\n      "1": 0,\n      "2": 0\n    },\n    "por_quadra": {},\n    "por_edad": {\n      "menos_1_a\xf1o": 0,\n      "1_2_a\xf1os": 0,\n      "2_5_a\xf1os": 0,\n      "mas_5_a\xf1os": 0\n    },\n    "terneros": 0\n  },\n  "partos": {\n    "total": 4,\n    "ultimo_mes": 4,\n    "ultimo_a\xf1o": 4,\n    "promedio_mensual": 0.33,\n    "por_mes": {\n      "2024-04": 0,\n      "2024-05": 0,\n      "2024-06": 0,\n      "2024-07": 0,\n      "2024-08": 0,\n      "2024-09": 0,\n      "2024-10": 0,\n      "2024-11": 0,\n      "2024-12": 0,\n      "2025-01": 0,\n      "2025-02": 0,\n      "2025-03": 0,\n      "2025-04": 4\n    }\n  }\n}\n\u2705 Prueba de estad\xedsticas completada exitosamente
+___________________________ test_explotacio_animals ___________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOH0.EgdUdfY6WAWC_a6Z-fXbUUNo5qgiA2WcuGEd289e7Uc'}
+
+    @pytest.mark.asyncio
+    async def test_explotacio_animals(test_token):
+        """
+        Prueba para verificar que se pueden obtener los animales de una explotación específica
+        y que los campos de los animales siguen las convenciones de nomenclatura correctas.
+    
+        REGLAS DE NEGOCIO PARA ANIMALES:
+        - 'nom' es el nombre del animal
+        - 'explotacio' es el identificador de la explotación a la que pertenece
+        - 'genere' indica el género del animal (M=toro, F=vaca)
+        - 'estado' indica si el animal está activo (OK) o fallecido (DEF)
+        """
+        # Primero obtenemos una explotación para usar su código
+        url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        response = requests.get(url_explotacions, headers=test_token)
+        assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Tomar la primera explotación para la prueba
+        explotacion = explotaciones[0]
+        explotacio_value = explotacion["explotacio"]
+    
+        # Primero necesitamos obtener todos los animales y luego filtrar por explotación
+        # ya que el endpoint específico para animales por explotación no está disponible
+        print(f"\n=== PRUEBA DE OBTENCIÓN DE ANIMALES POR EXPLOTACIÓN ===")
+        print(f"Consultando animales para explotación con ID: {explotacio_value}")
+        print(f"Datos de la explotación: {explotacion}")
+    
+        animals_url = f"{BASE_URL}api/v1/animals/?explotacio={explotacio_value}"
+        animals_response = requests.get(animals_url, headers=test_token)
+    
+        assert animals_response.status_code == 200, f"Error al obtener animales: {animals_response.status_code} - {animals_response.text}"
+    
+        try:
+            animals_data = animals_response.json()
+            print(f"Tipo de respuesta de animales: {type(animals_data)}")
+    
+            # Mostrar la estructura de la respuesta
+            print("\nEstructura de respuesta recibida:")
+            if isinstance(animals_data, dict):
+                print("Es un diccionario, claves disponibles:", ", ".join(animals_data.keys()))
+            elif isinstance(animals_data, list):
+                print("Es una lista con", len(animals_data), "elementos")
+            else:
+                print("Tipo de datos inesperado:", type(animals_data))
+    
+            # Determinar la estructura de la respuesta
+            if isinstance(animals_data, list):
+                animals = animals_data
+            elif isinstance(animals_data, dict) and "animals" in animals_data:
+                animals = animals_data["animals"]
+            else:
+                # Si la respuesta tiene otra estructura, mostramos más información
+>               print("\u26a0\ufe0f Estructura de respuesta inesperada para animales")
+
+new_tests\dashboard\test_dashboard_explotacio_detail.py:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u26a0\ufe0f Estructura de respuesta inesperada para animales', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode characters in position 0-1: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== PRUEBA DE OBTENCI\xd3N DE ANIMALES POR EXPLOTACI\xd3N ===\nConsultando animales para explotaci\xf3n con ID: Test\nDatos de la explotaci\xf3n: {'explotacio': 'Test'}\nTipo de respuesta de animales: <class 'dict'>\n\nEstructura de respuesta recibida:\nEs un diccionario, claves disponibles: status, data\n\u26a0\ufe0f Estructura de respuesta inesperada para animales
+____________________________ test_global_dashboard ____________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOX0.9dr1bS4B9RaWdXFlXVkXizfVKIoULMYXVCs5G5pwyO0'}
+
+    @pytest.mark.asyncio
+    async def test_global_dashboard(test_token):
+        """
+        Prueba para obtener el resumen global del dashboard.
+        """
+        print("\n=== RESUMEN GLOBAL ===")
+        resumen_url = f"{BASE_URL}api/v1/dashboard/stats"
+        response = requests.get(resumen_url, headers=test_token)
+    
+        assert response.status_code == 200, f"Error al obtener resumen global: {response.status_code} - {response.text}"
+    
+        resumen = response.json()
+        # Verificar estructura mínima esperada
+        assert 'animales' in resumen, "El resumen no contiene estadísticas de animales"
+    
+>       print("\u2705 Resumen global obtenido correctamente")
+
+new_tests\dashboard\test_dashboard_explotacio_filter.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Resumen global obtenido correctamente', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== RESUMEN GLOBAL ===\n\u2705 Resumen global obtenido correctamente
+___________________________ test_filtered_dashboard ___________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOX0.9dr1bS4B9RaWdXFlXVkXizfVKIoULMYXVCs5G5pwyO0'}
+
+    @pytest.mark.asyncio
+    async def test_filtered_dashboard(test_token):
+        """
+        Prueba para obtener el dashboard filtrado por explotación.
+        """
+        # Obtener lista de explotaciones para usar un código real
+        explotacions_url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        exp_response = requests.get(explotacions_url, headers=test_token)
+        assert exp_response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = exp_response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Extraer código de explotación
+        explotacio_value = explotaciones[0]['explotacio']
+    
+        # Endpoint para estadísticas por explotación
+        dashboard_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
+        response = requests.get(dashboard_url, headers=test_token)
+    
+        assert response.status_code == 200, f"Error al obtener resumen filtrado: {response.status_code} - {response.text}"
+    
+        data = response.json()
+        # Verificar estructura mínima esperada
+        assert 'animales' in data, "El resumen filtrado no contiene estadísticas de animales"
+        # Verificar que los datos estén filtrados por la explotación correcta
+        assert 'explotacio' in data, "Código de explotación no encontrado"
+        assert data['explotacio'] == explotacio_value, f"Código incorrecto: {data['explotacio']} != {explotacio_value}"
+    
+>       print("\u2705 Resumen filtrado obtenido correctamente")
+
+new_tests\dashboard\test_dashboard_explotacio_filter.py:102: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Resumen filtrado obtenido correctamente', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\u2705 Resumen filtrado obtenido correctamente
+_______________________ test_combined_dashboard_filter ________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOX0.9dr1bS4B9RaWdXFlXVkXizfVKIoULMYXVCs5G5pwyO0'}
+
+    @pytest.mark.asyncio
+    async def test_combined_dashboard_filter(test_token):
+        """
+        Prueba para verificar el filtrado en el endpoint combinado.
+        """
+        # Obtener lista de explotaciones para usar un código real
+        explotacions_url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        exp_response = requests.get(explotacions_url, headers=test_token)
+        assert exp_response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = exp_response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Extraer código de explotación
+        explotacio_value = explotaciones[0]['explotacio']
+    
+        print(f"\n=== DASHBOARD COMBINADO FILTRADO POR EXPLOTACIÓN: {explotacio_value} ===")
+        combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio={explotacio_value}"
+        combined_response = requests.get(combined_url, headers=test_token)
+    
+        assert combined_response.status_code == 200, f"Error al obtener dashboard combinado: {combined_response.status_code} - {combined_response.text}"
+    
+        combined_data = combined_response.json()
+        assert 'animales' in combined_data, "No se encontró 'animales' en el dashboard combinado"
+        assert 'partos' in combined_data, "No se encontró 'partos' en el dashboard combinado"
+        assert 'explotacio' in combined_data, "No se encontró 'explotacio' en el dashboard combinado"
+    
+>       print("\u2705 Dashboard combinado filtrado obtenido correctamente")
+
+new_tests\dashboard\test_dashboard_explotacio_filter.py:148: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Dashboard combinado filtrado obtenido correctamente', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== DASHBOARD COMBINADO FILTRADO POR EXPLOTACI\xd3N: Test ===\n\u2705 Dashboard combinado filtrado obtenido correctamente
+_____________________ test_explotacio_fields_nomenclature _____________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOX0.9dr1bS4B9RaWdXFlXVkXizfVKIoULMYXVCs5G5pwyO0'}
+
+    @pytest.mark.asyncio
+    async def test_explotacio_fields_nomenclature(test_token):
+        """
+        Prueba para verificar la nomenclatura correcta de campos en el modelo de explotación.
+    
+        IMPORTANTE: Reglas de nomenclatura en el sistema:
+        - 'descripcion' es el nombre de la explotación (distinto del campo 'explotacio')
+        - 'explotacio' es un identificador/código de explotación (puede ser null)
+        - 'id' es un campo técnico generado automáticamente por la base de datos
+        - 'nom' NO debe usarse en explotaciones, solo en animales
+        """
+        url = f"{BASE_URL}api/v1/dashboard/explotacions/"
+    
+        print(f"\n=== VERIFICACIÓN DE NOMENCLATURA DE CAMPOS ===")
+        print(f"Obteniendo lista de explotaciones: {url}")
+    
+        response = requests.get(url, headers=test_token)
+        assert response.status_code == 200, f"Error al obtener explotaciones: {response.status_code} - {response.text}"
+    
+        explotaciones = response.json()
+        print(f"Total explotaciones: {len(explotaciones)}")
+    
+        # Verificar el primer registro para comprobar los nombres de campo
+        if explotaciones:
+            first_exp = explotaciones[0]
+            assert 'explotacio' in first_exp, "Campo 'explotacio' no encontrado en la primera explotación"
+            # El campo se llama 'explotacio', no 'explotacion' en la API actual
+            # assert 'explotacion' in first_exp, "Campo 'explotacion' no encontrado en la primera explotación"
+    
+            # Verificar que NO exista el campo 'id' ni el campo 'nom'
+            assert 'id' not in first_exp, "El campo 'id' existe en explotaciones (eliminado en la nueva estructura)"
+            assert 'nom' not in first_exp, "El campo 'nom' existe en explotaciones (debe evitarse)"
+    
+            print("\n=== DATOS DE LA PRIMERA EXPLOTACIÓN ===")
+            print(json.dumps(first_exp, indent=2))
+    
+            # Verificar tipos de datos
+            assert isinstance(first_exp['explotacio'], str), f"Campo 'explotacio' no es string: {type(first_exp['explotacio'])}"
+    
+>       print("\u2705 Verificación de campos exitosa: 'explotacio' está presente y 'id' y 'nom' no lo están")
+
+new_tests\dashboard\test_dashboard_explotacio_general.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = "\u2705 Verificaci\xf3n de campos exitosa: 'explotacio' est\xe1 presente y 'id' y 'nom' no lo est\xe1n"
+final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== VERIFICACI\xd3N DE NOMENCLATURA DE CAMPOS ===\nObteniendo lista de explotaciones: http://localhost:8000/api/v1/dashboard/explotacions/\nTotal explotaciones: 3\n\n=== DATOS DE LA PRIMERA EXPLOTACI\xd3N ===\n{\n  "explotacio": "Test"\n}\n\u2705 Verificaci\xf3n de campos exitosa: 'explotacio' est\xe1 presente y 'id' y 'nom' no lo est\xe1n
+_______________________ test_explotacio_stats_endpoint ________________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMwOX0.9dr1bS4B9RaWdXFlXVkXizfVKIoULMYXVCs5G5pwyO0'}
+
+    @pytest.mark.asyncio
+    async def test_explotacio_stats_endpoint(test_token):
+        """
+        Prueba para verificar que las estadísticas de explotación funcionan correctamente.
+        Utiliza el primer ID de explotación disponible para obtener sus estadísticas.
+        """
+        # Obtener una explotación para probar
+        url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        response = requests.get(url_explotacions, headers=test_token)
+        assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Usar la primera explotación para la prueba
+        explotacion = explotaciones[0]
+        explotacio_value = explotacion['explotacio']
+        explotacion_nombre = explotacio_value  # Usamos el código como nombre ya que no hay campo explotacion
+    
+        print(f"\n=== PROBANDO ESTADÍSTICAS PARA EXPLOTACIÓN: {explotacio_value} ({explotacion_nombre}) ===")
+    
+        # Endpoint para estadísticas de explotación
+        stats_url = f"{BASE_URL}api/v1/dashboard/explotacions/{explotacio_value}/stats"
+        stats_response = requests.get(stats_url, headers=test_token)
+    
+        assert stats_response.status_code == 200, f"Error al obtener estadísticas: {stats_response.status_code} - {stats_response.text}"
+    
+        stats = stats_response.json()
+        print(f"Estadísticas recibidas correctamente")
+    
+        # Verificar que las estadísticas contengan información básica
+        assert 'animales' in stats, "No se encontró 'animales' en las estadísticas"
+    
+>       print("\u2705 Prueba de endpoint de estad\xedsticas completada exitosamente")
+
+new_tests\dashboard\test_dashboard_explotacio_general.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Prueba de endpoint de estad\xedsticas completada exitosamente'
+final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== PROBANDO ESTAD\xcdSTICAS PARA EXPLOTACI\xd3N: Test (Test) ===\nEstad\xedsticas recibidas correctamente\n\u2705 Prueba de endpoint de estad\xedsticas completada exitosamente
+___________________ test_combined_dashboard_with_explotacio ___________________
+
+test_token = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJVc2VyUm9sZS5BRE1JTiIsImV4cCI6MTc0NDA0NzMxMH0.8Yj-zdGvIQVeWPSaohQvBoZgMt8weOHM2mb_711aO2Q'}
+
+    @pytest.mark.asyncio
+    async def test_combined_dashboard_with_explotacio(test_token):
+        """
+        Prueba para verificar que el endpoint combinado funciona con filtro de explotación.
+        """
+        # Obtener una explotación para probar
+        url_explotacions = f"{BASE_URL}api/v1/dashboard/explotacions/"
+        response = requests.get(url_explotacions, headers=test_token)
+        assert response.status_code == 200, "No se pudieron obtener explotaciones"
+    
+        explotaciones = response.json()
+        assert len(explotaciones) > 0, "No hay explotaciones disponibles para probar"
+    
+        # Usar la primera explotación para la prueba
+        explotacion = explotaciones[0]
+        explotacio_value = explotacion['explotacio']
+        explotacion_nombre = explotacio_value  # Usamos el código como nombre ya que no hay campo explotacion
+    
+        print(f"\n=== PROBANDO DASHBOARD COMBINADO PARA EXPLOTACIÓN: {explotacio_value} ({explotacion_nombre}) ===")
+    
+        # Endpoint combinado de dashboard con filtro por explotación
+        combined_url = f"{BASE_URL}api/v1/dashboard/combined?explotacio={explotacio_value}"
+        combined_response = requests.get(combined_url, headers=test_token)
+    
+        assert combined_response.status_code == 200, f"Error al obtener dashboard combinado: {combined_response.status_code} - {combined_response.text}"
+    
+        combined_data = combined_response.json()
+        print(f"Dashboard combinado recibido correctamente")
+    
+        # Verificar estructura básica
+        assert 'animales' in combined_data, "No se encontró 'animales' en el dashboard combinado"
+        assert 'partos' in combined_data, "No se encontró 'partos' en el dashboard combinado"
+        assert 'explotacio' in combined_data, "No se encontró 'explotacio' en el dashboard combinado"
+    
+>       print("\u2705 Prueba de dashboard combinado completada exitosamente")
+
+new_tests\dashboard\test_dashboard_explotacio_general.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\site-packages\_pytest\capture.py:199: in write
+    return self._other.write(s)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalEncoder object at 0x0000013E09BE6F90>
+input = '\u2705 Prueba de dashboard combinado completada exitosamente', final = False
+
+    def encode(self, input, final=False):
+>       return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+E       UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+C:\Users\Usuario\anaconda3\envs\masclet-imperi\Lib\encodings\cp1252.py:19: UnicodeEncodeError
+---------------------------- Captured stdout call -----------------------------
+\n=== PROBANDO DASHBOARD COMBINADO PARA EXPLOTACI\xd3N: Test (Test) ===\nDashboard combinado recibido correctamente\n\u2705 Prueba de dashboard combinado completada exitosamente
+=========================== short test summary info ===========================
+FAILED new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_fields_nomenclature
+FAILED new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_stats
+FAILED new_tests/dashboard/test_dashboard_explotacio_detail.py::test_explotacio_animals
+FAILED new_tests/dashboard/test_dashboard_explotacio_filter.py::test_global_dashboard
+FAILED new_tests/dashboard/test_dashboard_explotacio_filter.py::test_filtered_dashboard
+FAILED new_tests/dashboard/test_dashboard_explotacio_filter.py::test_combined_dashboard_filter
+FAILED new_tests/dashboard/test_dashboard_explotacio_general.py::test_explotacio_fields_nomenclature
+FAILED new_tests/dashboard/test_dashboard_explotacio_general.py::test_explotacio_stats_endpoint
+FAILED new_tests/dashboard/test_dashboard_explotacio_general.py::test_combined_dashboard_with_explotacio
+======================== 9 failed, 21 passed in 5.02s =========================

@@ -1,0 +1,219 @@
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Response, Request
+import pandas as pd
+import numpy as np
+from typing import List, Dict, Optional, Any, Union
+from datetime import datetime
+import logging
+from io import StringIO
+import json
+import io
+import traceback
+from fastapi.responses import JSONResponse, PlainTextResponse
+
+# Modelos y enums
+from app.models.animal import Animal
+from app.models.parto import Part
+from app.models.enums import Genere, Estat
+
+# Configuración
+from app.core.config import settings
+from app.core.messages import MessageResponse
+
+# Configuración de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+REQUIRED_COLUMNS = [
+    'Alletar', 'explotació', 'NOM', 'Genere', 'Pare', 'Mare', 
+    'Quadra', 'COD', 'Nº Serie', 'DOB', 'Estado', 'part', 
+    'GenereT', 'EstadoT'
+]
+
+async def parse_date(date_str: str) -> datetime.date:
+    """Parsea diferentes formatos de fecha"""
+    if not date_str or pd.isna(date_str):
+        return None
+    try:
+        # Formato normal: dd/mm/yyyy
+        if "/" in date_str:
+            return datetime.strptime(date_str, "%d/%m/%Y").date()
+        # Formato especial: (28.11.19)
+        if "." in date_str:
+            clean_str = date_str.strip("()").replace(".", "/")
+            if len(clean_str.split("/")[2]) == 2:
+                clean_str = clean_str[:-2] + "20" + clean_str[-2:]
+            return datetime.strptime(clean_str, "%d/%m/%Y").date()
+        return None
+    except Exception as e:
+        logging.error(f"Error parsing date {date_str}: {e}")
+        return None
+
+def clean_cod(cod: str) -> str:
+    """Limpia y formatea el código"""
+    if not cod or pd.isna(cod):
+        return None
+    try:
+        # Convertir a entero y asegurar 4 dígitos
+        num = int(float(cod))
+        return f"{num:04d}"
+    except:
+        return None
+
+def clean_num_serie(num: str) -> str:
+    """Limpia y formatea el número de serie"""
+    if pd.isna(num) or not num:
+        return None
+    cleaned = str(num).upper().strip()
+    if not cleaned.startswith('ES'):
+        cleaned = f"ES{cleaned}"
+    return cleaned
+
+def clean_alletar(value: str) -> bool:
+    """Flexibiliza la interpretación de alletar"""
+    if pd.isna(value) or not value:
+        return False
+    return str(value).lower().strip() in ['si', 'yes', '1', 'true', 'ok']
+
+def clean_genere(genere: str) -> str:
+    """Limpia y normaliza el género"""
+    if not genere or pd.isna(genere):
+        return Genere.FEMELLA
+    return Genere.MASCLE if genere.upper().startswith('M') else Genere.FEMELLA
+
+def clean_estat(estat: str) -> str:
+    """Limpia y normaliza el estado"""
+    if not estat or pd.isna(estat):
+        return Estat.OK
+    return Estat.DEF if estat.upper() == 'DEF' else Estat.OK
+
+def validate_row(row: dict) -> List[str]:
+    """Valida una fila del CSV - más permisivo"""
+    warnings = []
+    
+    if pd.notna(row['Genere']) and row['Genere'].upper() not in ['M', 'F']:
+        warnings.append(f"Género ajustado: {row['Genere']} -> F")
+    if pd.notna(row['Estado']) and row['Estado'].upper() not in ['OK', 'DEF']:
+        warnings.append(f"Estado ajustado: {row['Estado']} -> OK")
+    if pd.notna(row['Nº Serie']) and len(str(row['Nº Serie'])) > 20:
+        warnings.append(f"Nº Serie truncado a 20 caracteres: {row['Nº Serie']}")
+    
+    return warnings
+
+def clean_field(value: any) -> Optional[str]:
+    """Limpia y valida un campo, retorna None si está vacío"""
+    if pd.isna(value) or value in ['', '#N/A', 'nan', 'NaN', 'NULL']:
+        return None
+    return str(value).strip()
+
+# Función auxiliar para manejar valores no serializables en JSON
+def json_serializable(obj):
+    """Convierte objetos que no son serializables JSON a tipos que sí lo son"""
+    if isinstance(obj, (np.integer)):
+        return int(obj)
+    elif isinstance(obj, (np.floating)):
+        return float(obj) if not np.isnan(obj) and not np.isinf(obj) else None
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    elif pd.isna(obj):
+        return None
+    return str(obj)
+
+@router.post("/preview", response_class=PlainTextResponse)
+async def preview_import(file: UploadFile = File(...)):
+    """
+    Preview CSV import - simple endpoint for checking CSV content
+    """
+    try:
+        # Leer el archivo
+        content = await file.read()
+        
+        # Intentar decodificar con utf-8 primero
+        try:
+            df = pd.read_csv(StringIO(content.decode('utf-8')), dtype=str)
+            df = df.fillna('')
+        except UnicodeDecodeError:
+            # Si falla, intentar con latin-1
+            try:
+                df = pd.read_csv(StringIO(content.decode('latin-1')), dtype=str)
+                df = df.fillna('')
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error de decodificación: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error al procesar CSV: {str(e)}")
+        
+        # Crear respuesta
+        results = {
+            "message": "Archivo leído correctamente",
+            "rows": len(df),
+            "columns": len(df.columns),
+            "column_names": df.columns.tolist(),
+            "preview_rows": df.head(5).to_dict(orient="records")
+        }
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error general en preview_import")
+        raise HTTPException(status_code=500, detail=f"Error general: {str(e)}")
+
+@router.post("/import/csv")
+async def import_csv(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    """
+    Importa datos desde CSV manteniendo la estructura original
+    Args:
+        background_tasks: Para tareas en segundo plano
+        file: Archivo CSV a importar
+    """
+    try:
+        contents = await file.read()
+        df = pd.read_csv(
+            StringIO(contents.decode('utf-8')),  # Cambiado de io.StringIO
+            sep=',',  # Cambiado de ';' según el formato de los archivos de prueba
+            na_values=['', '#N/A', 'nan', 'NaN', 'NULL'],
+            keep_default_na=False,
+            dtype={
+                'NOM': str,
+                'explotació': str,
+                'Genere': str,
+                'Alletar': str,
+                'Pare': str,
+                'Mare': str,
+                'Quadra': str,
+                'COD': str,
+                'Nº Serie': str,
+                'DOB': str,
+                'Estado': str,
+                'part': str,
+                'GenereT': str,
+                'EstadoT': str
+            }
+        )
+        
+        # Implementación pendiente para procesar en segundo plano
+        
+        return {
+            "message": "Importación iniciada correctamente",
+            "type": "success",
+            "data": {
+                "total_rows": len(df),
+                "status": "processing"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error importing file: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {
+            "message": f"Error importing file: {str(e)}",
+            "type": "error",
+            "data": {"detail": str(e)}
+        }

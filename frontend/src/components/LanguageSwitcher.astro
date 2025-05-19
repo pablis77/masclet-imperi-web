@@ -1,0 +1,43 @@
+---
+// Importamos las funciones de idioma que creamos
+import { getCurrentLanguage, setLanguage, supportedLanguages } from '../i18n/config';
+---
+
+<div class="language-switcher">
+  <select
+    id="language-selector"
+    class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white rounded py-1 px-2 text-sm"
+  >
+    <option value="es" selected={getCurrentLanguage() === 'es'}>Español</option>
+    <option value="ca" selected={getCurrentLanguage() === 'ca'}>Català</option>
+  </select>
+</div>
+
+<script>
+  // Script para manejar el cambio de idioma
+  document.addEventListener('DOMContentLoaded', () => {
+    const selector = document.getElementById('language-selector');
+    
+    if (selector) {
+      // Establecer el valor inicial desde localStorage
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      selector.value = currentLang;
+      
+      // Escuchar cambios en el selector
+      selector.addEventListener('change', () => {
+        const newLang = selector.value;
+        localStorage.setItem('userLanguage', newLang);
+        
+        // Recargar la página para aplicar el nuevo idioma
+        window.location.reload();
+      });
+    }
+  });
+</script>
+
+<style>
+  .language-switcher {
+    display: inline-block;
+    margin-left: 1rem;
+  }
+</style>

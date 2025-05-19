@@ -1,0 +1,40 @@
+---
+// Importar el layout y componentes necesarios
+import MainLayout from '../components/layout/MainLayout.astro';
+// Importar Dashboard2 directamente sin usar el index.ts
+import Dashboard2 from '../components/dashboard/Dashboard2';
+
+// No verificamos autenticación en desarrollo - siempre permitir acceso
+const userRole = 'administrador';
+
+// Título para la página
+const title = 'Dashboard (Versión Directa)';
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/dashboard-direct">
+  <div class="bg-blue-100 p-4 mb-6 rounded-lg border border-blue-300">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">⚠️ Versión Directa del Dashboard</h2>
+    <p class="text-blue-700">
+      Esta es una implementación directa del dashboard que importa el componente sin usar el archivo index.ts.
+      Esto debería resolver los problemas de hidratación.
+    </p>
+  </div>
+
+  <!-- Componente React del Dashboard - Renderizado solo en el cliente para evitar errores de hidratación -->
+  <Dashboard2 client:only="react" />
+</MainLayout>
+
+<script>
+  // Script para verificar que el componente se está cargando correctamente
+  console.log('🔍 Página dashboard-direct.astro cargada');
+  
+  // Verificar después de 2 segundos si el componente React se ha montado
+  setTimeout(() => {
+    const dashboardElement = document.querySelector('.container');
+    if (dashboardElement) {
+      console.log('✅ Componente Dashboard2 montado correctamente en dashboard-direct');
+    } else {
+      console.log('❌ Componente Dashboard2 no se ha montado en dashboard-direct');
+    }
+  }, 2000);
+</script>

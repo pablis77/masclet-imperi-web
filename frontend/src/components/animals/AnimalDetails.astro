@@ -1,0 +1,89 @@
+---
+// AnimalDetails.astro - Componente para mostrar los detalles básicos del animal
+export interface Props {
+  animal: any;
+  id: string | number;
+}
+
+const { animal, id } = Astro.props;
+
+// Determinar el icono y la clase de estado
+const icon = animal.genere === 'M' ? '🐂' : '🐄';
+const estadoClass = (animal.estado || animal.estat) === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+---
+
+<!-- Resumen del animal -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+  <div class="flex flex-col md:flex-row gap-6">
+    <!-- Icono y estado -->
+    <div class="flex flex-col items-center md:items-start">
+      <div class="text-6xl mb-3">{icon}</div>
+      <span class={`px-3 py-1 rounded-full ${estadoClass} text-sm font-medium`}>
+        {(animal.estado || animal.estat) === 'OK' ? 'Activo' : 'Baja'}
+      </span>
+    </div>
+    
+    <!-- Información básica -->
+    <div class="flex-grow">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom}</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Código</p>
+          <p class="font-medium">{animal.cod || 'No disponible'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+          <p class="font-medium">{animal.genere === 'M' ? 'Macho' : 'Hembra'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Fecha de nacimiento</p>
+          <p class="font-medium">
+            {(() => {
+              if (!animal.dob) return 'No disponible';
+              
+              // Si ya está en formato DD/MM/YYYY, devolverlo tal cual
+              if (typeof animal.dob === 'string' && /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.test(animal.dob)) {
+                return animal.dob;
+              }
+              
+              // Si está en formato YYYY-MM-DD, convertirla a DD/MM/YYYY
+              if (typeof animal.dob === 'string' && /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.test(animal.dob)) {
+                const match = animal.dob.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/);
+                if (match) {
+                  return `${match[3]}/${match[2]}/${match[1]}`;
+                }
+              }
+              
+              return animal.dob;
+            })()}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Explotación</p>
+          <p class="font-medium">{animal.explotacio || 'No disponible'}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Origen</p>
+          <p class="font-medium">{animal.quadra || 'No asignada'}</p>
+        </div>
+        {animal.genere === 'F' && (
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Estado amamantamiento</p>
+            <p class="font-medium">
+              {animal.alletar === '0' ? 'No amamanta' : 
+                animal.alletar === '1' ? 'Amamanta un ternero' : 
+                animal.alletar === '2' ? 'Amamanta dos terneros' : 'No disponible'}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="flex flex-col gap-2">
+      <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+        ↻ Actualizar
+      </a>
+    </div>
+  </div>
+</div>

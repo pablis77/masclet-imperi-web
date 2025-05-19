@@ -1,0 +1,5 @@
+nom;genere;estado;explotacio;part;GenereT;EstadoT
+Test_0252e6_F_Parto1;F;OK;ExplotTest;01/01/2023;M;OK
+Test_0252e6_F_Parto2;F;OK;ExplotTest;02/02/2023;F;OK
+Test_0252e6_F_Parto3;F;OK;ExplotTest;03/03/2023;F;DEF
+Test_0252e6_M_NoParto;M;OK;ExplotTest;01/01/2023;M;OK

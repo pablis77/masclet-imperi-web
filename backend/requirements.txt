@@ -1,0 +1,23 @@
+fastapi>=0.85.0
+uvicorn>=0.15.0
+sqlalchemy==2.0.23
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+email-validator>=2.0.0  # Añadimos esta línea
+psycopg2-binary==2.9.9
+alembic==1.12.1
+python-dotenv==1.0.0
+tortoise-orm[asyncpg]>=0.19.0
+aerich>=0.7.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0
+cryptography==41.0.7
+python-multipart>=0.0.5
+tomlkit==0.12.3
+tomli-w==1.0.0
+reportlab==4.0.9
+pandas>=2.0.0
+numpy>=1.20.0
+asyncpg>=0.27.0
+requests>=2.30.0

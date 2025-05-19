@@ -1,0 +1,336 @@
+---
+/**
+ * Formulario para crear un nuevo animal
+ */
+import type { Animal } from '../../types/types';
+import Alert from '../ui/Alert.astro';
+
+interface Props {
+  explotaciones: Array<{ id: number; explotacio: string }>;
+  error?: string | null;
+}
+
+const { explotaciones, error = null } = Astro.props;
+---
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
+  {error && (
+    <Alert 
+      type="error" 
+      title="Error" 
+      message={error} 
+      class="mb-4"
+    />
+  )}
+
+  <form id="new-animal-form" class="space-y-6">
+    <!-- Datos básicos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Nombre *
+        </label>
+        <input 
+          type="text" 
+          name="nom" 
+          id="nom"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Nombre del animal"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Código
+        </label>
+        <input 
+          type="text" 
+          name="cod" 
+          id="cod"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Código del animal"
+        />
+      </div>
+    </div>
+
+    <!-- Datos de identificación -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Género *
+        </label>
+        <select 
+          name="genere" 
+          id="genere"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="">Seleccionar</option>
+          <option value="M">Macho</option>
+          <option value="F">Hembra</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Fecha de Nacimiento
+        </label>
+        <input 
+          type="date" 
+          name="dob" 
+          id="dob"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Número de Serie
+        </label>
+        <input 
+          type="text" 
+          name="num_serie" 
+          id="num_serie"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Número de serie oficial"
+        />
+      </div>
+    </div>
+
+    <!-- Datos de explotación -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Explotación *
+        </label>
+        <input 
+          type="text" 
+          name="explotacio" 
+          id="explotacio"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Nombre de la explotación"
+          list="explotaciones-list"
+        />
+        <!-- Lista desplegable para sugerencias (datalist) -->
+        <datalist id="explotaciones-list">
+          {explotaciones.map(exp => (
+            <option value={exp.explotacio}>{exp.explotacio}</option>
+          ))}
+        </datalist>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Puedes seleccionar una existente o crear una nueva</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Origen
+        </label>
+        <input 
+          type="text" 
+          name="origen"
+          id="origen"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Origen o ubicación"
+        />
+      </div>
+    </div>
+
+    <!-- Datos de parentesco -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Padre
+        </label>
+        <input 
+          type="text" 
+          name="pare" 
+          id="pare"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Nombre del padre"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Madre
+        </label>
+        <input 
+          type="text" 
+          name="mare" 
+          id="mare"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="Nombre de la madre"
+        />
+      </div>
+    </div>
+
+    <!-- Estado y amamantamiento -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Estado *
+        </label>
+        <select 
+          name="estado" 
+          id="estado"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="OK" selected>Activo</option>
+          <option value="DEF">Fallecido</option>
+        </select>
+      </div>
+      <div id="alletar-container" class="hidden">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Amamantamiento
+        </label>
+        <select 
+          name="alletar" 
+          id="alletar"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="0" selected>No amamanta</option>
+          <option value="1">Un ternero</option>
+          <option value="2">Dos terneros</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="flex justify-end gap-3">
+      <a 
+        href="/animals"
+        class="px-6 py-3 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 rounded-md transition-colors"
+      >
+        Cancelar
+      </a>
+      <button 
+        type="submit"
+        class="px-6 py-3 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors"
+      >
+        Crear Animal
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  import { showSuccess, showError } from '../../stores/messageStore';
+  import { cachedFetch } from '../../stores/cacheStore';
+  import animalService from '../../services/animalService';
+  
+  // Script para manejar el envío del formulario
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('new-animal-form');
+    const genereSelect = document.getElementById('genere');
+    const alletarContainer = document.getElementById('alletar-container');
+    
+    // Mostrar/ocultar campo de amamantamiento según el género
+    if (genereSelect && alletarContainer) {
+      genereSelect.addEventListener('change', () => {
+        if (genereSelect.value === 'F') {
+          alletarContainer.classList.remove('hidden');
+        } else {
+          alletarContainer.classList.add('hidden');
+        }
+      });
+    }
+    
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Obtener el botón de submit para deshabilitarlo
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = 'Creando...';
+        }
+        
+        try {
+          // Obtener todos los campos del formulario
+          const formData = new FormData(form);
+          const animalData = {};
+          
+          // Procesar todos los campos
+          for (const [key, value] of formData.entries()) {
+            if (value !== '') {
+              // Convertir la fecha al formato esperado por el backend (DD/MM/YYYY)
+              if (key === 'dob' && value) {
+                // Convertir de YYYY-MM-DD a DD/MM/YYYY
+                const dateParts = value.split('-');
+                if (dateParts.length === 3) {
+                  animalData[key] = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                } else {
+                  animalData[key] = value;
+                }
+              } else {
+                animalData[key] = value;
+              }
+            }
+          }
+          
+          // Validar campos requeridos
+          const requiredFields = ['nom', 'genere', 'explotacio', 'estado'];
+          for (const field of requiredFields) {
+            if (!animalData[field]) {
+              throw new Error(`El campo ${field} es obligatorio`);
+            }
+          }
+          
+          // Si es hembra, asegurar que alletar tenga un valor
+          if (animalData.genere === 'F' && !animalData.alletar) {
+            animalData.alletar = '0'; // Valor por defecto
+          }
+          
+          // Si es macho, eliminar alletar
+          if (animalData.genere === 'M' && animalData.alletar) {
+            delete animalData.alletar;
+          }
+          
+          console.log('Datos a enviar:', animalData);
+          
+          // Enviar datos al servidor
+          const token = localStorage.getItem('token');
+          if (!token) {
+            throw new Error('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+          }
+          
+          // Usar animalService para crear el animal
+          const result = await animalService.createAnimal(animalData);
+          console.log('Animal creado:', result);
+          
+          // Mostrar mensaje de éxito
+          showSuccess('Animal creado', `El animal ${animalData.nom} ha sido creado correctamente`);
+          
+          // Redireccionar a la página de detalle del animal
+          setTimeout(() => {
+            // Extraer el ID correctamente según la estructura de respuesta del backend
+            let animalId;
+            if (result && result.data && result.data.id) {
+              animalId = result.data.id;
+            } else if (result && result.id) {
+              animalId = result.id;
+            } else {
+              console.error('No se pudo obtener el ID del animal creado:', result);
+              // Redireccionar a la lista de animales en caso de error
+              window.location.href = '/animals';
+              return;
+            }
+            
+            console.log('Redirigiendo a la ficha del animal con ID:', animalId);
+            window.location.href = `/animals/${animalId}`;
+          }, 1000);
+          
+        } catch (error) {
+          console.error('Error al crear animal:', error);
+          
+          // Mostrar mensaje de error
+          showError('Error', error.message || 'Ha ocurrido un error al crear el animal');
+          
+          // Restaurar botón
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Crear Animal';
+          }
+        }
+      });
+    }
+  });
+</script>

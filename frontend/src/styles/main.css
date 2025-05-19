@@ -1,0 +1,63 @@
+/* Variables globales */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+}
+
+/* Estilos globales */
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9f9f9;
+}
+
+/* Contenedores para gráficos */
+.chart-container {
+  position: relative;
+  height: 220px;
+  width: 100%;
+}
+
+/* Estilos de tarjetas */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Estilos personalizados para la barra de navegación */
+.app-navbar {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Estilos para el contenedor principal de la aplicación */
+.app-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Estilos para encabezados */
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1.5rem;
+  color: var(--dark-color);
+}
+
+/* Estilos para filtros */
+.filters-container {
+  background-color: var(--light-color);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}

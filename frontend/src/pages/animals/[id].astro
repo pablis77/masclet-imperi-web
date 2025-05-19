@@ -1,0 +1,1488 @@
+---
+// Importar el layout y componentes
+import MainLayout from '../../components/layout/MainLayout.astro';
+import animalService from '../../services/animalService';
+import { getCurrentLanguage } from '../../i18n/config';
+import EditarPartoModal from '../../components/animals/EditarPartoModal';
+
+// Obtener el ID del animal de los parámetros de la URL
+const { id } = Astro.params;
+
+// Obtener el idioma actual para renderizado en servidor
+const serverLang = getCurrentLanguage();
+
+// Variables de traducción directas 
+const txtMacho = serverLang === 'ca' ? 'Mascle' : 'Macho';
+const txtHembra = serverLang === 'ca' ? 'Femella' : 'Hembra';
+const txtNoDisponible = serverLang === 'ca' ? 'No disponible' : 'No disponible';
+const txtObservaciones = serverLang === 'ca' ? 'Sense observacions' : 'Sin observaciones';
+const txtVivo = serverLang === 'ca' ? 'Viu' : 'Vivo';
+const txtMuerto = serverLang === 'ca' ? 'Mort' : 'Fallecido';
+
+// Traducciones para la ficha de animal
+const translations = {
+  es: {
+    title: "Ficha de Animal",
+    back_to_list: "Volver al listado",
+    animal_id: "ID Animal",
+    loading: "Cargando datos del animal...",
+    error_title: "Error",
+    retry: "Reintentar",
+    active: "Activo",
+    inactive: "Baja",
+    dead: "Fallecido",
+    update: "Actualizar",
+    code: "Código",
+    name: "Nombre",
+    serial_number: "Número de Serie",
+    gender: "Sexo",
+    male: "Macho",
+    female: "Hembra",
+    birth_date: "Fecha de nacimiento",
+    not_available: "No disponible",
+    incorrect_date: "Fecha incorrecta",
+    status: "Estado",
+    exploitation: "Explotación",
+    stable: "Origen",
+    not_assigned: "No asignada",
+    father: "Padre",
+    mother: "Madre",
+    nursing_status: "Estado de amamantamiento",
+    not_nursing: "No amamanta",
+    nursing_one: "Amamanta a un ternero",
+    nursing_two: "Amamanta a dos terneros",
+    back_to_animal_list: "Volver al listado de animales",
+    complete_info_tab: "Información Completa",
+    birth_history_tab: "Historial de Partos",
+    changes_history_tab: "Historial de Cambios",
+    identification_data: "Datos de Identificación",
+    general_data: "Datos Generales",
+    birth_history: "Historial de Partos",
+    birth_registry: "Registro de todos los partos del animal",
+    no_births: "Este animal no tiene partos registrados",
+    date: "Fecha",
+    gender_label: "Género",
+    observations: "Observaciones",
+    changes_history: "Historial de Cambios",
+    changes_registry: "Registro de cambios realizados al animal",
+    no_changes: "No hay cambios registrados para este animal",
+    changes_date: "Fecha",
+    changes_user: "Usuario",
+    changes_field: "Campo",
+    changes_old_value: "Valor anterior",
+    changes_new_value: "Valor nuevo"
+  },
+  ca: {
+    title: "Fitxa d'Animal",
+    back_to_list: "Tornar al llistat",
+    animal_id: "ID Animal",
+    loading: "Carregant dades de l'animal...",
+    error_title: "Error",
+    retry: "Reintentar",
+    active: "Actiu",
+    inactive: "Baixa",
+    dead: "Mort",
+    update: "Actualitzar",
+    code: "Codi",
+    name: "Nom",
+    serial_number: "Número de Sèrie",
+    gender: "Sexe",
+    male: "Mascle",
+    female: "Femella",
+    birth_date: "Data de naixement",
+    not_available: "No disponible",
+    incorrect_date: "Data incorrecta",
+    status: "Estat",
+    exploitation: "Explotació",
+    stable: "Origen",
+    not_assigned: "No assignada",
+    father: "Pare",
+    mother: "Mare",
+    nursing_status: "Estat d'alletament",
+    not_nursing: "No alleta",
+    nursing_one: "Alleta un vedell",
+    nursing_two: "Alleta dos vedells",
+    back_to_animal_list: "Tornar al llistat d'animals",
+    complete_info_tab: "Informació Completa",
+    birth_history_tab: "Historial de Parts",
+    changes_history_tab: "Historial de Canvis",
+    identification_data: "Dades d'Identificació",
+    general_data: "Dades Generals",
+    birth_history: "Historial de Parts",
+    birth_registry: "Registre de tots els parts de l'animal",
+    no_births: "Aquest animal no té parts registrats",
+    date: "Data",
+    gender_label: "Gènere",
+    observations: "Observacions",
+    changes_history: "Historial de Canvis",
+    changes_registry: "Registre de canvis realitzats a l'animal",
+    no_changes: "No hi ha canvis registrats per a aquest animal",
+    changes_date: "Data",
+    changes_user: "Usuari",
+    changes_field: "Camp",
+    changes_old_value: "Valor anterior",
+    changes_new_value: "Valor nou"
+  }
+};
+
+// Función para obtener traducción según idioma
+function t(key) {
+  return translations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
+// Definir título y rol de usuario
+const title = t('title');
+const userRole = "administrador"; // Simulación de rol
+
+// Variables para almacenar datos y estado
+let animal = null;
+let error = null;
+let loading = true;
+
+try {
+  if (!id || isNaN(parseInt(id))) {
+    throw new Error('ID de animal no válido');
+  }
+
+  // Intentar cargar los datos del animal
+  console.log(`Intentando cargar animal con ID: ${id}`);
+  animal = await animalService.getAnimalById(parseInt(id));
+  console.log('Animal cargado:', animal);
+  
+  if (!animal) {
+    throw new Error('No se pudo encontrar el animal');
+  }
+  
+  loading = false;
+} catch (e) {
+  console.error('Error al cargar datos del animal:', e);
+  error = e.message || 'Error al cargar los datos del animal';
+  loading = false;
+}
+
+// Variables para controlar pestañas
+const showPartosTab = animal && animal.genere === 'F'; // Solo mostrar pestaña de partos para hembras
+
+// Obtener el icono del animal 
+// En lugar de usar emojis, utilizaremos rutas a imágenes PNG
+let iconPath = '/images/toro_sin_borde_2.png'; // Valor por defecto
+
+if (animal) {
+  if (animal.genere === 'M') {
+    iconPath = '/images/toro_sin_borde_2.png';
+  } else {
+    iconPath = animal.alletar !== '0' ? '/images/vaca azul.png' : '/images/vaca blanca.png';
+  }
+}
+
+// Mantenemos el icono emoji para compatibilidad con otras partes del código
+const icon = animal ? animalService.getAnimalIcon(animal) : '🐂';
+
+// Obtener la clase CSS para el estado del animal
+const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) : 'bg-gray-100 text-gray-800';
+
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href="/animals" id="back-to-list-link" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+        <span class="mr-1">←</span> {t('back_to_list')}
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
+    <p class="text-gray-600 dark:text-gray-300" id="animal-id-text">{t('animal_id')}: {id}</p>
+  </div>
+
+  {loading && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 flex justify-center items-center">
+      <div class="flex items-center space-x-2">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        <p>{t('loading')}</p>
+      </div>
+    </div>
+  )}
+
+  {error && (
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          ⚠️
+        </div>
+        <div class="ml-3">
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-300">{t('error_title')}</h3>
+          <div class="mt-2 text-red-700 dark:text-red-200">
+            <p>{error}</p>
+          </div>
+          <div class="mt-4">
+            <button 
+              id="retry-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              ↻ {t('retry')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {animal && (
+    <>
+      <!-- Elemento oculto con datos del animal para el script -->
+      <div id="animal-data" class="hidden" 
+        data-genere={animal.genere}
+        data-tiene-partos={
+          (animal.partos && animal.partos.items && animal.partos.items.length > 0) || 
+          (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) || 
+          (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) ? 'true' : 'false'
+        }
+      ></div>
+      <!-- Resumen del animal -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-6">
+          <!-- Icono y estado -->
+          <div class="flex flex-col items-center md:items-start">
+            <!-- Usamos imagen en lugar de emoji para mejor visualización -->
+            <div class="mb-3">
+              <img src={iconPath} alt="Icono Animal" class="w-24 h-24 object-contain" />
+            </div>
+            {animal.estado === 'DEF' && (
+              <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-sm font-medium">
+                Baja
+              </span>
+            )}
+          </div>
+          
+          <!-- Información básica -->
+          <div class="flex-grow">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{animal.nom}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('code')}</p>
+                <p class="font-medium">{animal.cod || t('not_available')}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('gender')}</p>
+                <p class="font-medium">{animal.genere === 'M' ? t('male') : t('female')}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('birth_date')}</p>
+                <p class="font-medium">
+                  {animal.dob ? 
+                    (() => {
+                      try {
+                        // Primero verificar si ya viene en formato español DD/MM/YYYY
+                        if (typeof animal.dob === 'string' && new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(animal.dob)) {
+                          // Interpretar como DD/MM/YYYY (formato español)
+                          const partes = animal.dob.split(/[\/\-]/);
+                          if (partes.length === 3) {
+                            // Asegurar que se interprete como día/mes/año
+                            const fecha = new Date(parseInt(partes[2]), parseInt(partes[1])-1, parseInt(partes[0]));
+                            if (!isNaN(fecha.getTime())) {
+                              return `${partes[0].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[2]}`;
+                            }
+                          }
+                          // Si no pudimos procesar pero tiene el formato adecuado, lo mostramos como está
+                          return animal.dob;
+                        }
+                        
+                        // Intentar procesar otros formatos de fecha
+                        const fecha = new Date(animal.dob);
+                        if (!isNaN(fecha.getTime())) {
+                          return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                        }
+                        
+                        return String(animal.dob);
+                      } catch (e) {
+                        return t('incorrect_date');
+                      }
+                    })() 
+                    : t('not_available')
+                  }
+                </p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('exploitation')}</p>
+                <p class="font-medium">{animal.explotacio || t('not_available')}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
+                <p class="font-medium">{animal.origen || t('not_assigned')}</p>
+              </div>
+              {animal.genere === 'F' && (
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{t('nursing_status')}</p>
+                  <p class="font-medium">
+                    {animal.alletar === '0' ? t('not_nursing') : 
+                     animal.alletar === '1' ? t('nursing_one') : 
+                     animal.alletar === '2' ? t('nursing_two') : t('not_available')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <!-- Acciones -->
+          <div class="flex flex-col gap-2">
+            <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+              ↻ {t('update')}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestañas de información detallada -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <!-- Pestañas de navegación -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700">
+          <button id="tab-info" class="px-6 py-3 text-primary border-b-2 border-primary font-medium">
+            {t('complete_info_tab')}
+          </button>
+          {showPartosTab && (
+            <button id="tab-partos" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+              {t('birth_history_tab')}
+            </button>
+          )}
+          <button id="tab-changes" class="px-6 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            {t('changes_history_tab')}
+          </button>
+        </div>
+
+        <!-- Contenido de pestañas -->
+        <div class="p-6">
+          <!-- Pestaña 1: Información Completa -->
+          <div id="content-info">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('identification_data')}</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('code')}</p>
+                    <p class="font-medium">{animal.cod || t('not_available')}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('name')}</p>
+                    <p class="font-medium">{animal.nom}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('serial_number')}</p>
+                    <p class="font-medium">{animal.num_serie || t('not_available')}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('general_data')}</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('gender')}</p>
+                    <p class="font-medium">{animal.genere === 'M' ? t('male') : t('female')}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('birth_date')}</p>
+                    <p class="font-medium">
+                      {animal.dob ? 
+                        (() => {
+                          try {
+                            const fecha = new Date(animal.dob);
+                            // Verificar si es una fecha válida
+                            if (!isNaN(fecha.getTime())) {
+                              // Formatear DD/MM/YYYY
+                              return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                            }
+                            // Si es una cadena con formato DD/MM/YYYY, mostrarla directamente
+                            if (typeof animal.dob === 'string' && new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(animal.dob)) {
+                              return animal.dob;
+                            }
+                            return String(animal.dob);
+                          } catch (e) {
+                            return t('incorrect_date');
+                          }
+                        })() 
+                        : t('not_available')
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('status')}</p>
+                    <p class="font-medium">{animal.estado === 'OK' ? t('active') : t('dead')}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <!-- Eliminado encabezado de Ubicación -->
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('exploitation')}</p>
+                    <p class="font-medium">{animal.explotacio || t('not_available')}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
+                    <p class="font-medium">{animal.origen || t('not_assigned')}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <!-- Eliminado encabezado de Parentesco -->
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('father')}</p>
+                    <p class="font-medium">{animal.pare || t('not_available')}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{t('mother')}</p>
+                    <p class="font-medium">{animal.mare || t('not_available')}</p>
+                  </div>
+                  {animal.genere === 'F' && (
+                    <div>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">{t('nursing_status')}</p>
+                      <p class="font-medium">
+                        {animal.alletar === '0' ? t('not_nursing') : 
+                         animal.alletar === '1' ? t('nursing_one') : 
+                         animal.alletar === '2' ? t('nursing_two') : t('not_available')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <!-- Botón Volver al listado al final de la pestaña Información -->
+              <div class="mt-6 text-center">
+                <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                  <span class="mr-2">←</span> {t('back_to_animal_list')}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
+          <div id="content-partos" class="hidden">
+            <div class="mb-4">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{t('birth_history')}</h3>
+              <p class="text-gray-500 dark:text-gray-400">{t('birth_registry')}</p>
+            </div>
+            {showPartosTab && (
+              
+              <div class="overflow-x-auto">
+                <table id="tabla-partos" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-fecha">
+                        {t('date')} <span class="ml-1 sort-indicator">↑</span>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-genero">{t('gender_label')}</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" id="sort-estado">{t('status')}</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('observations')}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {animal && (() => {
+                      // Manejar diferentes estructuras posibles de partos
+                      let partosArray = [];
+                      
+                      if (animal.partos && animal.partos.items && animal.partos.items.length > 0) {
+                        // Estructura esperada: animal.partos.items[]
+                        partosArray = animal.partos.items;
+                      } else if (animal.partos && Array.isArray(animal.partos) && animal.partos.length > 0) {
+                        // Estructura alternativa: animal.partos[]
+                        partosArray = animal.partos;
+                      } else if (animal.parts && Array.isArray(animal.parts) && animal.parts.length > 0) {
+                        // Estructura antigua: animal.parts[]
+                        partosArray = animal.parts;
+                      }
+                      
+                      if (partosArray.length > 0) {
+                        // Ordenar partos por fecha (de más antiguo a más reciente por defecto)
+                        partosArray.sort((a, b) => {
+                          const fechaA = a.part ? new Date(a.part) : new Date(0);
+                          const fechaB = b.part ? new Date(b.part) : new Date(0);
+                          return fechaA - fechaB; // Orden ascendente (más antiguo primero)
+                        });
+                        
+                        return partosArray.map((parto) => (
+                          <tr data-id={parto.id}>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              {parto.part ? 
+                                (() => {
+                                  try {
+                                    if (typeof parto.part === 'string') {
+                                      // Primero verificar si ya viene en formato español DD/MM/YYYY
+                                      if (new RegExp('^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{4}$').test(parto.part)) {
+                                        // Interpretar como DD/MM/YYYY (formato español)
+                                        const partes = parto.part.split(/[\/\-]/);
+                                        if (partes.length === 3) {
+                                          // Asegurar que se interprete como día/mes/año
+                                          const fecha = new Date(parseInt(partes[2]), parseInt(partes[1])-1, parseInt(partes[0]));
+                                          if (!isNaN(fecha.getTime())) {
+                                            return `${partes[0].padStart(2, '0')}/${partes[1].padStart(2, '0')}/${partes[2]}`;
+                                          }
+                                        }
+                                        // Si no pudimos procesar pero tiene el formato adecuado, lo mostramos como está
+                                        return parto.part;
+                                      } else {
+                                        // Intentar procesar otros formatos de fecha
+                                        const fecha = new Date(parto.part);
+                                        if (!isNaN(fecha.getTime())) {
+                                          return fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                                        }
+                                      }
+                                    }
+                                    return String(parto.part);
+                                  } catch (e) {
+                                    return 'Fecha incorrecta';
+                                  }
+                                })() 
+                                : 'N/A'
+                              }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              {parto.GenereT === 'M' ? txtMacho : 
+                               parto.GenereT === 'F' ? txtHembra : 
+                               parto.GenereT === 'esforrada' ? 'Esforrá' : txtNoDisponible}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <span class={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                parto.EstadoT === 'OK' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
+                                'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                              }`}>
+                                {parto.EstadoT === 'OK' ? txtVivo : txtMuerto}
+                              </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {parto.observacions || parto.observaciones || parto.obs || txtObservaciones}
+                            </td>
+                          </tr>
+                        ));
+                      } else {
+                        return (
+                          <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                              No hay registros de partos para este animal
+                            </td>
+                          </tr>
+                        );
+                      }
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+              {!showPartosTab && (
+                <p>{t('no_births')}</p>
+              )}
+              
+              <!-- Botón Volver al listado al final de la pestaña Partos -->
+              <div class="mt-6 text-center">
+                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                  <span class="mr-2">←</span> Volver al listado de animales
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña 3: Historial de Cambios (oculta por defecto) -->
+          <div id="content-changes" class="hidden">
+            <div class="mb-4">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{t('changes_history')}</h3>
+              <p class="text-gray-500 dark:text-gray-400">{t('changes_registry')}</p>
+            </div>
+            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+              <p>{t('no_changes')}</p>
+            </div>
+            
+            <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
+            <div class="mt-6 text-center">
+              <a href="/animals" id="changes-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+                <span class="mr-2">←</span> {t('back_to_animal_list')}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Botón flotante para volver al listado -->
+      <div class="fixed bottom-6 right-6 z-10">
+        <a href="/animals" class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white shadow-lg hover:bg-primary/80 transition-colors">
+          <span class="text-xl">←</span>
+        </a>
+      </div>
+    </>
+  )}
+</MainLayout>
+
+<script>
+  // Script para manejar interacciones de la página y traducciones
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM completamente cargado y analizado');
+    
+    // Traducciones del lado del cliente
+    const translations = {
+      es: {
+        title: "Ficha de Animal",
+        back_to_list: "Volver al listado",
+        animal_id: "ID Animal",
+        loading: "Cargando datos del animal...",
+        error_title: "Error",
+        retry: "Reintentar",
+        active: "Activo",
+        inactive: "Baja",
+        dead: "Fallecido",
+        update: "Actualizar",
+        code: "Código",
+        name: "Nombre",
+        serial_number: "Número de Serie",
+        gender: "Sexo",
+        male: "Macho",
+        female: "Hembra",
+        birth_date: "Fecha de nacimiento",
+        not_available: "No disponible",
+        incorrect_date: "Fecha incorrecta",
+        status: "Estado",
+        exploitation: "Explotación",
+        stable: "Origen",
+        not_assigned: "No asignada",
+        father: "Padre",
+        mother: "Madre",
+        nursing_status: "Estado de amamantamiento",
+        not_nursing: "No amamanta",
+        nursing_one: "Amamanta a un ternero",
+        nursing_two: "Amamanta a dos terneros",
+        back_to_animal_list: "Volver al listado de animales",
+        complete_info_tab: "Información Completa",
+        birth_history_tab: "Historial de Partos",
+        changes_history_tab: "Historial de Cambios",
+        identification_data: "Datos de Identificación",
+        general_data: "Datos Generales",
+        birth_history: "Historial de Partos",
+        birth_registry: "Registro de todos los partos del animal",
+        no_births: "Este animal no tiene partos registrados",
+        date: "Fecha",
+        gender_label: "Género",
+        observations: "Observaciones",
+        changes_history: "Historial de Cambios",
+        changes_registry: "Registro de cambios realizados al animal",
+        no_changes: "No hay cambios registrados para este animal",
+        changes_date: "Fecha",
+        changes_user: "Usuario",
+        changes_field: "Campo",
+        changes_old_value: "Valor anterior",
+        changes_new_value: "Valor nuevo"
+      },
+      ca: {
+        title: "Fitxa d'Animal",
+        back_to_list: "Tornar al llistat",
+        animal_id: "ID Animal",
+        loading: "Carregant dades de l'animal...",
+        error_title: "Error",
+        retry: "Reintentar",
+        active: "Actiu",
+        inactive: "Baixa",
+        dead: "Mort",
+        update: "Actualitzar",
+        code: "Codi",
+        name: "Nom",
+        serial_number: "Número de Sèrie",
+        gender: "Sexe",
+        male: "Mascle",
+        female: "Femella",
+        birth_date: "Data de naixement",
+        not_available: "No disponible",
+        incorrect_date: "Data incorrecta",
+        status: "Estat",
+        exploitation: "Explotació",
+        stable: "Origen",
+        not_assigned: "No assignada",
+        father: "Pare",
+        mother: "Mare",
+        nursing_status: "Estat d'alletament",
+        not_nursing: "No alleta",
+        nursing_one: "Alleta un vedell",
+        nursing_two: "Alleta dos vedells",
+        back_to_animal_list: "Tornar al llistat d'animals",
+        complete_info_tab: "Informació Completa",
+        birth_history_tab: "Historial de Parts",
+        changes_history_tab: "Historial de Canvis",
+        identification_data: "Dades d'Identificació",
+        general_data: "Dades Generals",
+        birth_history: "Historial de Parts",
+        birth_registry: "Registre de tots els parts de l'animal",
+        no_births: "Aquest animal no té parts registrats",
+        date: "Data",
+        gender_label: "Gènere",
+        observations: "Observacions",
+        changes_history: "Historial de Canvis",
+        changes_registry: "Registre de canvis realitzats a l'animal",
+        no_changes: "No hi ha canvis registrats per a aquest animal",
+        changes_date: "Data",
+        changes_user: "Usuari",
+        changes_field: "Camp",
+        changes_old_value: "Valor anterior",
+        changes_new_value: "Valor nou"
+      }
+    };
+
+    // Función para obtener traducción
+    function t(key, lang) {
+      return translations[lang]?.[key] || key;
+    }
+
+    // Función para traducir la ficha de animal
+    function translateAnimalFile() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Traducir título y encabezados principales
+      document.querySelector('h1.text-3xl').textContent = t('title', currentLang);
+      
+      // Corregir problema del enlace de volver al listado
+      const backLink = document.getElementById('back-to-list-link');
+      if (backLink) {
+        // Restablecer contenido correcto
+        backLink.innerHTML = `<span class="mr-1">←</span> ${t('back_to_list', currentLang)}`;
+      }
+      
+      // Corregir problema de ID duplicado
+      const idElement = document.getElementById('animal-id-text');
+      if (idElement) {
+        // Obtener el ID de animal (desde la URL)
+        const animalIdFromUrl = window.location.pathname.split('/').pop();
+        // Actualizar el texto con el formato e ID correcto
+        idElement.textContent = `${t('animal_id', currentLang)}: ${animalIdFromUrl}`;
+      }
+      
+      // Traducir elementos básicos
+      const elements = [
+        { selector: '.text-gray-600.dark\\:text-gray-300', key: 'animal_id', prefix: true },
+        { selector: '.animate-spin + p', key: 'loading', prefix: false },
+        { selector: '.text-lg.font-medium.text-red-800', key: 'error_title', prefix: false },
+        { selector: '#retry-button', key: 'retry', prefix: true },
+        { selector: 'a[href^="/animals/update"]', key: 'update', prefix: true },
+      ];
+      
+      elements.forEach(el => {
+        const element = document.querySelector(el.selector);
+        if (element) {
+          if (el.prefix) {
+            // Si tiene un prefijo (como un ícono), preservarlo
+            const text = element.innerHTML;
+            const iconPrefix = text.match(/.*?[^\w\s]/); // Captura todo hasta el primer no alfanumérico
+            if (iconPrefix) {
+              element.innerHTML = iconPrefix[0] + ' ' + t(el.key, currentLang);
+            } else {
+              element.textContent = t(el.key, currentLang);
+            }
+          } else {
+            element.textContent = t(el.key, currentLang);
+          }
+        }
+      });
+
+      // Traducir estado del animal
+      const estadoElement = document.querySelector('.px-3.py-1.rounded-full');
+      if (estadoElement) {
+        // Determinar si está activo o inactivo basado en la clase CSS
+        const isActive = estadoElement.classList.contains('bg-green-100') || 
+                         estadoElement.classList.contains('text-green-800');
+        estadoElement.textContent = isActive ? t('active', currentLang) : t('inactive', currentLang);
+      }
+      
+      // Traducir información del animal (resumen y detalle)
+      document.querySelectorAll('.text-sm.text-gray-500').forEach(label => {
+        const labelText = label.textContent.trim();
+        
+        // Mapear etiquetas a claves de traducción
+        let translationKey = '';
+        if (labelText.includes('Código') || labelText.includes('Codi')) translationKey = 'code';
+        else if (labelText.includes('Nombre') || labelText.includes('Nom')) translationKey = 'name';
+        else if (labelText.includes('Número de Serie') || labelText.includes('Número de Sèrie')) translationKey = 'serial_number';
+        else if (labelText.includes('Sexo') || labelText.includes('Sexe')) translationKey = 'gender';
+        else if (labelText.includes('Fecha de nacimiento') || labelText.includes('Data de naixement')) translationKey = 'birth_date';
+        else if (labelText.includes('Estado') || labelText.includes('Estat')) translationKey = 'status';
+        else if (labelText.includes('Explotación') || labelText.includes('Explotació')) translationKey = 'exploitation';
+        else if (labelText.includes('Origen') || labelText.includes('Origen')) translationKey = 'stable';
+        else if (labelText.includes('Padre') || labelText.includes('Pare')) translationKey = 'father';
+        else if (labelText.includes('Madre') || labelText.includes('Mare')) translationKey = 'mother';
+        else if (labelText.includes('amamantamiento') || labelText.includes('alletament')) translationKey = 'nursing_status';
+        
+        if (translationKey) {
+          label.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir pestañas de navegación
+      document.querySelectorAll('button[id^="tab-"]').forEach(tab => {
+        if (tab.id === 'tab-info') {
+          tab.textContent = t('complete_info_tab', currentLang);
+        } else if (tab.id === 'tab-partos') {
+          tab.textContent = t('birth_history_tab', currentLang);
+        } else if (tab.id === 'tab-changes') {
+          tab.textContent = t('changes_history_tab', currentLang);
+        }
+      });
+      
+      // Traducir encabezados de secciones
+      document.querySelectorAll('h3.text-lg.font-medium').forEach(header => {
+        const headerText = header.textContent.trim();
+        
+        let translationKey = '';
+        if (headerText.includes('Datos de Identificación') || headerText.includes('Dades d\'Identificació')) {
+          translationKey = 'identification_data';
+        } else if (headerText.includes('Datos Generales') || headerText.includes('Dades Generals')) {
+          translationKey = 'general_data';
+        } else if (headerText.includes('Historial de Partos') || headerText.includes('Historial de Parts')) {
+          translationKey = 'birth_history';
+        } else if (headerText.includes('Historial de Cambios') || headerText.includes('Historial de Canvis')) {
+          translationKey = 'changes_history';
+        }
+        
+        if (translationKey) {
+          header.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir descripciones de secciones
+      document.querySelectorAll('.mb-4 p.text-gray-500, .p-6.text-center p').forEach(desc => {
+        const descText = desc.textContent.trim();
+        
+        let translationKey = '';
+        if (descText.includes('Registro de todos los partos') || descText.includes('Registre de tots els parts')) {
+          translationKey = 'birth_registry';
+        } else if (descText.includes('No tiene partos registrados') || descText.includes('no té parts registrats')) {
+          translationKey = 'no_births';
+        } else if (descText.includes('Registro de cambios') || descText.includes('Registre de canvis')) {
+          translationKey = 'changes_registry';
+        } else if (descText.includes('No hay cambios registrados') || descText.includes('No hi ha canvis registrats')) {
+          translationKey = 'no_changes';
+        }
+        
+        if (translationKey) {
+          desc.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir encabezados de tablas
+      document.querySelectorAll('th.px-6.py-3').forEach(th => {
+        const headerText = th.textContent.trim();
+        let translationKey = '';
+        
+        if (headerText.includes('Fecha') || headerText.includes('Data')) {
+          translationKey = 'date';
+          // Conservar el indicador de ordenación
+          const sortIndicator = th.querySelector('.sort-indicator');
+          if (sortIndicator) {
+            th.innerHTML = t(translationKey, currentLang) + ' <span class="ml-1 sort-indicator">' + sortIndicator.innerHTML + '</span>';
+            return;
+          }
+        } else if (headerText.includes('Género') || headerText.includes('Gènere')) {
+          translationKey = 'gender_label';
+        } else if (headerText.includes('Estado') || headerText.includes('Estat')) {
+          translationKey = 'status';
+        } else if (headerText.includes('Observaciones') || headerText.includes('Observacions')) {
+          translationKey = 'observations';
+        }
+        
+        if (translationKey) {
+          th.textContent = t(translationKey, currentLang);
+        }
+      });
+      
+      // Traducir botones de volver al listado
+      document.querySelectorAll('a[href="/animals"].inline-flex').forEach(button => {
+        // Preservar el icono de flecha
+        const arrowSpan = button.querySelector('span.mr-2');
+        if (arrowSpan) {
+          button.innerHTML = `<span class="mr-2">←</span> ${t('back_to_animal_list', currentLang)}`;
+        }
+      });
+      
+      // Traducir textos en el contenido dinámico
+      document.querySelectorAll('.font-medium').forEach(value => {
+        const valueText = value.textContent.trim();
+        
+        // Solo traducir valores específicos que sabemos que necesitan traducción
+        if (valueText === 'No disponible') {
+          value.textContent = t('not_available', currentLang);
+        } else if (valueText === 'No asignada') {
+          value.textContent = t('not_assigned', currentLang);
+        } else if (valueText === 'Fecha incorrecta') {
+          value.textContent = t('incorrect_date', currentLang);
+        } else if (valueText === 'Macho') {
+          value.textContent = t('male', currentLang);
+        } else if (valueText === 'Hembra') {
+          value.textContent = t('female', currentLang);
+        } else if (valueText === 'Activo') {
+          value.textContent = t('active', currentLang);
+        } else if (valueText === 'Fallecido') {
+          value.textContent = t('dead', currentLang);
+        } else if (valueText === 'No amamanta') {
+          value.textContent = t('not_nursing', currentLang);
+        } else if (valueText.includes('Amamanta un ternero')) {
+          value.textContent = t('nursing_one', currentLang);
+        } else if (valueText.includes('Amamanta dos terneros')) {
+          value.textContent = t('nursing_two', currentLang);
+        }
+      });
+    }
+    
+    // Ejecutar traducción inicial
+    translateAnimalFile();
+    
+    // Retraducir cuando cambie el idioma
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        translateAnimalFile();
+        translateTableButtons();
+      }
+    });
+
+    // SOLUCIÓN AGRESIVA PARA FORZAR LAS TRADUCCIONES
+    document.addEventListener('DOMContentLoaded', function() {
+      // Función de fuerza bruta para traducir todo, con selección directa de elementos
+      function traducirTodoForzado() {
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
+        console.log('[DEBUG] Aplicando traducción forzada, idioma: ' + currentLang);
+        
+        // Botones de eliminar
+        document.querySelectorAll('button').forEach(btn => {
+          if (btn.textContent.trim() === 'Eliminar') {
+            if (currentLang === 'ca') {
+              btn.title = 'Eliminar part';
+            } else {
+              btn.title = 'Eliminar parto';
+            }
+          }
+        });
+        
+        // Textos de género
+        document.querySelectorAll('td').forEach(celda => {
+          const texto = celda.textContent.trim();
+          if (texto === 'Macho') {
+            celda.innerHTML = currentLang === 'ca' ? 'Mascle' : 'Macho';
+            console.log('[DEBUG] Traducido Macho→Mascle');
+          } 
+          if (texto === 'Hembra') {
+            celda.innerHTML = currentLang === 'ca' ? 'Femella' : 'Hembra';
+            console.log('[DEBUG] Traducido Hembra→Femella');
+          }
+        });
+        
+        // Sin observaciones
+        document.querySelectorAll('td').forEach(celda => {
+          const texto = celda.textContent.trim();
+          if (texto === 'Sin observaciones' || texto === 'animals.no_observations') {
+            celda.innerHTML = currentLang === 'ca' ? 'Sense observacions' : 'Sin observaciones';
+            console.log('[DEBUG] Traducido observaciones');
+          }
+        });
+        
+        // Estados (Vivo/Fallecido)
+        document.querySelectorAll('span.inline-flex').forEach(span => {
+          const texto = span.textContent.trim();
+          if (texto === 'Vivo') {
+            span.innerHTML = currentLang === 'ca' ? 'Viu' : 'Vivo';
+            console.log('[DEBUG] Traducido Vivo→Viu');
+          }
+          if (texto === 'Fallecido') {
+            span.innerHTML = currentLang === 'ca' ? 'Mort' : 'Fallecido';
+            console.log('[DEBUG] Traducido Fallecido→Mort');
+          }
+        });
+      }
+      
+      // Ejecutar inmediatamente
+      traducirTodoForzado();
+      
+      // Repetir cada 500ms durante los primeros 10 segundos
+      for (let i = 1; i <= 20; i++) {
+        setTimeout(traducirTodoForzado, i * 500);
+      }
+      
+      // Establecer un intervalo permanente para seguir traduciéndolo
+      setInterval(traducirTodoForzado, 2000);
+      
+      // Cuando cambie el idioma
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'userLanguage') {
+          console.log('[DEBUG] Cambio de idioma detectado');
+          // Aplicar inmediatamente y luego con retrasos
+          traducirTodoForzado();
+          for (let i = 1; i <= 10; i++) {
+            setTimeout(traducirTodoForzado, i * 200);
+          }
+        }
+      });
+    });
+    
+    // Botón de reintentar carga
+    const retryButton = document.getElementById('retry-button');
+    if (retryButton) {
+      retryButton.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+    
+    // Obtener todas las pestañas y contenidos
+    const tabs = document.querySelectorAll('#tab-info, #tab-partos, #tab-changes');
+    const contents = document.querySelectorAll('#content-info, #content-partos, #content-changes');
+    
+    console.log('Pestañas encontradas:', tabs.length);
+    console.log('Contenidos encontrados:', contents.length);
+    
+    // Función para mostrar pestaña y ocultar las demás
+    const showTab = (tabId) => {
+      console.log('Cambiando a pestaña:', tabId);
+      
+      // Ocultar todos los contenidos
+      contents.forEach(content => {
+        content.classList.add('hidden');
+      });
+      
+      // Resetear estilos de todas las pestañas
+      tabs.forEach(tab => {
+        tab.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+        tab.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+      });
+      
+      // Activar pestaña seleccionada
+      const selectedTab = document.getElementById(tabId);
+      if (selectedTab) {
+        selectedTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300');
+        selectedTab.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-medium');
+      }
+      
+      // Mostrar contenido correspondiente
+      const contentId = tabId.replace('tab-', 'content-');
+      const selectedContent = document.getElementById(contentId);
+      if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+      }
+    };
+    
+    // Inicializar con la pestaña de información abierta
+    showTab('tab-info');
+    
+    // Eventos de clic para pestañas
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        showTab(tab.id);
+        console.log('Clic en pestaña:', tab.id);
+      });
+    });
+
+    // Ordenación de la tabla de partos
+    const sortColumns = document.querySelectorAll('#sort-fecha, #sort-genero, #sort-estado');
+    let currentSortColumn = 'sort-fecha';
+    let currentSortDirection = 'asc';
+
+    // Función para ordenar la tabla
+    const sortTable = (columnId, direction) => {
+      const table = document.getElementById('tabla-partos');
+      if (!table) return;
+
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const sortedRows = [...rows];
+
+      // Obtener el índice de la columna según el ID del encabezado
+      let columnIndex = 0;
+      if (columnId === 'sort-genero') columnIndex = 1;
+      if (columnId === 'sort-estado') columnIndex = 2;
+
+      // Ordenar filas
+      sortedRows.sort((a, b) => {
+        const cellA = a.querySelectorAll('td')[columnIndex].textContent.trim();
+        const cellB = b.querySelectorAll('td')[columnIndex].textContent.trim();
+        
+        if (columnId === 'sort-fecha') {
+          // Para fechas, intentar convertir a objetos Date para comparación
+          const dateA = parseDate(cellA);
+          const dateB = parseDate(cellB);
+          
+          if (direction === 'asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
+        } else {
+          // Para texto, comparar strings
+          if (direction === 'asc') {
+            return cellA.localeCompare(cellB, 'es');
+          } else {
+            return cellB.localeCompare(cellA, 'es');
+          }
+        }
+      });
+
+      // Limpiar y reconstruir la tabla
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+
+      sortedRows.forEach(row => tbody.appendChild(row));
+
+      // Actualizar indicadores de ordenación
+      sortColumns.forEach(col => {
+        const indicator = col.querySelector('.sort-indicator');
+        if (indicator) {
+          indicator.textContent = '';
+        }
+      });
+
+      const activeHeader = document.getElementById(columnId);
+      const indicator = activeHeader.querySelector('.sort-indicator');
+      if (indicator) {
+        indicator.textContent = direction === 'asc' ? '↑' : '↓';
+      }
+    };
+
+    // Ayudante para convertir texto de fecha a objeto Date
+    const parseDate = (dateStr) => {
+      if (dateStr === 'N/A' || dateStr === 'Fecha incorrecta') {
+        return new Date(0); // Para valores no fechas, usar una fecha muy antigua
+      }
+      
+      // Intenta analizar la fecha en formato DD/MM/YYYY
+      const parts = dateStr.split(/[\/\-]/);
+      if (parts.length === 3) {
+        // Asumir formato DD/MM/YYYY
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      
+      // Como último recurso, intentar crear fecha directamente
+      return new Date(dateStr);
+    };
+
+    // Agregar eventos de clic a las columnas
+    sortColumns.forEach(col => {
+      col.addEventListener('click', () => {
+        // Si es la misma columna, cambiar dirección
+        if (col.id === currentSortColumn) {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          // Si es una nueva columna, establecer como ascendente
+          currentSortColumn = col.id;
+          currentSortDirection = 'asc';
+        }
+        
+        sortTable(currentSortColumn, currentSortDirection);
+      });
+    });
+
+    // Ordenar por fecha ascendente al cargar la página
+    sortTable('sort-fecha', 'asc');
+  });
+  // Crear un modal personalizado para interacciones con el usuario
+  function crearModalPersonalizado() {
+    // Comprobar si ya existe un modal
+    let modal = document.getElementById('modal-personalizado');
+    if (modal) return modal;
+    
+    // Crear el modal
+    modal = document.createElement('div');
+    modal.id = 'modal-personalizado';
+    modal.className = 'fixed inset-0 flex items-center justify-center z-50 hidden';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-25" onclick="document.getElementById('modal-personalizado').classList.add('hidden')"></div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-auto z-50 relative shadow-lg">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4" id="modal-titulo"></h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-6" id="modal-mensaje"></p>
+        <div class="flex justify-end space-x-4">
+          <button id="modal-btn-cancelar" class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">Cancelar</button>
+          <button id="modal-btn-confirmar" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none">Confirmar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Configurar el botón Cancelar
+    const btnCancelar = modal.querySelector('#modal-btn-cancelar');
+    btnCancelar.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+    
+    return modal;
+  }
+  
+  // Función para mostrar una notificación
+  function mostrarNotificacion(mensaje, tipo = 'success') {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white ${tipo === 'success' ? 'bg-green-500' : 'bg-red-500'} z-50 animate-fadeIn`;
+    notificacion.textContent = mensaje;
+    document.body.appendChild(notificacion);
+    
+    // Eliminar después de 3 segundos
+    setTimeout(() => {
+      notificacion.classList.add('animate-fadeOut');
+      setTimeout(() => {
+        notificacion.remove();
+      }, 500);
+    }, 3000);
+  }
+  
+  // Añadir botones de acciones a la tabla de partos
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado: Inicializando funcionalidades de animal...');
+    
+    // Agregar estilos para animaciones
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(10px); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+      .animate-fadeOut {
+        animation: fadeOut 0.3s ease-in forwards;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Crear modal personalizado
+    const modal = crearModalPersonalizado();
+    
+    const tablaPartos = document.getElementById('tabla-partos');
+    if (!tablaPartos) return;
+    
+    const tbody = tablaPartos.querySelector('tbody');
+    if (!tbody) return;
+    
+    // No añadir botones si no hay partos (solo hay mensaje de 'no hay registros')
+    const filasVacias = tbody.querySelectorAll('tr[data-empty="true"]');
+    if (filasVacias.length > 0) return;
+    
+    // Añadir columna de acciones al encabezado
+    const thead = tablaPartos.querySelector('thead tr');
+    if (thead) {
+      const thAcciones = document.createElement('th');
+      thAcciones.scope = 'col';
+      thAcciones.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider';
+      thAcciones.textContent = 'Acciones';
+      thead.appendChild(thAcciones);
+    }
+    
+    // Añadir botones a cada fila
+    const filas = tbody.querySelectorAll('tr');
+    filas.forEach(function(fila) {
+      // Si es una fila vacía, no añadir botones
+      if (fila.getAttribute('data-empty') === 'true') return;
+      
+      // Extraer el ID del parto - intentaremos obtenerlo de un atributo data-id
+      // Si no está disponible, usaremos un ID generado
+      const partoId = fila.getAttribute('data-id') || `parto-${Math.floor(Math.random() * 1000000)}`;
+      
+      // Crear celda para botones
+      const tdAcciones = document.createElement('td');
+      tdAcciones.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400';
+      
+      // Botón editar
+      const btnEditar = document.createElement('button');
+      btnEditar.className = 'bg-gray-100 text-blue-600 py-1 px-3 rounded-md mr-2 text-xs font-medium hover:bg-gray-200 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600';
+      btnEditar.title = 'Editar información del parto';
+      btnEditar.textContent = 'Editar';
+      btnEditar.setAttribute('data-id', partoId);
+      
+      // Botón eliminar
+      const btnEliminar = document.createElement('button');
+      btnEliminar.className = 'bg-gray-100 text-red-600 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-200 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-gray-600';
+      btnEliminar.textContent = 'Eliminar';
+      btnEliminar.setAttribute('data-id', partoId);
+      btnEliminar.title = 'Eliminar parto';
+      
+      // Añadir botones a la celda
+      tdAcciones.appendChild(btnEditar);
+      tdAcciones.appendChild(btnEliminar);
+      
+      // Añadir celda a la fila
+      fila.appendChild(tdAcciones);
+      
+      // Evento para editar parto
+      btnEditar.addEventListener('click', function(event) {
+        const partoId = this.getAttribute('data-id');
+        const fila = this.closest('tr');
+        console.log('Editando parto:', partoId);
+        
+        // Usar la función del script editar-parto-v4.js
+        if (window.editarPartoV4 && window.editarPartoV4.mostrarModal) {
+          window.editarPartoV4.mostrarModal(partoId, fila);
+        } else {
+          console.error('No se ha cargado correctamente el script de edición de partos v4');
+          mostrarNotificacion('Error al cargar el editor de partos', 'error');
+        }
+      });
+      
+      // Evento para eliminar parto
+      btnEliminar.addEventListener('click', function(event) {
+        const partoId = this.getAttribute('data-id');
+        const fila = this.closest('tr');
+        const rect = this.getBoundingClientRect();
+        
+        // Configurar el modal
+        document.getElementById('modal-titulo').textContent = 'Eliminar parto';
+        document.getElementById('modal-mensaje').textContent = '¿Seguro que desea eliminar este parto? Esta acción no se puede deshacer.';
+        
+        // Mostrar el modal
+        modal.classList.remove('hidden');
+        
+        // Configurar el botón Confirmar
+        const btnConfirmar = modal.querySelector('#modal-btn-confirmar');
+        btnConfirmar.onclick = function() {
+          modal.classList.add('hidden');
+          console.log('Eliminando parto:', partoId);
+          
+          const token = localStorage.getItem('token');
+          if (!token) {
+            mostrarNotificacion('Error: No se ha encontrado el token de autenticación', 'error');
+            return;
+          }
+          
+          // Obtener el ID del animal de la URL
+          const animalIdMatch = window.location.pathname.match(/\/animals\/([0-9]+)/);
+          const animalId = animalIdMatch ? animalIdMatch[1] : null;
+          
+          if (!animalId) {
+            alert('Error: No se pudo determinar el ID del animal');
+            return;
+          }
+          
+          // Vamos a intentar diferentes rutas de API en orden de prioridad
+          const apiUrls = [
+            `http://localhost:8000/api/v1/animals/${animalId}/partos/${partoId}`, // Ruta preferida con ID de animal
+            `http://localhost:8000/api/v1/partos/${partoId}` // Ruta alternativa
+          ];
+          
+          // Probar con el endpoint principal (animal_id/partos/parto_id)
+          console.log(`Intentando eliminar parto ${partoId} del animal ${animalId}`);
+          fetch(apiUrls[0], {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(function(response) {
+            if (!response.ok) {
+              // Si el primer endpoint falla, probar con el endpoint alternativo
+              console.log(`Endpoint principal falló con ${response.status}, intentando endpoint alternativo...`);
+              return fetch(apiUrls[1], {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+            }
+            
+            // Algunos endpoints no devuelven JSON válido
+            return response.json().catch(() => ({ success: true }));
+          })
+          .then(function(responseOrData) {
+            // Si es una respuesta HTTP de la segunda petición
+            if (responseOrData instanceof Response) {
+              const response = responseOrData;
+              if (!response.ok) {
+                throw new Error(`Error en la API: ${response.status}`);
+              }
+              
+              // Algunos endpoints no devuelven JSON válido
+              return response.json().catch(() => ({ success: true }));
+            }
+            
+            // Si son datos de una petición exitosa anterior
+            return responseOrData;
+          })
+          .then(function(data) {
+            console.log('Parto eliminado correctamente:', data);
+            
+            // Eliminar la fila de la tabla
+            if (fila) {
+              fila.remove();
+              
+              // Si no quedan filas, mostrar mensaje
+              const filas = tablaPartos.querySelectorAll('tbody tr');
+              if (filas.length === 0) {
+                const tbody = tablaPartos.querySelector('tbody');
+                if (tbody) {
+                  const tr = document.createElement('tr');
+                  tr.setAttribute('data-empty', 'true');
+                  tr.innerHTML = `
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No hay registros de partos para este animal
+                    </td>
+                  `;
+                  tbody.appendChild(tr);
+                }
+              }
+            }
+            
+            mostrarNotificacion('Parto eliminado correctamente', 'success');
+          })
+          .catch(function(error) {
+            console.error('Error al eliminar parto:', error);
+            
+            // Intentar mostrar un mensaje más descriptivo basado en el error
+            let mensajeError = error.message || 'Error desconocido';
+            
+            // Si es un error específico de API, intentar extraer más información
+            if (mensajeError.includes('500')) {
+              mensajeError = 'Error interno del servidor. Posible problema con la base de datos.';
+            } else if (mensajeError.includes('404')) {
+              mensajeError = 'No se encontró el recurso. Es posible que el parto ya haya sido eliminado.';
+            } else if (mensajeError.includes('403')) {
+              mensajeError = 'No tiene permisos para eliminar este parto.';
+            } else if (mensajeError.includes('401')) {
+              mensajeError = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+            }
+            
+            mostrarNotificacion(`Error al eliminar parto: ${mensajeError}`, 'error');
+          });
+        }
+      });
+    });
+  });
+</script>
+
+<!-- Script para edición de partos -->
+<script>
+  // Importar el script de edición de partos (versión 4 - usando PATCH en lugar de PUT)
+  const scriptPartos = document.createElement('script');
+  scriptPartos.src = '/scripts/editar-parto-v4.js';
+  scriptPartos.type = 'text/javascript';
+  document.head.appendChild(scriptPartos);
+</script>
+
+<!-- Script para cargar el historial de cambios -->
+<script>
+  // Importar el script que maneja la carga del historial de cambios
+  const scriptHistorial = document.createElement('script');
+  scriptHistorial.src = '/scripts/animal-history.js';
+  scriptHistorial.type = 'text/javascript';
+  document.head.appendChild(scriptHistorial);
+  
+  // Escribir directamente al console log para verificar que el script se ejecuta
+  console.log('🔍 VERIFICACIÓN: Script interno ejecutándose correctamente');
+  
+  // Agregar función para detectar cuando se hace clic en la pestaña de historial
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabChanges = document.getElementById('tab-changes');
+    if (tabChanges) {
+      console.log('🔍 Encontrada pestaña de historial, agregando event listener');
+      tabChanges.addEventListener('click', function() {
+        console.log('🔄 REGISTRADO: Clic en pestaña de historial desde script principal');
+      });
+    } else {
+      console.warn('⚠️ No se encontró la pestaña de historial');
+    }
+  });
+</script>

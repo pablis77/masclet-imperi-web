@@ -1,0 +1,74 @@
+He analizado las carpetas de componentes del frontend y aquí tienes un desglose más detallado de las ventanas y subventanas que probablemente existen en el sistema:
+
+1. Animales (animals/)
+AnimalFilters.tsx: Componente para aplicar filtros en el listado de animales.
+AnimalForm.tsx: Formulario para crear o editar animales.
+AnimalIcon.tsx: Iconos específicos para representar animales.
+AnimalTable.tsx: Tabla para listar animales con detalles.
+2. Autenticación (auth/)
+ClearLocalStorage.tsx: Limpia el almacenamiento local, probablemente para cerrar sesión.
+LoginForm.tsx: Formulario de inicio de sesión.
+LogoutButton.tsx: Botón para cerrar sesión.
+ProtectedRoute.tsx: Componente para proteger rutas según autenticación.
+3. Dashboard (dashboard/)
+ActivityFeed.tsx: Muestra actividades recientes.
+Dashboard.tsx: Componente principal del dashboard.
+Dashboard2.tsx: Versión alternativa o extendida del dashboard.
+DashboardFilters.tsx: Filtros aplicables en el dashboard.
+GenderDistributionChart.tsx: Gráfico de distribución por género.
+PartosChart.tsx: Gráfico relacionado con partos.
+StatCard.tsx y StatsCard.tsx: Tarjetas para mostrar estadísticas.
+StatusDistribution.tsx y StatusDistributionChart.tsx: Distribución de estados de animales.
+4. Importación (imports/)
+ImportCsv.tsx: Componente para importar datos desde un archivo CSV.
+ImportForm.tsx: Formulario para gestionar la importación.
+ImportHistory.tsx: Historial de importaciones realizadas.
+5. Maquetación (layout/)
+Footer.astro y Footer.tsx: Pie de página.
+MainLayout.astro y MainLayout.tsx: Layout principal que combina Navbar, Sidebar y Footer.
+Navbar.astro y Navbar.tsx: Barra de navegación principal.
+Sidebar.astro y Sidebar.tsx: Barra lateral para navegación.
+types.ts: Tipos compartidos para los componentes de maquetación.
+6. Interfaz de Usuario (ui/)
+Button.tsx: Botón reutilizable.
+Card.tsx: Tarjeta para mostrar contenido.
+Input.tsx: Campo de entrada reutilizable.
+Modal.tsx: Ventana modal.
+PasswordErrorModal.tsx: Modal específico para errores de contraseña.
+types.ts: Tipos compartidos para los componentes de UI.
+7. Usuarios (users/)
+UserForm.tsx: Formulario para crear o editar usuarios.
+UsersManagement.tsx: Gestión de usuarios, probablemente incluye listado y acciones.
+UserTable.tsx: Tabla para listar usuarios.
+Próximos Pasos
+Voy a documentar cómo estas ventanas y subventanas están conectadas con los endpoints del backend y su funcionalidad actual. Esto nos permitirá confirmar que estamos entendiendo lo mismo antes de realizar cualquier cambio. ¿Quieres que comience con algún módulo en particular?
+
+He analizado el componente Dashboard.tsx, que es el núcleo de la funcionalidad del Dashboard en el frontend. Aquí tienes un resumen de cómo está estructurado y qué funcionalidades ofrece:
+
+Funcionalidades Principales del Dashboard
+Pestañas de Navegación:
+
+Estadísticas: Muestra datos generales como el total de animales, machos, hembras, ratio machos/hembras, y estadísticas de partos.
+Explotación: Detalles específicos de una explotación seleccionada, como el total de animales y partos.
+Resumen: Un resumen básico de los datos generales.
+Partos: Estadísticas relacionadas con los partos, incluyendo distribución por mes y género.
+Combinado: Datos combinados de diferentes fuentes.
+Actividad Reciente: Lista de actividades recientes en el sistema.
+Carga de Datos:
+
+Los datos se cargan dinámicamente según la pestaña activa y la explotación seleccionada.
+Incluye funciones para manejar errores y reintentar la conexión en caso de fallos.
+Selector de Explotación:
+
+Permite al usuario seleccionar una explotación específica para filtrar los datos mostrados.
+Gráficos y Tarjetas:
+
+Usa componentes como StatCard y StatusDistribution para mostrar estadísticas y distribuciones de datos.
+Manejo de Errores:
+
+Muestra mensajes de error claros y permite reintentar la conexión.
+Datos Simulados:
+
+En caso de errores, utiliza datos simulados como fallback para evitar que el dashboard quede vacío.
+Relación con el Backend
+El componente interactúa con varios endpoints del backend a través de servicios como getDashboardStats, getExplotaciones, getPartosStats, entre otros. Estos endpoints proporcionan datos para las diferentes pestañas y funcionalidades.

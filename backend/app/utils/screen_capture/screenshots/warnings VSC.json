@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-02-17T19:36:00.870661",
+  "type": "swagger_ui_capture",
+  "sections": [
+    {
+      "section": 1,
+      "text_content": "PRoBLeMs @M) OUTPUT DEBUG CONSOLE TERMINAL PORTS GITLENS- SQLCONSOLE QUERY RESULTS (PREVIEW) AZURE COMMENTS\n\nY_ ® animals.py backend\\app\\api\\endpoints @)\nA\\ “get explotacion_animals\" is not defined Pylance(reportUndefinedVariable) [Ln 179, Col 22]\nA\\ “parse date” is not defined Pylance(reportUndefinedVariable) [Ln 356, Col 17]\nA\\ “logger* is not defined Pylance(reportUndefinedVariable) [Ln 461, Col 9]\n> Manage-Backups.pst backend\\dockenscripts @)\nA\\ The cmdlet ‘List-Backups' uses an unapproved verb. PSScriptAnalyzer(PSUseApprovedVerbs) [Ln 19, Col 10]\nA\\ The cmdlet ‘Create-Backup' uses an unapproved verb. PSScriptAnalyzer(PSUseApprovedVerbs) [Ln 30, Col 10]\n> Manage-Backups.pst backend\\dockenscripts @)\nA\\ The cmdlet ‘List-Backups' uses an unapproved verb. PSScriptAnalyzer(SUseApprovedVerbs) [Ln 18, Col 10]\nA\\ The cmdlet ‘Create-Backup' uses an unapproved verb. PSScriptAnalyzer(PSUseApprovedVerbs) [Ln 29, Col 10]\n> Manage-Backups.pst backend\\dockenscripts @)\nA\\ The cmdlet ‘List-Backups' uses an unapproved verb. PSScriptAnalyzer(PSUseApprovedVerbs) [Ln 20, Col 10]\nA\\ The cmdlet ‘Create-Backup' uses an unapproved verb. PSScriptAnalyzer(PSUseApprovedVerbs) [Ln 31, Col 10]\n> Manage-Backups.pst backend\\dockenscripts @)\n\\ The variable ‘containerinfo' is assigned but never used. PSScriptnalyzer(PSUseDeclaredVarsMoreThanAssignments) [Ln 36, Col 13]\nA\\ The variable ‘script€xists' is assigned but never used. PSScriptanalyzer(PSUseDeclaredVarsMoreThanAssignments) [Ln 88, Col 9]\n> Manage-Backups.ps1 backend\\dockenscripts @)\n\\ The variable ‘containerinfo' is assigned but never used. PSScriptnalyzer(PSUseDeclaredVarsMoreThanAssignments) [Ln 36, Col 13]\nA\\ The variable ‘script€xists' is assigned but never used. PSScriptanalyzer(PSUseDeclaredVarsMoreThanAssignments) [Ln 88, Col 9]\n@ READMEmd backend @5)\n¥ NEW_HOIADERUTAMmd docs @®\n\nvy\n",
+      "image_name": "warnings_VSC.png"
+    }
+  ]
+}

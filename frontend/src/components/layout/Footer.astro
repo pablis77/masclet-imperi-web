@@ -1,0 +1,243 @@
+---
+// Props que pueden ser pasados al componente
+interface Props {
+  showVersion?: boolean;
+  version?: string;
+}
+
+// Valores por defecto
+const { 
+  showVersion = true,
+  version = "1.0.0"
+} = Astro.props;
+
+// Importar config de idioma
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor para la renderización inicial
+const serverLang = getCurrentLanguage();
+
+// Traducciones para el footer
+const translations = {
+  es: {
+    rights_reserved: "Todos los derechos reservados",
+    version: "Versión",
+    about: "Acerca de",
+    help: "Ayuda",
+    privacy: "Privacidad",
+    terms: "Términos"
+  },
+  ca: {
+    rights_reserved: "Tots els drets reservats",
+    version: "Versió",
+    about: "Sobre nosaltres",
+    help: "Ajuda",
+    privacy: "Privacitat",
+    terms: "Termes"
+  }
+};
+
+// Función para obtener traducción
+function t(key: string): string {
+  return translations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
+// Obtener el año actual
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 relative z-30">
+  <div class="container mx-auto px-4 py-4 md:py-5">
+    <div class="flex flex-col md:flex-row justify-between items-center">
+      <!-- Logo y copyright -->
+      <div class="flex items-center mb-4 md:mb-0">
+        <img src="/images/logo_masclet.png" alt="Masclet Imperi" class="h-8 w-auto mr-3">
+        <div>
+          <p class="text-sm text-gray-600 dark:text-gray-300">
+            &copy; {currentYear} Masclet Imperi - {t('rights_reserved')}
+          </p>
+          {showVersion && (
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t('version')} {version}
+            </p>
+          )}
+        </div>
+      </div>
+      
+      <!-- Enlaces útiles -->
+      <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 md:mb-0">
+        <a href="/about" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
+          {t('about')}
+        </a>
+        <a href="/help" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
+          {t('help')}
+        </a>
+        <a href="/privacy" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
+          {t('privacy')}
+        </a>
+        <a href="/terms" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors">
+          {t('terms')}
+        </a>
+      </div>
+      
+      <!-- Botones de accesibilidad -->
+      <div class="flex items-center space-x-3">
+        <!-- Toggle de alto contraste -->
+        <button id="footer-contrast-toggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <span class="text-sm">👁️</span>
+        </button>
+        
+        <!-- Botón de accesibilidad -->
+        <button id="accessibility-toggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <span class="text-sm">♿</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Traducciones para el cliente
+  const translations = {
+    es: {
+      rights_reserved: "Todos los derechos reservados",
+      version: "Versión",
+      about: "Acerca de",
+      help: "Ayuda",
+      privacy: "Privacidad",
+      terms: "Términos"
+    },
+    ca: {
+      rights_reserved: "Tots els drets reservats",
+      version: "Versió",
+      about: "Sobre nosaltres",
+      help: "Ajuda",
+      privacy: "Privacitat",
+      terms: "Termes"
+    }
+  };
+
+  // Función para obtener traducción
+  function t(key, lang) {
+    return translations[lang]?.[key] || key;
+  }
+
+  // Función para traducir el footer
+  function translateFooter() {
+    const currentLang = localStorage.getItem('userLanguage') || 'es';
+    
+    // Traducir los derechos reservados
+    const rightsText = document.querySelector('.text-sm.text-gray-600.dark\\:text-gray-300');
+    if (rightsText) {
+      const yearText = rightsText.textContent.split('-')[0].trim();
+      rightsText.textContent = `${yearText} - ${t('rights_reserved', currentLang)}`;
+    }
+    
+    // Traducir la versión
+    const versionText = document.querySelector('.text-xs.text-gray-500');
+    if (versionText) {
+      const versionNumber = versionText.textContent.split(' ').pop();
+      versionText.textContent = `${t('version', currentLang)} ${versionNumber}`;
+    }
+    
+    // Traducir los enlaces
+    const links = document.querySelectorAll('.flex.flex-wrap.justify-center a');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === '/about') {
+        link.textContent = t('about', currentLang);
+      } else if (href === '/help') {
+        link.textContent = t('help', currentLang);
+      } else if (href === '/privacy') {
+        link.textContent = t('privacy', currentLang);
+      } else if (href === '/terms') {
+        link.textContent = t('terms', currentLang);
+      }
+    });
+  }
+  
+  // Ejecutar traducción inicial
+  document.addEventListener('DOMContentLoaded', () => {
+    translateFooter();
+  });
+  
+  // Retraducir cuando cambie el idioma
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'userLanguage') {
+      translateFooter();
+    }
+  });
+
+  // Setup del botón de contraste en el footer
+  const footerContrastToggle = document.getElementById('footer-contrast-toggle');
+  
+  if (footerContrastToggle) {
+    footerContrastToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('high-contrast-mode');
+      
+      // Guardar preferencia
+      const isHighContrast = document.documentElement.classList.contains('high-contrast-mode');
+      localStorage.setItem('highContrast', isHighContrast ? 'true' : 'false');
+    });
+  }
+  
+  // Aplicar contraste guardado
+  if (localStorage.getItem('highContrast') === 'true') {
+    document.documentElement.classList.add('high-contrast-mode');
+  }
+  
+  // Setup del botón de accesibilidad
+  const accessibilityToggle = document.getElementById('accessibility-toggle');
+  
+  if (accessibilityToggle) {
+    accessibilityToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('accessibility-mode');
+      
+      // Guardar preferencia
+      const isAccessibilityMode = document.documentElement.classList.contains('accessibility-mode');
+      localStorage.setItem('accessibilityMode', isAccessibilityMode ? 'true' : 'false');
+    });
+  }
+  
+  // Aplicar modo de accesibilidad guardado
+  if (localStorage.getItem('accessibilityMode') === 'true') {
+    document.documentElement.classList.add('accessibility-mode');
+  }
+</script>
+
+<style>
+  /* Estilos para el modo de alto contraste */
+  :global(.high-contrast-mode) {
+    --contrast-bg: black;
+    --contrast-text: white;
+    --contrast-border: yellow;
+    --contrast-focus: yellow;
+  }
+  
+  :global(.high-contrast-mode) body {
+    background-color: var(--contrast-bg);
+    color: var(--contrast-text);
+  }
+  
+  :global(.high-contrast-mode) a,
+  :global(.high-contrast-mode) button {
+    color: var(--contrast-text);
+    border-color: var(--contrast-border);
+  }
+  
+  :global(.high-contrast-mode) a:focus,
+  :global(.high-contrast-mode) button:focus {
+    outline: 2px solid var(--contrast-focus);
+  }
+  
+  /* Estilos para el modo de accesibilidad */
+  :global(.accessibility-mode) {
+    font-size: 1.2em;
+    line-height: 1.5;
+  }
+  
+  :global(.accessibility-mode) button,
+  :global(.accessibility-mode) a {
+    padding: 0.5em !important;
+  }
+</style>

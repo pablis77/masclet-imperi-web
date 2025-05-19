@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "source": "masclet_imperi_api 1.png",
+    "timestamp": "2025-02-22T17:55:49.176156",
+    "resolution": [
+      1186,
+      1204
+    ]
+  },
+  "content": {
+    "raw_text": "Masclet Imperi API“\n\n‘openapison\nanimals a\n\nJapi/vi/aninals/aninals Create Animal v\n/api/vi/animals/aninals Get Animals v\n/api/vi/aninals/aninals/{animal_id} GetAnimal v\n/api/v1/animals/aninals/{animal_id} Update Animal vy\n/api/vi/aninals/animals/{animal_id} Delete Animal Vv\n/api/v1/aninals/aninals/{animal_id}/history GetArima v\n/api/vi/aninals/aninals/search Searc Animals v\n/api/vi/aninals/aninals/{animal_id}/full Get Animal Detais v\nJapi/vi/aninals/aninals/{nom} Get Animal Desis v\n/api/v1/animals/explotacions/{explotacio} Get E»pltacion Details v\n/api/v1/aninals/explotacions/{explotacio}/pdf Generate Explotacion Pat v\n/api/v1/animals/aninals/{id} Get Anime! Vv\n/api/vi/aninals/aninals/by-name/{nom} Get Animal Sy Name v\nJapi/vi/aninals/stats/explotacio Get Splctcio Stats v\nJapi/vi/animals/ Get Animals v\nJapilvifaninals/ Create Animal v\nJapi/vi/animals/imports/ Import Csv v\n/api/vi/aninals/explotacio Get E:xitacons v\n/api/v1/animals/{animal_id} Get Anime! Vv\n/api/v1/animals/search/ Search Animals v\n/api/vi/aninals/{aninal_id}/parts GetArimal Pars Vv\nJapi/vi/aninals/search Search Animals v\n\n",
+    "structured_data": {
+      "sections": [],
+      "links": [],
+      "buttons": [],
+      "forms": [],
+      "tables": [],
+      "navigation": [],
+      "headers": []
+    }
+  }
+}

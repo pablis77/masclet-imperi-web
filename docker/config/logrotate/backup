@@ -1,0 +1,60 @@
+# Configuración de logrotate para logs de backup
+# Ubicación: backend/docker/config/logrotate/backup
+
+/logs/backup.log /logs/notifications.log /logs/test.log {
+    # Rotación diaria
+    daily
+    
+    # Mantener 30 días de logs
+    rotate 30
+    
+    # Comprimir logs rotados
+    compress
+    delaycompress
+    
+    # No rotar si está vacío
+    notifempty
+    
+    # Crear nuevo archivo con permisos correctos
+    create 644 postgres postgres
+    
+    # Detectar si archivo fue eliminado/renombrado
+    missingok
+    
+    # Usar fecha en nombre del archivo
+    dateext
+    dateformat _%Y-%m-%d
+    
+    # Tamaño máximo por archivo
+    size 50M
+    
+    # Scripts a ejecutar
+    postrotate
+        # Recargar servicio de logs si es necesario
+        if [ -f /var/run/syslogd.pid ]; then
+            kill -HUP $(cat /var/run/syslogd.pid)
+        fi
+    endscript
+    
+    # Manejar múltiples instancias
+    sharedscripts
+}
+
+# Configuración específica para logs de backup
+/logs/backup.log {
+    # Rotación más agresiva para logs de backup
+    size 100M
+    rotate 60
+    
+    # Mantener compresión más alta
+    compress
+    compresscmd /usr/bin/gzip
+    compressoptions -9
+    
+    # Copiar a ubicación de backup
+    prerotate
+        if [ -d "/backups/logs" ]; then
+            cp /logs/backup.log "/backups/logs/backup_$(date +%Y%m%d).log"
+        fi
+    endscript
+}

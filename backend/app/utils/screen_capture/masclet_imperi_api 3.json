@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "source": "masclet_imperi_api 3.png",
+    "timestamp": "2025-02-22T17:56:04.148093",
+    "resolution": [
+      1172,
+      1098
+    ]
+  },
+  "content": {
+    "raw_text": "Schemas\n\nAnimalCreate >\n\nobject\n\nAnimalDetail >\n\nAnimalResponse >\n\nAnimalUpdate >\n\nBody_import_csv_api_v1_animals_imports__post >\n\nobject\n\nBody_import_csv_¢\n\ni_v1_imports_import_csv_post >\n\nobject\n\ni_v1_auth_auth_login_post > = object\n\nBody_preview_import_api_v1_imports_preview_post >\n\nEstat >\n\nExplotacioResponse > object\nHTTPValidationError > object\nMessageResponse > Sonal object\nMessageType > string\nPartoCreate > object\nPartoResponse > =: object\nPartoStats >\n\nToken >\n\nUserCreate > object\nUserResponse > object\nUserRole > string\nValidationError » al object\n\n",
+    "structured_data": {
+      "sections": [],
+      "links": [],
+      "buttons": [],
+      "forms": [],
+      "tables": [],
+      "navigation": [],
+      "headers": []
+    }
+  }
+}

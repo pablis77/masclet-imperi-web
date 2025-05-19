@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor Usuario
+    participant UI as Interfaz
+    participant Auth as AuthService
+    participant Data as DataManager
+    participant Store as Almacenamiento
+
+    Usuario->>UI: Inicia Aplicación
+    UI->>Auth: Verifica Credenciales
+    Auth->>Store: Consulta users.json
+    
+    alt Credenciales Guardadas
+        Store-->>Auth: Recupera credenciales
+        Auth-->>UI: Auto-login
+    else Sin Credenciales
+        UI->>Usuario: Solicita Login
+        Usuario->>UI: Introduce Credenciales
+        UI->>Auth: Verifica Login
+    end
+
+    Auth-->>UI: Confirmación Login
+    UI->>UI: Muestra Menú Principal
+
+    alt Consulta Ficha
+        Usuario->>UI: Selecciona Consulta
+        UI->>Data: Solicita Datos
+        Data->>Store: Consulta CSV
+        Store-->>Data: Retorna Datos
+        Data-->>UI: Muestra Información
+    else Actualización
+        Usuario->>UI: Selecciona Actualizar
+        UI->>Auth: Verifica Permisos
+        Auth-->>UI: Confirma Permisos
+        UI->>Data: Actualiza Datos
+        Data->>Store: Guarda Cambios
+    else Importación
+        Usuario->>UI: Selecciona Importar
+        UI->>Data: Procesa CSV
+        Data->>Store: Backup Actual
+        Data->>Store: Guarda Nuevos Datos
+    end

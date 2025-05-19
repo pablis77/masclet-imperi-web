@@ -1,0 +1,562 @@
+---
+import MainLayout from '../../../components/layout/MainLayout.astro';
+import AnimalForm from '../../../components/animals/AnimalForm.astro';
+import HabitualesForm from '../../../components/animals/HabitualesForm.astro';
+import Tabs from '../../../components/ui/Tabs.astro';
+import MessageContainer from '../../../components/ui/MessageContainer.astro';
+import animalService from '../../../services/animalService';
+
+// Obtener el ID del animal de los parámetros de la URL
+const { id } = Astro.params;
+
+// Obtener el rol del usuario de la sesión
+const userRole = Astro.cookies.get('userRole')?.value || 'user';
+
+// Estado inicial
+let animal = null;
+let loading = true;
+let error = null;
+let title = 'Cargando animal...';
+
+try {
+  // Obtener los datos del animal directamente del servicio
+  animal = await animalService.getAnimalById(Number(id));
+
+  // Convertir el animal a un formato más sencillo para el formulario
+  if (animal && animal.data) {
+    animal = animal.data;
+  }
+
+  title = `Editar ${animal.nom}`;
+  loading = false;
+} catch (err) {
+  console.error('Error al cargar el animal:', err);
+  error = err.message || 'Error al cargar los datos del animal';
+  loading = false;
+  title = 'Error al cargar animal';
+}
+
+// Configurar las pestañas
+const tabs = [
+  { id: 'general', label: 'Datos Generales', active: true },
+  { id: 'habitual', label: 'Cambios Habituales' }
+];
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <!-- Encabezado con botón de volver -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href={`/animals/${id}`} class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
+        <span class="mr-1">←</span> Volver al detalle
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{animal?.nom}</h1>
+    <p class="text-gray-600 dark:text-gray-300">ID: {id}</p>
+  </div>
+
+  <!-- Estado de carga -->
+  {loading && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6">
+      <div class="flex justify-center items-center py-10">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        <span class="ml-3 text-gray-700 dark:text-gray-300">Cargando...</span>
+      </div>
+    </div>
+  )}
+
+  <!-- Mensaje de error -->
+  {error && (
+    <MessageContainer 
+      type="error"
+      title="Error"
+      message={error}
+    />
+  )}
+
+  {!loading && !error && animal && (
+    <div class="grid grid-cols-1 gap-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+        <div class="border-b border-gray-200 dark:border-gray-700">
+          <Tabs tabs={tabs} />
+        </div>
+        <div class="p-6">
+          <!-- Pestaña 1: Datos Generales -->
+          <div id="content-general" class="tab-content">
+            <AnimalForm animal={animal} />
+          </div>
+          
+          <!-- Pestaña 2: Cambios Habituales -->
+          <div id="content-habitual" class="tab-content hidden">
+            <HabitualesForm animal={animal} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</MainLayout>
+
+<script is:inline define:vars={{id}}>
+  // Variables globales
+  window.animalId = id;
+  
+  // Función para mostrar mensajes
+  window.mostrarMensaje = function(mensaje, tipo = 'info') {
+    const container = document.createElement('div');
+    container.className = 'fixed bottom-4 right-4 z-50 animate-slideIn';
+    
+    // Colores según el tipo
+    let colorClase = 'bg-blue-50 border-blue-200 text-blue-800';
+    if (tipo === 'error') {
+      colorClase = 'bg-red-50 border-red-200 text-red-800';
+    } else if (tipo === 'success') {
+      colorClase = 'bg-green-50 border-green-200 text-green-800';
+    }
+    
+    // Determinar qué icono mostrar
+    let icono = 'ℹ️'; // Icono de info por defecto
+    if (tipo === 'error') {
+      icono = '❌'; // Icono de error
+    } else if (tipo === 'success') {
+      icono = '✅'; // Icono de éxito
+    }
+    
+    container.innerHTML = `
+      <div class="flex items-center p-4 ${colorClase} rounded-lg border shadow-lg max-w-md">
+        <div class="mr-3 text-xl">
+          ${icono}
+        </div>
+        <div>
+          <p class="font-medium">${mensaje}</p>
+        </div>
+        <button class="ml-auto pl-3 hover:opacity-70" onclick="this.parentNode.parentNode.remove()">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(container);
+    
+    // Auto eliminar después de 5 segundos
+    setTimeout(() => {
+      container.remove();
+    }, 5000);
+  };
+</script>
+
+<script>
+  // Configurar formularios cuando la página esté cargada
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM completamente cargado y analizado');
+    
+    // Configurar pestañas
+    const tabs = document.querySelectorAll('[data-tab]');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+        
+        // Activar tab
+        tabs.forEach(t => t.classList.remove('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light'));
+        this.classList.add('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light');
+        
+        // Mostrar contenido
+        tabContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        
+        console.log(`Cambio a pestaña ${tabId}`);
+      });
+    });
+    
+    // Capturar los formularios
+    const formGeneral = document.getElementById('form-general');
+    const formHabitual = document.getElementById('form-habitual');
+    const formHabituales = document.getElementById('form-habituales');
+    
+    console.log('Configurando formularios...');
+    console.log('Form general encontrado:', formGeneral ? 'Sí' : 'No');
+    console.log('Form habitual encontrado:', formHabitual ? 'Sí' : 'No');
+    console.log('Form habituales encontrado:', formHabituales ? 'Sí' : 'No');
+    
+    // Configurar botón de registrar parto
+    const registrarPartoBtn = document.getElementById('registrar-parto-btn');
+    if (registrarPartoBtn) {
+      console.log('Botón de registrar parto encontrado, configurando...');
+      registrarPartoBtn.addEventListener('click', function() {
+        console.log('Botón de registrar parto clickeado');
+        handleRegistrarParto();
+      });
+    } else {
+      console.log('Botón de registrar parto NO encontrado');
+    }
+    
+    // Configurar manejadores para formularios
+    if (formGeneral) {
+      console.log('Formulario general encontrado, configurando...');
+      formGeneral.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario general enviado');
+        handleFormSubmit(formGeneral);
+      });
+    } else {
+      console.log('Formulario general no encontrado');
+    }
+    
+    // Probar con ambos nombres posibles para el formulario de cambios habituales
+    if (formHabitual) {
+      console.log('Formulario habitual encontrado, configurando...');
+      formHabitual.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario habitual enviado');
+        handleFormSubmit(formHabitual);
+      });
+    } else {
+      console.log('Formulario habitual no encontrado');
+    }
+    
+    if (formHabituales) {
+      console.log('Formulario habituales encontrado, configurando...');
+      formHabituales.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Formulario habituales enviado');
+        handleFormSubmit(formHabituales);
+      });
+    } else {
+      console.log('Formulario habituales no encontrado');
+    }
+    
+    // Para capturar cualquier otro formulario en la página
+    document.querySelectorAll('form').forEach(form => {
+      if (!form._hasSubmitListener) {
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          console.log('Formulario genérico enviado:', form.id);
+          handleFormSubmit(form);
+        });
+        form._hasSubmitListener = true;
+      }
+    });
+  });
+  
+  // Función para manejar el envío del formulario
+  async function handleFormSubmit(form) {
+    try {
+      // Registrar el formulario que se está enviando
+      console.log('Procesando formulario:', form.id);
+      
+      // Obtener datos del formulario
+      const formData = new FormData(form);
+      
+      // Depuración: mostrar todos los campos del formulario
+      console.log('Campos en el formulario:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+      }
+      
+      // Si es form-habituales y no contiene campos, verificar selectores directamente
+      if (form.id === 'form-habituales' && formData.entries().next().done) {
+        console.log('Formulario habituales está vacío, verificando campos manualmente...');
+        
+        // Verificar selectores y campos específicos
+        const alletarSelect = form.querySelector('select[name="alletar"]');
+        if (alletarSelect) {
+          console.log('Encontrado select alletar con valor:', alletarSelect.value);
+          formData.append('alletar', alletarSelect.value);
+        }
+        
+        const estadoSelect = form.querySelector('select[name="estado_hab"]');
+        if (estadoSelect) {
+          console.log('Encontrado select estado_hab con valor:', estadoSelect.value);
+          formData.append('estado_hab', estadoSelect.value);
+        }
+      }
+      
+      const datos = {};
+      
+      // Convertir FormData a objeto JSON
+      for (const [key, value] of formData.entries()) {
+        // Mapear nombres de campos al formato de la API
+        switch(key) {
+          // Campos del formulario general
+          case 'nombre': datos.nom = value || ''; break;
+          case 'genere': datos.genere = value || 'F'; break;
+          case 'dob': 
+            // Solo incluir fecha si tiene valor
+            if (value) {
+              // Convertir formato YYYY-MM-DD a DD/MM/YYYY
+              if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = value.split('-');
+                datos.dob = `${day}/${month}/${year}`;
+              } else {
+                datos.dob = value;
+              }
+            }
+            break;
+          case 'codigo': datos.cod = value || null; break;
+          case 'num_serie': datos.num_serie = value || null; break;
+          case 'explotacio': datos.explotacio = value || ''; break;
+          case 'origen': datos.origen = value || null; break;
+          case 'pare': datos.pare = value || null; break;
+          case 'mare': datos.mare = value || null; break;
+          
+          // Campos del formulario de cambios habituales
+          case 'estado_hab': datos.estado = value || 'OK'; break;
+          
+          // Campos que pueden estar en ambos formularios
+          case 'alletar': 
+            // Asegurar que alletar siempre sea un string: '0', '1', o '2'
+            if (value === '' || value === undefined || value === null) {
+              datos.alletar = '0'; // Valor por defecto
+            } else {
+              datos.alletar = String(value);
+            }
+            break;
+          case 'estado': datos.estado = value || 'OK'; break;
+          default: console.log('Campo no mapeado:', key);
+        }
+      }
+      
+      // Mostrar mensaje de carga
+      window.mostrarMensaje('Actualizando animal...', 'info');
+      
+      // Mostrar mensaje de carga
+      window.mostrarMensaje('Enviando actualización al servidor...', 'info');
+      
+      // Usaremos fetch directamente para evitar problemas con imports
+      window.animalesFormData = datos; // Para inspección por consola
+      console.log('Datos a enviar directamente al backend:', datos);
+      
+      try {
+        // Primero, vamos a cargar el animal actual para comparar los valores
+        console.log('Obteniendo datos actuales del animal para comparar...');
+        
+        // Obtener token de autenticación para las peticiones
+        const token = localStorage.getItem('token') || 'admin123'; // Token para desarrollo
+        
+        // Petición para obtener los datos actuales
+        const responseGet = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!responseGet.ok) {
+          throw new Error(`Error al obtener los datos actuales: ${responseGet.status} ${responseGet.statusText}`);
+        }
+        
+        const animalActual = await responseGet.json();
+        const animalData = animalActual.data || animalActual;
+        console.log('Datos actuales del animal:', animalData);
+        
+        // Construir un objeto con solo los campos modificados
+        const datosModificados = {};
+        
+        // Mostrar todos los valores antes de la comparación
+        console.log('Datos del formulario:');
+        for (const [key, value] of Object.entries(datos)) {
+          console.log(`  ${key}: ${value} (${typeof value})`);
+        }
+        console.log('Datos actuales del animal:');
+        for (const [key, value] of Object.entries(animalData)) {
+          console.log(`  ${key}: ${value} (${typeof value})`);
+        }
+        
+        // Comprobamos cada campo para ver si ha cambiado
+        if (datos.nom !== animalData.nom) datosModificados.nom = datos.nom;
+        if (datos.genere !== animalData.genere) datosModificados.genere = datos.genere;
+        if (datos.explotacio !== animalData.explotacio) datosModificados.explotacio = datos.explotacio;
+        if (datos.estado !== animalData.estado) datosModificados.estado = datos.estado;
+        
+        // Campos opcionales - solo los incluimos si han cambiado
+        if (datos.dob && datos.dob !== animalData.dob) datosModificados.dob = datos.dob;
+        if (datos.mare !== animalData.mare) datosModificados.mare = datos.mare;
+        if (datos.pare !== animalData.pare) datosModificados.pare = datos.pare;
+        if (datos.origen !== animalData.origen) datosModificados.origen = datos.origen;
+        if (datos.cod !== animalData.cod) datosModificados.cod = datos.cod;
+        if (datos.num_serie !== animalData.num_serie) datosModificados.num_serie = datos.num_serie;
+        
+        // Manejo especial para alletar - siempre convertir a string antes de comparar
+        console.log('Comparando alletar:', 
+          `Valor formulario: ${datos.alletar} (${typeof datos.alletar})`, 
+          `Valor actual: ${animalData.alletar} (${typeof animalData.alletar})`);
+        
+        // Convertir ambos valores a string para comparar
+        const alletarForm = String(datos.alletar || '0');
+        const alletarActual = String(animalData.alletar || '0');
+        
+        if (datos.alletar && alletarForm !== alletarActual) {
+          console.log(`Valor de alletar diferente: ${alletarForm} !== ${alletarActual}`);
+          datosModificados.alletar = alletarForm;
+        }
+        
+        console.log('Campos modificados a enviar:', datosModificados);
+        
+        // Si no hay cambios, informamos al usuario y terminamos
+        if (Object.keys(datosModificados).length === 0) {
+          window.mostrarMensaje('No se detectaron cambios que actualizar', 'info');
+          return;
+        }
+        
+        console.log('Enviando solo campos modificados para actualización:', datosModificados);
+        
+        // Realizar la petición PATCH usando fetch
+        const response = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(datosModificados)
+        });
+        
+        console.log(`Respuesta recibida: ${response.status} ${response.statusText}`);
+        
+        // Comprobar si la respuesta es exitosa
+        if (response.ok) {
+          const resultado = await response.json();
+          console.log('Respuesta de actualización:', resultado);
+          
+          window.mostrarMensaje('¡Animal actualizado con éxito!', 'success');
+          
+          // Redirigir al detalle del animal
+          setTimeout(() => {
+            window.location.href = `/animals/${window.animalId}`;
+          }, 1500);
+        } else {
+          // Intentar obtener el mensaje de error
+          let mensajeError = `Error ${response.status}: ${response.statusText}`;
+          
+          try {
+            const errorJson = await response.json();
+            console.error('Error detallado:', errorJson);
+            
+            if (errorJson.detail) {
+              if (Array.isArray(errorJson.detail)) {
+                mensajeError = 'Errores de validación: ' + 
+                  errorJson.detail.map(e => e.msg).join(', ');
+              } else {
+                mensajeError = errorJson.detail;
+              }
+            }
+          } catch (e) {
+            // Si no se puede parsear como JSON, intentamos obtener como texto
+            try {
+              const errorText = await response.text();
+              mensajeError += ` - ${errorText}`;
+            } catch (e2) {
+              console.error('No se pudo obtener detalle del error');
+            }
+          }
+          
+          window.mostrarMensaje('Error: ' + mensajeError, 'error');
+        }
+      } catch (error) {
+        console.error('Error en la petición:', error);
+        window.mostrarMensaje('Error: ' + (error.message || 'Error desconocido'), 'error');
+      }
+    } catch (error) {
+      console.error('Error al actualizar el animal:', error);
+      window.mostrarMensaje(`Error: ${error.message || 'Error desconocido'}`, 'error');
+    }
+  }
+  
+  // Función para manejar el registro de un nuevo parto
+  async function handleRegistrarParto() {
+    console.log('Iniciando proceso de registro de parto...');
+    
+    try {
+      // Obtener datos del formulario de partos
+      const part = document.getElementById('part')?.value;
+      const genereT = document.getElementById('GenereT')?.value;
+      const estadoT = document.getElementById('EstadoT')?.value;
+      const observacions = document.getElementById('observacions')?.value;
+      
+      console.log('Datos del parto:', { part, genereT, estadoT, observacions });
+      
+      // Validar que los campos requeridos tengan valor
+      if (!part || !genereT || !estadoT) {
+        window.mostrarMensaje('Por favor, completa todos los campos obligatorios (fecha, género y estado)', 'error');
+        return;
+      }
+      
+      // Formatear la fecha si es necesario (de YYYY-MM-DD a DD/MM/YYYY)
+      let fechaFormateada = part;
+      if (part.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = part.split('-');
+        fechaFormateada = `${day}/${month}/${year}`;
+      }
+      
+      // Preparar datos para enviar
+      const datosParto = {
+        part: fechaFormateada,
+        GenereT: genereT,
+        EstadoT: estadoT
+      };
+      
+      // Añadir observaciones solo si tiene valor
+      if (observacions) {
+        datosParto.observacions = observacions;
+      }
+      
+      console.log('Datos del parto formateados:', datosParto);
+      
+      // Obtener token de autenticación
+      const token = localStorage.getItem('token') || 'admin123'; // Token para desarrollo
+      
+      // Mostrar mensaje de proceso
+      window.mostrarMensaje('Registrando nuevo parto...', 'info');
+      
+      // Enviar datos al servidor para crear el parto
+      const response = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}/partos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosParto)
+      });
+      
+      console.log(`Respuesta recibida: ${response.status} ${response.statusText}`);
+      
+      // Procesar respuesta
+      if (response.ok) {
+        const resultado = await response.json();
+        console.log('Respuesta de registro de parto:', resultado);
+        
+        window.mostrarMensaje('¡Parto registrado con éxito!', 'success');
+        
+        // Limpiar formulario
+        document.getElementById('part').value = '';
+        document.getElementById('GenereT').value = '';
+        document.getElementById('EstadoT').value = '';
+        if (document.getElementById('observacions')) {
+          document.getElementById('observacions').value = '';
+        }
+        
+        // Redirigir a la página de detalle después de un breve delay
+        setTimeout(() => {
+          window.location.href = `/animals/${window.animalId}`;
+        }, 1500);
+      } else {
+        // Si hay error, intentar obtener mensaje
+        let mensajeError = 'Error al registrar el parto';
+        try {
+          const errorData = await response.json();
+          mensajeError = errorData.detail || errorData.message || mensajeError;
+          console.error('Error detallado:', errorData);
+        } catch (e) {
+          console.error('Error al procesar respuesta de error:', e);
+        }
+        
+        window.mostrarMensaje(`Error: ${mensajeError}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error en el registro de parto:', error);
+      window.mostrarMensaje(`Error: ${error.message || 'Error desconocido al registrar el parto'}`, 'error');
+    }
+  }
+</script>

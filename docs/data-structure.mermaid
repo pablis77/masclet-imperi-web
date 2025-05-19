@@ -1,0 +1,66 @@
+classDiagram
+    class Animal {
+        +String alletar
+        +String explotacio
+        +String nom
+        +String genere
+        +String pare
+        +String mare
+        +String quadra
+        +String cod
+        +String num_serie
+        +Date dob
+        +String estado
+        +Date part
+        +String genereT
+        +String estadoT
+        +validarCampos()
+        +actualizarEstado()
+        +calcularEdad()
+    }
+
+    class Usuario {
+        +String username
+        +String password_hash
+        +String role
+        +bool recordar
+        +validarCredenciales()
+        +actualizarPassword()
+        +verificarPermisos()
+    }
+
+    class DataValidator {
+        +validarNombreUnico()
+        +validarFormatoCodigo()
+        +validarFechas()
+        +validarRelaciones()
+        +validarEstados()
+    }
+
+    class BackupManager {
+        +crearBackup()
+        +restaurarBackup()
+        +rotarBackups()
+        +verificarIntegridad()
+    }
+
+    class ImportManager {
+        +validarCSV()
+        +procesarDatos()
+        +resolverDuplicados()
+        +actualizarRegistros()
+    }
+
+    class MessageHandler {
+        +mostrarError()
+        +mostrarExito()
+        +mostrarAdvertencia()
+        +mostrarProgreso()
+    }
+
+    Animal --> DataValidator
+    Usuario --> DataValidator
+    ImportManager --> BackupManager
+    ImportManager --> DataValidator
+    DataValidator --> MessageHandler
+    BackupManager --> MessageHandler

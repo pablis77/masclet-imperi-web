@@ -1,0 +1,259 @@
+---
+// Props que pueden ser pasados al componente
+interface Props {
+  userRole?: string;
+  currentPath?: string;
+}
+
+// Valores por defecto
+const { 
+  userRole = "administrador",
+  currentPath = "/"
+} = Astro.props;
+
+// Importar config de idioma
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual en el servidor para la renderización inicial
+const serverLang = getCurrentLanguage();
+
+// Traducciones para títulos de secciones
+const sectionTitles = {
+  es: {
+    navigation: "NAVEGACIÓN",
+    admin: "ADMINISTRACIÓN"
+  },
+  ca: {
+    navigation: "NAVEGACIÓ",
+    admin: "ADMINISTRACIÓ"
+  }
+};
+
+// Traducciones para items del menú
+const menuTranslations = {
+  es: {
+    dashboard: "Dashboard",
+    animals: "Animales",
+    exploitations: "Explotaciones",
+    users: "Usuarios",
+    imports: "Importación",
+    backup: "Copias de seguridad",
+    management_system: "Sistema de Gestión Ganadera"
+  },
+  ca: {
+    dashboard: "Tauler de control",
+    animals: "Animals",
+    exploitations: "Explotacions",
+    users: "Usuaris",
+    imports: "Importació",
+    backup: "Còpies de seguretat",
+    management_system: "Sistema de Gestió Ramadera"
+  }
+};
+
+// Función para obtener traducción
+function t(key: string, section = 'menu'): string {
+  if (section === 'section') {
+    return sectionTitles[serverLang as 'es' | 'ca']?.[key] || key;
+  }
+  return menuTranslations[serverLang as 'es' | 'ca']?.[key] || key;
+}
+
+// Definir las secciones del menú según roles
+const menuSections = [
+  {
+    title: t("navigation", 'section'),
+    key: "navigation",
+    items: [
+      { name: t("dashboard"), key: "dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("exploitations"), key: "exploitations", url: "/explotaciones-react", icon: "🏡", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("animals"), key: "animals", url: "/animals", icon: "🐄", roles: ["administrador", "gerente", "editor", "usuario"] },
+    ]
+  },
+  {
+    title: t("admin", 'section'),
+    key: "admin",
+    items: [
+      { name: t("imports"), key: "imports", url: "/imports", icon: "📥", roles: ["administrador"] },
+      { name: t("users"), key: "users", url: "/users", icon: "👥", roles: ["administrador", "gerente"] },
+      { name: t("backup"), key: "backup", url: "/backup", icon: "💾", roles: ["administrador"] },
+    ]
+  }
+];
+
+// Mostrar todas las secciones y elementos sin filtrar por rol
+const filteredSections = menuSections;
+
+// Función para determinar si un elemento está activo
+const isActive = (itemUrl: string) => {
+  if (itemUrl === '/' && currentPath === '/') return true;
+  if (itemUrl !== '/' && currentPath.startsWith(itemUrl)) return true;
+  return false;
+};
+---
+
+<aside class="masclet-sidebar w-64 bg-white dark:bg-gray-800 min-h-screen shadow-md border-r border-gray-100 dark:border-gray-800 z-40 fixed top-0 left-0 h-screen overflow-y-auto">
+  <!-- Cabecera del sidebar con logo -->
+  <div class="py-4 px-0 border-b border-gray-100 dark:border-gray-700 flex items-center justify-center" style="min-height: 150px;">
+    <div class="w-full h-full flex items-center justify-center">
+      <img src="/images/logo_masclet.png" alt="Masclet Imperi Logo" class="max-w-full max-h-full" style="object-fit: contain;">
+    </div>
+  </div>
+
+  <!-- Botón para cerrar el sidebar en móvil -->
+  <button id="close-sidebar" class="md:hidden absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+    <span class="text-2xl">✕</span>
+  </button>
+
+  <!-- Título del sistema -->
+  <div class="px-6 pt-4 pb-2 text-center">
+    <p class="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+      {serverLang === 'ca' ? menuTranslations.ca.management_system : menuTranslations.es.management_system}
+    </p>
+  </div>
+  
+  <!-- Navegación -->
+  <nav class="py-2 overflow-y-auto max-h-[calc(100vh-240px)]">
+    {filteredSections.map((section) => (
+      <div class="mb-6">
+        <h3 class="px-6 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          {section.title}
+        </h3>
+        <div class="space-y-1">
+          {section.items.map((item) => (
+            <a 
+              href={item.url} 
+              class:list={[
+                "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150",
+                {
+                  "text-primary-dark bg-primary/10 dark:text-primary-light dark:bg-primary-dark/20 border-r-4 border-primary dark:border-primary-light": isActive(item.url),
+                  "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700": !isActive(item.url)
+                }
+              ]}
+            >
+              <span class="text-xl mr-3">{item.icon}</span>
+              {item.name}
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+  </nav>
+
+  <!-- Eliminado banner de versión -->
+</aside>
+
+<script>
+  // Script para manejar el cierre del sidebar en móvil y traducir elementos
+  document.addEventListener('DOMContentLoaded', () => {
+    // Traducciones del menú para cliente
+    const translations = {
+      es: {
+        dashboard: "Dashboard",
+        animals: "Animales",
+        exploitations: "Explotaciones",
+        users: "Usuarios",
+        imports: "Importación",
+        backup: "Copias de seguridad",
+        management_system: "Sistema de Gestión Ganadera",
+        navigation: "NAVEGACIÓN",
+        admin: "ADMINISTRACIÓN"
+      },
+      ca: {
+        dashboard: "Tauler de control",
+        animals: "Animals",
+        exploitations: "Explotacions",
+        users: "Usuaris",
+        imports: "Importació",
+        backup: "Còpies de seguretat",
+        management_system: "Sistema de Gestió Ramadera",
+        navigation: "NAVEGACIÓ",
+        admin: "ADMINISTRACIÓ"
+      }
+    };
+
+    // Función para traducir
+    function t(key, lang) {
+      return translations[lang]?.[key] || key;
+    }
+
+    // Función para traducir la barra lateral
+    function translateSidebar() {
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+
+      // Traducir los títulos de secciones
+      document.querySelectorAll('h3.px-6.mb-2.text-xs.font-semibold').forEach(header => {
+        const text = header.textContent.trim();
+        if (text === "NAVEGACIÓN") {
+          header.textContent = t('navigation', currentLang);
+        } else if (text === "ADMINISTRACIÓN") {
+          header.textContent = t('admin', currentLang);
+        }
+      });
+
+      // Traducir los elementos del menú lateral
+      document.querySelectorAll('nav a').forEach(link => {
+        const text = link.textContent.trim();
+        // Extraer el emoji si existe
+        const emoji = text.match(/^([\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}\u{24C2}\u{23E9}-\u{23EF}\u{25B6}\u{23F8}-\u{23FA}]+)/u);
+        const emojiPrefix = emoji ? emoji[0] + ' ' : '';
+
+        // Mapear los nombres del menú a claves de traducción
+        let translationKey = '';
+        if (text.includes('Dashboard')) translationKey = 'dashboard';
+        else if (text.includes('Animales')) translationKey = 'animals';
+        else if (text.includes('Explotaciones')) translationKey = 'exploitations';
+        else if (text.includes('Usuarios')) translationKey = 'users';
+        else if (text.includes('Importación')) translationKey = 'imports';
+        else if (text.includes('Backup') || text.includes('Copias')) translationKey = 'backup';
+
+        if (translationKey) {
+          link.innerHTML = `${emojiPrefix} ${t(translationKey, currentLang)}`;
+        }
+      });
+
+      // Traducir el texto del sistema de gestión
+      const systemText = document.querySelector('p.text-sm.text-gray-500.dark\\:text-gray-300.text-center');
+      if (systemText) {
+        systemText.textContent = t('management_system', currentLang);
+      }
+    }
+
+    // Ejecutar traducción inicial
+    translateSidebar();
+
+    // Retraducir cuando cambie el idioma
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        translateSidebar();
+      }
+    });
+
+    // Función para cerrar sidebar en móvil
+    const closeSidebarButton = document.getElementById('close-sidebar');
+    
+    if (closeSidebarButton) {
+      closeSidebarButton.addEventListener('click', () => {
+        // Disparar un evento personalizado para cerrar el sidebar
+        document.dispatchEvent(new CustomEvent('close-sidebar'));
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Estilos específicos del sidebar */
+  .masclet-sidebar {
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  @media (max-width: 768px) {
+    .masclet-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 80%; /* Reducir ancho en móvil para mejor usabilidad */
+      max-width: 280px;
+    }
+  }
+</style>

@@ -1,0 +1,194 @@
+Microsoft Windows [Versión 10.0.22631.4890]
+(c) Microsoft Corporation. Todos los derechos reservados.
+
+C:\Users\Usuario>conda activate masclet-imperi
+
+(masclet-imperi) C:\Users\Usuario>cd c:\Proyectos\claude\masclet-imperi-web\backend
+
+(masclet-imperi) c:\Proyectos\claude\masclet-imperi-web\backend>uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+INFO:     Will watch for changes in these directories: ['c:\\Proyectos\\claude\\masclet-imperi-web\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [19496] using StatReload
+INFO:     Started server process [22852]
+INFO:     Waiting for application startup.
+2025-02-27 14:05:10,799 - tortoise - DEBUG - Tortoise-ORM startup
+    connections: {'default': 'postgres://postgres:1***@localhost:5432/masclet_imperi'}
+    apps: {'models': {'models': ['app.models.animal', 'app.models.parto', 'aerich.models'], 'default_connection': 'default'}}
+2025-02-27 14:05:10,899 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x0000020B0F75D850>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-27 14:05:10,899 - tortoise - INFO - Tortoise-ORM generating schema
+2025-02-27 14:05:10,900 - tortoise - DEBUG - Creating schema: CREATE TABLE IF NOT EXISTS "animals" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "explotacio" VARCHAR(255) NOT NULL,
+    "nom" VARCHAR(255) NOT NULL,
+    "genere" VARCHAR(1) NOT NULL,
+    "estado" VARCHAR(3) NOT NULL,
+    "alletar" BOOL,
+    "pare" VARCHAR(100),
+    "mare" VARCHAR(100),
+    "quadra" VARCHAR(100),
+    "cod" VARCHAR(20),
+    "num_serie" VARCHAR(50),
+    "dob" TIMESTAMPTZ,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE "animals" IS 'Modelo principal de Animal';
+CREATE TABLE IF NOT EXISTS "animal_history" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "field_name" VARCHAR(50) NOT NULL,
+    "old_value" VARCHAR(255),
+    "new_value" VARCHAR(255),
+    "changed_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "changed_by" VARCHAR(50),
+    "animal_id" INT NOT NULL REFERENCES "animals" ("id") ON DELETE CASCADE
+);
+COMMENT ON TABLE "animal_history" IS 'Modelo para tracking de cambios';
+CREATE TABLE IF NOT EXISTS "parts" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "data" DATE NOT NULL,
+    "genere_fill" VARCHAR(1),
+    "estat_fill" VARCHAR(3),
+    "numero_part" INT NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "animal_id" INT NOT NULL REFERENCES "animals" ("id") ON DELETE CASCADE
+);
+COMMENT ON COLUMN "parts"."genere_fill" IS 'MASCLE: M\nFEMELLA: F';
+COMMENT ON COLUMN "parts"."estat_fill" IS 'OK: OK\nDEF: DEF';
+COMMENT ON TABLE "parts" IS 'Modelo para gestionar los partos';
+CREATE TABLE IF NOT EXISTS "aerich" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "version" VARCHAR(255) NOT NULL,
+    "app" VARCHAR(100) NOT NULL,
+    "content" JSONB NOT NULL
+);
+2025-02-27 14:05:10,938 - tortoise.db_client - DEBUG - Created connection pool <asyncpg.pool.Pool object at 0x0000020B11435FC0> with params: {'host': 'localhost', 'port': 5432, 'user': 'postgres', 'database': 'masclet_imperi', 'min_size': 1, 'max_size': 5, 'connection_class': <class 'asyncpg.connection.Connection'>, 'loop': None, 'server_settings': {}}
+2025-02-27 14:05:10,938 - tortoise.db_client - DEBUG - CREATE TABLE IF NOT EXISTS "animals" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "explotacio" VARCHAR(255) NOT NULL,
+    "nom" VARCHAR(255) NOT NULL,
+    "genere" VARCHAR(1) NOT NULL,
+    "estado" VARCHAR(3) NOT NULL,
+    "alletar" BOOL,
+    "pare" VARCHAR(100),
+    "mare" VARCHAR(100),
+    "quadra" VARCHAR(100),
+    "cod" VARCHAR(20),
+    "num_serie" VARCHAR(50),
+    "dob" TIMESTAMPTZ,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE "animals" IS 'Modelo principal de Animal';
+CREATE TABLE IF NOT EXISTS "animal_history" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "field_name" VARCHAR(50) NOT NULL,
+    "old_value" VARCHAR(255),
+    "new_value" VARCHAR(255),
+    "changed_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "changed_by" VARCHAR(50),
+    "animal_id" INT NOT NULL REFERENCES "animals" ("id") ON DELETE CASCADE
+);
+COMMENT ON TABLE "animal_history" IS 'Modelo para tracking de cambios';
+CREATE TABLE IF NOT EXISTS "parts" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "data" DATE NOT NULL,
+    "genere_fill" VARCHAR(1),
+    "estat_fill" VARCHAR(3),
+    "numero_part" INT NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "animal_id" INT NOT NULL REFERENCES "animals" ("id") ON DELETE CASCADE
+);
+COMMENT ON COLUMN "parts"."genere_fill" IS 'MASCLE: M\nFEMELLA: F';
+COMMENT ON COLUMN "parts"."estat_fill" IS 'OK: OK\nDEF: DEF';
+COMMENT ON TABLE "parts" IS 'Modelo para gestionar los partos';
+CREATE TABLE IF NOT EXISTS "aerich" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "version" VARCHAR(255) NOT NULL,
+    "app" VARCHAR(100) NOT NULL,
+    "content" JSONB NOT NULL
+);
+INFO:     Application startup complete.
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_part_begin with no data
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_field with data[42:61]
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_value with data[63:115]
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_end with no data
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_field with data[117:129]
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_value with data[131:139]
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_header_end with no data
+2025-02-27 14:06:02,145 - multipart.multipart - DEBUG - Calling on_headers_finished with no data
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[143:234]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[0:2]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[236:1605]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[0:2]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[1607:4229]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_data with data[0:2]
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_part_end with no data
+2025-02-27 14:06:02,146 - multipart.multipart - DEBUG - Calling on_end with no data
+2025-02-27 14:06:02,148 - app.api.endpoints.imports - INFO - CSV decodificado correctamente con codificación: latin1
+2025-02-27 14:06:02,183 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['1', 2]
+2025-02-27 14:06:02,186 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-36', 2]
+2025-02-27 14:06:02,187 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-36', 2]
+2025-02-27 14:06:02,188 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-50', 2]
+2025-02-27 14:06:02,188 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-50', 2]
+2025-02-27 14:06:02,190 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-50', 2]
+2025-02-27 14:06:02,191 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-51', 2]
+2025-02-27 14:06:02,191 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-51', 2]
+2025-02-27 14:06:02,192 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-64', 2]
+2025-02-27 14:06:02,192 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['20-64', 2]
+2025-02-27 14:06:02,193 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['R-32', 2]
+2025-02-27 14:06:02,337 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['R-32', 2]
+2025-02-27 14:06:02,338 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['R-32', 2]
+2025-02-27 14:06:02,339 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['R-32', 2]
+2025-02-27 14:06:02,339 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['R-32', 2]
+2025-02-27 14:06:02,340 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['E6', 2]
+2025-02-27 14:06:02,340 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['G-16', 2]
+2025-02-27 14:06:02,341 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['K-75', 2]
+2025-02-27 14:06:02,342 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['I-2', 2]
+2025-02-27 14:06:02,342 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['H-71', 2]
+2025-02-27 14:06:02,343 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['46', 2]
+2025-02-27 14:06:02,344 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['51', 2]
+2025-02-27 14:06:02,344 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['K-41', 2]
+2025-02-27 14:06:02,345 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['47', 2]
+2025-02-27 14:06:02,346 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-17', 2]
+2025-02-27 14:06:02,346 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-19', 2]
+2025-02-27 14:06:02,347 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-09', 2]
+2025-02-27 14:06:02,348 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-31', 2]
+2025-02-27 14:06:02,348 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-28', 2]
+2025-02-27 14:06:02,349 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['21-29', 2]
+2025-02-27 14:06:02,349 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['23-09', 2]
+2025-02-27 14:06:02,350 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['23-04', 2]
+2025-02-27 14:06:02,350 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['50', 2]
+2025-02-27 14:06:02,351 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['52', 2]
+2025-02-27 14:06:02,352 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['E5', 2]
+2025-02-27 14:06:02,352 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['E8', 2]
+2025-02-27 14:06:02,353 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['K-73', 2]
+2025-02-27 14:06:02,354 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Pablo', 2]
+2025-02-27 14:06:02,354 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Mario', 2]
+2025-02-27 14:06:02,355 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Marta', 2]
+2025-02-27 14:06:02,355 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Marta', 2]
+2025-02-27 14:06:02,356 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Marta', 2]
+2025-02-27 14:06:02,357 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Felipe', 2]
+2025-02-27 14:06:02,357 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Emma', 2]
+2025-02-27 14:06:02,358 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,358 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+2025-02-27 14:06:02,359 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Marcos', 2]
+2025-02-27 14:06:02,359 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Elena', 2]
+2025-02-27 14:06:02,360 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Afri', 2]
+2025-02-27 14:06:02,361 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Lola', 2]
+2025-02-27 14:06:02,361 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,362 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+2025-02-27 14:06:02,362 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,363 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+2025-02-27 14:06:02,363 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['paBLIS', 2]
+2025-02-27 14:06:02,364 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['asdasd', 2]
+2025-02-27 14:06:02,365 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,365 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+2025-02-27 14:06:02,366 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['fdsdf', 2]
+2025-02-27 14:06:02,366 - tortoise.db_client - DEBUG - UPDATE "animals" SET "explotacio"=$1,"nom"=$2,"genere"=$3,"estado"=$4 WHERE "id"=$5: ['asdasf', 'fdsdf', 'F', 'OK', 137]
+2025-02-27 14:06:02,367 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['asfasdf', 2]
+2025-02-27 14:06:02,368 - tortoise.db_client - DEBUG - UPDATE "animals" SET "explotacio"=$1,"nom"=$2,"genere"=$3,"estado"=$4 WHERE "id"=$5: ['asdasd', 'asfasdf', 'F', 'OK', 138]
+2025-02-27 14:06:02,369 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,369 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+2025-02-27 14:06:02,370 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Nico', 2]
+2025-02-27 14:06:02,371 - tortoise.db_client - DEBUG - SELECT "nom","estado","pare","dob","genere","num_serie","quadra","cod","mare","created_at","id","updated_at","explotacio","alletar" FROM "animals" WHERE "nom"=$1 ORDER BY "explotacio" ASC,"nom" ASC LIMIT $2: ['Clara', 2]
+INFO:     127.0.0.1:58103 - "POST /api/v1/imports/import/csv HTTP/1.1" 200 OK

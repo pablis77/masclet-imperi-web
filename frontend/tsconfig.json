@@ -1,0 +1,43 @@
+{
+    "extends": "astro/tsconfigs/strict",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@components/*": [
+                "src/components/*"
+            ],
+            "@layouts/*": [
+                "src/components/layout/*"
+            ],
+            "@common/*": [
+                "src/components/common/*"
+            ],
+            "@pages/*": [
+                "src/pages/*"
+            ],
+            "@utils/*": [
+                "src/utils/*"
+            ],
+            "@services/*": [
+                "src/services/*"
+            ],
+            "@stores/*": [
+                "src/stores/*"
+            ],
+            "@styles/*": [
+                "src/styles/*"
+            ]
+        },
+        "jsx": "react-jsx",
+        "jsxImportSource": "react",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
