@@ -101,6 +101,27 @@ const userRole = "administrador"; // Simulación de rol
     <p class="text-gray-600 dark:text-gray-300">{t.subtitle}</p>
   </div>
 
+  <!-- Leyenda del sistema de backups -->
+  <div class="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-6 rounded shadow-sm">
+    <h2 class="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">Protocolo de copias de seguridad</h2>
+    <div class="text-sm text-blue-700 dark:text-blue-200 space-y-2">
+      <p><strong>Copias automáticas:</strong> El sistema realiza backups automáticos en las siguientes situaciones:</p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li>Cada día a las 2:00 AM (copia diaria completa)</li>
+        <li>Cuando se crean nuevas fichas de animales</li>
+        <li>Cuando se editan datos importantes en fichas existentes</li>
+        <li>Después de cada importación de datos</li>
+      </ul>
+      <p class="mt-2"><strong>Política de retención:</strong> Se mantienen las últimas 14 copias de seguridad:</p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li>7 copias diarias más recientes</li>
+        <li>7 copias semanales históricas</li>
+      </ul>
+      <p class="mt-2"><strong>Almacenamiento:</strong> Todas las copias se almacenan de forma segura en la nube con cifrado, asegurando la recuperación en caso de cualquier incidencia.</p>
+      <p class="mt-2"><strong>Copias manuales:</strong> Como administrador, puedes crear copias de seguridad manuales adicionales en cualquier momento desde esta sección, especialmente antes de realizar cambios importantes en el sistema.</p>
+    </div>
+  </div>
+
   <!-- Alerta para mostrar mensajes de operaciones -->
   <div id="alert-container" class="hidden mb-4">
     <div id="alert" class="p-4 rounded-md text-center">
