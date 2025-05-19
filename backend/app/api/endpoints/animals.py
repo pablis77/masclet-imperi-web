@@ -33,7 +33,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Función auxiliar para ejecutar backup tras modificaciones
-async def trigger_backup_after_change(background_tasks: BackgroundTasks, action: str, animal_nom: str):
+async def trigger_backup_after_change(background_tasks: BackgroundTasks, action: str, animal_nom: str, history_id: str = None):
     """Ejecuta un backup automático tras modificaciones importantes en fichas de animales"""
     logger.info(f"Programando backup automático tras {action} del animal {animal_nom}")
     
@@ -41,17 +41,32 @@ async def trigger_backup_after_change(background_tasks: BackgroundTasks, action:
     if os.name == 'nt':  # Windows (entorno de desarrollo)
         # Obtener la ruta base del proyecto (2 niveles arriba de app/api/endpoints)
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        script_path = os.path.join(base_path, "new_tests", "complementos", "backup_programado.ps1")
-        if os.path.exists(script_path):
-            # En Windows, ejecutamos el script de PowerShell con el parámetro -AfterChange
+        
+        # Primero verificamos si existe el nuevo script con integración de historial
+        new_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_with_history.ps1")
+        legacy_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_programado.ps1")
+        
+        if os.path.exists(new_script_path):
+            # En Windows, ejecutamos el nuevo script de PowerShell con el parámetro -AfterChange y el ID del historial
             try:
-                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path, "-AfterChange"]
+                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", new_script_path, "-AfterChange"]
+                # Añadir ID del historial si existe
+                if history_id:
+                    cmd.extend(["-HistoryId", str(history_id)])
                 background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
-                logger.info(f"Backup automático programado correctamente tras {action} de {animal_nom}")
+                logger.info(f"Backup automático con historial programado tras {action} de {animal_nom}")
             except Exception as e:
-                logger.error(f"Error al programar backup automático: {str(e)}")
+                logger.error(f"Error al programar backup automático con historial: {str(e)}")
+        elif os.path.exists(legacy_script_path):
+            # Si no existe el nuevo script, usamos el script legado
+            try:
+                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", legacy_script_path, "-AfterChange"]
+                background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
+                logger.info(f"Backup automático (legado) programado tras {action} de {animal_nom}")
+            except Exception as e:
+                logger.error(f"Error al programar backup automático (legado): {str(e)}")
         else:
-            logger.warning(f"Script de backup no encontrado en: {script_path}")
+            logger.warning(f"No se encontró ningún script de backup disponible")
     else:  # Linux/Unix (entorno de producción)
         # En producción podríamos usar AWS SDK para lanzar el backup a S3
         # Esta implementación dependerá de la configuración final en AWS
@@ -117,16 +132,17 @@ async def create_animal(
         )
         
         # Registrar la creación en el historial
-        await AnimalHistory.create(
+        history_record = await AnimalHistory.create(
             animal=new_animal,
             action="CREATE",
             user=current_user.email if current_user else "sistema",
+            description=f"Creación del animal {new_animal.nom}",
             changes=animal_data
         )
         
         # Disparar backup automático tras la creación
         if background_tasks:
-            await trigger_backup_after_change(background_tasks, "creación", new_animal.nom)
+            await trigger_backup_after_change(background_tasks, "creación", new_animal.nom, str(history_record.id))
 
         # Preparar respuesta
         return {

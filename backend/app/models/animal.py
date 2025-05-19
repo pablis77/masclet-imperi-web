@@ -128,28 +128,40 @@ class AnimalHistory(models.Model):
     animal = fields.ForeignKeyField(
         "models.Animal", related_name="history_records", on_delete=fields.CASCADE
     )
-    usuario = fields.CharField(max_length=100)
-    cambio = fields.TextField()
-    campo = fields.CharField(max_length=50)
-    valor_anterior = fields.TextField(null=True)
-    valor_nuevo = fields.TextField(null=True)
+    # Acciones estándares: CREATE, UPDATE, DELETE
+    action = fields.CharField(max_length=20)
+    # Quién realizó los cambios
+    user = fields.CharField(max_length=100)
+    # Fecha y hora del cambio
+    timestamp = fields.DatetimeField(auto_now_add=True)
+    # Campo específico modificado (si aplica)
+    field = fields.CharField(max_length=50, null=True)
+    # Descripción del cambio
+    description = fields.TextField()
+    # Valores anteriores y nuevos (como JSON)
+    old_value = fields.TextField(null=True)
+    new_value = fields.TextField(null=True)
+    # Datos completos del cambio (como JSON, útil para CREATE)
+    changes = fields.JSONField(null=True)
     
     class Meta:
         """Metadatos del modelo"""
         table = "animal_history"
-        ordering = ["-id"]
+        ordering = ["-timestamp", "-id"]
     
     async def to_dict(self) -> dict:
         """Convierte el modelo a diccionario"""
         return {
             "id": self.id,
             "animal_id": self.animal_id,
-            "fecha": datetime.now().strftime("%d/%m/%Y %H:%M"),  # Fecha actual como fallback
-            "usuario": self.usuario,
-            "cambio": self.cambio,
-            "campo": self.campo,
-            "valor_anterior": self.valor_anterior,
-            "valor_nuevo": self.valor_nuevo
+            "action": self.action,
+            "user": self.user,
+            "timestamp": self.timestamp.strftime("%d/%m/%Y %H:%M:%S") if self.timestamp else None,
+            "field": self.field,
+            "description": self.description,
+            "old_value": self.old_value,
+            "new_value": self.new_value,
+            "changes": self.changes
         }
 
 class Part(models.Model):
