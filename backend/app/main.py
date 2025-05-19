@@ -62,15 +62,54 @@ else:
     logger.info(f"Modo producción: permitiendo orígenes específicos: {origins}")
     allow_creds = True
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Forzar permitir todos los orígenes independientemente del modo
-    allow_credentials=False,  # Debe ser False cuando allow_origins es ["*"]
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],  # Incluir todos los métodos posibles
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=86400  # Cachear preflight por 24 horas para mejorar rendimiento
-)
+# Configurar CORS de forma adecuada para permitir credenciales
+if is_dev:
+    # Lista de orígenes en desarrollo para pruebas
+    dev_origins = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://localhost:4321",  # Puerto Astro por defecto
+        "http://127.0.0.1:4321",
+        "http://127.0.0.1:55710",  # Puerto dinámico actual
+        "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
+        "https://api-masclet-imperi.loca.lt"              # Backend LocalTunnel
+    ]
+    
+    # Registrar los orígenes permitidos
+    logger.info(f"Modo desarrollo: permitiendo orígenes específicos: {dev_origins}")
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=dev_origins,  # Lista específica en lugar del comodín
+        allow_credentials=True,     # Permitir credenciales
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=86400  # Cachear preflight por 24 horas
+    )
+    
+    # Registramos que hemos configurado CORS correctamente
+    logger.info("CORS configurado con credenciales habilitadas para orígenes específicos")
+else:
+    # En producción sólo permitimos orígenes conocidos
+    prod_origins = [
+        "https://masclet-imperi-web.netlify.app",
+        "https://masclet-imperi-web-frontend.onrender.com",
+        "https://masclet-imperi-web-frontend-2025.loca.lt", 
+        "https://api-masclet-imperi.loca.lt"              
+    ]
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=prod_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=86400
+    )
 
 # Configurar medidas de seguridad
 setup_security(app)

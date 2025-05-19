@@ -13,6 +13,7 @@ from app.api.endpoints.admin import admin_router
 from app.api.endpoints.diagnostico import router as diagnostico_router
 from app.api.endpoints.explotacions import router as explotacions_router
 from app.api.endpoints.health import router as health_router
+from app.api.endpoints.backup import router as backup_router
 
 # Crear router principal
 api_router = APIRouter()
@@ -91,4 +92,11 @@ api_router.include_router(
 api_router.include_router(
     health_router,
     tags=["health"]
+)
+
+# Rutas para backup y restauración
+api_router.include_router(
+    backup_router,
+    prefix="/backup",
+    tags=["backup"]
 )
