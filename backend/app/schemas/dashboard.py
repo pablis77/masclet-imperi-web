@@ -16,7 +16,7 @@ class AnimalStats(BaseModel):
     ratio_m_h: float
     por_estado: Dict[str, int]
     por_alletar: Optional[Dict[str, int]] = None
-    por_quadra: Optional[Dict[str, int]] = None
+    por_origen: Optional[Dict[str, int]] = None
     edades: Optional[Dict[str, int]] = None
     
 class PartoStats(BaseModel):
@@ -86,7 +86,7 @@ class CombinedDashboardResponse(BaseModel):
     partos: PartoStats
     explotaciones: Optional[ExplotacioStats] = None
     comparativas: ComparativaStats
-    por_quadra: Dict[str, Dict[str, Any]]
+    por_origen: Dict[str, Dict[str, Any]]
     rendimiento_partos: Dict[str, float]
     tendencias: Dict[str, Dict[str, float]]
     explotacio: Optional[str] = None
