@@ -249,13 +249,25 @@ function displayHistoryData(historyData) {
     
     // Agregar cada registro a la tabla
     historyData.forEach(item => {
-        const date = new Date(item.created_at).toLocaleString();
+        // Usar el timestamp ya formateado que viene del backend
+        const date = item.timestamp || 'Fecha desconocida';
+        
+        // Formatear el cambio para mostrar valor anterior → valor nuevo
+        let cambioFormateado = item.cambio || '-';
+        
+        // Si tenemos valores anterior y nuevo, mostrarlos en formato más claro
+        if (item.valor_anterior !== undefined && item.valor_nuevo !== undefined) {
+            const valorAnterior = item.valor_anterior === null ? 'vacío' : item.valor_anterior;
+            const valorNuevo = item.valor_nuevo === null ? 'vacío' : item.valor_nuevo;
+            cambioFormateado = `${valorAnterior} → ${valorNuevo}`;
+        }
+        
         tableHTML += `
             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                 <td class="py-4 px-6">${date}</td>
                 <td class="py-4 px-6">${item.usuario || 'Sistema'}</td>
                 <td class="py-4 px-6">${item.campo || '-'}</td>
-                <td class="py-4 px-6">${item.cambio || '-'}</td>
+                <td class="py-4 px-6">${cambioFormateado}</td>
             </tr>
         `;
     });
