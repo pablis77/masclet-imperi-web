@@ -32,7 +32,19 @@ const translations = {
     complete: "Completo",
     download: "Descargar",
     restore: "Restaurar",
-    delete: "Eliminar"
+    delete: "Eliminar",
+    loading: "Cargando...",
+    success: "Operación completada con éxito",
+    error: "Error",
+    confirmRestore: "¿Estás seguro de que quieres restaurar el sistema? Esta acción reemplazará todos los datos actuales.",
+    confirmDelete: "¿Estás seguro de que quieres eliminar este backup?",
+    noBackups: "No hay backups disponibles",
+    autoBackup: "Backup automático",
+    manualBackup: "Backup manual",
+    systemBackup: "Backup del sistema",
+    backupInProgress: "Backup en progreso...",
+    restoreInProgress: "Restauración en progreso...",
+    deleteInProgress: "Eliminando backup..."
   },
   ca: {
     title: "Backup del Sistema",
@@ -59,7 +71,19 @@ const translations = {
     complete: "Complet",
     download: "Descarregar",
     restore: "Restaurar",
-    delete: "Eliminar"
+    delete: "Eliminar",
+    loading: "Carregant...",
+    success: "Operació completada amb èxit",
+    error: "Error",
+    confirmRestore: "Estàs segur que vols restaurar el sistema? Aquesta acció reemplaçarà totes les dades actuals.",
+    confirmDelete: "Estàs segur que vols eliminar aquest backup?",
+    noBackups: "No hi ha backups disponibles",
+    autoBackup: "Backup automàtic",
+    manualBackup: "Backup manual",
+    systemBackup: "Backup del sistema",
+    backupInProgress: "Backup en progrés...",
+    restoreInProgress: "Restauració en progrés...",
+    deleteInProgress: "Eliminant backup..."
   }
 };
 
@@ -77,6 +101,13 @@ const userRole = "administrador"; // Simulación de rol
     <p class="text-gray-600 dark:text-gray-300">{t.subtitle}</p>
   </div>
 
+  <!-- Alerta para mostrar mensajes de operaciones -->
+  <div id="alert-container" class="hidden mb-4">
+    <div id="alert" class="p-4 rounded-md text-center">
+      <span id="alert-message"></span>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <!-- Crear backup -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
@@ -87,24 +118,73 @@ const userRole = "administrador"; // Simulación de rol
       <div class="space-y-4">
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
-            <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <input type="checkbox" id="include-animals" checked class="form-checkbox text-primary dark:border-gray-600" />
             <span>{t.includeAnimals}</span>
           </label>
         </div>
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
-            <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <input type="checkbox" id="include-births" checked class="form-checkbox text-primary dark:border-gray-600" />
             <span>{t.includeBirths}</span>
           </label>
         </div>
         <div>
           <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
-            <input type="checkbox" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <input type="checkbox" id="include-config" checked class="form-checkbox text-primary dark:border-gray-600" />
             <span>{t.includeConfig}</span>
           </label>
         </div>
       </div>
-      <button class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors">{t.createButton}</button>
+      <button 
+        id="create-backup-btn" 
+        class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors"
+        onclick="
+          console.log('Botón de backup clickeado');
+          const includeAnimals = document.getElementById('include-animals').checked;
+          const includeBirths = document.getElementById('include-births').checked;
+          const includeConfig = document.getElementById('include-config').checked;
+          
+          fetch('/api/v1/backup/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              include_animals: includeAnimals,
+              include_births: includeBirths,
+              include_config: includeConfig,
+              created_by: 'usuario'
+            }),
+            credentials: 'include'
+          })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(error => {
+                throw new Error(error.detail || 'Error al crear el backup');
+              });
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Backup creado:', data);
+            alert('Backup creado correctamente');
+            window.location.reload();
+          })
+          .catch(error => {
+            console.error('Error al crear backup:', error);
+            alert(`Error: ${error.message}`);
+            this.disabled = false;
+            this.innerText = 'Crear backup ahora';
+          });
+          
+          this.disabled = true;
+          this.innerText = 'Creando backup...';
+          return false;
+        "
+      >
+        {t.createButton}
+      </button>
     </div>
 
     <!-- Restaurar backup -->
@@ -115,13 +195,17 @@ const userRole = "administrador"; // Simulación de rol
         <span class="font-semibold text-amber-600 dark:text-amber-400">{t.warning}</span>
       </p>
       <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 mb-4 text-center">
-        <div class="text-gray-500 dark:text-gray-400">
+        <div id="selected-backup-container" class="hidden">
+          <p class="mb-2">{t.selectFile}: <span id="selected-backup-name" class="font-semibold"></span></p>
+          <button id="change-backup-btn" class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">{t.selectButton}</button>
+        </div>
+        <div id="no-selected-backup-container" class="text-gray-500 dark:text-gray-400">
           <p class="mb-2">{t.selectFile}</p>
           <p class="text-sm">{t.or}</p>
-          <button class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">{t.selectButton}</button>
+          <button id="select-backup-btn" class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">{t.selectButton}</button>
         </div>
       </div>
-      <button class="w-full px-4 py-2 bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>{t.restoreButton}</button>
+      <button id="restore-backup-btn" class="w-full px-4 py-2 bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>{t.restoreButton}</button>
     </div>
   </div>
 
@@ -139,29 +223,10 @@ const userRole = "administrador"; // Simulación de rol
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.actions}</th>
           </tr>
         </thead>
-        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">13/03/2025 10:30</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">15.2 MB</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">admin@mascletimperi.com</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">{t.complete}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <div class="flex space-x-2">
-                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{t.download}</button>
-                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">{t.restore}</button>
-                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">{t.delete}</button>
-              </div>
-            </td>
-          </tr>
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">10/03/2025 16:45</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">14.8 MB</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">admin@mascletimperi.com</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">{t.complete}</span>
-            </td>
+        <tbody id="backups-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- Aquí se cargarán los backups dinámicamente -->
+          <tr class="text-center">
+            <td colspan="5" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{t.loading}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
                 <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{t.download}</button>
@@ -174,4 +239,366 @@ const userRole = "administrador"; // Simulación de rol
       </table>
     </div>
   </div>
+
+  <script>
+    // Importar servicios para manejar backups
+    import { getBackupsList, createBackup, restoreBackup, deleteBackup, getBackupDownloadUrl } from '../../services/backupService.js';
+    
+    // Traducciones disponibles en cliente
+    const userLanguage = document.documentElement.lang || 'es';
+    const translations = {
+      es: {
+        loading: "Cargando...",
+        success: "Operación completada con éxito",
+        error: "Error",
+        confirmRestore: "¿Estás seguro de que quieres restaurar el sistema? Esta acción reemplazará todos los datos actuales.",
+        confirmDelete: "¿Estás seguro de que quieres eliminar este backup?",
+        noBackups: "No hay backups disponibles",
+        autoBackup: "Backup automático",
+        manualBackup: "Backup manual",
+        systemBackup: "Backup del sistema",
+        backupInProgress: "Backup en progreso...",
+        restoreInProgress: "Restauración en progreso...",
+        deleteInProgress: "Eliminando backup...",
+        backupSuccess: "Backup creado correctamente",
+        restoreSuccess: "Sistema restaurado correctamente",
+        deleteSuccess: "Backup eliminado correctamente",
+        download: "Descargar",
+        restore: "Restaurar",
+        delete: "Eliminar",
+        complete: "Completo",
+        selectFile: "Selecciona un archivo de backup"
+      },
+      ca: {
+        loading: "Carregant...",
+        success: "Operació completada amb èxit",
+        error: "Error",
+        confirmRestore: "Estàs segur que vols restaurar el sistema? Aquesta acció reemplaçarà totes les dades actuals.",
+        confirmDelete: "Estàs segur que vols eliminar aquest backup?",
+        noBackups: "No hi ha backups disponibles",
+        autoBackup: "Backup automàtic",
+        manualBackup: "Backup manual",
+        systemBackup: "Backup del sistema",
+        backupInProgress: "Backup en progrés...",
+        restoreInProgress: "Restauració en progrés...",
+        deleteInProgress: "Eliminant backup...",
+        backupSuccess: "Backup creat correctament",
+        restoreSuccess: "Sistema restaurat correctament",
+        deleteSuccess: "Backup eliminat correctament",
+        download: "Descarregar",
+        restore: "Restaurar",
+        delete: "Eliminar",
+        complete: "Complet",
+        selectFile: "Selecciona un arxiu de backup"
+      }
+    };
+    const t = translations[userLanguage] || translations.es;
+    
+    // Variables globales
+    let selectedBackup = null;
+    let backupsList = [];
+    
+    // Elementos DOM
+    const alertContainer = document.getElementById('alert-container');
+    const alertElement = document.getElementById('alert');
+    const alertMessage = document.getElementById('alert-message');
+    const createBackupBtn = document.getElementById('create-backup-btn');
+    const restoreBackupBtn = document.getElementById('restore-backup-btn');
+    const selectBackupBtn = document.getElementById('select-backup-btn');
+    const changeBackupBtn = document.getElementById('change-backup-btn');
+    const selectedBackupContainer = document.getElementById('selected-backup-container');
+    const noSelectedBackupContainer = document.getElementById('no-selected-backup-container');
+    const selectedBackupName = document.getElementById('selected-backup-name');
+    const backupsTableBody = document.getElementById('backups-table-body');
+    const includeAnimals = document.getElementById('include-animals');
+    const includeBirths = document.getElementById('include-births');
+    const includeConfig = document.getElementById('include-config');
+    
+    // Funciones auxiliares
+    function showAlert(message, type = 'success') {
+      alertContainer.classList.remove('hidden');
+      alertMessage.innerText = message;
+      
+      alertElement.className = 'p-4 rounded-md text-center';
+      
+      if (type === 'success') {
+        alertElement.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
+      } else if (type === 'error') {
+        alertElement.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+      } else if (type === 'warning') {
+        alertElement.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-200');
+      } else if (type === 'info') {
+        alertElement.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+      }
+      
+      // Auto-ocultar después de 5 segundos
+      setTimeout(() => {
+        alertContainer.classList.add('hidden');
+      }, 5000);
+    }
+    
+    function setLoading(button, isLoading, text) {
+      if (isLoading) {
+        button.disabled = true;
+        button.originalText = button.innerText;
+        button.innerText = text || t.loading;
+        button.classList.add('opacity-70');
+      } else {
+        button.disabled = false;
+        button.innerText = button.originalText || button.innerText;
+        button.classList.remove('opacity-70');
+      }
+    }
+    
+    function updateSelectedBackup(backup) {
+      selectedBackup = backup;
+      
+      if (backup) {
+        selectedBackupName.innerText = backup.filename;
+        selectedBackupContainer.classList.remove('hidden');
+        noSelectedBackupContainer.classList.add('hidden');
+        restoreBackupBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        restoreBackupBtn.disabled = false;
+      } else {
+        selectedBackupContainer.classList.add('hidden');
+        noSelectedBackupContainer.classList.remove('hidden');
+        restoreBackupBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        restoreBackupBtn.disabled = true;
+      }
+    }
+    
+    function getBackupTypeLabel(filename) {
+      if (filename.includes('diario-auto')) {
+        return t.autoBackup;
+      } else if (filename.includes('cambio-sistema')) {
+        return t.systemBackup;
+      } else {
+        return t.manualBackup;
+      }
+    }
+    
+    // Cargar la lista de backups
+    async function loadBackupsList() {
+      try {
+        backupsList = await getBackupsList();
+        
+        // Actualizar la tabla de backups
+        if (backupsList.length === 0) {
+          backupsTableBody.innerHTML = `
+            <tr class="text-center">
+              <td colspan="5" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">${t.noBackups}</td>
+            </tr>
+          `;
+          return;
+        }
+        
+        backupsTableBody.innerHTML = backupsList.map(backup => `
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700" data-filename="${backup.filename}">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.size}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.created_by}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                ${getBackupTypeLabel(backup.filename)}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex space-x-2">
+                <a href="${getBackupDownloadUrl(backup.filename)}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200" download>${t.download}</a>
+                <button class="restore-btn text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">
+                  ${t.restore}
+                </button>
+                <button class="delete-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">
+                  ${t.delete}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+        
+        // Agregar event listeners a los botones de la tabla
+        document.querySelectorAll('.restore-btn').forEach(btn => {
+          btn.addEventListener('click', handleRestoreFromTable);
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', handleDeleteFromTable);
+        });
+        
+      } catch (error) {
+        console.error('Error al cargar la lista de backups:', error);
+        showAlert(`${t.error}: ${error.message}`, 'error');
+        
+        backupsTableBody.innerHTML = `
+          <tr class="text-center">
+            <td colspan="5" class="px-6 py-4 text-sm text-red-500 dark:text-red-300">${t.error}: ${error.message}</td>
+          </tr>
+        `;
+      }
+    }
+    
+    // Manejadores de eventos
+    async function handleCreateBackup() {
+      try {
+        setLoading(createBackupBtn, true, t.backupInProgress);
+        
+        const options = {
+          include_animals: includeAnimals.checked,
+          include_births: includeBirths.checked,
+          include_config: includeConfig.checked,
+          created_by: 'usuario' // Se sobreescribirá en el backend con el correo del usuario autenticado
+        };
+        
+        const result = await createBackup(options);
+        showAlert(t.backupSuccess, 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+        
+      } catch (error) {
+        console.error('Error al crear backup:', error);
+        showAlert(`${t.error}: ${error.message}`, 'error');
+      } finally {
+        setLoading(createBackupBtn, false);
+      }
+    }
+    
+    async function handleRestoreBackup() {
+      if (!selectedBackup) return;
+      
+      try {
+        setLoading(restoreBackupBtn, true, t.restoreInProgress);
+        
+        await restoreBackup(selectedBackup.filename);
+        showAlert(t.restoreSuccess, 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+        
+        // Limpiar selección
+        updateSelectedBackup(null);
+        
+      } catch (error) {
+        console.error('Error al restaurar backup:', error);
+        showAlert(`${t.error}: ${error.message}`, 'error');
+      } finally {
+        setLoading(restoreBackupBtn, false);
+      }
+    }
+    
+    function handleSelectBackup() {
+      // Mostrar una lista modal o dropdown con los backups disponibles
+      // Para simplicidad, usamos el primer backup de la lista
+      if (backupsList.length > 0) {
+        updateSelectedBackup(backupsList[0]);
+      } else {
+        showAlert(t.noBackups, 'warning');
+      }
+    }
+    
+    function handleChangeBackup() {
+      // Volver a mostrar la selección
+      updateSelectedBackup(null);
+    }
+    
+    function handleRestoreFromTable(event) {
+      const row = event.target.closest('tr');
+      const filename = row.dataset.filename;
+      const backup = backupsList.find(b => b.filename === filename);
+      
+      if (backup) {
+        updateSelectedBackup(backup);
+        // Desplazar a la sección de restauración
+        document.getElementById('restore-backup-btn').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    
+    async function handleDeleteFromTable(event) {
+      const row = event.target.closest('tr');
+      const filename = row.dataset.filename;
+      
+      try {
+        // Desactivar botón mientras se elimina
+        event.target.disabled = true;
+        event.target.textContent = t.deleteInProgress;
+        
+        await deleteBackup(filename);
+        showAlert(t.deleteSuccess, 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+        
+        // Si el backup eliminado era el seleccionado, limpiamos la selección
+        if (selectedBackup && selectedBackup.filename === filename) {
+          updateSelectedBackup(null);
+        }
+        
+      } catch (error) {
+        console.error('Error al eliminar backup:', error);
+        showAlert(`${t.error}: ${error.message}`, 'error');
+        event.target.disabled = false;
+        event.target.textContent = t.delete;
+      }
+    }
+    
+    // Función para inicializar la página
+    function initPage() {
+      console.log('Inicializando página de backup...');
+      
+      // Verificar que todos los elementos existen
+      if (!createBackupBtn) {
+        console.error('No se encontró el botón de crear backup');
+        createBackupBtn = document.getElementById('create-backup-btn');
+      }
+      
+      if (!restoreBackupBtn) {
+        console.error('No se encontró el botón de restaurar backup');
+        restoreBackupBtn = document.getElementById('restore-backup-btn');
+      }
+      
+      if (!selectBackupBtn) {
+        console.error('No se encontró el botón de seleccionar backup');
+        selectBackupBtn = document.getElementById('select-backup-btn');
+      }
+      
+      if (!changeBackupBtn) {
+        console.error('No se encontró el botón de cambiar backup');
+        changeBackupBtn = document.getElementById('change-backup-btn');
+      }
+      
+      // Cargar la lista de backups
+      loadBackupsList();
+      
+      // Agregar event listeners si los elementos existen
+      if (createBackupBtn) {
+        console.log('Añadiendo event listener al botón de crear backup');
+        createBackupBtn.addEventListener('click', handleCreateBackup);
+      }
+      
+      if (restoreBackupBtn) {
+        restoreBackupBtn.addEventListener('click', handleRestoreBackup);
+      }
+      
+      if (selectBackupBtn) {
+        selectBackupBtn.addEventListener('click', handleSelectBackup);
+      }
+      
+      if (changeBackupBtn) {
+        changeBackupBtn.addEventListener('click', handleChangeBackup);
+      }
+    }
+    
+    // Intentar inicializar la página de varias formas para asegurar que funciona
+    document.addEventListener('DOMContentLoaded', initPage);
+    
+    // También intentar inicializar después de un pequeño retraso
+    setTimeout(initPage, 1000);
+    
+    // Y también intentar inicializar ahora mismo
+    try {
+      initPage();
+    } catch (error) {
+      console.error('Error al inicializar la página:', error);
+    }
+  </script>
 </MainLayout>
