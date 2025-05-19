@@ -298,7 +298,7 @@ const tabs = [
           case 'codigo': datos.cod = value || null; break;
           case 'num_serie': datos.num_serie = value || null; break;
           case 'explotacio': datos.explotacio = value || ''; break;
-          case 'quadra': datos.quadra = value || null; break;
+          case 'origen': datos.origen = value || null; break;
           case 'pare': datos.pare = value || null; break;
           case 'mare': datos.mare = value || null; break;
           
@@ -375,7 +375,7 @@ const tabs = [
         if (datos.dob && datos.dob !== animalData.dob) datosModificados.dob = datos.dob;
         if (datos.mare !== animalData.mare) datosModificados.mare = datos.mare;
         if (datos.pare !== animalData.pare) datosModificados.pare = datos.pare;
-        if (datos.quadra !== animalData.quadra) datosModificados.quadra = datos.quadra;
+        if (datos.origen !== animalData.origen) datosModificados.origen = datos.origen;
         if (datos.cod !== animalData.cod) datosModificados.cod = datos.cod;
         if (datos.num_serie !== animalData.num_serie) datosModificados.num_serie = datos.num_serie;
         

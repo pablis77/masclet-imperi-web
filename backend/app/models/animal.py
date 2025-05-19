@@ -38,7 +38,7 @@ class Animal(models.Model):
     dob = fields.DateField(null=True)  # Date of birth
     mare = fields.CharField(max_length=100, null=True)
     pare = fields.CharField(max_length=100, null=True)
-    quadra = fields.CharField(max_length=50, null=True)
+    origen = fields.CharField(max_length=50, null=True)
     cod = fields.CharField(max_length=20, null=True)
     num_serie = fields.CharField(max_length=50, null=True)
     part = fields.CharField(max_length=50, null=True)  # Cambiado de 'num_part' a 'part' para coincidir con el CSV
@@ -63,7 +63,7 @@ class Animal(models.Model):
             "dob": self.dob.strftime("%d/%m/%Y") if self.dob else None,
             "mare": self.mare,
             "pare": self.pare,
-            "quadra": self.quadra,
+            "origen": self.origen,
             "cod": self.cod,
             "num_serie": self.num_serie,
             "part": self.part,
@@ -128,21 +128,22 @@ class AnimalHistory(models.Model):
     animal = fields.ForeignKeyField(
         "models.Animal", related_name="history_records", on_delete=fields.CASCADE
     )
-    # Acciones estándares: CREATE, UPDATE, DELETE
-    action = fields.CharField(max_length=20)
-    # Quién realizó los cambios
-    user = fields.CharField(max_length=100)
-    # Fecha y hora del cambio
-    timestamp = fields.DatetimeField(auto_now_add=True)
-    # Campo específico modificado (si aplica)
-    field = fields.CharField(max_length=50, null=True)
-    # Descripción del cambio
-    description = fields.TextField()
-    # Valores anteriores y nuevos (como JSON)
-    old_value = fields.TextField(null=True)
-    new_value = fields.TextField(null=True)
-    # Datos completos del cambio (como JSON, útil para CREATE)
-    changes = fields.JSONField(null=True)
+    # Campos obligatorios (NOT NULL) según la estructura de la base de datos
+    usuario = fields.CharField(max_length=100, default="admin")  # Usuario que realizó el cambio
+    cambio = fields.TextField(default="Sin descripción")  # Descripción del cambio
+    campo = fields.CharField(max_length=50, default="general")  # Campo modificado
+    valor_anterior = fields.TextField(null=True)  # Valor anterior
+    valor_nuevo = fields.TextField(null=True)  # Valor nuevo
+    
+    # Campos del nuevo formato extendido
+    action = fields.CharField(max_length=20, default="UPDATE")  # Tipo de acción (CREATE, UPDATE, DELETE)
+    usuario_cambio = fields.CharField(max_length=100, null=True)  # Duplicado de usuario para compatibilidad
+    timestamp = fields.DatetimeField(auto_now_add=True)  # Fecha y hora del cambio
+    field = fields.CharField(max_length=100, null=True)  # Duplicado de campo para compatibilidad
+    description = fields.TextField(null=True)  # Duplicado de cambio para compatibilidad
+    old_value = fields.TextField(null=True)  # Duplicado de valor_anterior para compatibilidad
+    new_value = fields.TextField(null=True)  # Duplicado de valor_nuevo para compatibilidad
+    changes = fields.JSONField(null=True)  # Datos completos del cambio en formato JSON
     
     class Meta:
         """Metadatos del modelo"""
@@ -154,8 +155,12 @@ class AnimalHistory(models.Model):
         return {
             "id": self.id,
             "animal_id": self.animal_id,
+            "usuario": self.usuario,
+            "cambio": self.cambio,
+            "campo": self.campo,
+            "valor_anterior": self.valor_anterior,
+            "valor_nuevo": self.valor_nuevo,
             "action": self.action,
-            "user": self.user,
             "timestamp": self.timestamp.strftime("%d/%m/%Y %H:%M:%S") if self.timestamp else None,
             "field": self.field,
             "description": self.description,
