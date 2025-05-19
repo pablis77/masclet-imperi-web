@@ -1,10 +1,11 @@
 """
 Endpoints para la gestión de animales
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request, Response, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request, Response, Body, BackgroundTasks
 from pydantic import ValidationError
 from typing import List, Optional, Dict, Any
 import logging
+import subprocess
 from datetime import datetime
 from tortoise.expressions import Q
 
@@ -23,15 +24,44 @@ from app.schemas.animal import (
 )
 from app.core.date_utils import DateConverter, is_valid_date
 from app.core.auth import get_current_user, check_permissions
-from app.core.config import Action
+from app.core.config import Action, settings
 from app.models.user import User
+import os
+import sys
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Función auxiliar para ejecutar backup tras modificaciones
+async def trigger_backup_after_change(background_tasks: BackgroundTasks, action: str, animal_nom: str):
+    """Ejecuta un backup automático tras modificaciones importantes en fichas de animales"""
+    logger.info(f"Programando backup automático tras {action} del animal {animal_nom}")
+    
+    # Verificar el entorno (desarrollo vs producción)
+    if os.name == 'nt':  # Windows (entorno de desarrollo)
+        # Obtener la ruta base del proyecto (2 niveles arriba de app/api/endpoints)
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        script_path = os.path.join(base_path, "new_tests", "complementos", "backup_programado.ps1")
+        if os.path.exists(script_path):
+            # En Windows, ejecutamos el script de PowerShell con el parámetro -AfterChange
+            try:
+                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path, "-AfterChange"]
+                background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
+                logger.info(f"Backup automático programado correctamente tras {action} de {animal_nom}")
+            except Exception as e:
+                logger.error(f"Error al programar backup automático: {str(e)}")
+        else:
+            logger.warning(f"Script de backup no encontrado en: {script_path}")
+    else:  # Linux/Unix (entorno de producción)
+        # En producción podríamos usar AWS SDK para lanzar el backup a S3
+        # Esta implementación dependerá de la configuración final en AWS
+        logger.info("Ejecutando backup en entorno de producción (AWS)")
+        # Aquí iría el código para AWS S3 cuando implementemos el despliegue
+
 @router.post("/", response_model=AnimalResponse, status_code=201)
 async def create_animal(
     animal_data: dict = Body(...),
+    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(get_current_user)
 ) -> AnimalResponse:
     """Crear un nuevo animal"""
@@ -85,6 +115,18 @@ async def create_animal(
             num_serie=animal.num_serie,
             part=animal.part
         )
+        
+        # Registrar la creación en el historial
+        await AnimalHistory.create(
+            animal=new_animal,
+            action="CREATE",
+            user=current_user.email if current_user else "sistema",
+            changes=animal_data
+        )
+        
+        # Disparar backup automático tras la creación
+        if background_tasks:
+            await trigger_backup_after_change(background_tasks, "creación", new_animal.nom)
 
         # Preparar respuesta
         return {
@@ -284,6 +326,7 @@ async def update_animal_patch(
     animal_id: int,
     animal_data: schemas.AnimalUpdate,
     request: Request,
+    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(get_current_user),
 ) -> dict:
     """
@@ -404,6 +447,10 @@ async def update_animal_patch(
                 valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
                 valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
             )
+        
+        # Disparar backup automático tras la modificación
+        if background_tasks and len(raw_data) > 0:
+            await trigger_backup_after_change(background_tasks, "modificación (PATCH)", animal.nom)
             
         return {
             "status": "success",
@@ -421,6 +468,7 @@ async def update_animal_patch(
 async def update_animal(
     animal_id: int, 
     animal_data: AnimalUpdate,
+    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """

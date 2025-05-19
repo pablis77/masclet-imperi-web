@@ -1,5 +1,14 @@
 # Script de backup programado para Masclet Imperi
 # Este script se puede programar para ejecutarse automáticamente en el Programador de tareas de Windows
+# o como tarea programada en un entorno AWS
+#
+# Uso:
+#   - Para backup diario (2:00 AM): ./backup_programado.ps1
+#   - Para backup tras cambios: ./backup_programado.ps1 -AfterChange
+#
+# Configuración recomendada para AWS:
+#   - Tarea programada en EC2 o mediante EventBridge
+#   - Los backups se pueden almacenar en EFS y/o S3
 
 param (
     [switch]$AfterChange = $false
@@ -36,7 +45,17 @@ if (-not $dockerInstalled) {
 }
 
 # Identificar el tipo de backup
-$backupType = if ($AfterChange) { "post-cambio" } else { "programado" }
+$dayOfWeek = (Get-Date).DayOfWeek
+
+# Si es domingo (DayOfWeek = 0) y no es tras un cambio, hacemos backup semanal
+$backupType = if ($AfterChange) { 
+    "cambio-sistema" 
+} elseif ($dayOfWeek -eq 0) { 
+    "semanal" 
+} else { 
+    "diario-auto" 
+}
+
 Write-Log "Iniciando backup $backupType de la base de datos Masclet Imperi"
 
 # Verificar si el contenedor PostgreSQL está en ejecución
@@ -79,7 +98,7 @@ try {
     Write-Log "Iniciando backup de la base de datos $dbName en $backupPath..."
     
     # Ejecutar pg_dump dentro del contenedor
-    $process = docker exec masclet-db-new pg_dump -U $dbUser $dbName | Out-File -FilePath $backupPath -Encoding utf8
+    docker exec masclet-db-new pg_dump -U $dbUser $dbName | Out-File -FilePath $backupPath -Encoding utf8
     
     # Verificar que el archivo de backup existe y tiene contenido
     if (-not (Test-Path $backupPath) -or (Get-Item $backupPath).Length -eq 0) {
@@ -94,19 +113,55 @@ try {
     Write-Log "Backup completado exitosamente: $filename"
     Write-Log "Tamaño del backup: $formattedSize"
     
-    # Limpiar backups antiguos
-    # Mantener solo los últimos 7 backups
-    $maxBackups = 7
-    $backupFiles = Get-ChildItem -Path $backupDir -Filter "backup_masclet_imperi_*.sql" | 
-                   Sort-Object -Property LastWriteTime
+    # Limpiar backups antiguos según nuestro protocolo
+    # Mantener los últimos 7 backups diarios y los últimos 7 backups semanales
+    $maxDailyBackups = 7
+    $maxWeeklyBackups = 7
     
-    if ($backupFiles.Count -gt $maxBackups) {
-        $backupsToDelete = $backupFiles.Count - $maxBackups
-        Write-Log "Limpiando $backupsToDelete backups antiguos..."
+    # Separar backups por tipo
+    $dailyBackups = Get-ChildItem -Path $backupDir -Filter "backup_masclet_imperi_*_diario-auto.sql" | 
+                   Sort-Object -Property LastWriteTime -Descending
+    
+    $weeklyBackups = Get-ChildItem -Path $backupDir -Filter "backup_masclet_imperi_*_semanal.sql" | 
+                    Sort-Object -Property LastWriteTime -Descending
+    
+    $changeBackups = Get-ChildItem -Path $backupDir -Filter "backup_masclet_imperi_*_cambio-sistema.sql" | 
+                    Sort-Object -Property LastWriteTime -Descending
+    
+    Write-Log "Backups encontrados: $($dailyBackups.Count) diarios, $($weeklyBackups.Count) semanales, $($changeBackups.Count) por cambios"
+    
+    # Mantener solo los backups más recientes según el tipo
+    # Limpiar backups diarios excedentes
+    if ($dailyBackups.Count -gt $maxDailyBackups) {
+        $dailyToDelete = $dailyBackups.Count - $maxDailyBackups
+        Write-Log "Limpiando $dailyToDelete backups diarios antiguos..."
         
-        $backupFiles | Select-Object -First $backupsToDelete | ForEach-Object {
+        $dailyBackups | Select-Object -Last $dailyToDelete | ForEach-Object {
             Remove-Item $_.FullName -Force
-            Write-Log "Backup antiguo eliminado: $($_.Name)"
+            Write-Log "Backup diario antiguo eliminado: $($_.Name)"
+        }
+    }
+    
+    # Limpiar backups semanales excedentes
+    if ($weeklyBackups.Count -gt $maxWeeklyBackups) {
+        $weeklyToDelete = $weeklyBackups.Count - $maxWeeklyBackups
+        Write-Log "Limpiando $weeklyToDelete backups semanales antiguos..."
+        
+        $weeklyBackups | Select-Object -Last $weeklyToDelete | ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Log "Backup semanal antiguo eliminado: $($_.Name)"
+        }
+    }
+    
+    # Limpiar backups por cambios excedentes (mantener solo los 5 más recientes)
+    $maxChangeBackups = 5
+    if ($changeBackups.Count -gt $maxChangeBackups) {
+        $changeToDelete = $changeBackups.Count - $maxChangeBackups
+        Write-Log "Limpiando $changeToDelete backups por cambios antiguos..."
+        
+        $changeBackups | Select-Object -Last $changeToDelete | ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Log "Backup por cambios antiguo eliminado: $($_.Name)"
         }
     }
     
