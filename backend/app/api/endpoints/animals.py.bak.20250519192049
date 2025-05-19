@@ -455,15 +455,27 @@ async def update_animal_patch(
                 descripcion = f"Cambio de cuadra: {valor_anterior} → {nuevo_valor}"
             else:
                 descripcion = f"Actualización de {campo}"
-                
             # Registrar en historial
+            cambios_json = {campo: {"anterior": str(valor_anterior) if valor_anterior is not None else None, 
+                                 "nuevo": str(nuevo_valor) if nuevo_valor is not None else None}}
+            
             await AnimalHistory.create(
                 animal=animal,
                 usuario=current_user.username,
                 cambio=descripcion,
                 campo=campo,
                 valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
-                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
+                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None,
+                
+                # Campos obligatorios del nuevo formato
+                action="UPDATE",
+                user=current_user.username,
+                timestamp=datetime.now(),
+                field=campo,
+                description=descripcion,
+                old_value=str(valor_anterior) if valor_anterior is not None else None,
+                new_value=str(nuevo_valor) if nuevo_valor is not None else None,
+                changes=json.dumps(cambios_json)
             )
         
         # Disparar backup automático tras la modificación
@@ -568,15 +580,27 @@ async def update_animal(
                 descripcion = f"Cambio de cuadra: {valor_anterior} → {nuevo_valor}"
             else:
                 descripcion = f"Actualización de {campo}"
-                
             # Registrar en historial
+            cambios_json = {campo: {"anterior": str(valor_anterior) if valor_anterior is not None else None, 
+                                 "nuevo": str(nuevo_valor) if nuevo_valor is not None else None}}
+            
             await AnimalHistory.create(
                 animal=animal,
                 usuario=current_user.username,
                 cambio=descripcion,
                 campo=campo,
                 valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
-                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
+                valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None,
+                
+                # Campos obligatorios del nuevo formato
+                action="UPDATE",
+                user=current_user.username,
+                timestamp=datetime.now(),
+                field=campo,
+                description=descripcion,
+                old_value=str(valor_anterior) if valor_anterior is not None else None,
+                new_value=str(nuevo_valor) if nuevo_valor is not None else None,
+                changes=json.dumps(cambios_json)
             )
     
     # Devolver el animal actualizado
