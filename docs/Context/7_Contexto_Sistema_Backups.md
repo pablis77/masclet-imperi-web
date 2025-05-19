@@ -3,11 +3,13 @@
 ## 1. Configuración Principal
 
 ### Automatización
+
 - Schedule: Diario 2 AM
-- Retención: 3 últimos backups
+- Retención: 5 últimos backups
 - Ubicación: `/backups/{tipo}/{fecha}`
 
 ### Herramientas
+
 - pg_dump/pg_restore para operaciones
 - cron para automatización
 - rsync para sincronización remota
@@ -15,6 +17,7 @@
 ## 2. Tipos de Backup
 
 ### Diario (2 AM)
+
 ```bash
 # Solo datos críticos comprimidos
 pg_dump -U postgres -t animals -t parts masclet_imperi \
@@ -22,6 +25,7 @@ pg_dump -U postgres -t animals -t parts masclet_imperi \
 ```
 
 ### Semanal (Domingo 3 AM)
+
 ```bash
 # Base de datos completa
 pg_dump -U postgres masclet_imperi \
@@ -31,6 +35,7 @@ pg_dump -U postgres masclet_imperi \
 ## 3. Scripts y Herramientas
 
 ### Validación
+
 ```bash
 # Verificar backup
 gunzip -t backup_20250311.sql.gz
@@ -40,6 +45,7 @@ zcat backup_20250311.sql.gz | grep -c 'INSERT INTO animals'
 ```
 
 ### Rotación
+
 ```bash
 # Mantener últimos 7 diarios
 find /backups/db/daily_* -mtime +7 -delete
@@ -51,12 +57,14 @@ find /backups/db/weekly_* -mtime +28 -delete
 ## 4. Procedimientos
 
 ### Backup Manual
+
 1. Detener servicios activos
 2. Ejecutar backup
 3. Verificar integridad
 4. Reiniciar servicios
 
 ### Restauración
+
 1. Detener servicios
 2. Validar backup
 3. Restaurar datos
@@ -66,6 +74,7 @@ find /backups/db/weekly_* -mtime +28 -delete
 ## 5. Monitorización
 
 ### Métricas
+
 ```python
 BACKUP_METRICS = {
     "performance": {
@@ -92,6 +101,7 @@ BACKUP_METRICS = {
 ```
 
 ### Alertas
+
 ```python
 BACKUP_ALERTS = {
     "critical": {
@@ -114,6 +124,7 @@ BACKUP_ALERTS = {
 ## 6. Referencias
 
 ### Documentación
+
 - [PostgreSQL Backup/Restore](https://www.postgresql.org/docs/current/backup.html)
 - [pg_dump Manual](https://www.postgresql.org/docs/current/app-pgdump.html)
 - [Docker Backup Best Practices](https://docs.docker.com/storage/backup/)
@@ -121,17 +132,18 @@ BACKUP_ALERTS = {
 ## 7. Tests del Sistema de Backup
 
 ### Pruebas Unitarias
+
 ```python
 @pytest.mark.asyncio
 class TestBackupSystem:
     async def test_backup_creation(self):
         # Validar creación correcta
         ...
-    
+  
     async def test_backup_compression(self):
         # Verificar ratio de compresión
         ...
-        
+      
     async def test_backup_rotation(self):
         # Comprobar política de retención
         ...
@@ -144,11 +156,13 @@ class TestBackupSystem:
 ## 8. Verificación y Validación
 
 ### Pre-backup
+
 - Espacio disponible suficiente
 - Permisos de escritura correctos
 - Servicios en estado correcto
 
 ### Post-backup
+
 - Integridad del archivo
 - Conteo de registros correcto
 - Compresión efectiva
@@ -156,6 +170,7 @@ class TestBackupSystem:
 ## 9. Recuperación ante Desastres
 
 ### Plan de Recuperación
+
 1. Identificar último backup válido
 2. Preparar entorno limpio
 3. Restaurar datos por fases
@@ -163,6 +178,7 @@ class TestBackupSystem:
 5. Actualizar documentación
 
 ### Simulacros
+
 - Pruebas trimestrales
 - Escenarios múltiples
 - Documentación de resultados
@@ -170,6 +186,7 @@ class TestBackupSystem:
 ## 10. Integración con Docker
 
 ### Docker Compose
+
 ```yaml
 backup:
   image: postgres:17
@@ -183,6 +200,7 @@ backup:
 ```
 
 ### Volúmenes
+
 ```yaml
 volumes:
   backup_data:
@@ -196,6 +214,7 @@ volumes:
 ## 11. Registro de Operaciones
 
 ### Formato de Log
+
 ```json
 {
     "timestamp": "YYYY-MM-DD HH:mm:ss",
@@ -215,6 +234,7 @@ volumes:
 ## 12. Mantenimiento y Limpieza
 
 ### Tareas Programadas
+
 ```bash
 # Limpieza logs antiguos
 find /var/log/backup/* -mtime +90 -delete
@@ -226,6 +246,7 @@ vacuumdb -z -v masclet_imperi
 ## 13. Automatización CI/CD
 
 ### GitHub Actions
+
 ```yaml
 backup-test:
   runs-on: ubuntu-latest
@@ -240,6 +261,7 @@ backup-test:
 ## 14. Reporting y Estadísticas
 
 ### Métricas a Reportar
+
 ```python
 BACKUP_REPORTS = {
     "daily": {
@@ -254,3 +276,4 @@ BACKUP_REPORTS = {
         "error_frequency": dict
     }
 }
+```
