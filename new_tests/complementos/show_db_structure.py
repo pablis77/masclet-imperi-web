@@ -2,32 +2,60 @@
 """
 Script para mostrar la estructura actual de la base de datos.
 Muestra las tablas, columnas, restricciones y relaciones.
+
+Uso:
+    python show_db_structure.py [opciones]
+
+Opciones:
+    -h, --help          Muestra esta ayuda
+    -v, --verbose       Muestra información detallada
+    -p, --port PUERTO   Especifica el puerto de la base de datos (5432 para local, 5433 para contenedor)
+    --container         Usa configuración para el contenedor (puerto 5433)
+    --local             Usa configuración para la base de datos local (puerto 5432, por defecto)
 """
 import asyncio
 import sys
 import os
 import logging
+import argparse
 from tortoise import Tortoise
 from tabulate import tabulate
+from dotenv import load_dotenv
 
 # Agregar el directorio raíz al path para poder importar desde app
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.append(root_path)
 
-# Importar configuración
+# Cargar variables de entorno
+env_path = os.path.join(root_path, 'backend', '.env')
+load_dotenv(env_path)
+
+# Importar configuración (pero no la usaremos directamente)
 from backend.app.core.config import settings
 
 # Configurar logging básico
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def init_db():
+async def init_db(db_port=None):
     """Inicializar conexión a base de datos"""
+    # Obtener valores de las variables de entorno directamente
+    db_user = os.getenv("POSTGRES_USER", settings.postgres_user)
+    db_password = os.getenv("POSTGRES_PASSWORD", settings.postgres_password)
+    db_name = os.getenv("POSTGRES_DB", settings.postgres_db)
+    db_host = os.getenv("DB_HOST", "localhost")
+    
+    # Usar el puerto especificado o el de la configuración
+    if db_port is None:
+        db_port = os.getenv("DB_PORT", settings.db_port)
+    
+    db_url = f"postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    
     await Tortoise.init(
-        db_url=f"postgres://{settings.postgres_user}:{settings.postgres_password}@{settings.db_host}:{settings.db_port}/{settings.postgres_db}",
+        db_url=db_url,
         modules={"models": ["backend.app.models.animal", "backend.app.models.user", "backend.app.models.explotacio"]}
     )
-    logger.info("Conexión establecida con la base de datos")
+    logger.info(f"Conexión establecida con la base de datos en {db_host}:{db_port}")
 
 async def close_db():
     """Cerrar conexión a base de datos"""
@@ -233,8 +261,29 @@ async def show_record_counts():
     print(tabulate(results, headers=["Tabla", "Número de registros"], tablefmt="grid"))
 
 async def main():
+    # Configurar parser de argumentos
+    parser = argparse.ArgumentParser(description="Muestra la estructura de la base de datos")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Muestra información detallada")
+    parser.add_argument("-p", "--port", type=str, help="Puerto de la base de datos")
+    
+    # Opciones mutuamente excluyentes para local o contenedor
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--container", action="store_true", help="Usa el contenedor (puerto 5433)")
+    group.add_argument("--local", action="store_true", help="Usa la base de datos local (puerto 5432)")
+    
+    args = parser.parse_args()
+    
+    # Determinar el puerto a usar
+    db_port = None
+    if args.port:
+        db_port = args.port
+    elif args.container:
+        db_port = "5433"
+    elif args.local:
+        db_port = "5432"
+    
     try:
-        await init_db()
+        await init_db(db_port)
         
         # Mostrar todas las tablas
         await show_tables()
