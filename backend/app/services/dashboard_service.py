@@ -76,14 +76,14 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
         # Total de terneros: cada vaca con un ternero cuenta como 1, cada vaca con dos terneros cuenta como 2
         total_terneros = un_ternero + (dos_terneros * 2)
         
-        logger.info("Calculando distribución por quadra")
-        por_quadra = {}
-        cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
+        logger.info("Calculando distribución por origen")
+        por_origen = {}
+        origenes = await Animal.filter(**base_filter).distinct().values_list('origen', flat=True)
         
-        for cuadra in cuadras:
-            if cuadra:  # Ignorar valores nulos
-                count = await Animal.filter(**base_filter, quadra=cuadra).count()
-                por_quadra[cuadra] = count
+        for origen in origenes:
+            if origen:  # Ignorar valores nulos
+                count = await Animal.filter(**base_filter, origen=origen).count()
+                por_origen[origen] = count
         
         # Distribución por edades
         today = date.today()
@@ -368,7 +368,7 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
                 "ratio_m_h": round(ratio, 3),
                 "por_estado": por_estado,
                 "por_alletar": por_alletar,
-                "por_quadra": por_quadra,
+                "por_origen": por_origen,
                 "por_edad": edades,
                 "terneros": total_terneros
             },
@@ -805,14 +805,14 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
             
         # Añadir los campos adicionales requeridos para CombinedDashboardResponse
         
-        # 1. por_quadra (estadísticas por cuadra)
-        por_quadra = {}
-        if 'animales' in stats and 'por_quadra' in stats['animales']:
-            # Usar las estadísticas por cuadra ya existentes
-            quadras = stats['animales']['por_quadra']
-            for quadra, count in quadras.items():
-                # Para cada cuadra, crear un objeto con estadísticas resumidas
-                por_quadra[quadra] = {
+        # 1. por_origen (estadísticas por origen)
+        por_origen = {}
+        if 'animales' in stats and 'por_origen' in stats['animales']:
+            # Usar las estadísticas por origen ya existentes
+            origenes = stats['animales']['por_origen']
+            for origen, count in origenes.items():
+                # Para cada origen, crear un objeto con estadísticas resumidas
+                por_origen[origen] = {
                     "animales": count,
                     "partos": 0,  # Se podría calcular con más detalle si es necesario
                     "ratio_partos": 0.0
@@ -870,7 +870,7 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
         # Construir la respuesta completa con los campos adicionales
         combined_stats = {
             **stats,  # Incluir todas las estadísticas básicas
-            "por_quadra": por_quadra,
+            "por_origen": por_origen,
             "rendimiento_partos": rendimiento_partos,
             "tendencias": tendencias
         }
