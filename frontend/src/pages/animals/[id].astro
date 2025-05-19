@@ -43,7 +43,7 @@ const translations = {
     incorrect_date: "Fecha incorrecta",
     status: "Estado",
     exploitation: "Explotación",
-    stable: "Cuadra",
+    stable: "Origen",
     not_assigned: "No asignada",
     father: "Padre",
     mother: "Madre",
@@ -94,7 +94,7 @@ const translations = {
     incorrect_date: "Data incorrecta",
     status: "Estat",
     exploitation: "Explotació",
-    stable: "Quadra",
+    stable: "Origen",
     not_assigned: "No assignada",
     father: "Pare",
     mother: "Mare",
@@ -308,7 +308,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               </div>
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
-                <p class="font-medium">{animal.quadra || t('not_assigned')}</p>
+                <p class="font-medium">{animal.origen || t('not_assigned')}</p>
               </div>
               {animal.genere === 'F' && (
                 <div>
@@ -420,7 +420,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                   </div>
                   <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{t('stable')}</p>
-                    <p class="font-medium">{animal.quadra || t('not_assigned')}</p>
+                    <p class="font-medium">{animal.origen || t('not_assigned')}</p>
                   </div>
                 </div>
               </div>
@@ -643,7 +643,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         incorrect_date: "Fecha incorrecta",
         status: "Estado",
         exploitation: "Explotación",
-        stable: "Cuadra",
+        stable: "Origen",
         not_assigned: "No asignada",
         father: "Padre",
         mother: "Madre",
@@ -694,7 +694,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         incorrect_date: "Data incorrecta",
         status: "Estat",
         exploitation: "Explotació",
-        stable: "Quadra",
+        stable: "Origen",
         not_assigned: "No assignada",
         father: "Pare",
         mother: "Mare",
@@ -802,7 +802,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         else if (labelText.includes('Fecha de nacimiento') || labelText.includes('Data de naixement')) translationKey = 'birth_date';
         else if (labelText.includes('Estado') || labelText.includes('Estat')) translationKey = 'status';
         else if (labelText.includes('Explotación') || labelText.includes('Explotació')) translationKey = 'exploitation';
-        else if (labelText.includes('Cuadra') || labelText.includes('Quadra')) translationKey = 'stable';
+        else if (labelText.includes('Origen') || labelText.includes('Origen')) translationKey = 'stable';
         else if (labelText.includes('Padre') || labelText.includes('Pare')) translationKey = 'father';
         else if (labelText.includes('Madre') || labelText.includes('Mare')) translationKey = 'mother';
         else if (labelText.includes('amamantamiento') || labelText.includes('alletament')) translationKey = 'nursing_status';
@@ -1456,8 +1456,33 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 <!-- Script para edición de partos -->
 <script>
   // Importar el script de edición de partos (versión 4 - usando PATCH en lugar de PUT)
-  const script = document.createElement('script');
-  script.src = '/scripts/editar-parto-v4.js';
-  script.type = 'text/javascript';
-  document.head.appendChild(script);
+  const scriptPartos = document.createElement('script');
+  scriptPartos.src = '/scripts/editar-parto-v4.js';
+  scriptPartos.type = 'text/javascript';
+  document.head.appendChild(scriptPartos);
+</script>
+
+<!-- Script para cargar el historial de cambios -->
+<script>
+  // Importar el script que maneja la carga del historial de cambios
+  const scriptHistorial = document.createElement('script');
+  scriptHistorial.src = '/scripts/animal-history.js';
+  scriptHistorial.type = 'text/javascript';
+  document.head.appendChild(scriptHistorial);
+  
+  // Escribir directamente al console log para verificar que el script se ejecuta
+  console.log('🔍 VERIFICACIÓN: Script interno ejecutándose correctamente');
+  
+  // Agregar función para detectar cuando se hace clic en la pestaña de historial
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabChanges = document.getElementById('tab-changes');
+    if (tabChanges) {
+      console.log('🔍 Encontrada pestaña de historial, agregando event listener');
+      tabChanges.addEventListener('click', function() {
+        console.log('🔄 REGISTRADO: Clic en pestaña de historial desde script principal');
+      });
+    } else {
+      console.warn('⚠️ No se encontró la pestaña de historial');
+    }
+  });
 </script>

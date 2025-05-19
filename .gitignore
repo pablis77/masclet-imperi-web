@@ -101,4 +101,4 @@ backend/docker/backups/**
 backend/docker/postgres/data/**
 *.tar
 *.zip
-*.gz
+*.gz*.bak*

@@ -139,14 +139,14 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="quadra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cuadra</label>
+        <label for="origen" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origen</label>
         <input 
           type="text" 
-          id="quadra" 
-          name="quadra" 
+          id="origen" 
+          name="origen" 
           class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
-          value={animal.quadra || ''} 
-          data-original-value={animal.quadra || ''}
+          value={animal.origen || animal.quadra || ''} 
+          data-original-value={animal.origen || animal.quadra || ''}
           oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
         >
       </div>

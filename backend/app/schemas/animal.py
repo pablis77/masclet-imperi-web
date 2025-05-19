@@ -45,7 +45,7 @@ class AnimalBase(BaseModel):
     dob: Optional[str] = None  # Fecha de nacimiento (dd/mm/yyyy)
     mare: Optional[str] = None
     pare: Optional[str] = None
-    quadra: Optional[str] = None
+    origen: Optional[str] = None
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     part: Optional[str] = None
@@ -120,7 +120,7 @@ class AnimalUpdate(BaseModel):
     alletar: Optional[str] = None
     mare: Optional[str] = None
     pare: Optional[str] = None
-    quadra: Optional[str] = None
+    origen: Optional[str] = None
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     part: Optional[str] = None
