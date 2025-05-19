@@ -126,7 +126,7 @@ async def create_animal(
             dob=dob,
             mare=animal.mare,
             pare=animal.pare,
-            quadra=animal.quadra,
+            origen=animal.origen,
             cod=animal.cod,
             num_serie=animal.num_serie,
             part=animal.part

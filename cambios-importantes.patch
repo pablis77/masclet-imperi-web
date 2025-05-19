@@ -1,0 +1,80 @@
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519191813 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519191813
+deleted file mode 100644
+index bdff950..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519191813
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:7cdc4eafada4b57cc8badc39637ae73cbfcc0ffa0aa2b333a3421ba77d541aca
+-size 31218
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519192049 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519192049
+deleted file mode 100644
+index 096f4ce..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519192049
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:d6d26095d149e80bcfb448e87a39a4a7d3683e5d20fc369b9b9fb331f0ca9c23
+-size 33356
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193112 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193112
+deleted file mode 100644
+index 98cca82..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193112
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:d6a71074a1cffa4f57fa6efe65ad3bb715ed737134ff95b945b936d58d4cc036
+-size 31964
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193240 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193240
+deleted file mode 100644
+index 4955eab..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519193240
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:c5c6207e9742357e840f33d8b99560de1a1c8d468e5c518e1712dfd9f1191bc9
+-size 31964
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519203006 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519203006
+deleted file mode 100644
+index 46c4f9c..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519203006
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:f46ec75322cfec9ff9c3fabb3c260ab07c048330a3799918b01586e379f88b5a
+-size 33038
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204245 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204245
+deleted file mode 100644
+index 98cca82..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204245
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:d6a71074a1cffa4f57fa6efe65ad3bb715ed737134ff95b945b936d58d4cc036
+-size 31964
+diff --git a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204416 b/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204416
+deleted file mode 100644
+index 98cca82..0000000
+--- a/backend/app/api/endpoints/backups_antiguos/animals.py.bak.20250519204416
++++ /dev/null
+@@ -1,3 +0,0 @@
+-version https://git-lfs.github.com/spec/v1
+-oid sha256:d6a71074a1cffa4f57fa6efe65ad3bb715ed737134ff95b945b936d58d4cc036
+-size 31964
+diff --git a/backend/scripts/test_animal_history.py b/backend/scripts/test_animal_history.py
+index a3c3b63..a73756c 100644
+--- a/backend/scripts/test_animal_history.py
++++ b/backend/scripts/test_animal_history.py
+@@ -53,7 +53,7 @@ API_BASE_URL = "http://localhost:8000/api/v1"
+ 
+ # Credenciales para autenticaci├│n (default en desarrollo)
+ USERNAME = "admin"
+-PASSWORD = "admin123"
++PASSWORD = "admin"
+ 
+ async def test_create_history():
+     """Probar la creaci├│n de un registro en el historial de animales"""
+diff --git a/bfg.jar b/bfg.jar
+deleted file mode 100644
+index 688fe71..0000000
+Binary files a/bfg.jar and /dev/null differ
