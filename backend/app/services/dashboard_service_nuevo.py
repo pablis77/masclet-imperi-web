@@ -71,14 +71,14 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
         # Total de terneros: cada vaca con un ternero cuenta como 1, cada vaca con dos terneros cuenta como 2
         total_terneros = un_ternero + (dos_terneros * 2)
         
-        # Estadísticas por quadra
-        por_quadra = {}
-        cuadras = await Animal.filter(**base_filter).distinct().values_list('quadra', flat=True)
+        # Estadísticas por origen
+        por_origen = {}
+        origenes = await Animal.filter(**base_filter).distinct().values_list('origen', flat=True)
         
-        for cuadra in cuadras:
-            if cuadra:  # Ignorar valores nulos
-                count = await Animal.filter(**base_filter, quadra=cuadra).count()
-                por_quadra[cuadra] = count
+        for origen in origenes:
+            if origen:  # Ignorar valores nulos
+                count = await Animal.filter(**base_filter, origen=origen).count()
+                por_origen[origen] = count
         
         # Distribución por edades
         today = date.today()
@@ -295,7 +295,7 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
                 "ratio_m_h": round(ratio, 3),
                 "por_estado": por_estado,
                 "por_alletar": por_alletar,
-                "por_quadra": por_quadra,
+                "por_origen": por_origen,
                 "por_edad": edades,
                 "terneros": total_terneros
             },
@@ -352,7 +352,7 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
                     EstadoAlletar.UN_TERNERO: 0,
                     EstadoAlletar.DOS_TERNEROS: 0
                 },
-                "por_quadra": {},
+                "por_origen": {},
                 "por_edad": {
                     "menos_1_año": 0,
                     "1_2_años": 0,
