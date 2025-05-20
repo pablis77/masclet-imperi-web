@@ -2,6 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { t } from '../../../i18n/config';
 
+// Colores estandarizados para los gráficos (coinciden con los colores de las tarjetas)
+const CHART_COLORS = {
+  TOROS_ACTIVOS: '#3b82f6', // Azul para toros activos
+  FALLECIDOS: '#f97316',    // Naranja para fallecidos (original)
+  VACAS: '#ec4899',         // Rosa para vacas
+  VACAS_AMAM_0: '#f59e0b',  // Ámbar para vacas sin amamantar
+  VACAS_AMAM_1: '#06b6d4',  // Cyan para vacas con 1 ternero
+  VACAS_AMAM_2: '#ef4444'   // Rojo para vacas con 2 terneros
+};
+
 // Componentes de gráficos extraídos directamente del dashboard original
 
 // Renderizar gráfico de distribución por género
@@ -48,14 +58,14 @@ export const GenderChart = ({ data, darkMode }: { data: Record<string, number> |
         label: t('dashboard.population_analysis', currentLang),
         data: Object.values(data),
         backgroundColor: [
-          'rgba(59, 130, 246, 0.7)', // Azul - Toros
-          'rgba(236, 72, 153, 0.7)', // Rosa - Vacas
-          'rgba(249, 115, 22, 0.7)', // Naranja - Fallecidos
+          `${CHART_COLORS.TOROS_ACTIVOS}CC`, // Azul - Toros (con transparencia)
+          `${CHART_COLORS.VACAS}CC`,         // Rosa - Vacas (con transparencia)
+          `${CHART_COLORS.FALLECIDOS}CC`,    // Naranja - Fallecidos (con transparencia)
         ],
         borderColor: [
-          'rgba(59, 130, 246, 1)',
-          'rgba(236, 72, 153, 1)',
-          'rgba(249, 115, 22, 1)',
+          CHART_COLORS.TOROS_ACTIVOS,
+          CHART_COLORS.VACAS,
+          CHART_COLORS.FALLECIDOS,
         ],
         borderWidth: 1,
       },
