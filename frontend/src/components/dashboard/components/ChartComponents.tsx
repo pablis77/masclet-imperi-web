@@ -548,21 +548,64 @@ export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean
   // Procesar los datos que vienen del API
   console.log('Datos del API recibidos en DistribucionMensualChart:', data);
   
-  // Extraer los valores del objeto data o usar valores vacíos si no hay datos
+  // NUEVA IMPLEMENTACIÓN: Obtener datos mensuales de formato {1900-01: 0, 1900-02: 0, ...}
+  // Definir el tipo para la distribución por mes
+  type DistribucionMensual = Record<string, number>;
+  
+  // Inicializar con valores por defecto para todos los meses
+  const distribucionPorMesInicial: DistribucionMensual = {
+    "Enero": 0, "Febrero": 0, "Marzo": 0, "Abril": 0, "Mayo": 0, "Junio": 0,
+    "Julio": 0, "Agosto": 0, "Septiembre": 0, "Octubre": 0, "Noviembre": 0, "Diciembre": 0
+  };
+  
+  // Variable para almacenar los datos procesados
+  let distribucionPorMes: DistribucionMensual = {...distribucionPorMesInicial};
+  
+  if (data && typeof data === 'object') {
+    // Verificar si los datos vienen en el formato por_mes
+    if ('por_mes' in data && data.por_mes && typeof data.por_mes === 'object') {
+      console.log('Usando distribución por_mes del objeto data principal');
+      // Asegurar que es un objeto Record<string, number>
+      distribucionPorMes = data.por_mes as DistribucionMensual;
+    } 
+    // Verificar si los datos contienen directamente los nombres de meses
+    else if ('Enero' in data || 'enero' in data) {
+      console.log('Usando objeto data directamente, contiene meses');
+      distribucionPorMes = data as DistribucionMensual;
+    } 
+    // Procesar datos en formato año-mes
+    else {
+      console.log('Procesando datos en formato año-mes (1900-01)');
+      
+      // Procesar cada clave del objeto data buscando patrones de año-mes
+      Object.entries(data).forEach(([clave, valor]) => {
+        // Verificar si la clave tiene el formato "YYYY-MM"
+        if (clave.match(/^\d{4}-\d{2}$/)) {
+          const mes = parseInt(clave.split('-')[1]);
+          if (mes >= 1 && mes <= 12) {
+            const nombreMes = meses[mes - 1]; // -1 porque los meses van de 0-11 en JS
+            if (typeof valor === 'number') {
+              distribucionPorMes[nombreMes] += valor;
+            }
+          }
+        }
+      });
+    }
+  }
+  
+  console.log('Distribución por mes procesada:', distribucionPorMes);
+  
+  // Extraer valores de cada mes en orden para usar en el gráfico
   const valoresMeses = meses.map(mes => {
-    // Si tenemos datos y el mes existe, usarlo
-    if (data && typeof data === 'object' && mes in data) {
-      return data[mes];
-    }
-    // Si no, buscar usando la primera letra mayúscula
-    const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
-    if (data && typeof data === 'object' && mesCapitalizado in data) {
-      return data[mesCapitalizado];
-    }
-    return 0; // Valor por defecto
+    // Cada mes ya está inicializado con su valor por defecto (0)
+    // Devolvemos directamente el valor del mes de distribucionPorMes
+    return distribucionPorMes[mes] || 0;
   });
   
-  console.log('Valores de meses procesados:', nombresMeses, valoresMeses);
+  // Para fines de debug, mostrar el resultado final
+  console.log('Valores mensuales finales:', meses.map((mes, i) => `${mes}: ${valoresMeses[i]}`));
+  
+  console.log('Valores de meses procesados FINALES:', nombresMeses, valoresMeses);
   
   const chartData = {
     labels: nombresMeses,

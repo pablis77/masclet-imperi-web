@@ -564,32 +564,16 @@ const Dashboard: React.FC = () => {
         throw new Error('Formato de respuesta inválido en partos');
       }
       
-      // Definir valores predeterminados para campos requeridos
-      const defaultPartosData = {
-        total: 0,
-        por_mes: {},
-        por_genero_cria: { M: 0, F: 0 },
-        tasa_supervivencia: 0,
-        distribucion_anual: {},
-        tendencia: {},
-        ultimo_mes: 0,
-        ultimo_año: 0,
-        promedio_mensual: 0
-      };
+      // SOLO USAR DATOS DINÁMICOS - NADA DE VALORES PREDETERMINADOS
       
-      // Mezclar con valores predeterminados para campos faltantes
-      const validatedData = {
-        ...defaultPartosData,
-        // Asegurarnos de que estos campos sean números válidos
-        total: typeof response.total === 'number' ? response.total : 0,
-        ultimo_mes: typeof response.ultimo_mes === 'number' ? response.ultimo_mes : 0,
-        ultimo_año: typeof response.ultimo_año === 'number' ? response.ultimo_año : 0,
-        tasa_supervivencia: typeof response.tasa_supervivencia === 'number' ? response.tasa_supervivencia : 0,
-        // Asegurar que estos objetos estén presentes y no sean null
-        por_mes: response.por_mes || {},
-        por_genero_cria: response.por_genero_cria || { M: 0, F: 0 },
-        distribucion_anual: response.distribucion_anual || {}
-      };
+      // Verificar que la respuesta contenga los datos necesarios
+      if (!response.distribucion_anual || !response.por_mes || !response.por_genero_cria) {
+        console.error('Error crítico: Datos de partos incompletos del backend', response);
+        throw new Error('Datos de partos incompletos del backend');
+      }
+      
+      // Usar SOLO los datos dinámicos del backend sin mezclar con valores predeterminados
+      const validatedData = response;
       
       console.log('Datos de partos procesados:', validatedData);
       addLog(`Datos de partos validados correctamente`);
