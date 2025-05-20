@@ -27,12 +27,12 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
     """
     logger.info(f"Iniciando get_dashboard_stats: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
     try:
-        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar 2010 como fecha de inicio para todos los datos históricos
-            start_date = date(2010, 1, 1)
+            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
+            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
         
         # Filtro base para todos los queries
         base_filter = {}
@@ -493,12 +493,12 @@ async def get_explotacio_dashboard(explotacio_value: str,
         if not exists:
             raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
         
-        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar 2010 como fecha de inicio para todos los datos históricos
-            start_date = date(2010, 1, 1)
+            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
+            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
         
         # Filtro base para todos los queries
         base_filter = {"explotacio": explotacio_value}
@@ -607,7 +607,7 @@ async def get_dashboard_resumen(explotacio: Optional[str] = None,
             end_date = date.today()
         if not start_date:
             # Usar 2010 como fecha de inicio para incluir todos los datos históricos
-            start_date = date(2010, 1, 1)
+            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
             
         logger.info(f"Dashboard resumen: usando rango ampliado {start_date} a {end_date}")
         
@@ -788,12 +788,12 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
     """
     try:
         logger.info(f"Iniciando get_combined_dashboard: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
-        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar 2010 como fecha de inicio para todos los datos históricos
-            start_date = date(2010, 1, 1)
+            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
+            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
         
         # Obtener estadísticas básicas
         stats = await get_dashboard_stats(explotacio, start_date, end_date)
@@ -962,12 +962,12 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
     try:
         logger.info(f"Iniciando get_partos_dashboard: explotacio={explotacio}, animal_id={animal_id}, start_date={start_date}, end_date={end_date}")
         
-        # Si no se especifican fechas, usar desde 2010 hasta hoy
+        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar 2010 como fecha de inicio para todos los datos históricos
-            start_date = date(2010, 1, 1)
+            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
+            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
         
         # Inicializar el filtro de partos
         parto_filter = {}
