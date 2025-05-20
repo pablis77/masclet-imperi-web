@@ -26,10 +26,30 @@ function Write-Log {
     Write-Host "$timestamp [$Level] $Message"
 }
 
-# Ruta base del proyecto
-$proyectoBase = "C:\Proyectos\claude\masclet-imperi-web"
+# Determinar automáticamente la ruta del script actual
+$scriptPath = $PSScriptRoot
+Write-Log "Ruta del script: $scriptPath"
+
+# Determinar la ruta base del proyecto de forma dinámica
+# El script está en 'new_tests/complementos' así que necesitamos ir dos niveles arriba
+$proyectoBase = Split-Path -Parent (Split-Path -Parent $scriptPath)
+Write-Log "Ruta base del proyecto: $proyectoBase"
+
+# Verificar que la ruta base existe
+if (-not (Test-Path $proyectoBase)) {
+    Write-Log "La ruta base del proyecto no existe: $proyectoBase" "ERROR"
+    exit 1
+}
+
+# Verificar que la estructura del proyecto es correcta
+$backendDir = Join-Path -Path $proyectoBase -ChildPath "backend"
+if (-not (Test-Path $backendDir)) {
+    Write-Log "El directorio backend no existe: $backendDir" "ERROR"
+    exit 1
+}
+
 # Directorio de backups
-$backupDir = "$proyectoBase\backend\backups"
+$backupDir = Join-Path -Path $backendDir -ChildPath "backups"
 
 # Verificar que existe el directorio de backups
 if (-not (Test-Path $backupDir)) {
