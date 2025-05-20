@@ -4,6 +4,96 @@ import { StatCard, DashboardCard, CardLabel } from '../components/UIComponents';
 import type { DashboardStats, PartosStats } from '../types';
 import { t } from '../../../i18n/config';
 
+// Función para obtener el año con más partos
+const getMaxYear = (distribucion?: Record<string, number>) => {
+  if (!distribucion || Object.keys(distribucion).length === 0) {
+    return 'N/A';
+  }
+
+  const entries = Object.entries(distribucion);
+  if (entries.length === 0) return 'N/A';
+  
+  const maxEntry = entries.reduce((max, current) => {
+    return current[1] > max[1] ? current : max;
+  }, entries[0]);
+  
+  return `${maxEntry[0]} (${maxEntry[1]} partos)`;
+};
+
+// Función para obtener el año con menos partos
+const getMinYear = (distribucion?: Record<string, number>) => {
+  if (!distribucion || Object.keys(distribucion).length === 0) {
+    return 'N/A';
+  }
+
+  // Filtrar valores mayores que 0
+  const entriesConValor = Object.entries(distribucion).filter(entry => entry[1] > 0);
+  
+  if (entriesConValor.length === 0) return 'N/A';
+  
+  const minEntry = entriesConValor.reduce((min, current) => {
+    return current[1] < min[1] ? current : min;
+  }, entriesConValor[0]);
+  
+  return `${minEntry[0]} (${minEntry[1]} parto${minEntry[1] !== 1 ? 's' : ''})`;
+};
+
+// Función para obtener el primer año con partos
+const getFirstYear = (distribucion?: Record<string, number>) => {
+  if (!distribucion || Object.keys(distribucion).length === 0) {
+    return 'N/A';
+  }
+
+  // Filtrar años con al menos un parto
+  const añosConPartos = Object.entries(distribucion)
+    .filter(([_, value]) => value > 0)
+    .map(([year]) => year);
+  
+  if (añosConPartos.length === 0) return 'N/A';
+  
+  // Ordenar años numéricamente
+  const primerAño = añosConPartos.sort((a, b) => parseInt(a) - parseInt(b))[0];
+  
+  return primerAño;
+};
+
+// Función para obtener el último año con partos
+const getLastYear = (distribucion?: Record<string, number>) => {
+  if (!distribucion || Object.keys(distribucion).length === 0) {
+    return 'N/A';
+  }
+
+  // Filtrar años con al menos un parto
+  const añosConPartos = Object.entries(distribucion)
+    .filter(([_, value]) => value > 0)
+    .map(([year]) => year);
+  
+  if (añosConPartos.length === 0) return 'N/A';
+  
+  // Ordenar años numéricamente
+  const ultimoAño = añosConPartos.sort((a, b) => parseInt(b) - parseInt(a))[0];
+  const partosUltimoAño = distribucion[ultimoAño];
+  
+  return `${ultimoAño} (${partosUltimoAño} parto${partosUltimoAño !== 1 ? 's' : ''})`;
+};
+
+// Función para obtener los partos del año actual
+const getPartosCurrentYear = (distribucion?: Record<string, number>) => {
+  if (!distribucion) return 0;
+  
+  const currentYear = new Date().getFullYear().toString();
+  return distribucion[currentYear] || 0;
+};
+
+// Función para obtener el total de partos
+const getTotalPartos = (distribucion?: Record<string, number>) => {
+  if (!distribucion || Object.keys(distribucion).length === 0) {
+    return 0;
+  }
+
+  return Object.values(distribucion).reduce((total, count) => total + count, 0);
+};
+
 // Sección de Partos extraída directamente del dashboard original
 // EXACTAMENTE con la misma estructura visual
 interface PartosSectionProps {
@@ -26,20 +116,38 @@ const PartosSection: React.FC<PartosSectionProps> = ({
   
   // Obtener idioma actual cuando se carga el componente
   useEffect(() => {
-    const lang = localStorage.getItem('userLanguage') || 'es';
-    setCurrentLang(lang);
+    const userLanguage = localStorage.getItem('userLanguage');
+    if (userLanguage) {
+      setCurrentLang(userLanguage);
+    }
     
-    // Escuchar cambios en el idioma
-    const handleStorageChange = () => {
-      const newLang = localStorage.getItem('userLanguage') || 'es';
-      if (newLang !== currentLang) {
-        setCurrentLang(newLang);
+    // Función para manejar cambios de idioma
+    const handleLanguageChange = (e: StorageEvent) => {
+      if (e.key === 'userLanguage') {
+        setCurrentLang(e.newValue || 'es');
       }
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleLanguageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleLanguageChange);
+    };
   }, []);
+  
+  // DEPURACIÓN: Ver exactamente qué datos están llegando
+  useEffect(() => {
+    if (statsData && statsData.partos) {
+      console.log('DATOS MENSUALES RECIBIDOS:', statsData.partos.por_mes);
+      console.log('TIPO DE DATOS:', typeof statsData.partos.por_mes);
+      console.log('CLAVES:', Object.keys(statsData.partos.por_mes || {}));
+      console.log('VALORES:', Object.values(statsData.partos.por_mes || {}));
+      
+      console.log('DATOS ANUALES RECIBIDOS:', statsData.partos.distribucion_anual);
+      console.log('TIPO DE DATOS:', typeof statsData.partos.distribucion_anual);
+      console.log('CLAVES:', Object.keys(statsData.partos.distribucion_anual || {}));
+    }
+  }, [statsData]);
   if (loading) {
     return <div className="col-span-12 text-center py-4">{t('dashboard.loading', currentLang)}</div>;
   }
@@ -80,8 +188,8 @@ const PartosSection: React.FC<PartosSectionProps> = ({
         <div className="mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
           {/* Partos del año actual (2025) */}
           <StatCard
-            title="2025"
-            value={17}
+            title={new Date().getFullYear().toString()}
+            value={getPartosCurrentYear(statsData.partos.distribucion_anual)}
             color="bg-cyan-500"
             darkMode={darkMode}
           />
@@ -98,7 +206,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució mensual" : "Distribución mensual"}</h3>
         <div style={{ height: "300px" }}>
-          <DistribucionMensualChart darkMode={darkMode} />
+          <DistribucionMensualChart darkMode={darkMode} data={statsData.partos.por_mes} />
         </div>
         <div className="text-xs text-center mt-2" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
           {currentLang === 'ca' ? "Distribució mensual de parts" : "Distribución mensual de partos"}
@@ -117,7 +225,10 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució anual detallada" : "Distribución anual detallada"}</h3>
         <div style={{ height: "300px" }}>
-          <DistribucionAnualChart darkMode={darkMode} />
+          <DistribucionAnualChart 
+            darkMode={darkMode} 
+            data={statsData.partos.distribucion_anual} 
+          />
         </div>
         <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
           {currentLang === 'ca' ? "Distribució anual de parts (dades reals)" : "Distribución anual de partos (datos reales)"}
@@ -131,8 +242,8 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             fontWeight: 'semibold' 
           }}>
             {currentLang === 'ca' 
-              ? <>Any amb <strong>més</strong> parts:<br/><span className="text-lg font-bold">2023 (54 parts)</span></>
-              : <>Año con <strong>más</strong> partos:<br/><span className="text-lg font-bold">2023 (54 partos)</span></>
+              ? <>Any amb <strong>més</strong> parts:<br/><span className="text-lg font-bold">{getMaxYear(statsData.partos.distribucion_anual)}</span></>
+              : <>Año con <strong>más</strong> partos:<br/><span className="text-lg font-bold">{getMaxYear(statsData.partos.distribucion_anual)}</span></>
             }
           </div>
           <div className="text-sm text-center p-2" style={{ 
@@ -141,8 +252,8 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             fontWeight: 'semibold' 
           }}>
             {currentLang === 'ca' 
-              ? <>Any amb <strong>menys</strong> parts:<br/><span className="text-lg font-bold">2000 (1 part)</span></>
-              : <>Año con <strong>menos</strong> partos:<br/><span className="text-lg font-bold">2000 (1 parto)</span></>
+              ? <>Any amb <strong>menys</strong> parts:<br/><span className="text-lg font-bold">{getMinYear(statsData.partos.distribucion_anual)}</span></>
+              : <>Año con <strong>menos</strong> partos:<br/><span className="text-lg font-bold">{getMinYear(statsData.partos.distribucion_anual)}</span></>
             }
           </div>
         </div>
@@ -154,8 +265,8 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             fontWeight: 'semibold' 
           }}>
             {currentLang === 'ca' 
-              ? <>Primer any amb parts:<br/><span className="text-lg font-bold">2000</span></>
-              : <>Primer año con partos:<br/><span className="text-lg font-bold">2000</span></>
+              ? <>Primer any amb parts:<br/><span className="text-lg font-bold">{getFirstYear(statsData.partos.distribucion_anual)}</span></>
+              : <>Primer año con partos:<br/><span className="text-lg font-bold">{getFirstYear(statsData.partos.distribucion_anual)}</span></>
             }
           </div>
           <div className="text-sm text-center p-2" style={{ 
@@ -164,16 +275,16 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             fontWeight: 'semibold' 
           }}>
             {currentLang === 'ca' 
-              ? <>Últim any amb parts:<br/><span className="text-lg font-bold">2025 (17 parts)</span></>
-              : <>Último año con partos:<br/><span className="text-lg font-bold">2025 (17 partos)</span></>
+              ? <>Últim any amb parts:<br/><span className="text-lg font-bold">{getLastYear(statsData.partos.distribucion_anual)}</span></>
+              : <>Último año con partos:<br/><span className="text-lg font-bold">{getLastYear(statsData.partos.distribucion_anual)}</span></>
             }
           </div>
         </div>
         
         <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
           {currentLang === 'ca' 
-            ? <>Total: <span className="text-lg">274 parts</span></>
-            : <>Total: <span className="text-lg">274 partos</span></>
+            ? <>Total: <span className="text-lg">{statsData.partos.total} parts</span></>
+            : <>Total: <span className="text-lg">{statsData.partos.total} partos</span></>
           }
         </div>
       </div>
