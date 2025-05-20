@@ -22,14 +22,12 @@ const { animal } = Astro.props;
           class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           data-original-value={animal.estado || ''}
           onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
-          disabled={animal.estado === 'DEF'}
+          
         >
           <option value="OK" selected={animal.estado === 'OK'}>Activo</option>
           <option value="DEF" selected={animal.estado === 'DEF'}>Fallecido</option>
         </select>
-        {animal.estado === 'DEF' && (
-          <div class="text-xs text-red-500 mt-1">No se puede cambiar el estado de un animal fallecido a activo</div>
-        )}
+        {/* Se ha eliminado el mensaje de alerta que indicaba que no se puede cambiar el estado */}
       </div>
     </div>
     
