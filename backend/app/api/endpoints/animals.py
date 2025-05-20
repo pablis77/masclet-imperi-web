@@ -225,7 +225,7 @@ async def list_animals(
     alletar: Optional[str] = None,
     mare: Optional[str] = None,
     pare: Optional[str] = None,
-    quadra: Optional[str] = None,
+    origen: Optional[str] = None,
     search: Optional[str] = None,
     num_serie: Optional[str] = None,
     offset: int = Query(0, ge=0),
@@ -281,8 +281,8 @@ async def list_animals(
         if pare:
             filter_conditions = filter_conditions & Q(pare=pare)
             
-        if quadra:
-            filter_conditions = filter_conditions & Q(quadra=quadra)
+        if origen:
+            filter_conditions = filter_conditions & Q(origen=origen)
             
         # Búsqueda general
         if search:
@@ -292,7 +292,7 @@ async def list_animals(
                              Q(cod__icontains=search) | \
                              Q(pare__icontains=search) | \
                              Q(mare__icontains=search) | \
-                             Q(quadra__icontains=search) | \
+                             Q(origen__icontains=search) | \
                              Q(explotacio__icontains=search)
             
             # Si no hay otros filtros, aplicamos solo la condición de búsqueda

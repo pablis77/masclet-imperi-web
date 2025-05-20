@@ -122,6 +122,17 @@ Este documento sirve como registro centralizado de todas las mejoras, correccion
 - [ ] Revisar y optimizar modelos para mejor rendimiento
 - [ ] Configurar replicación para alta disponibilidad (producción)
 
+## Sistema de Backups
+
+- [ ] Leer configuración desde archivos .env para mayor seguridad y consistencia
+- [ ] Integrar backups con historial de cambios para permitir restauración a puntos específicos
+- [ ] Implementar almacenamiento de metadatos (usuario, descripción del cambio, etc.) junto a cada backup
+- [ ] Crear una interfaz gráfica para gestión de backups y restauraciones
+- [ ] Configurar almacenamiento en la nube (S3, Google Cloud Storage, etc.) para backups remotos
+- [ ] Implementar compresión y encriptación de archivos de backup
+- [ ] Añadir alertas por correo/SMS cuando fallan los backups programados
+- [ ] Crear herramienta de verificación automática de integridad de backups
+
 ## DevOps e Infraestructura
 
 - [ ] Configurar pipeline completo de CI/CD
