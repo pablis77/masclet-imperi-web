@@ -59,7 +59,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
   return (
     <>
       {/* Resumen de Partos */}
-      <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
+      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.partos_analysis', currentLang)}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
           <StatCard
@@ -93,8 +93,90 @@ const PartosSection: React.FC<PartosSectionProps> = ({
           />
         </div>
       </div>
-
-      {/* Esta sección ha sido eliminada según lo solicitado */}
+      
+      {/* Distribución Mensual - NUEVA */}
+      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+        <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució mensual" : "Distribución mensual"}</h3>
+        <div style={{ height: "300px" }}>
+          <DistribucionMensualChart darkMode={darkMode} />
+        </div>
+        <div className="text-xs text-center mt-2" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
+          {currentLang === 'ca' ? "Distribució mensual de parts" : "Distribución mensual de partos"}
+        </div>
+        <div className="text-xs text-center mt-1" style={{ color: darkMode ? 'rgba(209, 213, 219, 0.6)' : 'rgba(107, 114, 128, 0.6)' }}>
+          <span style={{ fontSize: '9px' }}>
+            {currentLang === 'ca' 
+              ? `Mes amb més parts: Març (46), mes amb menys parts: Agost (4)`
+              : `Mes con más partos: Marzo (46), mes con menos partos: Agosto (4)`
+            }
+          </span>
+        </div>
+      </div>
+      
+      {/* Distribución Anual Detallada - NUEVA */}
+      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+        <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució anual detallada" : "Distribución anual detallada"}</h3>
+        <div style={{ height: "300px" }}>
+          <DistribucionAnualChart darkMode={darkMode} />
+        </div>
+        <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
+          {currentLang === 'ca' ? "Distribució anual de parts (dades reals)" : "Distribución anual de partos (datos reales)"}
+        </div>
+        
+        {/* Información destacada sobre años con partos */}
+        <div className="grid grid-cols-2 gap-2 mt-3 mb-2">
+          <div className="text-sm text-center p-2" style={{ 
+            backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)', 
+            borderRadius: '6px',
+            fontWeight: 'semibold' 
+          }}>
+            {currentLang === 'ca' 
+              ? <>Any amb <strong>més</strong> parts:<br/><span className="text-lg font-bold">2023 (54 parts)</span></>
+              : <>Año con <strong>más</strong> partos:<br/><span className="text-lg font-bold">2023 (54 partos)</span></>
+            }
+          </div>
+          <div className="text-sm text-center p-2" style={{ 
+            backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)', 
+            borderRadius: '6px',
+            fontWeight: 'semibold' 
+          }}>
+            {currentLang === 'ca' 
+              ? <>Any amb <strong>menys</strong> parts:<br/><span className="text-lg font-bold">2000 (1 part)</span></>
+              : <>Año con <strong>menos</strong> partos:<br/><span className="text-lg font-bold">2000 (1 parto)</span></>
+            }
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="text-sm text-center p-2" style={{ 
+            backgroundColor: darkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)', 
+            borderRadius: '6px',
+            fontWeight: 'semibold' 
+          }}>
+            {currentLang === 'ca' 
+              ? <>Primer any amb parts:<br/><span className="text-lg font-bold">2000</span></>
+              : <>Primer año con partos:<br/><span className="text-lg font-bold">2000</span></>
+            }
+          </div>
+          <div className="text-sm text-center p-2" style={{ 
+            backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.1)', 
+            borderRadius: '6px',
+            fontWeight: 'semibold' 
+          }}>
+            {currentLang === 'ca' 
+              ? <>Últim any amb parts:<br/><span className="text-lg font-bold">2025 (17 parts)</span></>
+              : <>Último año con partos:<br/><span className="text-lg font-bold">2025 (17 partos)</span></>
+            }
+          </div>
+        </div>
+        
+        <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
+          {currentLang === 'ca' 
+            ? <>Total: <span className="text-lg">274 parts</span></>
+            : <>Total: <span className="text-lg">274 partos</span></>
+          }
+        </div>
+      </div>
 
       {/* Distribución por Género - CORREGIDA */}
       <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
@@ -173,73 +255,6 @@ const PartosSection: React.FC<PartosSectionProps> = ({
           }
         </div>
       </div>
-      
-      {/* Distribución Anual Detallada - NUEVA */}
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
-        <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució anual detallada" : "Distribución anual detallada"}</h3>
-        <div style={{ height: "300px" }}>
-          <DistribucionAnualChart darkMode={darkMode} />
-        </div>
-        <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
-          {currentLang === 'ca' ? "Distribució anual de parts (dades reals)" : "Distribución anual de partos (datos reales)"}
-        </div>
-        
-        {/* Información destacada sobre años con partos */}
-        <div className="grid grid-cols-2 gap-2 mt-3 mb-2">
-          <div className="text-sm text-center p-2" style={{ 
-            backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)', 
-            borderRadius: '6px',
-            fontWeight: 'semibold' 
-          }}>
-            {currentLang === 'ca' 
-              ? <>Any amb <strong>més</strong> parts:<br/><span className="text-lg font-bold">2023 (54 parts)</span></>
-              : <>Año con <strong>más</strong> partos:<br/><span className="text-lg font-bold">2023 (54 partos)</span></>
-            }
-          </div>
-          <div className="text-sm text-center p-2" style={{ 
-            backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)', 
-            borderRadius: '6px',
-            fontWeight: 'semibold' 
-          }}>
-            {currentLang === 'ca' 
-              ? <>Any amb <strong>menys</strong> parts:<br/><span className="text-lg font-bold">2000 (1 part)</span></>
-              : <>Año con <strong>menos</strong> partos:<br/><span className="text-lg font-bold">2000 (1 parto)</span></>
-            }
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-2 mt-1">
-          <div className="text-sm text-center p-2" style={{ 
-            backgroundColor: darkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)', 
-            borderRadius: '6px',
-            fontWeight: 'semibold' 
-          }}>
-            {currentLang === 'ca' 
-              ? <>Primer any amb parts:<br/><span className="text-lg font-bold">2000</span></>
-              : <>Primer año con partos:<br/><span className="text-lg font-bold">2000</span></>
-            }
-          </div>
-          <div className="text-sm text-center p-2" style={{ 
-            backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.1)', 
-            borderRadius: '6px',
-            fontWeight: 'semibold' 
-          }}>
-            {currentLang === 'ca' 
-              ? <>Últim any amb parts:<br/><span className="text-lg font-bold">2025 (17 parts)</span></>
-              : <>Último año con partos:<br/><span className="text-lg font-bold">2025 (17 partos)</span></>
-            }
-          </div>
-        </div>
-        
-        <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
-          {currentLang === 'ca' 
-            ? <>Total: <span className="text-lg">274 parts</span></>
-            : <>Total: <span className="text-lg">274 partos</span></>
-          }
-        </div>
-      </div>
-      
-      {/* Distribución Mensual - NUEVA */}
       <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució mensual" : "Distribución mensual"}</h3>
         <div style={{ height: "300px" }}>
