@@ -3,6 +3,8 @@ Aplicación principal FastAPI
 """
 import logging
 import time
+import socket
+import ipaddress
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,7 +66,51 @@ else:
 
 # Configurar CORS de forma adecuada para permitir credenciales
 if is_dev:
-    # Lista de orígenes en desarrollo para pruebas
+    # Detectar automáticamente todas las IPs del sistema
+    def get_local_ip_addresses():
+        local_ips = []
+        try:
+            # Obtener el nombre del host local
+            hostname = socket.gethostname()
+            # Obtener todas las IPs asociadas al host
+            addresses = socket.getaddrinfo(hostname, None)
+            
+            # Filtrar solo direcciones IPv4
+            for addr in addresses:
+                ip = addr[4][0]
+                # Solo considerar IPv4 y excluir loopback
+                try:
+                    if ipaddress.ip_address(ip).version == 4 and not ipaddress.ip_address(ip).is_loopback:
+                        local_ips.append(ip)
+                except:
+                    pass
+            
+            # Añadir también la IP pública si está disponible
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                public_ip = s.getsockname()[0]
+                if public_ip not in local_ips:
+                    local_ips.append(public_ip)
+                s.close()
+            except:
+                pass
+                
+            # Eliminar duplicados
+            local_ips = list(set(local_ips))
+            return local_ips
+        except Exception as e:
+            logger.error(f"Error al obtener IPs locales: {str(e)}")
+            return []
+    
+    # Obtener IPs locales
+    local_ips = get_local_ip_addresses()
+    logger.info(f"IPs locales detectadas: {local_ips}")
+    
+    # Lista de puertos usados por el frontend
+    frontend_ports = [3000, 4321, 53983, 54000, 54001, 54002]
+    
+    # Lista base de orígenes en desarrollo para pruebas
     dev_origins = [
         "http://localhost:3000",
         "http://localhost:8000",
@@ -73,16 +119,27 @@ if is_dev:
         "http://localhost:4321",  # Puerto Astro por defecto
         "http://127.0.0.1:4321",
         "http://127.0.0.1:55710",  # Puerto dinámico actual
+        "http://127.0.0.1:53983",  # Puerto del proxy de Cascade
         "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
         "https://api-masclet-imperi.loca.lt"              # Backend LocalTunnel
     ]
+    
+    # Añadir automáticamente todas las IPs locales con los puertos del frontend
+    for ip in local_ips:
+        for port in frontend_ports:
+            origin = f"http://{ip}:{port}"
+            dev_origins.append(origin)
+            logger.info(f"Añadido origen automáticamente: {origin}")
+            
+    # Eliminar duplicados
+    dev_origins = list(set(dev_origins))
     
     # Registrar los orígenes permitidos
     logger.info(f"Modo desarrollo: permitiendo orígenes específicos: {dev_origins}")
     
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=dev_origins,  # Lista específica en lugar del comodín
+        allow_origins=dev_origins,  # Lista dinámica con IPs automáticas
         allow_credentials=True,     # Permitir credenciales
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         allow_headers=["*"],
