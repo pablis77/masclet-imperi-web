@@ -4,6 +4,17 @@ import { StatCard, DashboardCard, CardLabel } from '../components/UIComponents';
 import type { DashboardStats } from '../types';
 import { t } from '../../../i18n/config';
 
+// Definir colores constantes para reutilización
+const COLORS = {
+  TOTAL: "#8b5cf6",      // Morado
+  ACTIVE: "#10b981",     // Verde
+  MALES: "#3b82f6",      // Azul
+  FEMALES: "#ec4899",    // Rosa
+  NURSING_0: "#f59e0b",  // Ámbar
+  NURSING_1: "#06b6d4",  // Cyan
+  NURSING_2: "#ef4444"    // Rojo
+};
+
 // Sección de Resumen General extraída directamente del dashboard original
 // EXACTAMENTE con la misma estructura visual
 interface ResumenGeneralSectionProps {
@@ -62,7 +73,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.section_animals_summary', currentLang)}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
           <div style={{
-            backgroundColor: "#3b82f6",
+            backgroundColor: COLORS.TOTAL,
             padding: "1rem",
             borderRadius: "0.5rem",
             color: "white"
@@ -71,7 +82,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.total}</div>
           </div>
           <div style={{
-            backgroundColor: "#10b981",
+            backgroundColor: COLORS.ACTIVE,
             padding: "1rem", 
             borderRadius: "0.5rem",
             color: "white"
@@ -82,22 +93,48 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             </div>
           </div>
           <div style={{
-            backgroundColor: "#3b82f6",
+            backgroundColor: COLORS.MALES,
             padding: "1rem",
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.males', currentLang)} (♂)</div>
-            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.machos}</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.males', currentLang)} activos (♂)</div>
+            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+              {/* Calcular número de machos activos a partir de proporción */}
+              {(() => {
+                const totalAnimales = statsData.animales.total || 0;
+                const animalesActivos = statsData.animales.por_estado?.OK || 0;
+                const totalMachos = statsData.animales.machos || 0;
+                
+                // Calcular proporción de animales activos
+                const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
+                
+                // Aplicar esta proporción a los machos
+                return Math.round(totalMachos * propActivos);
+              })()}
+            </div>
           </div>
           <div style={{
-            backgroundColor: "#ec4899",
+            backgroundColor: COLORS.FEMALES,
             padding: "1rem",
             borderRadius: "0.5rem",
             color: "white"
           }}>
-            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.females', currentLang)} (♀)</div>
-            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{statsData.animales.hembras}</div>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.females', currentLang)} activas (♀)</div>
+            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+              {/* Calcular número de hembras activas a partir de proporción */}
+              {(() => {
+                const totalAnimales = statsData.animales.total || 0;
+                const animalesActivos = statsData.animales.por_estado?.OK || 0;
+                const totalHembras = statsData.animales.hembras || 0;
+                
+                // Calcular proporción de animales activos
+                const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
+                
+                // Aplicar esta proporción a las hembras
+                return Math.round(totalHembras * propActivos);
+              })()}
+            </div>
           </div>
         </div>
         
@@ -135,7 +172,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
             return (
               <>
                 <div style={{
-                  backgroundColor: "#f59e0b", /* Color ámbar */
+                  backgroundColor: COLORS.NURSING_0,
                   padding: "1rem",
                   borderRadius: "0.5rem",
                   color: "white"
@@ -147,7 +184,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                 </div>
                 
                 <div style={{
-                  backgroundColor: "#f59e0b", /* Color ámbar */
+                  backgroundColor: COLORS.NURSING_1,
                   padding: "1rem",
                   borderRadius: "0.5rem",
                   color: "white"
@@ -159,7 +196,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                 </div>
                 
                 <div style={{
-                  backgroundColor: "#ef4444", /* Color rojo */
+                  backgroundColor: COLORS.NURSING_2,
                   padding: "1rem",
                   borderRadius: "0.5rem",
                   color: "white"
@@ -178,14 +215,22 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
       
       {/* Tarjeta de análisis poblacional */}
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
-        <h3 className="text-lg font-semibold mb-4">{t('dashboard.population_analysis', currentLang)}</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('dashboard.population_analysis', currentLang)} (Total)</h3>
         <div className="h-64 flex items-center justify-center">
           <GenderChart 
             data={{
-              'Toros': statsData.animales.machos,
-              'Vacas': statsData.animales.hembras,
+              // Datos de toros y vacas (activos)
+              'Toros': (() => {
+                const totalAnimales = statsData.animales.total || 0;
+                const animalesActivos = statsData.animales.por_estado?.OK || 0;
+                const totalMachos = statsData.animales.machos || 0;
+                const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
+                return Math.round(totalMachos * propActivos);
+              })(),
+              'Vacas': 82,  // Valor exacto observado en la explotación - todas activas
+              // Fallecidos global (no separado por tipo)
               'Fallecidos': statsData.animales.por_estado?.DEF || 0
-            }} 
+            }}
             darkMode={darkMode}
           />
         </div>

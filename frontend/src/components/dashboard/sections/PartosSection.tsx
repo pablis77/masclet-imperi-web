@@ -114,6 +114,14 @@ const PartosSection: React.FC<PartosSectionProps> = ({
         <div className="text-xs text-center mt-2" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
           {currentLang === 'ca' ? "Gènere de les cries nascudes" : "Género de las crías nacidas"}
         </div>
+        <div className="text-xs text-center mt-1" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
+          <span style={{ fontSize: '10px', fontStyle: 'italic' }}>
+            {currentLang === 'ca' 
+              ? `Nota: El gràfic mostra només els parts dins del període seleccionat (${statsData.partos.por_genero_cria?.M || 0} mascles + ${statsData.partos.por_genero_cria?.F || 0} femelles = ${(statsData.partos.por_genero_cria?.M || 0) + (statsData.partos.por_genero_cria?.F || 0)}). El total inclou tots els parts històrics (${statsData.partos.total}).`
+              : `Nota: El gráfico muestra solo los partos dentro del período seleccionado (${statsData.partos.por_genero_cria?.M || 0} machos + ${statsData.partos.por_genero_cria?.F || 0} hembras = ${(statsData.partos.por_genero_cria?.M || 0) + (statsData.partos.por_genero_cria?.F || 0)}). El total incluye todos los partos históricos (${statsData.partos.total}).`
+            }
+          </span>
+        </div>
       </div>
 
       {/* Evolución Anual */}
