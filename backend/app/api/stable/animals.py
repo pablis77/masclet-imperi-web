@@ -114,10 +114,8 @@ async def update_animal(animal_id: int, animal: AnimalUpdate):
                 data={"animal_id": animal_id}
             )
             
-        if db_animal.estado == "DEF" and animal.estado and animal.estado != "DEF":
-            return ErrorResponse(
-                message="No se puede cambiar el estado de un animal fallecido"
-            )
+        # Se ha eliminado la restricción que impedía cambiar el estado de un animal de fallecido a activo
+        # Ahora se permite cambiar de DEF a OK para corregir errores de registro
             
         # Actualizar solo los campos proporcionados
         update_data = animal.dict(exclude_unset=True)
