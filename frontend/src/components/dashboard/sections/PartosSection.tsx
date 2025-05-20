@@ -224,12 +224,18 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       {/* Distribución Anual Detallada - NUEVA */}
       <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució anual detallada" : "Distribución anual detallada"}</h3>
+        {/* Mostrar los datos de distribución anual que vienen directamente del backend */}
         <div style={{ height: "300px" }}>
           <DistribucionAnualChart 
             darkMode={darkMode} 
             data={statsData.partos.distribucion_anual} 
           />
         </div>
+        
+        {/* DEPURACIÓN: Verificamos que estamos recibiendo los datos correctos del API */}
+        <pre style={{ display: 'none', fontSize: '8px', maxHeight: '80px', overflow: 'auto', margin: '0', padding: '4px', backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', borderRadius: '4px' }}>
+          {JSON.stringify(statsData.partos.distribucion_anual, null, 2)}
+        </pre>
         <div className="text-sm text-center mt-3" style={{ color: darkMode ? '#d1d5db' : '#6b7280', fontWeight: 'bold' }}>
           {currentLang === 'ca' ? "Distribució anual de parts (dades reals)" : "Distribución anual de partos (datos reales)"}
         </div>

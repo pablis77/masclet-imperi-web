@@ -433,36 +433,41 @@ export const DistribucionAnualChart = ({ darkMode, data }: { darkMode: boolean, 
     );
   }
   
-  // Datos REALES verificados con el test SQL (2000-2025)
-  const datosAnualesReales: Record<string, number> = {
-    '2000': 1,
-    '2002': 1,
-    '2004': 1,
-    '2010': 1,
-    '2012': 1,
-    '2014': 6,
-    '2015': 6,
-    '2016': 8,
-    '2017': 10,
-    '2018': 15,
-    '2019': 18,
-    '2020': 22,
-    '2021': 24,
-    '2022': 42,
-    '2023': 54,
-    '2024': 47,
-    '2025': 17
-  };
+  console.log('DistribucionAnualChart - Datos recibidos del backend:', data);
   
-  // Usar los años que realmente tienen partos
-  const years = Object.keys(datosAnualesReales).sort((a, b) => parseInt(a) - parseInt(b));
+  // Verificar si tenemos datos válidos
+  if (!data || typeof data !== 'object') {
+    console.error('No se recibieron datos válidos para el gráfico anual');
+    return (
+      <div style={{ 
+        height: '100%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: darkMode ? '#d1d5db' : '#6b7280'
+      }}>
+        {currentLang === 'ca' ? "No hi ha dades disponibles" : "No hay datos disponibles"}
+      </div>
+    );
+  }
   
+  // Filtrar y ordenar los años que tienen partos (valor > 0)
+  const years = Object.keys(data)
+    .filter(year => typeof data[year] === 'number' && data[year] > 0)
+    .sort((a, b) => parseInt(a) - parseInt(b));
+  
+  console.log('Años con partos reales:', years);
+  
+  // IMPORTANTE: SOLO usar datos dinámicos del backend
   const chartData = {
     labels: years,
     datasets: [
       {
         label: currentLang === 'ca' ? 'Parts per any' : 'Partos por año',
-        data: years.map(year => datosAnualesReales[year as keyof typeof datosAnualesReales]),
+        data: years.map(year => {
+          // Verificar que data exista y tenga la propiedad del año
+          return data && typeof data === 'object' && year in data ? data[year] : 0;
+        }),
         backgroundColor: '#10b981', // Verde esmeralda
         borderColor: '#059669',
         borderWidth: 1,
@@ -537,28 +542,27 @@ export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean
     'Juliol', 'Agost', 'Setembre', 'Octubre', 'Novembre', 'Desembre'
   ];
   
-  // DATOS 100% REALES DE LA BASE DE DATOS:
-  // Estos son los datos REALES verificados con el test SQL
-  const datosReales: Record<string, number> = {
-    'Enero': 26,
-    'Febrero': 38,
-    'Marzo': 46,
-    'Abril': 22,
-    'Mayo': 29,
-    'Junio': 11,
-    'Julio': 17,
-    'Agosto': 4,
-    'Septiembre': 8,
-    'Octubre': 26,
-    'Noviembre': 20,
-    'Diciembre': 27
-  };
-  
   // Determinar qué nombres de meses usar según el idioma
   const nombresMeses = currentLang === 'ca' ? mesesCat : meses;
   
-  // Mapear los valores para la gráfica usando los DATOS REALES verificados
-  const valoresMeses = meses.map(mes => datosReales[mes as keyof typeof datosReales]);
+  // Procesar los datos que vienen del API
+  console.log('Datos del API recibidos en DistribucionMensualChart:', data);
+  
+  // Extraer los valores del objeto data o usar valores vacíos si no hay datos
+  const valoresMeses = meses.map(mes => {
+    // Si tenemos datos y el mes existe, usarlo
+    if (data && typeof data === 'object' && mes in data) {
+      return data[mes];
+    }
+    // Si no, buscar usando la primera letra mayúscula
+    const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+    if (data && typeof data === 'object' && mesCapitalizado in data) {
+      return data[mesCapitalizado];
+    }
+    return 0; // Valor por defecto
+  });
+  
+  console.log('Valores de meses procesados:', nombresMeses, valoresMeses);
   
   const chartData = {
     labels: nombresMeses,
