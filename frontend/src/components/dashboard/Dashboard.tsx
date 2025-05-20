@@ -22,7 +22,7 @@ import './dashboardStyles.css';
 import ResumenGeneralSection from './sections/ResumenGeneralSection';
 import PartosSection from './sections/PartosSection';
 import ExplotacionesSection from './sections/ExplotacionesSection';
-import PeriodoAnalisisSection from './sections/PeriodoAnalisisSection';
+// Importación eliminada: PeriodoAnalisisSection ya no se usa
 
 // Importar componentes UI reutilizables
 import { SectionTitle } from './components/UIComponents';
@@ -1062,38 +1062,37 @@ const Dashboard: React.FC = () => {
     // Función para cargar todos los datos con los parámetros de fecha de la URL
     const loadDashboardData = async () => {
       try {
-        addLog('Cargando datos del dashboard');
+        addLog('🔄 Cargando datos completos del dashboard, incluyendo TODOS los partos históricos');
         
-        // Obtener parámetros de fecha de la URL
-        const params = new URLSearchParams(window.location.search);
-        const fechaInicioParam = params.get('fecha_inicio');
-        const fechaFinParam = params.get('fecha_fin');
+        // Establecer fecha final como hoy
+        const today = new Date();
+        const fechaFinISO = today.toISOString().split('T')[0];
+        setFechaFin(fechaFinISO);
         
-        // Actualizar los campos de fecha con los valores de la URL
-        if (fechaInicioParam) {
-          setFechaInicio(fechaInicioParam);
-        }
+        // IMPORTANTE: Establecer fecha de inicio como el parto más antiguo (Emma, 01/05/1978)
+        // en lugar de obtenerla de la URL o del backend
+        const fechaInicioEmma = '1978-05-01';
+        setFechaInicio(fechaInicioEmma);
         
-        if (fechaFinParam) {
-          setFechaFin(fechaFinParam);
-        }
+        // Registrar que estamos usando la fecha real del parto más antiguo
+        addLog(`✅ Usando fecha real del parto más antiguo: ${fechaInicioEmma} (Emma)`);
+        console.log(`✅ Usando fecha real del parto más antiguo: ${fechaInicioEmma} (Emma)`);
         
         // Construir objeto con parámetros de fecha para las APIs
-        const dateParams: DateParams = {};
-        if (fechaInicioParam) {
-          dateParams.fechaInicio = fechaInicioParam;
-        }
-        if (fechaFinParam) {
-          dateParams.fechaFin = fechaFinParam;
-        }
+        // Siempre usamos fechaInicio=1978-05-01 (Emma) y fechaFin=hoy
+        const dateParams: DateParams = {
+          fechaInicio: fechaInicioEmma,
+          fechaFin: fechaFinISO
+        };
         
-        // Mostrar mensaje en la consola con los filtros aplicados
-        if (fechaInicioParam || fechaFinParam) {
-          console.log('Aplicando filtros a través de la URL:', {
-            desde: fechaInicioParam || 'inicio',
-            hasta: fechaFinParam || 'actualidad'
-          });
-        }
+        // Mostrar mensaje en la consola
+        addLog(`✅ Analizando TODOS los datos históricos desde ${fechaInicioEmma} hasta ${fechaFinISO}`)
+        
+        // Mostrar mensaje en la consola con los fechas usadas
+        console.log('Aplicando fechas para cargar datos:', {
+          desde: dateParams.fechaInicio,
+          hasta: dateParams.fechaFin
+        });
         
         // Cargar datos de resumen con parámetros de fecha
         if (Object.keys(dateParams).length > 0) {
@@ -1391,15 +1390,7 @@ const Dashboard: React.FC = () => {
         </>
       )}
       
-      {/* Período de análisis con selectores */}
-      <PeriodoAnalisisSection 
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-        setFechaInicio={setFechaInicio}
-        setFechaFin={setFechaFin}
-        onFilterChange={aplicarFiltroFechas}
-        darkMode={darkMode}
-      />
+      {/* ELIMINADA sección de período de análisis para mostrar siempre todos los datos históricos */}
     </div>
   );
 }

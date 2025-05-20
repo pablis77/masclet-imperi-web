@@ -1113,10 +1113,10 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
                 
         logger.info(f"Distribución mensual de partos: {por_mes}")
         
-        # Distribución anual - mostrar todos los años desde 2010 hasta el presente
-        # Inicializar la distribución anual con años desde 2010 hasta el presente
+        # Distribución anual - mostrar todos los años desde el parto más antiguo (Emma, 1978) hasta el presente
+        # Inicializar la distribución anual con años desde 1978 hasta el presente
         anio_actual = date.today().year
-        anio_inicio = 2010
+        anio_inicio = 1978  # Año del parto más antiguo (Emma)
         distribucion_anual = {str(anio): 0 for anio in range(anio_inicio, anio_actual + 1)}
         
         # NO usar la consulta ORM que está dando error
