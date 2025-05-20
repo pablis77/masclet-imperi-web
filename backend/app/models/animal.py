@@ -42,6 +42,7 @@ class Animal(models.Model):
     cod = fields.CharField(max_length=20, null=True)
     num_serie = fields.CharField(max_length=50, null=True)
     part = fields.CharField(max_length=50, null=True)  # Cambiado de 'num_part' a 'part' para coincidir con el CSV
+    observaciones = fields.TextField(null=True)  # Campo para notas y observaciones adicionales
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
@@ -67,6 +68,7 @@ class Animal(models.Model):
             "cod": self.cod,
             "num_serie": self.num_serie,
             "part": self.part,
+            "observaciones": self.observaciones,
             "created_at": self.created_at.strftime("%d/%m/%Y") if self.created_at else None,
             "updated_at": self.updated_at.strftime("%d/%m/%Y") if self.updated_at else None
         }
