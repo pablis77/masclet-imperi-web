@@ -106,13 +106,15 @@ const { animal } = Astro.props;
         </div>
         
         <div>
-          <label for="observacions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones</label>
+          <label for="observacions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones (máx. 200 caracteres)</label>
           <textarea 
             id="observacions" 
             name="observacions" 
             rows="3"
+            maxlength="200"
             class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           ></textarea>
+          <div class="text-xs text-gray-500 mt-1">Notas breves sobre el cambio realizado</div>
         </div>
         
         <div class="flex justify-end">
