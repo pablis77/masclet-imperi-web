@@ -122,6 +122,14 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             }
           </span>
         </div>
+        <div className="text-xs text-center mt-1" style={{ color: darkMode ? 'rgba(209, 213, 219, 0.6)' : 'rgba(107, 114, 128, 0.6)' }}>
+          <span style={{ fontSize: '9px' }}>
+            {currentLang === 'ca' 
+              ? `Període mostrat: 01/05/1978 (Emma) - ${new Date().toLocaleDateString('ca')}`
+              : `Período mostrado: 01/05/1978 (Emma) - ${new Date().toLocaleDateString('es')}`
+            }
+          </span>
+        </div>
       </div>
 
       {/* Evolución Anual */}
@@ -132,6 +140,14 @@ const PartosSection: React.FC<PartosSectionProps> = ({
         </div>
         <div className="text-xs text-center mt-2" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
           {currentLang === 'ca' ? "Tendència de parts al llarg del temps" : "Tendencia de partos a lo largo del tiempo"}
+        </div>
+        <div className="text-xs text-center mt-1" style={{ color: darkMode ? 'rgba(209, 213, 219, 0.6)' : 'rgba(107, 114, 128, 0.6)' }}>
+          <span style={{ fontSize: '9px' }}>
+            {currentLang === 'ca' 
+              ? `Període mostrat: 01/05/1978 (Emma) - ${new Date().toLocaleDateString('ca')}`
+              : `Período mostrado: 01/05/1978 (Emma) - ${new Date().toLocaleDateString('es')}`
+            }
+          </span>
         </div>
       </div>
     </>

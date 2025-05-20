@@ -239,7 +239,7 @@ export const QuadraChart = ({ data, darkMode }: { data: Record<string, number> |
     labels: sortedEntries.map(([key]) => key),
     datasets: [
       {
-        label: 'Distribución por Cuadra',
+        label: 'Distribución por Origen',
         data: sortedEntries.map(([_, value]) => value),
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
         borderColor: 'rgba(59, 130, 246, 1)',
@@ -343,13 +343,18 @@ export const MonthlyChart = ({ data, darkMode }: { data: Record<string, number> 
 // Renderizar gráfico de tendencia
 export const TrendChart = ({ data, darkMode }: { data: Record<string, number> | undefined, darkMode: boolean }) => {
   if (!data) return null;
-
+  
+  // Filtrar para mostrar solo los años con partos y ordenarlos
+  const sortedKeys = Object.keys(data)
+    .filter(year => data[year] > 0)  // Solo años con partos
+    .sort((a, b) => parseInt(a) - parseInt(b));
+  
   const chartData = {
-    labels: Object.keys(data),
+    labels: sortedKeys,
     datasets: [
       {
-        label: 'Tendencia',
-        data: Object.values(data),
+        label: 'Partos por año',
+        data: sortedKeys.map(year => data[year]),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
         tension: 0.4,
@@ -357,5 +362,31 @@ export const TrendChart = ({ data, darkMode }: { data: Record<string, number> | 
     ],
   };
 
-  return <Line data={chartData} />
+  return <Line data={chartData} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Año'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Número de partos'
+        },
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items) => `Año ${items[0].label}`,
+          label: (context) => `Partos: ${context.formattedValue}`
+        }
+      }
+    }
+  }} />
 };
