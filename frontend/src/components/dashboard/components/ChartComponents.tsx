@@ -390,3 +390,143 @@ export const TrendChart = ({ data, darkMode }: { data: Record<string, number> | 
     }
   }} />
 };
+
+// Componente para gráfico de distribución anual detallada
+export const DistribucionAnualChart = ({ darkMode }: { darkMode: boolean }) => {
+  // Datos reales de partos por año
+  const datosReales: Record<string, number> = {
+    '2000': 1,
+    '2002': 1,
+    '2004': 1,
+    '2010': 1,
+    '2012': 1,
+    '2014': 6,
+    '2015': 6,
+    '2016': 8,
+    '2017': 10,
+    '2018': 15,
+    '2019': 18,
+    '2020': 22,
+    '2021': 24,
+    '2022': 42,
+    '2023': 54,
+    '2024': 47,
+    '2025': 17
+  };
+  
+  // Obtener años ordenados
+  const years = Object.keys(datosReales).sort((a, b) => parseInt(a) - parseInt(b));
+  
+  const chartData = {
+    labels: years,
+    datasets: [
+      {
+        label: 'Partos por año',
+        data: years.map(year => datosReales[year]),
+        backgroundColor: '#10b981', // Verde esmeralda
+        borderColor: '#059669',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return <Bar data={chartData} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Año'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Número de partos'
+        },
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          title: (items) => `Año ${items[0].label}`,
+          label: (context) => `Partos: ${context.formattedValue}`
+        }
+      }
+    }
+  }} />
+};
+
+// Componente para gráfico de distribución mensual
+export const DistribucionMensualChart = ({ darkMode }: { darkMode: boolean }) => {
+  // Datos reales de distribución mensual
+  const mesesData: Record<string, number> = {
+    'Enero': 26,
+    'Febrero': 38,
+    'Marzo': 46,
+    'Abril': 22,
+    'Mayo': 29,
+    'Junio': 11,
+    'Julio': 17,
+    'Agosto': 4,
+    'Septiembre': 8,
+    'Octubre': 26,
+    'Noviembre': 20,
+    'Diciembre': 27
+  };
+  
+  // Nombres de los meses en orden
+  const meses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  
+  const chartData = {
+    labels: meses,
+    datasets: [
+      {
+        label: 'Partos por mes',
+        data: meses.map(mes => mesesData[mes]),
+        backgroundColor: '#3b82f6', // Azul
+        borderColor: '#2563eb',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return <Bar data={chartData} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Mes'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Número de partos'
+        },
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          title: (items) => items[0].label,
+          label: (context) => `Partos: ${context.formattedValue}`
+        }
+      }
+    }
+  }} />
+};
