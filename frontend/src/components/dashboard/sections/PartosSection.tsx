@@ -70,7 +70,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             translationKey="dashboard.partos_count"
           />
           <StatCard
-            title="Maig"
+            title={currentLang === 'ca' ? "Maig" : "Mayo"}
             value={statsData.partos.ultimo_mes}
             color="bg-cyan-500"
             darkMode={darkMode}
@@ -78,10 +78,10 @@ const PartosSection: React.FC<PartosSectionProps> = ({
         </div>
         
         <div className="mt-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-          {/* Usamos el mismo valor que mayo para el año 2025 */}
+          {/* Partos del año actual (2025) */}
           <StatCard
             title="2025"
-            value={statsData.partos.ultimo_mes}
+            value={17}
             color="bg-cyan-500"
             darkMode={darkMode}
           />
@@ -253,23 +253,6 @@ const PartosSection: React.FC<PartosSectionProps> = ({
             ? <>Total crías: <span className="text-lg">{(statsData.partos.por_genero_cria?.M || 0) + (statsData.partos.por_genero_cria?.F || 0) + (statsData.partos.por_genero_cria?.esforrada || 0)}</span></>
             : <>Total crías: <span className="text-lg">{(statsData.partos.por_genero_cria?.M || 0) + (statsData.partos.por_genero_cria?.F || 0) + (statsData.partos.por_genero_cria?.esforrada || 0)}</span></>
           }
-        </div>
-      </div>
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
-        <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució mensual" : "Distribución mensual"}</h3>
-        <div style={{ height: "300px" }}>
-          <DistribucionMensualChart darkMode={darkMode} />
-        </div>
-        <div className="text-xs text-center mt-2" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
-          {currentLang === 'ca' ? "Distribució mensual de parts" : "Distribución mensual de partos"}
-        </div>
-        <div className="text-xs text-center mt-1" style={{ color: darkMode ? 'rgba(209, 213, 219, 0.6)' : 'rgba(107, 114, 128, 0.6)' }}>
-          <span style={{ fontSize: '9px' }}>
-            {currentLang === 'ca' 
-              ? `Mes amb més parts: Març (46), mes amb menys parts: Agost (4)`
-              : `Mes con más partos: Marzo (46), mes con menos partos: Agosto (4)`
-            }
-          </span>
         </div>
       </div>
     </>
