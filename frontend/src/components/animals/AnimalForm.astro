@@ -184,16 +184,22 @@ function formatDateForInput(dob) {
   
   <!-- Campo de Observaciones (ancho completo) -->
   <div class="space-y-2">
-    <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones</label>
+    <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones (máx. 2000 caracteres)</label>
     <textarea
       id="observaciones"
       name="observaciones"
       rows="4"
+      maxlength="2000"
       class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
       data-original-value={animal.observaciones || ''}
       oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
     >{animal.observaciones || ''}</textarea>
     <div class="text-xs text-gray-500 mt-1">Añade notas o información adicional sobre el animal</div>
+  </div>
+  
+  <!-- Leyenda para campos obligatorios -->
+  <div class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-4">
+    <span class="text-black dark:text-white font-bold">*</span> <span class="font-bold">Campos obligatorios</span>
   </div>
   
   <div class="flex justify-between items-center">
