@@ -1116,8 +1116,18 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
         # Distribución anual - mostrar todos los años desde el parto más antiguo (Emma, 1978) hasta el presente
         # Inicializar la distribución anual con años desde 1978 hasta el presente
         anio_actual = date.today().year
-        anio_inicio = 1978  # Año del parto más antiguo (Emma)
+        anio_inicio = 1978  # Año del parto más antiguo (Emma) esto de todas todas debe ser tambien dinamico, si yo borro por lo que sea el aprto del 78, que se quede de refrencia siemrpe el parto mas antiguo
+        
+        # LOG PARA DEPURACIÓN
+        logger.info(f"CREANDO DISTRIBUCIÓN ANUAL: del año {anio_inicio} al {anio_actual}")
+        logger.info(f"TOTAL AÑOS A GENERAR: {anio_actual - anio_inicio + 1}")
+        
         distribucion_anual = {str(anio): 0 for anio in range(anio_inicio, anio_actual + 1)}
+        
+        # Log para confirmar que se inicializaron todos los años
+        logger.info(f"DISTRIBUCIÓN ANUAL INICIALIZADA CON {len(distribucion_anual)} AÑOS")
+        logger.info(f"PRIMEROS 5 AÑOS: {list(distribucion_anual.keys())[:5]}")
+        logger.info(f"ÚLTIMOS 5 AÑOS: {list(distribucion_anual.keys())[-5:]}")
         
         # NO usar la consulta ORM que está dando error
         # En su lugar, usar los partos que ya obtuvimos con SQL directo
@@ -1143,7 +1153,29 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
         # Ordenar la distribución por año
         distribucion_anual = {k: distribucion_anual[k] for k in sorted(distribucion_anual.keys())}
         
+        # Log para verificar que NO se están filtrando años con valor 0
+        total_anios = len(distribucion_anual)
+        anios_con_partos = sum(1 for v in distribucion_anual.values() if v > 0)
+        anios_sin_partos = sum(1 for v in distribucion_anual.values() if v == 0)
+        
+        logger.info(f"VERIFICACIÓN FINAL DISTRIBUCIÓN ANUAL:")
+        logger.info(f"TOTAL AÑOS EN DISTRIBUCIÓN: {total_anios}")
+        logger.info(f"AÑOS CON PARTOS: {anios_con_partos}")
+        logger.info(f"AÑOS SIN PARTOS: {anios_sin_partos}")
+        logger.info(f"VERIFICACIÓN: {anios_con_partos} + {anios_sin_partos} = {anios_con_partos + anios_sin_partos} (debe ser igual a {total_anios})")
+        
+        # Log completo de la distribución anual
         logger.info(f"Distribución anual de partos: {distribucion_anual}")
+        
+        # Log de algunos años específicos como prueba
+        for anio_test in ['1978', '1980', '1990', '2000', '2010', '2020', str(date.today().year)]:
+            if anio_test in distribucion_anual:
+                logger.info(f"Año {anio_test}: {distribucion_anual[anio_test]} partos")
+            else:
+                logger.info(f"Año {anio_test}: NO EXISTE EN LA DISTRIBUCIÓN")
+                
+        # Ahora vamos a comprobar que se están incluyendo los años sin partos
+        # Si todos los años con valor 0 se eliminaran, anios_sin_partos sería 0, lo cual es incorrecto
         
         # Calcular tendencia (variación mes a mes y año a año)
         tendencia = {
