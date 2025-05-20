@@ -301,6 +301,7 @@ const tabs = [
           case 'origen': datos.origen = value || null; break;
           case 'pare': datos.pare = value || null; break;
           case 'mare': datos.mare = value || null; break;
+          case 'observaciones': datos.observaciones = value || null; break;
           
           // Campos del formulario de cambios habituales
           case 'estado_hab': datos.estado = value || 'OK'; break;
@@ -378,6 +379,7 @@ const tabs = [
         if (datos.origen !== animalData.origen) datosModificados.origen = datos.origen;
         if (datos.cod !== animalData.cod) datosModificados.cod = datos.cod;
         if (datos.num_serie !== animalData.num_serie) datosModificados.num_serie = datos.num_serie;
+        if (datos.observaciones !== animalData.observaciones) datosModificados.observaciones = datos.observaciones;
         
         // Manejo especial para alletar - siempre convertir a string antes de comparar
         console.log('Comparando alletar:', 

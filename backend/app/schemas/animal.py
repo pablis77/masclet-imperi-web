@@ -49,6 +49,7 @@ class AnimalBase(BaseModel):
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     part: Optional[str] = None
+    observaciones: Optional[str] = None  # Campo para notas adicionales sobre el animal
     genere_t: Optional[str] = None  # Validado como enum en el endpoint
     estado_t: Optional[str] = None  # Validado como enum en el endpoint
 
@@ -124,6 +125,7 @@ class AnimalUpdate(BaseModel):
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     part: Optional[str] = None
+    observaciones: Optional[str] = None
     genere_t: Optional[str] = None
     estado_t: Optional[str] = None
     dob: Optional[str] = None

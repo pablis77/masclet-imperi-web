@@ -449,6 +449,18 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                 </div>
               </div>
               
+              <!-- Sección de Observaciones -->
+              <div class="md:col-span-2 mt-4">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('observations')}</h3>
+                <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+                  {animal.observaciones ? (
+                    <p class="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{animal.observaciones}</p>
+                  ) : (
+                    <p class="text-gray-500 dark:text-gray-400 italic">{t('no_observations')}</p>
+                  )}
+                </div>
+              </div>
+              
               <!-- Botón Volver al listado al final de la pestaña Información -->
               <div class="mt-6 text-center">
                 <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
