@@ -41,6 +41,11 @@ export interface AnimalStats {
   por_alletar?: Record<string, number>;
   por_quadra?: Record<string, number>;
   por_genero?: Record<string, number>;
+  // Añadida estructura anidada para filtrar por género y estado
+  por_genero_estado?: {
+    M?: Record<string, number>; // Machos por estado
+    F?: Record<string, number>; // Hembras por estado
+  };
   edades?: {
     menos_1_año?: number;
     "1_2_años"?: number;

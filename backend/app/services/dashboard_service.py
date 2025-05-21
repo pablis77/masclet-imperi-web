@@ -786,16 +786,17 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
         end_date: Fecha de fin para el periodo de análisis (opcional)
         
     Returns:
-        Dict: Diccionario con estadísticas combinadas
+        Dict: Diccionario con estadísticas combinadas que cumple con CombinedDashboardResponse
     """
     try:
         logger.info(f"Iniciando get_combined_dashboard: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
+        
         # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
         if not end_date:
             end_date = date.today()
         if not start_date:
             # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
-            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
+            start_date = date(1900, 1, 1)
         
         # Obtener estadísticas básicas
         stats = await get_dashboard_stats(explotacio, start_date, end_date)
@@ -804,77 +805,81 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
         if stats is None:
             logger.warning("No se encontraron estadísticas básicas")
             return crear_respuesta_vacia_combined(start_date, end_date, explotacio)
-            
-        # Añadir los campos adicionales requeridos para CombinedDashboardResponse
         
-        # 1. por_origen (estadísticas por origen)
-        por_origen = {}
-        if 'animales' in stats and 'por_origen' in stats['animales']:
-            # Usar las estadísticas por origen ya existentes
-            origenes = stats['animales']['por_origen']
-            for origen, count in origenes.items():
-                # Para cada origen, crear un objeto con estadísticas resumidas
-                por_origen[origen] = {
+        # Calcular ratio machos/hembras
+        total_machos = stats.get("animales", {}).get("machos", 0)
+        total_hembras = stats.get("animales", {}).get("hembras", 0)
+        ratio_m_h = total_machos / total_hembras if total_hembras > 0 else 0
+        
+        # Calcular estadísticas de partos
+        total_partos = stats.get("partos", {}).get("total", 0)
+        
+        # Calcular partos del último mes
+        un_mes_atras = date.today() - timedelta(days=30)
+        partos_ultimo_mes = await Part.filter(
+            part__gte=un_mes_atras,
+            part__lte=date.today()
+        ).count()
+        
+        # Calcular promedio mensual de partos
+        dias_periodo = (end_date - start_date).days
+        meses_periodo = max(1, dias_periodo / 30.44)  # 30.44 días por mes en promedio
+        promedio_mensual = total_partos / meses_periodo if meses_periodo > 0 else 0
+        
+        # Construir la respuesta completa con la estructura que espera el frontend
+        combined_stats = {
+            "animales": {
+                "total": total_machos + total_hembras,
+                "machos": total_machos,
+                "hembras": total_hembras,
+                "ratio_m_h": round(ratio_m_h, 2),
+                "por_estado": stats.get("animales", {}).get("por_estado", {"OK": 0, "DEF": 0}),
+                "por_alletar": stats.get("animales", {}).get("por_alletar", {"0": 0, "1": 0, "2": 0}),
+                "por_origen": stats.get("animales", {}).get("por_origen", {}),
+                "edades": stats.get("animales", {}).get("por_edad", {})
+            },
+            "partos": {
+                "total": total_partos,
+                "ultimo_mes": partos_ultimo_mes,
+                "ultimo_anio": total_partos,  # Usar total como aproximación para el último año
+                "promedio_mensual": round(promedio_mensual, 1),
+                "por_mes": stats.get("partos", {}).get("por_mes", {}),
+                "por_genero_cria": stats.get("partos", {}).get("por_genero_cria", {"M": 0, "F": 0, "esforzada": 0}),
+                "tasa_supervivencia": stats.get("partos", {}).get("tasa_supervivencia", 0.0)
+            },
+            "comparativas": {
+                "mes_actual_vs_anterior": stats.get("comparativas", {}).get("mes_actual_vs_anterior", {}),
+                "año_actual_vs_anterior": stats.get("comparativas", {}).get("año_actual_vs_anterior", {})
+            },
+            "por_origen": {
+                origen: {
                     "animales": count,
                     "partos": 0,  # Se podría calcular con más detalle si es necesario
                     "ratio_partos": 0.0
                 }
-        
-        # 2. rendimiento_partos (rendimiento de partos por periodo)
-        rendimiento_partos = {
-            "anual": 0.0,
-            "mensual": 0.0,
-            "semanal": 0.0
-        }
-        
-        # Calcular el rendimiento de partos (partos por vaca por periodo)
-        if 'partos' in stats and 'total' in stats['partos'] and 'animales' in stats and 'hembras' in stats['animales']:
-            total_partos = stats['partos']['total']
-            total_hembras = stats['animales']['hembras']
-            if total_hembras > 0:
-                # Calcular partos por vaca por año
-                dias_periodo = (end_date - start_date).days
-                if dias_periodo > 0:
-                    # Anualizado
-                    rendimiento_partos["anual"] = (total_partos / total_hembras) * (365 / dias_periodo)
-                    # Mensualizado
-                    rendimiento_partos["mensual"] = rendimiento_partos["anual"] / 12
-                    # Semanal
-                    rendimiento_partos["semanal"] = rendimiento_partos["anual"] / 52
-        
-        # 3. tendencias (tendencias temporales)
-        tendencias = {
-            "partos": {
-                "ultimo_mes": 0.0,
-                "ultimo_anio": 0.0
+                for origen, count in stats.get("animales", {}).get("por_origen", {}).items()
             },
-            "animales": {
-                "ultimo_mes": 0.0,
-                "ultimo_anio": 0.0
+            "rendimiento_partos": {
+                "anual": (total_partos / total_hembras) * (365 / dias_periodo) if total_hembras > 0 and dias_periodo > 0 else 0.0,
+                "mensual": (total_partos / total_hembras) * (12 / (dias_periodo / 30.44)) if total_hembras > 0 and dias_periodo > 0 else 0.0,
+                "semanal": (total_partos / total_hembras) * (52 / (dias_periodo / 7)) if total_hembras > 0 and dias_periodo > 0 else 0.0
+            },
+            "tendencias": {
+                "partos": {
+                    "ultimo_mes": partos_ultimo_mes,
+                    "ultimo_anio": total_partos  # Usar total como aproximación
+                },
+                "animales": {
+                    "ultimo_mes": 0.0,  # No hay datos históricos de animales
+                    "ultimo_anio": 0.0  # No hay datos históricos de animales
+                }
+            },
+            "explotacio": explotacio,
+            "nombre_explotacio": explotacio,  # Mismo valor que explotacio si no hay nombre específico
+            "periodo": {
+                "inicio": start_date,
+                "fin": end_date
             }
-        }
-        
-        # Usar los datos de comparativas si existen
-        if 'comparativas' in stats:
-            comparativas = stats['comparativas']
-            if 'mes_actual_vs_anterior' in comparativas:
-                mes = comparativas['mes_actual_vs_anterior']
-                if 'partos' in mes:
-                    tendencias["partos"]["ultimo_mes"] = mes['partos']
-                if 'animales' in mes:
-                    tendencias["animales"]["ultimo_mes"] = mes['animales']
-            
-            if 'año_actual_vs_anterior' in comparativas:
-                anio = comparativas['año_actual_vs_anterior']
-                if 'partos' in anio:
-                    tendencias["partos"]["ultimo_anio"] = anio['partos']
-        
-        # Construir la respuesta completa con los campos adicionales
-        combined_stats = {
-            **stats,  # Incluir todas las estadísticas básicas
-            "por_origen": por_origen,
-            "rendimiento_partos": rendimiento_partos,
-            "tendencias": tendencias
         }
         
         return combined_stats
