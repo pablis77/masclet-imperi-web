@@ -100,18 +100,8 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
           }}>
             <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.males', currentLang)} activos (♂)</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-              {/* Calcular número de machos activos a partir de proporción */}
-              {(() => {
-                const totalAnimales = statsData.animales.total || 0;
-                const animalesActivos = statsData.animales.por_estado?.OK || 0;
-                const totalMachos = statsData.animales.machos || 0;
-                
-                // Calcular proporción de animales activos
-                const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
-                
-                // Aplicar esta proporción a los machos
-                return Math.round(totalMachos * propActivos);
-              })()}
+              {/* Usar el contador directo de machos activos del backend */}
+              {statsData.animales.machos_activos || 0}
             </div>
           </div>
           <div style={{
@@ -122,18 +112,8 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
           }}>
             <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{t('dashboard.females', currentLang)} activas (♀)</div>
             <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-              {/* Calcular número de hembras activas a partir de proporción */}
-              {(() => {
-                const totalAnimales = statsData.animales.total || 0;
-                const animalesActivos = statsData.animales.por_estado?.OK || 0;
-                const totalHembras = statsData.animales.hembras || 0;
-                
-                // Calcular proporción de animales activos
-                const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
-                
-                // Aplicar esta proporción a las hembras
-                return Math.round(totalHembras * propActivos);
-              })()}
+              {/* Usar el contador directo de hembras activas del backend */}
+              {statsData.animales.hembras_activas || 0}
             </div>
           </div>
         </div>
@@ -145,70 +125,48 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
       <div className="dashboard-card" style={{ gridColumn: "span 4" }}>
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.section_nursing_status', currentLang)}</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          {/* Calculamos la proporción de vacas activas respecto al total */}
-          {(() => {
-            // Obtenemos el total de animales activos y el total general
-            const animalesActivos = statsData.animales.por_estado?.OK || 0;
-            const totalAnimales = statsData.animales.total || 0;
-            
-            // Calculamos la proporción de hembras activas
-            const totalHembras = statsData.animales.hembras || 0;
-            const propHembrasActivas = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
-            const hembrasActivas = Math.round(totalHembras * propHembrasActivas);
-            
-            // Calculamos la distribución por alletar solo de vacas activas
-            const aletar0Raw = statsData.animales.por_alletar?.['0'] || 0;
-            const aletar1Raw = statsData.animales.por_alletar?.['1'] || 0;
-            const aletar2Raw = statsData.animales.por_alletar?.['2'] || 0;
-            
-            const propAletar0 = totalHembras > 0 ? aletar0Raw / totalHembras : 0;
-            const propAletar1 = totalHembras > 0 ? aletar1Raw / totalHembras : 0;
-            const propAletar2 = totalHembras > 0 ? aletar2Raw / totalHembras : 0;
-            
-            const aletar0Activas = Math.round(hembrasActivas * propAletar0);
-            const aletar1Activas = Math.round(hembrasActivas * propAletar1);
-            const aletar2Activas = Math.round(hembrasActivas * propAletar2);
-            
-            return (
-              <>
-                <div style={{
-                  backgroundColor: COLORS.NURSING_0,
-                  padding: "1rem",
-                  borderRadius: "0.5rem",
-                  color: "white"
-                }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
-                    {currentLang === 'ca' ? 'vaques no alletant' : 'vacas no amamantando'}
-                  </div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar0Activas}</div>
-                </div>
-                
-                <div style={{
-                  backgroundColor: COLORS.NURSING_1,
-                  padding: "1rem",
-                  borderRadius: "0.5rem",
-                  color: "white"
-                }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
-                    {currentLang === 'ca' ? 'vaques alletant 1 vedell' : 'vacas amamantando 1 ternero'}
-                  </div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar1Activas}</div>
-                </div>
-                
-                <div style={{
-                  backgroundColor: COLORS.NURSING_2,
-                  padding: "1rem",
-                  borderRadius: "0.5rem",
-                  color: "white"
-                }}>
-                  <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
-                    {currentLang === 'ca' ? 'vaques alletant 2 vedells' : 'vacas amamantando 2 terneros'}
-                  </div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{aletar2Activas}</div>
-                </div>
-              </>
-            );
-          })()}
+          {/* Mostramos directamente los valores de por_alletar */}
+          <div style={{
+            backgroundColor: COLORS.NURSING_0,
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            color: "white"
+          }}>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+              {currentLang === 'ca' ? 'vaques no alletant' : 'vacas no amamantando'}
+            </div>
+            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+              {statsData.animales.por_alletar?.['0'] || 0}
+            </div>
+          </div>
+          
+          <div style={{
+            backgroundColor: COLORS.NURSING_1,
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            color: "white"
+          }}>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+              {currentLang === 'ca' ? 'vaques alletant 1 vedell' : 'vacas amamantando 1 ternero'}
+            </div>
+            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+              {statsData.animales.por_alletar?.['1'] || 0}
+            </div>
+          </div>
+          
+          <div style={{
+            backgroundColor: COLORS.NURSING_2,
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            color: "white"
+          }}>
+            <div style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+              {currentLang === 'ca' ? 'vaques alletant 2 vedells' : 'vacas amamantando 2 terneros'}
+            </div>
+            <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+              {statsData.animales.por_alletar?.['2'] || 0}
+            </div>
+          </div>
 
         </div>
       </div>
@@ -227,7 +185,7 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
                 const propActivos = totalAnimales > 0 ? animalesActivos / totalAnimales : 0;
                 return Math.round(totalMachos * propActivos);
               })(),
-              'Vacas': 82,  // Valor exacto observado en la explotación - todas activas
+              'Vacas': statsData.animales.hembras_activas || 0,  // Usar el contador de hembras activas
               // Fallecidos global (no separado por tipo)
               'Fallecidos': statsData.animales.por_estado?.DEF || 0
             }}
