@@ -34,6 +34,8 @@ export interface AnimalStats {
   total: number;
   machos: number;
   hembras: number;
+  machos_activos: number;  // Añadido
+  hembras_activas: number;  // Añadido
   ratio_m_h: number;
   por_estado: Record<string, number>;
   por_alletar?: Record<string, number>;

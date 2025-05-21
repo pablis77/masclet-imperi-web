@@ -32,8 +32,10 @@ export interface DashboardResumen {
 export interface DashboardStats {
   animales: {
     total: number;
-    machos: number;
-    hembras: number;
+    machos: number;  // Total de machos (activos + inactivos)
+    hembras: number;  // Total de hembras (activas + inactivas)
+    machos_activos: number;  // Solo machos con estado "OK"
+    hembras_activas: number;  // Solo hembras con estado "OK"
     ratio_m_h: number;
     por_estado: Record<string, number>;
     por_alletar?: Record<string, number>;
@@ -95,8 +97,10 @@ export interface PartosStats {
 export interface CombinedStats {
   animales: {
     total: number;
-    machos: number;
-    hembras: number;
+    machos: number;  // Total de machos (activos + inactivos)
+    hembras: number;  // Total de hembras (activas + inactivas)
+    machos_activos: number;  // Solo machos con estado "OK"
+    hembras_activas: number;  // Solo hembras con estado "OK"
     ratio_m_h: number;
     por_estado: Record<string, number>;
     por_alletar?: Record<string, number>;
@@ -150,8 +154,10 @@ export interface ExplotacionInfo {
 // Estadísticas de Animales (Subcomponente)
 export interface AnimalStats {
   total: number;
-  machos: number;
-  hembras: number;
+  machos: number;  // Total de machos (activos + inactivos)
+    hembras: number;  // Total de hembras (activas + inactivas)
+    machos_activos: number;  // Solo machos con estado "OK"
+    hembras_activas: number;  // Solo hembras con estado "OK"
   ratio_m_h: number;
   por_estado: Record<string, number>;
   por_alletar: Record<string, number>;
@@ -164,3 +170,4 @@ export interface ThemeState {
   darkMode: boolean;
   toggleTheme: () => void;
 }
+

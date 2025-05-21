@@ -81,6 +81,8 @@ const Dashboard: React.FC = () => {
     total: 0,
     machos: 0,
     hembras: 0,
+    machos_activos: 0,  // Añadido
+    hembras_activas: 0,  // Añadido
     ratio_m_h: 0,
     por_estado: {},
     por_alletar: {},
@@ -421,6 +423,8 @@ const Dashboard: React.FC = () => {
           total: 0,
           machos: 0,
           hembras: 0,
+          machos_activos: 0,  // Añadido
+          hembras_activas: 0,  // Añadido
           ratio_m_h: 0,
           por_estado: {},
           por_quadra: {},
@@ -498,6 +502,8 @@ const Dashboard: React.FC = () => {
           total: 0,
           machos: 0,
           hembras: 0,
+          machos_activos: 0,  // Añadido
+          hembras_activas: 0,  // Añadido
           ratio_m_h: 0,
           por_estado: {},
           por_quadra: {},

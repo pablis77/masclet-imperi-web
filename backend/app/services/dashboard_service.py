@@ -62,10 +62,10 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
             "DEF": total_bajas
         }
         
-        # Estadísticas por estado de amamantamiento (solo para hembras)
-        no_alletar = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.NO_ALLETAR).count()
-        un_ternero = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.UN_TERNERO).count()
-        dos_terneros = await Animal.filter(**base_filter, genere="F", alletar=EstadoAlletar.DOS_TERNEROS).count()
+        # Estadísticas por estado de amamantamiento (solo para hembras activas)
+        no_alletar = await Animal.filter(**base_filter, genere="F", estado="OK", alletar=EstadoAlletar.NO_ALLETAR).count()
+        un_ternero = await Animal.filter(**base_filter, genere="F", estado="OK", alletar=EstadoAlletar.UN_TERNERO).count()
+        dos_terneros = await Animal.filter(**base_filter, genere="F", estado="OK", alletar=EstadoAlletar.DOS_TERNEROS).count()
         
         por_alletar = {
             EstadoAlletar.NO_ALLETAR: no_alletar,
@@ -363,9 +363,11 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
         return {
             "animales": {
                 "total": total_animales,
-                "machos": total_machos,
-                "hembras": total_hembras,
-                "ratio_m_h": round(ratio, 3),
+                "machos": total_machos,  # Total de machos (activos + inactivos)
+                "hembras": total_hembras,  # Total de hembras (activas + inactivas)
+                "machos_activos": await Animal.filter(**base_filter, genere="M", estado="OK").count(),  # Solo machos activos
+                "hembras_activas": await Animal.filter(**base_filter, genere="F", estado="OK").count(),  # Solo hembras activas
+                "ratio_m_h": ratio,
                 "por_estado": por_estado,
                 "por_alletar": por_alletar,
                 "por_origen": por_origen,
