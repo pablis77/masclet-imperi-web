@@ -6,36 +6,36 @@
 graph TD
     %% Nodo central - Dashboard principal
     Dashboard["Dashboard.tsx<br/>(Orquestador Principal)"] 
-    
+  
     %% Definiciones de tipos
     Types["dashboard.ts<br/>(Definiciones de Tipos)"]
-    
+  
     %% Componentes de secciones
     ResumenGeneral["ResumenGeneralSection.tsx<br/>(Resumen de Animales)"]
     PartosSection["PartosSection.tsx<br/>(Análisis de Partos)"]
     ExplotacionesSection["ExplotacionesSection.tsx<br/>(Análisis de Explotaciones)"]
-    
+  
     %% Componentes UI
     UIComponents["UIComponents.tsx<br/>(Componentes de UI)"]
     ChartComponents["ChartComponents.tsx<br/>(Componentes de Gráficos)"]
-    
+  
     %% Componentes auxiliares
     ActivityFeed["ActivityFeed.tsx<br/>(Feed de Actividad)"]
     DashboardFilters["DashboardFilters.tsx<br/>(Filtros)"]
     LoadingIndicator["LoadingIndicator.tsx<br/>(Indicador de Carga)"]
-    
+  
     %% Estilos y servicios
     Styles["dashboardStyles.css<br/>(Estilos)"]
     ApiService["apiService.ts<br/>(Servicios API)"]
-    
+  
     %% Hooks personalizados
     useDashboardData["useDashboardData.ts<br/>(Hook de Datos)"]
     useDarkMode["useDarkMode.ts<br/>(Hook de Modo Oscuro)"]
-    
+  
     %% Backend
     BackendAPI["API del Backend<br/>(Endpoints)"]
     VerificadorContadores["verificar_contadores.py<br/>(Lógica de Negocio)"]
-    
+  
     %% Relaciones principales
     Dashboard --> Types
     Dashboard --> ResumenGeneral
@@ -47,11 +47,11 @@ graph TD
     Dashboard --> ApiService
     Dashboard --> useDashboardData
     Dashboard --> useDarkMode
-    
+  
     %% Relación con backend
     Dashboard --> BackendAPI
     BackendAPI -.-> VerificadorContadores
-    
+  
     %% Relaciones de componentes de sección
     ResumenGeneral --> Types
     ResumenGeneral --> UIComponents
@@ -62,12 +62,12 @@ graph TD
     ExplotacionesSection --> Types
     ExplotacionesSection --> UIComponents
     ExplotacionesSection --> ChartComponents
-    
+  
     %% Relaciones de componentes auxiliares
     DashboardFilters --> UIComponents
     ActivityFeed --> UIComponents
     ActivityFeed --> LoadingIndicator
-    
+  
     %% Estilo de los nodos
     classDef central fill:#f9d71c,stroke:#333,stroke-width:2px;
     classDef section fill:#47a3f3,color:white,stroke:#333;
@@ -75,7 +75,7 @@ graph TD
     classDef service fill:#10b981,color:white,stroke:#333;
     classDef types fill:#8b5cf6,color:white,stroke:#333;
     classDef backend fill:#ef4444,color:white,stroke:#333;
-    
+  
     %% Aplicación de estilos
     class Dashboard central;
     class ResumenGeneral,PartosSection,ExplotacionesSection section;
@@ -88,13 +88,15 @@ graph TD
 ## 1. Componente Principal: Dashboard.tsx
 
 **Funcionalidad principal:**
+
 - Actúa como orquestador central de todo el dashboard
-- Centraliza la obtención de datos de la API 
+- Centraliza la obtención de datos de la API
 - Maneja los estados de carga y errores
 - Administra el modo oscuro
 - Distribuye los datos a los componentes hijos
 
 **Estados clave:**
+
 - `resumenData`: Datos de resumen general
 - `statsData`: Estadísticas detalladas
 - `partosData`: Datos específicos de partos
@@ -105,6 +107,7 @@ graph TD
   - Ratios y distribuciones
 
 **Características de implementación:**
+
 - Utiliza múltiples endpoints para obtener datos de forma concurrente
 - Implementa el patrón de componentes contenedores/presentacionales
 - Manejo centralizado de errores y estados de carga
@@ -112,6 +115,7 @@ graph TD
 - Soporte multilingüe (español/catalán)
 
 **Dependencias externas:**
+
 - ChartJS para los gráficos
 - Axios para las llamadas API
 - React para la gestión de componentes y estados
@@ -119,22 +123,25 @@ graph TD
 ## 2. Definiciones de Tipos: dashboard.ts
 
 **Interfaces principales:**
+
 - `AnimalStats`: Define la estructura de estadísticas de animales
+
   - Incluye `por_genero_estado` que es una estructura anidada para filtrar por género y estado
   - Proporciona contadores por género, estado, amamantamiento, etc.
-
 - `PartosDetailStats`: Define la estructura de estadísticas de partos
+
   - Incluye distribuciones por mes, año, género de crías, etc.
   - Proporciona tasa de supervivencia y promedios
-
 - `DashboardStats`: Contenedor principal para todos los datos del dashboard
+
   - Agrupa estadísticas de animales, partos, explotaciones
   - Incluye datos de período seleccionado
-
 - `ExplotacionInfo`: Información detallada de cada explotación
+
   - Contiene identificadores, descripciones, totales y ratios
 
 **Particularidades:**
+
 - Estructuras anidadas para facilitar el filtrado y la visualización
 - Uso extensivo de tipos genéricos como `Record<string, number>` para mapeos dinámicos
 - Soporte para datos opcionales con `?` para manejar datos incompletos
@@ -143,6 +150,7 @@ graph TD
 ## 3. Componente ResumenGeneralSection.tsx
 
 **Funcionalidad:**
+
 - Muestra un resumen general de estadísticas de animales
 - Presenta tres tarjetas principales en una misma fila:
   1. **Resumen de Animales:** Con total, activos, machos y hembras
@@ -150,18 +158,21 @@ graph TD
   3. **Análisis Poblacional:** Gráfico de distribución por género y estado
 
 **Procesamiento de datos:**
+
 - Implementa la misma lógica que `verificar_contadores.py` para cálculos estadísticos
 - Extrae datos directamente de `stats.animales.por_genero_estado`
 - Calcula totales y proporciones dinámicamente
 - Maneja casos con datos incompletos o nulos
 
 **Presentación visual:**
+
 - Utiliza tarjetas con fondos de colores completos para mejor visualización
 - Integración de gráficos circular para análisis poblacional
 - Indicadores numéricos grandes para estadísticas clave
 - Diseño responsivo que adapta las tarjetas según el tamaño de pantalla
 
 **Estados específicos:**
+
 - Estado de carga con animaciones "pulse"
 - Estado de error con mensaje explicativo
 - Manejo de datos nulos o incompletos
@@ -169,6 +180,7 @@ graph TD
 ## 4. Componente PartosSection.tsx
 
 **Funcionalidad:**
+
 - Presenta análisis detallado de partos
 - Múltiples utilidades de procesamiento para analizar datos temporales:
   - `getMaxYear`: Obtiene el año con más partos
@@ -179,6 +191,7 @@ graph TD
   - `getTotalPartos`: Calcula el total de partos
 
 **Presentación visual:**
+
 - Utiliza tarjetas con fondos de colores completos
 - Organización en cuadrícula para mostrar:
   - Total de partos
@@ -188,6 +201,7 @@ graph TD
 - Representación gráfica de distribución mensual y anual
 
 **Particularidades:**
+
 - Soporte multilingüe integrado
 - Depuración detallada de datos recibidos
 - Manejo de eventos de cambio de idioma
@@ -196,11 +210,13 @@ graph TD
 ## 5. Componente ExplotacionesSection.tsx
 
 **Funcionalidad:**
+
 - Presenta información detallada de las explotaciones
 - Muestra distribución de animales por explotación
 - Calcula ratios de rendimiento para cada explotación
 
 **Características:**
+
 - Lista interactiva de explotaciones
 - Tarjetas resumen con estadísticas clave
 - Indicadores visuales de estado (activa/inactiva)
@@ -209,21 +225,24 @@ graph TD
 ## 6. Componentes visuales: UIComponents.tsx
 
 **Componentes clave:**
+
 - `StatCard`: El bloque fundamental para mostrar estadísticas
+
   - Acepta título, valor, color y estado de modo oscuro
   - Proporciona estilizado consistente con fondos de colores
   - Soporte para traducciones mediante `translationKey`
-
 - `SectionTitle`: Para títulos de sección con números circulares
+
   - Proporciona el encabezado verde característico
   - Incluye círculo blanco con número de sección
   - Se adapta al modo oscuro
-
 - `DashboardCard`: Contenedor para secciones con título
+
   - Proporciona consistencia visual entre secciones
   - Maneja adaptación al modo oscuro
 
 **Características adicionales:**
+
 - Diseño accesible con contraste adecuado
 - Implementación con estilos inline y Tailwind CSS
 - Componentes puros que dependen solo de sus props
@@ -231,11 +250,12 @@ graph TD
 ## 7. Gráficos y visualizaciones: ChartComponents.tsx
 
 **Componentes de gráficos:**
+
 - `GenderChart`: Gráfico circular para distribución por género
+
   - Utiliza colores estandarizados para cada categoría
   - Maneja transparencias para mejor visualización
   - Presenta casos con datos vacíos
-
 - `GenderCriaChart`: Distribución por género de crías
 - `StatusChart`: Distribución por estado de animales
 - `QuadraChart`: Distribución por cuadra/ubicación
@@ -245,6 +265,7 @@ graph TD
 - `DistribucionMensualChart`: Distribución mensual detallada
 
 **Implementación técnica:**
+
 - Integración con React-ChartJS-2
 - Sistema de colores consistente (CHART_COLORS)
 - Gestión de estados locales para idiomas
@@ -254,12 +275,14 @@ graph TD
 ## 8. Hooks personalizados
 
 **useDashboardData.ts:**
+
 - Centraliza la lógica de obtención de datos
 - Implementa gestión de estado para carga, errores y datos
 - Maneja actualizaciones periódicas y filtros temporales
 - Proporciona funciones de transformación de datos
 
 **useDarkMode.ts:**
+
 - Gestiona la persistencia de preferencias del modo oscuro
 - Detecta y responde a preferencias del sistema
 - Proporciona toggle para cambiar entre modos
@@ -268,6 +291,7 @@ graph TD
 ## 9. Estilos y temas: dashboardStyles.css
 
 **Características:**
+
 - Sistema de variables CSS para colores y dimensiones
 - Clases específicas para modos claro/oscuro
 - Reglas responsivas para diferentes tamaños de pantalla
@@ -287,6 +311,7 @@ graph TD
 5. Los componentes de sección visualizan y procesan los datos según sus necesidades específicas
 
 **Mantenimiento de consistencia:**
+
 - La implementación frontend respeta exactamente la misma lógica de cálculo que el backend
 - Las interfaces TypeScript reflejan fielmente las estructuras de datos devueltas por la API
 - Las mismas reglas de negocio se aplican en ambos lados para garantizar coherencia
@@ -294,6 +319,7 @@ graph TD
 ## Flujo de Datos y Dependencias
 
 ### Flujo de entrada de datos:
+
 1. `Dashboard.tsx` obtiene los datos de la API mediante múltiples endpoints
 2. Los datos se procesan y normalizan según las interfaces definidas en `dashboard.ts`
 3. Se distribuyen a componentes específicos como `ResumenGeneralSection` y `PartosSection`
@@ -301,6 +327,7 @@ graph TD
 5. Se visualizan mediante componentes de UI y gráficos
 
 ### Dependencias críticas:
+
 - Cada sección depende de `statsData` y otras estructuras de datos específicas
 - Los componentes de UI dependen de props correctamente tipadas
 - Los gráficos dependen de datos formateados específicamente para ChartJS
@@ -330,9 +357,10 @@ graph TD
 
 ## Conexión con verificar_contadores.py
 
-El script `verificar_contadores.py` tiene un papel fundamental en el sistema, ya que proporciona la lógica de negocio para el cálculo de estadísticas que se muestran en el dashboard. 
+El script `verificar_contadores.py` tiene un papel fundamental en el sistema, ya que proporciona la lógica de negocio para el cálculo de estadísticas que se muestran en el dashboard.
 
 **Características principales:**
+
 - Implementa consultas a la base de datos para obtener:
   - Conteos de animales por género y estado
   - Distribución de estados de amamantamiento
