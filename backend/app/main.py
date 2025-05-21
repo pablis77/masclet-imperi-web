@@ -47,12 +47,12 @@ origins = [
 is_dev = os.getenv("DEV_MODE", "true").lower() == "true"
 logger.info(f"Modo {'desarrollo' if is_dev else 'producción'} detectado")
 
-# Configuración simplificada de CORS
+# Configuración detallada de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=600  # 10 minutos
@@ -67,9 +67,10 @@ async def add_cors_headers(request: Request, call_next):
             status_code=200,
             headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
                 "Access-Control-Allow-Headers": "*",
                 "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Expose-Headers": "*",
                 "Access-Control-Max-Age": "600"  # 10 minutos
             }
         )
@@ -80,9 +81,10 @@ async def add_cors_headers(request: Request, call_next):
     
     # Añadir encabezados CORS a la respuesta
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Expose-Headers"] = "*"
     response.headers["Access-Control-Max-Age"] = "600"  # 10 minutos
     
     return response
