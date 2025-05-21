@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
       if (isError) {
         console.error(`[Dashboard] ${message}`);
       } else {
-        console.log(`[Dashboard] ${message}`);
+        // console.log(`[Dashboard] ${message}`);
       }
     }
   };
@@ -300,8 +300,6 @@ const Dashboard: React.FC = () => {
         return null;
       }
       
-      console.log('Endpoint a utilizar:', endpoint);
-      
       // Usar apiService que detecta automáticamente la IP
       addLog(`Realizando petición GET a ${endpoint}`);
       trackNetworkRequest(endpoint, 'pending');
@@ -309,7 +307,7 @@ const Dashboard: React.FC = () => {
       const response = await apiService.get(endpoint);
       trackNetworkRequest(endpoint, 'success');
       addLog('✅ Datos de resumen recibidos');
-      console.log('Datos de resumen recibidos:', response);
+      // console.log('Datos de resumen recibidos:', response);
       
       // Validar estructura de datos
       if (!response || typeof response !== 'object') {
@@ -355,11 +353,11 @@ const Dashboard: React.FC = () => {
     } catch (err) {
       // Manejar errores Axios
       if (axios.isAxiosError(err)) {
-        addLog(`❌ Error en resumen: ${err.message}`);
+        addLog(`❌ Error en resumen: ${err.message}`, true);
         setError(prev => ({ ...prev, resumen: `Error: ${err.message}` }));
       } else {
         // Manejar otros tipos de errores
-        addLog(`❌ Error desconocido en resumen: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        addLog(`❌ Error desconocido en resumen: ${err instanceof Error ? err.message : 'Error sin detalles'}`, true);
         setError(prev => ({ ...prev, resumen: 'Error procesando datos de resumen' }));
       }
       
@@ -392,7 +390,7 @@ const Dashboard: React.FC = () => {
       
       // Verificar token (no es necesario, apiService ya lo maneja)
       if (!localStorage.getItem('token')) {
-        addLog('⚠️ No se encontró token en localStorage');
+        addLog('⚠️ No se encontró token en localStorage', true);
         setError(prev => ({ ...prev, stats: 'No hay token de autenticación' }));
         setLoading(prev => ({ ...prev, stats: false }));
         return;
@@ -402,20 +400,20 @@ const Dashboard: React.FC = () => {
       const response = await apiService.get('/dashboard/stats');
       
       addLog('✅ Datos de stats recibidos');
-      console.log('Datos de stats recibidos:', response);
+      // console.log('Datos de stats recibidos:', response);
 
       // Usar response directamente en lugar de response.data
       if (!response) {
-        addLog('⚠️ Respuesta vacía recibida en stats');
+        addLog('⚠️ Respuesta vacía recibida en stats', true);
         throw new Error('Formato de respuesta inválido en stats - datos vacíos');
       }
 
       // Imprimir la estructura para depuración
-      console.log('Estructura de stats:', {
-        keys: Object.keys(response),
-        type: typeof response,
-        isArray: Array.isArray(response)
-      });
+      // console.log('Estructura de stats:', {
+        // keys: Object.keys(response),
+        // type: typeof response,
+        // isArray: Array.isArray(response)
+      // });
       
       // Asegurar que otros campos requeridos estén presentes
       const defaultStats = {
@@ -490,10 +488,10 @@ const Dashboard: React.FC = () => {
       setLoading(prev => ({ ...prev, stats: false }));
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        addLog(`❌ Error en stats: ${err.message}`);
+        addLog(`❌ Error en stats: ${err.message}`, true);
         setError(prev => ({ ...prev, stats: `Error: ${err.message}` }));
       } else {
-        addLog(`❌ Error desconocido en stats: ${err instanceof Error ? err.message : 'Error sin detalles'}`);
+        addLog(`❌ Error desconocido en stats: ${err instanceof Error ? err.message : 'Error sin detalles'}`, true);
         setError(prev => ({ ...prev, stats: 'Error procesando datos' }));
       }
       // Establecer valores predeterminados en caso de error
@@ -554,7 +552,7 @@ const Dashboard: React.FC = () => {
       
       // Verificar token (no es necesario, apiService ya lo maneja)
       if (!localStorage.getItem('token')) {
-        addLog('⚠️ No se encontró token en localStorage');
+        addLog('⚠️ No se encontró token en localStorage', true);
         setError(prev => ({ ...prev, partos: 'No hay token de autenticación' }));
         setLoading(prev => ({ ...prev, partos: false }));
         return;
@@ -563,7 +561,7 @@ const Dashboard: React.FC = () => {
       const response = await apiService.get('/dashboard/partos');
       
       addLog('✅ Datos de partos recibidos');
-      console.log('Datos de partos completos:', response);
+      // console.log('Datos de partos completos:', response);
       
       // Validar estructura de datos
       if (!response || typeof response !== 'object') {
@@ -581,7 +579,7 @@ const Dashboard: React.FC = () => {
       // Usar SOLO los datos dinámicos del backend sin mezclar con valores predeterminados
       const validatedData = response;
       
-      console.log('Datos de partos procesados:', validatedData);
+      // console.log('Datos de partos procesados:', validatedData);
       addLog(`Datos de partos validados correctamente`);
       setPartosData(validatedData);
       setLoading(prev => ({ ...prev, partos: false }));
@@ -680,22 +678,22 @@ const Dashboard: React.FC = () => {
         
         for (const exp of uniqueExplotaciones) {
           try {
-            console.log(`Procesando explotación: ${exp.explotacio}`);
+            // console.log(`Procesando explotación: ${exp.explotacio}`);
             
             // Obtener detalles básicos de la explotación
             const explotacionDetail = await apiService.get(`/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}`);
-            console.log(`Detalles de explotación:`, explotacionDetail);
+            // console.log(`Detalles de explotación:`, explotacionDetail);
             
             // Obtener estadísticas de animales
             const statsData = await apiService.get(`/dashboard/explotacions/${encodeURIComponent(exp.explotacio)}/stats`);
-            console.log(`Estadísticas:`, statsData);
+            // console.log(`Estadísticas:`, statsData);
             
             // Obtener los datos reales de animales para esta explotación
             const animalesResponse = await apiService.get(`/animals/?explotacio=${encodeURIComponent(exp.explotacio)}`);
-            console.log(`Respuesta de animales:`, animalesResponse?.length ? `${animalesResponse.length} animales` : animalesResponse);
+            // console.log(`Respuesta de animales:`, animalesResponse?.length ? `${animalesResponse.length} animales` : animalesResponse);
             
             // La API siempre devuelve un objeto con estructura {status, data: {items}}. Vamos a obtener los items directamente
-            console.log(`Respuesta de la API para ${exp.explotacio}:`, animalesResponse);
+            // console.log(`Respuesta de la API para ${exp.explotacio}:`, animalesResponse);
             
             // Definir interfaz para los animales
             interface Animal {
@@ -714,42 +712,42 @@ const Dashboard: React.FC = () => {
               if ('data' in animalesResponse && typeof animalesResponse.data === 'object' && animalesResponse.data !== null) {
                 if ('items' in animalesResponse.data && Array.isArray(animalesResponse.data.items)) {
                   animalesList = animalesResponse.data.items;
-                  console.log(`Extraídos ${animalesList.length} animales de estructura data.items`);
+                  // console.log(`Extraídos ${animalesList.length} animales de estructura data.items`);
                 } else if (Array.isArray(animalesResponse.data)) {
                   animalesList = animalesResponse.data;
-                  console.log(`Extraídos ${animalesList.length} animales de estructura data array`);
+                  // console.log(`Extraídos ${animalesList.length} animales de estructura data array`);
                 }
               } else if (Array.isArray(animalesResponse)) {
                 animalesList = animalesResponse;
-                console.log(`La respuesta ya es un array de ${animalesResponse.length} elementos`);
+                // console.log(`La respuesta ya es un array de ${animalesResponse.length} elementos`);
               }
             }
             
             if (animalesList.length === 0) {
-              console.log(`No hay animales en la explotación ${exp.explotacio}`);
+              // console.log(`No hay animales en la explotación ${exp.explotacio}`);
             } else {
-              console.log(`Procesados correctamente ${animalesList.length} animales para la explotación ${exp.explotacio}`);
+              // console.log(`Procesados correctamente ${animalesList.length} animales para la explotación ${exp.explotacio}`);
             }
             
-            console.log(`Procesando ${animalesList.length} animales para explotación ${exp.explotacio}`);
+            // console.log(`Procesando ${animalesList.length} animales para explotación ${exp.explotacio}`);
             
             // Analizar cada animal para confirmar su estructura
             animalesList.forEach((animal: Animal, index: number) => {
-              console.log(`Animal #${index+1}:`, {
-                id: animal.id,
-                nom: animal.nom,
-                genere: animal.genere,
-                estado: animal.estado,
-                alletar: animal.alletar,
-                tipo: typeof animal.alletar
-              });
+              // console.log(`Animal #${index+1}:`, {
+                // id: animal.id,
+                // nom: animal.nom,
+                // genere: animal.genere,
+                // estado: animal.estado,
+                // alletar: animal.alletar,
+                // tipo: typeof animal.alletar
+              // });
             });
             
             // Filtrar solo animales activos (estado = "OK")
             const animalesActivos = animalesList.filter((animal: Animal) => {
               // Verificación básica del objeto
               if (!animal || typeof animal !== 'object') {
-                console.warn('Animal no válido encontrado:', animal);
+                // console.warn('Animal no válido encontrado:', animal);
                 return false;
               }
               
@@ -757,11 +755,11 @@ const Dashboard: React.FC = () => {
               const estadoNormalizado = animal.estado?.toString().toUpperCase();
               const esActivo = estadoNormalizado === "OK";
               
-              console.log(`Animal ${animal.nom || 'sin nombre'}: estado=${estadoNormalizado}, activo=${esActivo}`);
+              // console.log(`Animal ${animal.nom || 'sin nombre'}: estado=${estadoNormalizado}, activo=${esActivo}`);
               return esActivo;
             });
             
-            console.log(`Total animales ACTIVOS: ${animalesActivos.length}`);
+            // console.log(`Total animales ACTIVOS: ${animalesActivos.length}`);
             
             // Toros activos
             const torosActivos = animalesActivos.filter((animal: Animal) => {
@@ -769,13 +767,13 @@ const Dashboard: React.FC = () => {
               const esToro = generoNormalizado === "M";
               
               if (esToro) {
-                console.log(`Toro activo encontrado: ${animal.nom}`);
+                // console.log(`Toro activo encontrado: ${animal.nom}`);
               }
               
               return esToro;
             }).length;
             
-            console.log(`Total TOROS activos: ${torosActivos}`);
+            // console.log(`Total TOROS activos: ${torosActivos}`);
             
             // Vacas activas
             const vacasActivas = animalesActivos.filter((animal: Animal) => {
@@ -783,13 +781,13 @@ const Dashboard: React.FC = () => {
               const esVaca = generoNormalizado === "F";
               
               if (esVaca) {
-                console.log(`Vaca activa encontrada: ${animal.nom}, alletar=${animal.alletar}`);
+                // console.log(`Vaca activa encontrada: ${animal.nom}, alletar=${animal.alletar}`);
               }
               
               return esVaca;
             }).length;
             
-            console.log(`Total VACAS activas: ${vacasActivas}`);
+            // console.log(`Total VACAS activas: ${vacasActivas}`);
             
             // Vacas por alletar (asegurarse de normalizar los valores)
             function normalizarAlletar(valor: number | string | null | undefined): number {
@@ -809,7 +807,7 @@ const Dashboard: React.FC = () => {
               const esVacaSinCrias = generoNormalizado === "F" && alletar === 0;
               
               if (esVacaSinCrias) {
-                console.log(`Vaca sin crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+                // console.log(`Vaca sin crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
               }
               
               return esVacaSinCrias;
@@ -822,7 +820,7 @@ const Dashboard: React.FC = () => {
               const esVacaConUnaCria = generoNormalizado === "F" && alletar === 1;
               
               if (esVacaConUnaCria) {
-                console.log(`Vaca con 1 cría: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+                // console.log(`Vaca con 1 cría: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
               }
               
               return esVacaConUnaCria;
@@ -835,13 +833,13 @@ const Dashboard: React.FC = () => {
               const esVacaConDosCrias = generoNormalizado === "F" && alletar === 2;
               
               if (esVacaConDosCrias) {
-                console.log(`Vaca con 2 crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
+                // console.log(`Vaca con 2 crías: ${animal.nom}, alletar original=${animal.alletar}, normalizado=${alletar}`);
               }
               
               return esVacaConDosCrias;
             }).length;
             
-            console.log(`Vacas por alletar: 0=${vacasAlletar0}, 1=${vacasAlletar1}, 2=${vacasAlletar2}`)
+            // console.log(`Vacas por alletar: 0=${vacasAlletar0}, 1=${vacasAlletar1}, 2=${vacasAlletar2}`)
             
             // Total de animales activos = toros activos + vacas activas
             const totalAnimales = torosActivos + vacasActivas;
@@ -892,20 +890,20 @@ const Dashboard: React.FC = () => {
             };
             
             // Log para depuración
-            console.log(`Datos finales para explotación ${exp.explotacio}:`, {
-              animales_totales: animalesList.length,
-              animales_activos: animalesActivos.length,
-              toros_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "M").length,
-              toros_activos: torosActivos,
-              vacas_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "F").length,
-              vacas_activas: vacasActivas,
-              vacas_alletar0: vacasAlletar0,
-              vacas_alletar1: vacasAlletar1,
-              vacas_alletar2: vacasAlletar2,
-              partos: totalPartos
-            });
+            // console.log(`Datos finales para explotación ${exp.explotacio}:`, {
+              // animales_totales: animalesList.length,
+              // animales_activos: animalesActivos.length,
+              // toros_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "M").length,
+              // toros_activos: torosActivos,
+              // vacas_totales: animalesList.filter((animal: Animal) => animal.genere?.toString().toUpperCase() === "F").length,
+              // vacas_activas: vacasActivas,
+              // vacas_alletar0: vacasAlletar0,
+              // vacas_alletar1: vacasAlletar1,
+              // vacas_alletar2: vacasAlletar2,
+              // partos: totalPartos
+            // });
             
-            console.log(`Datos procesados para ${exp.explotacio}:`, explotacionData);
+            // console.log(`Datos procesados para ${exp.explotacio}:`, explotacionData);
             processedExplotaciones.push(explotacionData);
           } catch (error) {
             console.error(`Error al procesar la explotación ${exp.explotacio}:`, error);
@@ -913,7 +911,7 @@ const Dashboard: React.FC = () => {
         }
         
         // Actualizar el estado con las explotaciones procesadas
-        console.log(`Total de explotaciones procesadas: ${processedExplotaciones.length}`);
+        // console.log(`Total de explotaciones procesadas: ${processedExplotaciones.length}`);
         setExplotaciones(processedExplotaciones);
       } else {
         console.error('Respuesta de explotaciones no es un array:', response);
@@ -984,7 +982,7 @@ const Dashboard: React.FC = () => {
     
     // Si hay parámetros, aplicar filtros automáticamente
     if (fechaInicioParam || fechaFinParam) {
-      console.log('Detectados parámetros de fecha en URL:', { fechaInicioParam, fechaFinParam });
+      // console.log('Detectados parámetros de fecha en URL:', { fechaInicioParam, fechaFinParam });
     }
   }, []);
 
@@ -1021,10 +1019,10 @@ const Dashboard: React.FC = () => {
       localStorage.setItem('dashboard_start_date', fechaInicio || '');
       localStorage.setItem('dashboard_end_date', fechaFin || '');
       
-      console.log('Recargando dashboard con filtros de fecha:', {
-        desde: fechaInicio || 'inicio', 
-        hasta: fechaFin || 'actualidad'
-      });
+      // console.log('Recargando dashboard con filtros de fecha:', {
+        // desde: fechaInicio || 'inicio', 
+        // hasta: fechaFin || 'actualidad'
+      // });
       
       // Recargar la página para que todos los componentes utilicen los nuevos parámetros
       window.location.href = currentUrl.toString();
@@ -1066,7 +1064,7 @@ const Dashboard: React.FC = () => {
         
         // Registrar que estamos usando la fecha real del parto más antiguo
         addLog(`✅ Usando fecha real del parto más antiguo: ${fechaInicioEmma} (Emma)`);
-        console.log(`✅ Usando fecha real del parto más antiguo: ${fechaInicioEmma} (Emma)`);
+        // console.log(`✅ Usando fecha real del parto más antiguo: ${fechaInicioEmma} (Emma)`);
         
         // Construir objeto con parámetros de fecha para las APIs
         // Siempre usamos fechaInicio=1978-05-01 (Emma) y fechaFin=hoy
@@ -1079,10 +1077,10 @@ const Dashboard: React.FC = () => {
         addLog(`✅ Analizando TODOS los datos históricos desde ${fechaInicioEmma} hasta ${fechaFinISO}`)
         
         // Mostrar mensaje en la consola con los fechas usadas
-        console.log('Aplicando fechas para cargar datos:', {
-          desde: dateParams.fechaInicio,
-          hasta: dateParams.fechaFin
-        });
+        // console.log('Aplicando fechas para cargar datos:', {
+          // desde: dateParams.fechaInicio,
+          // hasta: dateParams.fechaFin
+        // });
         
         // Cargar datos de resumen con parámetros de fecha
         if (Object.keys(dateParams).length > 0) {

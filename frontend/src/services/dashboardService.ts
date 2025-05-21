@@ -93,7 +93,7 @@ export interface RecentActivityResponse {
  * Obtiene las estadísticas generales del dashboard
  */
 export const getDashboardStats = async (params: DashboardParams = {}): Promise<DashboardResponse> => {
-  console.log(' [dashboardService] Solicitando estadísticas del dashboard con parámetros:', params);
+  // console.log(' [dashboardService] Solicitando estadísticas del dashboard con parámetros:', params);
   
   try {
     // Construir parámetros de consulta
@@ -108,18 +108,18 @@ export const getDashboardStats = async (params: DashboardParams = {}): Promise<D
     const cacheParam = params._cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(` [dashboardService] Parámetros de consulta: ${Object.fromEntries(queryParams.entries())}`);
+    // console.log(` [dashboardService] Parámetros de consulta: ${Object.fromEntries(queryParams.entries())}`);
     
     // Usar el endpoint correcto según la documentación
     const endpoint = '/dashboard/stats';
-    console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
+    // console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
     
     const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [dashboardService] Estadísticas recibidas:', response);
+    // console.log(' [dashboardService] Estadísticas recibidas:', response);
     return response;
   } catch (error: any) {
-    console.error(' [dashboardService] Error al obtener estadísticas del dashboard:', error);
-    console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
+    console.error(' [dashboardService] Error al obtener estadísticas del dashboard:', error.message);
+    // console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
     throw error;
   }
 };
@@ -140,24 +140,24 @@ export const getExplotacionStats = async (explotacionId: number, params: Dashboa
     const cacheParam = params._cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(` [Dashboard] Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, Object.fromEntries(queryParams.entries()));
+    // console.log(` [Dashboard] Obteniendo estadísticas de la explotación ${explotacionId} con parámetros:`, Object.fromEntries(queryParams.entries()));
     
     const endpoint = `/dashboard/explotacions/${explotacionId}`;
-    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    // console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<ExplotacionDetailResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [Dashboard] Respuesta de explotación recibida correctamente:', response);
+    // console.log(' [Dashboard] Respuesta de explotación recibida correctamente:', response);
     
     return response;
   } catch (error: any) {
-    console.error(` [Dashboard] Error al obtener estadísticas de la explotación ${explotacionId}:`, error);
+    console.error(` [Dashboard] Error al obtener estadísticas de la explotación ${explotacionId}:`, error.message);
     
     // Registrar información detallada del error para depuración
     if (error.status) {
-      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+      // console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
     }
     if (error.message) {
-      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+      // console.error(` [Dashboard] Mensaje de error: ${error.message}`);
     }
     
     throw error;
@@ -168,7 +168,7 @@ export const getExplotacionStats = async (explotacionId: number, params: Dashboa
  * Obtiene la lista de explotaciones disponibles
  */
 export const getExplotaciones = async (_cache?: string): Promise<ExplotacionResponse[]> => {
-  console.log(' [dashboardService] Solicitando lista de explotaciones');
+  // console.log(' [dashboardService] Solicitando lista de explotaciones');
   
   try {
     // Construir parámetros de consulta
@@ -180,14 +180,14 @@ export const getExplotaciones = async (_cache?: string): Promise<ExplotacionResp
     
     // Usar el endpoint correcto según la documentación
     const endpoint = '/dashboard/explotacions';
-    console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
+    // console.log(` [dashboardService] Usando endpoint: ${endpoint}`);
     
     const response = await get<ExplotacionResponse[]>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [dashboardService] Explotaciones recibidas:', response);
+    // console.log(' [dashboardService] Explotaciones recibidas:', response);
     return response;
   } catch (error: any) {
-    console.error(' [dashboardService] Error al obtener explotaciones:', error);
-    console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
+    console.error(' [dashboardService] Error al obtener explotaciones:', error.message);
+    // console.error(' [dashboardService] Detalles del error:', error.message, error.status, error.response);
     throw error;
   }
 };
@@ -204,13 +204,13 @@ export const getDashboardResumen = async (_cache?: string): Promise<DashboardRes
     const cacheParam = _cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(' [Dashboard] Iniciando solicitud de resumen');
+    // console.log(' [Dashboard] Iniciando solicitud de resumen');
     
     const endpoint = '/dashboard/resumen';
-    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    // console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<DashboardResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [Dashboard] Resumen recibido correctamente:', response);
+    // console.log(' [Dashboard] Resumen recibido correctamente:', response);
     
     return response;
   } catch (error: any) {
@@ -218,10 +218,10 @@ export const getDashboardResumen = async (_cache?: string): Promise<DashboardRes
     
     // Registrar información detallada del error para depuración
     if (error.status) {
-      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+      // console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
     }
     if (error.message) {
-      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+      // console.error(` [Dashboard] Mensaje de error: ${error.message}`);
     }
     
     throw error;
@@ -245,25 +245,25 @@ export const getPartosStats = async (params: DashboardParams = {}): Promise<Part
     const cacheParam = params._cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(' [Dashboard] Iniciando solicitud de estadísticas de partos');
-    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    // console.log(' [Dashboard] Iniciando solicitud de estadísticas de partos');
+    // console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
     const endpoint = '/dashboard/partos';
-    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    // console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<PartosResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [Dashboard] Estadísticas de partos recibidas correctamente:', response);
+    // console.log(' [Dashboard] Estadísticas de partos recibidas correctamente:', response);
     
     return response;
   } catch (error: any) {
-    console.error(' [Dashboard] Error al obtener estadísticas de partos:', error);
+    console.error(' [Dashboard] Error al obtener estadísticas de partos:', error.message);
     
     // Registrar información detallada del error para depuración
     if (error.status) {
-      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+      // console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
     }
     if (error.message) {
-      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+      // console.error(` [Dashboard] Mensaje de error: ${error.message}`);
     }
     
     throw error;
@@ -287,25 +287,25 @@ export const getCombinedDashboard = async (params: DashboardParams = {}): Promis
     const cacheParam = params._cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(' [Dashboard] Iniciando solicitud de dashboard combinado');
-    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    // console.log(' [Dashboard] Iniciando solicitud de dashboard combinado');
+    // console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
     const endpoint = '/dashboard/combined';
-    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    // console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<CombinedDashboardResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [Dashboard] Dashboard combinado recibido correctamente:', response);
+    // console.log(' [Dashboard] Dashboard combinado recibido correctamente:', response);
     
     return response;
   } catch (error: any) {
-    console.error(' [Dashboard] Error al obtener dashboard combinado:', error);
+    console.error(' [Dashboard] Error al obtener dashboard combinado:', error.message);
     
     // Registrar información detallada del error para depuración
     if (error.status) {
-      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+      // console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
     }
     if (error.message) {
-      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+      // console.error(` [Dashboard] Mensaje de error: ${error.message}`);
     }
     
     throw error;
@@ -327,25 +327,25 @@ export const getRecentActivities = async (_cache?: string, limit: number = 5): P
     const cacheParam = _cache || Date.now().toString();
     queryParams.append('_cache', cacheParam);
     
-    console.log(' [Dashboard] Iniciando solicitud de actividades recientes');
-    console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
+    // console.log(' [Dashboard] Iniciando solicitud de actividades recientes');
+    // console.log(` [Dashboard] Parámetros: ${Object.fromEntries(queryParams.entries())}`);
     
     const endpoint = '/dashboard/recientes';
-    console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
+    // console.log(` [Dashboard] URL del endpoint: ${endpoint}`);
     
     const response = await get<RecentActivityResponse>(`${endpoint}?${queryParams.toString()}`);
-    console.log(' [Dashboard] Actividades recientes recibidas correctamente:', response);
+    // console.log(' [Dashboard] Actividades recientes recibidas correctamente:', response);
     
     return response;
   } catch (error: any) {
-    console.error(' [Dashboard] Error al obtener actividades recientes:', error);
+    console.error(' [Dashboard] Error al obtener actividades recientes:', error.message);
     
     // Registrar información detallada del error para depuración
     if (error.status) {
-      console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
+      // console.error(` [Dashboard] Código de estado HTTP: ${error.status}`);
     }
     if (error.message) {
-      console.error(` [Dashboard] Mensaje de error: ${error.message}`);
+      // console.error(` [Dashboard] Mensaje de error: ${error.message}`);
     }
     
     throw error;

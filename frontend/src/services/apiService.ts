@@ -29,12 +29,12 @@ const getApiUrl = (): string => {
   
   // Si existe una URL explícita configurada, usarla
   if (envApiUrl) {
-    console.log(`[ApiService] Usando URL explícita de variable de entorno: ${envApiUrl}`);
+    // console.log(`[ApiService] Usando URL explícita de variable de entorno: ${envApiUrl}`);
     return envApiUrl;
   }
 
   // LOG del entorno detectado
-  console.log(`[ApiService] Entorno detectado: ${ENVIRONMENT}`);
+  // console.log(`[ApiService] Entorno detectado: ${ENVIRONMENT}`);
   
   // Detectar explícitamente entorno local vs producción
   let isLocal = false;
@@ -46,17 +46,17 @@ const getApiUrl = (): string => {
     isTunnel = hostname.includes('loca.lt');
     // Comprobar si estamos en localhost o en tunnel
     isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || isTunnel;
-    console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}, isTunnel: ${isTunnel}`);
+    // console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}, isTunnel: ${isTunnel}`);
   } else {
     // Si window no está definido (SSR), usar variable de entorno
     isLocal = ENVIRONMENT !== 'production';
-    console.log(`[ApiService] SSR, usando ENVIRONMENT: ${ENVIRONMENT}, isLocal: ${isLocal}`);
+    // console.log(`[ApiService] SSR, usando ENVIRONMENT: ${ENVIRONMENT}, isLocal: ${isLocal}`);
   }
   
   // FORZAR MODO TUNNEL SI LA URL INCLUYE loca.lt
   if (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')) {
     isTunnel = true;
-    console.log('[ApiService] Modo tunnel forzado porque la URL contiene loca.lt');
+    // console.log('[ApiService] Modo tunnel forzado porque la URL contiene loca.lt');
   }
   
   // Seleccionar configuración según entorno
@@ -79,21 +79,21 @@ const getApiUrl = (): string => {
           backendTunnelUrl = savedBackendUrl;
         }
         
-        console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${backendTunnelUrl}`);
+        // console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${backendTunnelUrl}`);
         return backendTunnelUrl;
       }
     }
     
     // Fallback a la URL conocida si no podemos construirla dinámicamente
     const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
-    console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL (fallback)!: ${tunnelBackendUrl}`);
+    // console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL (fallback)!: ${tunnelBackendUrl}`);
     return tunnelBackendUrl;
   }
   
   // Para conexiones normales, construir URL estándar
   const baseUrl = `${config.protocol}://${config.host}${config.port ? ':' + config.port : ''}${config.path}`;
   
-  console.log(`[ApiService] API configurada para entorno ${isLocal ? 'desarrollo' : 'producción'}: ${baseUrl}`);
+  // console.log(`[ApiService] API configurada para entorno ${isLocal ? 'desarrollo' : 'producción'}: ${baseUrl}`);
   return baseUrl;
 };
 
@@ -107,8 +107,8 @@ if (import.meta.env.PROD) {
 // Configurar la URL base de la API
 API_BASE_URL = getApiUrl();
 
-console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
-console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
+// console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
+// console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
 
 // IMPORTANTE: Detectar si estamos en producción para forzar rutas relativas
 // y evitar problemas de CORS
@@ -122,7 +122,7 @@ if (typeof window !== 'undefined') {
 // El problema era que estábamos convirtiendo la URL absoluta en relativa, lo que hacía que las peticiones
 // fueran al frontend en lugar de al backend
 if (isProduction) {
-  console.log(`[ApiService] Manteniendo URL absoluta en producción: ${API_BASE_URL}`);
+  // console.log(`[ApiService] Manteniendo URL absoluta en producción: ${API_BASE_URL}`);
 }
 
 // Credenciales fijas para desarrollo: admin/admin123
@@ -142,7 +142,7 @@ api.interceptors.request.use(
     const endpoint = config.url || '';
     
     // Debug para todas las peticiones
-    console.log(`[API] Procesando solicitud: ${endpoint}`);
+    // console.log(`[API] Procesando solicitud: ${endpoint}`);
     
     // SOLUCIÓN PARA TÚNELES DE LOCALTUNNEL
     if (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')) {
@@ -270,8 +270,8 @@ export function configureApi(baseUrl: string, useMockData: boolean = false) {
   USE_MOCK_DATA = useMockData;
   api.defaults.baseURL = baseUrl;
   
-  console.log(`API configurada con URL base: ${baseUrl}`);
-  console.log(`Uso de datos simulados: ${useMockData ? 'SÍ' : 'NO'}`);
+  // console.log(`API configurada con URL base: ${baseUrl}`);
+  // console.log(`Uso de datos simulados: ${useMockData ? 'SÍ' : 'NO'}`);
 }
 
 // Función para realizar peticiones GET
@@ -288,26 +288,26 @@ export async function get<T = any>(endpoint: string): Promise<T> {
     
     // IMPORTANTE: En producción, solo imprimir la ruta relativa
     if (isProduction) {
-      console.log(`Realizando petición GET a: /api/v1${finalEndpoint}`);
+      // console.log(`Realizando petición GET a: /api/v1${finalEndpoint}`);
     } else {
-      console.log(`Realizando petición GET a: ${finalEndpoint}`);
+      // console.log(`Realizando petición GET a: ${finalEndpoint}`);
     }
     
     const response = await api.get<T>(finalEndpoint);
     
     // Registrar información detallada de la respuesta para depuración
-    console.log(`✅ Respuesta recibida de ${finalEndpoint}:`, {
-      status: response.status,
-      statusText: response.statusText,
-      dataType: typeof response.data,
-      isNull: response.data === null,
-      isUndefined: response.data === undefined,
-      dataLength: response.data && typeof response.data === 'object' ? Object.keys(response.data).length : 'N/A'
-    });
+    // console.log(`✅ Respuesta recibida de ${finalEndpoint}:`, {
+    //   status: response.status,
+    //   statusText: response.statusText,
+    //   dataType: typeof response.data,
+    //   isNull: response.data === null,
+    //   isUndefined: response.data === undefined,
+    //   dataLength: response.data && typeof response.data === 'object' ? Object.keys(response.data).length : 'N/A'
+    // });
     
     // Si la data es undefined o null, registrar warning y devolver objeto vacío
     if (response.data === undefined || response.data === null) {
-      console.warn(`⚠️ Datos recibidos vacíos en ${finalEndpoint}`);
+      // console.warn(`⚠️ Datos recibidos vacíos en ${finalEndpoint}`);
       
       // Devolver objeto vacío del tipo esperado para evitar errores
       if (Array.isArray(response.data)) {
@@ -321,14 +321,10 @@ export async function get<T = any>(endpoint: string): Promise<T> {
   } catch (error) {
     // Mejorar el log de errores para facilitar la depuración
     if (axios.isAxiosError(error)) {
-      console.error(`❌ Error en petición GET a ${endpoint}:`, {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
+      // Solo mantenemos un log de error básico para diagnóstico
+      console.error(`❌ Error en petición GET a ${endpoint}: ${error.message} (${error.response?.status || 'sin status'})`);
     } else {
-      console.error(`❌ Error no relacionado con Axios en ${endpoint}:`, error);
+      console.error(`❌ Error no relacionado con Axios en ${endpoint}: ${error}`);
     }
     
     // Mecanismo de reintento para errores 404
@@ -338,11 +334,11 @@ export async function get<T = any>(endpoint: string): Promise<T> {
       const absoluteUrl = error.config?.baseURL ? `${error.config.baseURL}${originalUrl}` : originalUrl;
       
       // Registrar el fallo para diagnóstico
-      console.warn(`⚠️ Error 404 en: ${absoluteUrl}`);
+      // console.warn(`⚠️ Error 404 en: ${absoluteUrl}`);
       
       // En desarrollo local, simplemente registramos el error y dejamos que falle normalmente
       if (!isProduction) {
-        console.warn(`Entorno de desarrollo: sin reintentos automáticos`);
+        // console.warn(`Entorno de desarrollo: sin reintentos automáticos`);
       } else {
         // En producción, intentamos estrategias de recuperación
         
@@ -352,7 +348,7 @@ export async function get<T = any>(endpoint: string): Promise<T> {
             // Extraer solo el path para hacer una petición relativa
             const urlObj = new URL(absoluteUrl);
             const relativePath = urlObj.pathname + urlObj.search;
-            console.log(`🔧 Detectada URL absoluta, reintentando con ruta relativa: ${relativePath}`);
+            // console.log(`🔧 Detectada URL absoluta, reintentando con ruta relativa: ${relativePath}`);
             
             // Hacer una petición completamente relativa
             try {
@@ -361,13 +357,13 @@ export async function get<T = any>(endpoint: string): Promise<T> {
                 baseURL: '',
                 headers: error.config?.headers
               });
-              console.log(`✅ Éxito con la ruta relativa!`);
+              // console.log(`✅ Éxito con la ruta relativa!`);
               return retryResponse.data;
             } catch (retryError) {
-              console.error(`💥 Falló el intento con ruta relativa: ${relativePath}`);
+              // console.error(`💥 Falló el intento con ruta relativa: ${relativePath}`);
             }
           } catch (e) {
-            console.warn(`No se pudo procesar la URL para reintento: ${absoluteUrl}`);
+            // console.warn(`No se pudo procesar la URL para reintento: ${absoluteUrl}`);
           }
         }
         
@@ -375,7 +371,7 @@ export async function get<T = any>(endpoint: string): Promise<T> {
         if (originalUrl.includes('//') || originalUrl.includes('api/api') || 
             (originalUrl.includes('/api/v1') && endpoint.includes('/api/v1'))) {
           
-          console.log(`🔧 Detectada URL mal formada, intentando corregir...`);
+          // console.log(`🔧 Detectada URL mal formada, intentando corregir...`);
           
           // Corregir problemas comunes en las URLs
           let correctedUrl = endpoint.replace(/api\/api/g, 'api');
@@ -384,13 +380,13 @@ export async function get<T = any>(endpoint: string): Promise<T> {
           
           // Si la URL se corrige, intentar nuevamente
           if (correctedUrl !== endpoint) {
-            console.log(`🔨 Reintentando con URL corregida: ${correctedUrl}`);
+            // console.log(`🔨 Reintentando con URL corregida: ${correctedUrl}`);
             try {
               const retryResponse = await api.get<T>(correctedUrl);
-              console.log(`✅ Éxito con URL corregida!`);
+              // console.log(`✅ Éxito con URL corregida!`);
               return retryResponse.data;
             } catch (retryError) {
-              console.error(`💥 También falló el reintento con URL corregida`);            
+              // console.error(`💥 También falló el reintento con URL corregida`);            
             }
           }
         }
@@ -403,14 +399,14 @@ export async function get<T = any>(endpoint: string): Promise<T> {
               finalAttemptUrl = `/api/v1/${finalAttemptUrl.startsWith('/') ? finalAttemptUrl.substring(1) : finalAttemptUrl}`;
             }
             
-            console.log(`🤖 Último intento con ruta absoluta: ${finalAttemptUrl}`);
+            // console.log(`🤖 Último intento con ruta absoluta: ${finalAttemptUrl}`);
             const lastResponse = await axios.get<T>(finalAttemptUrl, {
               baseURL: ''
             });
-            console.log(`✅ Éxito en el último intento!`);
+            // console.log(`✅ Éxito en el último intento!`);
             return lastResponse.data;
           } catch (lastError) {
-            console.error(`💥 Falló el último intento de recuperación`); 
+            // console.error(`💥 Falló el último intento de recuperación`); 
           }
         }
       }
@@ -420,7 +416,7 @@ export async function get<T = any>(endpoint: string): Promise<T> {
           endpoint.includes('all') || 
           endpoint.includes('explotacions') || 
           endpoint.includes('animales')) {
-        console.warn(`Devolviendo array vacío para ${endpoint} debido a 404`);
+        // console.warn(`Devolviendo array vacío para ${endpoint} debido a 404`);
         return [] as unknown as T;
       }
     }
