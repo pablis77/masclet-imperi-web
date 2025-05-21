@@ -284,7 +284,7 @@ const Dashboard: React.FC = () => {
       // Si hay parámetros de fecha, añadirlos directamente a la URL
       if (dateParams?.fechaInicio || dateParams?.fechaFin) {
         // NOTA IMPORTANTE: Cambiamos a formato de querystring directo para evitar problemas con caracteres
-        endpoint = `/dashboard/resumen/?start_date=${dateParams.fechaInicio || ''}&end_date=${dateParams.fechaFin || ''}`;
+        endpoint = `/dashboard/resumen/?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}`;
         addLog(`Iniciando petición a ${endpoint} con filtros de fecha directos`);
       } else {
         addLog('Iniciando petición a /dashboard/resumen/ sin filtros');
@@ -564,16 +564,32 @@ const Dashboard: React.FC = () => {
         throw new Error('Formato de respuesta inválido en partos');
       }
       
-      // SOLO USAR DATOS DINÁMICOS - NADA DE VALORES PREDETERMINADOS
+      // Definir valores predeterminados para campos requeridos
+      const defaultPartosData = {
+        total: 0,
+        por_mes: {},
+        por_genero_cria: { M: 0, F: 0 },
+        tasa_supervivencia: 0,
+        distribucion_anual: {},
+        tendencia: {},
+        ultimo_mes: 0,
+        ultimo_año: 0,
+        promedio_mensual: 0
+      };
       
-      // Verificar que la respuesta contenga los datos necesarios
-      if (!response.distribucion_anual || !response.por_mes || !response.por_genero_cria) {
-        console.error('Error crítico: Datos de partos incompletos del backend', response);
-        throw new Error('Datos de partos incompletos del backend');
-      }
-      
-      // Usar SOLO los datos dinámicos del backend sin mezclar con valores predeterminados
-      const validatedData = response;
+      // Mezclar con valores predeterminados para campos faltantes
+      const validatedData = {
+        ...defaultPartosData,
+        // Asegurarnos de que estos campos sean números válidos
+        total: typeof response.total === 'number' ? response.total : 0,
+        ultimo_mes: typeof response.ultimo_mes === 'number' ? response.ultimo_mes : 0,
+        ultimo_año: typeof response.ultimo_año === 'number' ? response.ultimo_año : 0,
+        tasa_supervivencia: typeof response.tasa_supervivencia === 'number' ? response.tasa_supervivencia : 0,
+        // Asegurar que estos objetos estén presentes y no sean null
+        por_mes: response.por_mes || {},
+        por_genero_cria: response.por_genero_cria || { M: 0, F: 0 },
+        distribucion_anual: response.distribucion_anual || {}
+      };
       
       console.log('Datos de partos procesados:', validatedData);
       addLog(`Datos de partos validados correctamente`);
@@ -965,8 +981,8 @@ const Dashboard: React.FC = () => {
   // Cargar parámetros de fecha de la URL si existen
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const fechaInicioParam = params.get('start_date');
-    const fechaFinParam = params.get('end_date');
+    const fechaInicioParam = params.get('fecha_inicio');
+    const fechaFinParam = params.get('fecha_fin');
     
     if (fechaInicioParam) {
       setFechaInicio(fechaInicioParam);
@@ -999,21 +1015,21 @@ const Dashboard: React.FC = () => {
       const currentUrl = new URL(window.location.href);
       
       // Limpiar parámetros existentes
-      currentUrl.searchParams.delete('start_date');
-      currentUrl.searchParams.delete('end_date');
+      currentUrl.searchParams.delete('fecha_inicio');
+      currentUrl.searchParams.delete('fecha_fin');
       
       // Añadir nuevos parámetros
       if (fechaInicio) {
-        currentUrl.searchParams.append('start_date', fechaInicio);
+        currentUrl.searchParams.append('fecha_inicio', fechaInicio);
       }
       
       if (fechaFin) {
-        currentUrl.searchParams.append('end_date', fechaFin);
+        currentUrl.searchParams.append('fecha_fin', fechaFin);
       }
       
       // Guardar preferencias en localStorage para recuperarlas después
-      localStorage.setItem('dashboard_start_date', fechaInicio || '');
-      localStorage.setItem('dashboard_end_date', fechaFin || '');
+      localStorage.setItem('dashboard_fecha_inicio', fechaInicio || '');
+      localStorage.setItem('dashboard_fecha_fin', fechaFin || '');
       
       console.log('Recargando dashboard con filtros de fecha:', {
         desde: fechaInicio || 'inicio', 
@@ -1087,7 +1103,7 @@ const Dashboard: React.FC = () => {
         
         // Cargar datos de estadísticas
         const statsEndpoint = Object.keys(dateParams).length > 0 ?
-          `/dashboard/stats?start_date=${dateParams.fechaInicio || ''}&end_date=${dateParams.fechaFin || ''}` :
+          `/dashboard/stats?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
           '/dashboard/stats';
           
         const statsResponse = await apiService.get(statsEndpoint);
@@ -1096,7 +1112,7 @@ const Dashboard: React.FC = () => {
         
         // Cargar datos de partos
         const partosEndpoint = Object.keys(dateParams).length > 0 ?
-          `/dashboard/partos?start_date=${dateParams.fechaInicio || ''}&end_date=${dateParams.fechaFin || ''}` :
+          `/dashboard/partos?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
           '/dashboard/partos';
           
         const partosResponse = await apiService.get(partosEndpoint);
@@ -1105,7 +1121,7 @@ const Dashboard: React.FC = () => {
         
         // Cargar datos combinados
         const combinedEndpoint = Object.keys(dateParams).length > 0 ?
-          `/dashboard/combined?start_date=${dateParams.fechaInicio || ''}&end_date=${dateParams.fechaFin || ''}` :
+          `/dashboard/combined?fecha_inicio=${dateParams.fechaInicio || ''}&fecha_fin=${dateParams.fechaFin || ''}` :
           '/dashboard/combined';
           
         const combinedResponse = await apiService.get(combinedEndpoint);

@@ -38,135 +38,54 @@ app = FastAPI(
     redoc_url="/api/v1/redoc",
 )
 
-# Configurar CORS para permitir orígenes específicos, incluido LocalTunnel
+# Configurar CORS para desarrollo
 origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "https://masclet-imperi-web.netlify.app",
-    "https://masclet-imperi-web-frontend.onrender.com",
-    "https://api-masclet-imperi.loca.lt",            # Backend LocalTunnel
-    "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:56271",                        # Puerto dinámico del frontend
-    "http://127.0.0.1",                              # Cualquier puerto en localhost IPv4
-    "https://*.loca.lt",                              # Cualquier subdominio de loca.lt
+    "*"  # En desarrollo, permitimos todos los orígenes
 ]
 
-# Detectar si estamos en modo desarrollo para permitir todos los orígenes
+# Configuración de CORS simplificada
 is_dev = os.getenv("DEV_MODE", "true").lower() == "true"
-if is_dev:
-    logger.info("Modo desarrollo detectado: permitiendo todos los orígenes (CORS *)") 
-    origins = ["*"]
-    allow_creds = False
-else:
-    logger.info(f"Modo producción: permitiendo orígenes específicos: {origins}")
-    allow_creds = True
+logger.info(f"Modo {'desarrollo' if is_dev else 'producción'} detectado")
 
-# Configurar CORS de forma adecuada para permitir credenciales
-if is_dev:
-    # Detectar automáticamente todas las IPs del sistema
-    def get_local_ip_addresses():
-        local_ips = []
-        try:
-            # Obtener el nombre del host local
-            hostname = socket.gethostname()
-            # Obtener todas las IPs asociadas al host
-            addresses = socket.getaddrinfo(hostname, None)
-            
-            # Filtrar solo direcciones IPv4
-            for addr in addresses:
-                ip = addr[4][0]
-                # Solo considerar IPv4 y excluir loopback
-                try:
-                    if ipaddress.ip_address(ip).version == 4 and not ipaddress.ip_address(ip).is_loopback:
-                        local_ips.append(ip)
-                except:
-                    pass
-            
-            # Añadir también la IP pública si está disponible
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                public_ip = s.getsockname()[0]
-                if public_ip not in local_ips:
-                    local_ips.append(public_ip)
-                s.close()
-            except:
-                pass
-                
-            # Eliminar duplicados
-            local_ips = list(set(local_ips))
-            return local_ips
-        except Exception as e:
-            logger.error(f"Error al obtener IPs locales: {str(e)}")
-            return []
+# Configuración simplificada de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600  # 10 minutos
+)
+
+# Middleware para manejar manualmente las peticiones OPTIONS
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    # Si es una petición OPTIONS, responder inmediatamente
+    if request.method == "OPTIONS":
+        response = Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "600"  # 10 minutos
+            }
+        )
+        return response
     
-    # Obtener IPs locales
-    local_ips = get_local_ip_addresses()
-    logger.info(f"IPs locales detectadas: {local_ips}")
+    # Para el resto de peticiones, procesar normalmente y añadir encabezados CORS
+    response = await call_next(request)
     
-    # Lista de puertos usados por el frontend
-    frontend_ports = [3000, 4321, 53983, 54000, 54001, 54002]
+    # Añadir encabezados CORS a la respuesta
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "600"  # 10 minutos
     
-    # Lista base de orígenes en desarrollo para pruebas
-    dev_origins = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://localhost:4321",  # Puerto Astro por defecto
-        "http://127.0.0.1:4321",
-        "http://127.0.0.1:55710",  # Puerto dinámico actual
-        "http://127.0.0.1:53983",  # Puerto del proxy de Cascade
-        "https://masclet-imperi-web-frontend-2025.loca.lt", # Frontend LocalTunnel
-        "https://api-masclet-imperi.loca.lt"              # Backend LocalTunnel
-    ]
-    
-    # Añadir automáticamente todas las IPs locales con los puertos del frontend
-    for ip in local_ips:
-        for port in frontend_ports:
-            origin = f"http://{ip}:{port}"
-            dev_origins.append(origin)
-            logger.info(f"Añadido origen automáticamente: {origin}")
-            
-    # Eliminar duplicados
-    dev_origins = list(set(dev_origins))
-    
-    # Registrar los orígenes permitidos
-    logger.info(f"Modo desarrollo: permitiendo orígenes específicos: {dev_origins}")
-    
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=dev_origins,  # Lista dinámica con IPs automáticas
-        allow_credentials=True,     # Permitir credenciales
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=86400  # Cachear preflight por 24 horas
-    )
-    
-    # Registramos que hemos configurado CORS correctamente
-    logger.info("CORS configurado con credenciales habilitadas para orígenes específicos")
-else:
-    # En producción sólo permitimos orígenes conocidos
-    prod_origins = [
-        "https://masclet-imperi-web.netlify.app",
-        "https://masclet-imperi-web-frontend.onrender.com",
-        "https://masclet-imperi-web-frontend-2025.loca.lt", 
-        "https://api-masclet-imperi.loca.lt"              
-    ]
-    
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=prod_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=86400
-    )
+    return response
 
 # Configurar medidas de seguridad
 setup_security(app)

@@ -76,11 +76,11 @@ export const useDashboardData = () => {
         const searchParams = new URLSearchParams();
         
         if (dateParams.fechaInicio) {
-          searchParams.append('fecha_inicio', dateParams.fechaInicio);
+          searchParams.append('start_date', dateParams.fechaInicio);
         }
         
         if (dateParams.fechaFin) {
-          searchParams.append('fecha_fin', dateParams.fechaFin);
+          searchParams.append('end_date', dateParams.fechaFin);
         }
         
         // Añadir parámetros a la URL
@@ -172,11 +172,11 @@ export const useDashboardData = () => {
         const searchParams = new URLSearchParams();
         
         if (dateParams.fechaInicio) {
-          searchParams.append('fecha_inicio', dateParams.fechaInicio);
+          searchParams.append('start_date', dateParams.fechaInicio);
         }
         
         if (dateParams.fechaFin) {
-          searchParams.append('fecha_fin', dateParams.fechaFin);
+          searchParams.append('end_date', dateParams.fechaFin);
         }
         
         // Añadir parámetros a la URL
@@ -240,11 +240,11 @@ export const useDashboardData = () => {
         const searchParams = new URLSearchParams();
         
         if (dateParams.fechaInicio) {
-          searchParams.append('fecha_inicio', dateParams.fechaInicio);
+          searchParams.append('start_date', dateParams.fechaInicio);
         }
         
         if (dateParams.fechaFin) {
-          searchParams.append('fecha_fin', dateParams.fechaFin);
+          searchParams.append('end_date', dateParams.fechaFin);
         }
         
         // Añadir parámetros a la URL
@@ -308,11 +308,11 @@ export const useDashboardData = () => {
         const searchParams = new URLSearchParams();
         
         if (dateParams.fechaInicio) {
-          searchParams.append('fecha_inicio', dateParams.fechaInicio);
+          searchParams.append('start_date', dateParams.fechaInicio);
         }
         
         if (dateParams.fechaFin) {
-          searchParams.append('fecha_fin', dateParams.fechaFin);
+          searchParams.append('end_date', dateParams.fechaFin);
         }
         
         // Añadir parámetros a la URL

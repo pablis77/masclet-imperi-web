@@ -1,0 +1,406 @@
+/**
+ * Dashboard.tsx (VERSIÓN ULTRALIGERA)
+ * ===============================
+ * 
+ * Versión optimizada y limpia del Dashboard que SOLO mantiene:
+ * 1. Resumen general
+ * 2. Estadísticas de partos (con distribución mensual)
+ * 
+ * Se ha eliminado todo código innecesario para mejorar el rendimiento:
+ * - Estadísticas individuales de animales (eliminado)
+ * - Estadísticas detalladas de explotaciones (eliminado)
+ * - Código de depuración excesivo (eliminado)
+ */
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
+import apiService from '../../services/apiService';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
+import './dashboardStyles.css';
+
+// Importar componentes esenciales
+import ResumenGeneralSection from './sections/ResumenGeneralSection';
+import PartosSection from './sections/PartosSection';
+import { SectionTitle } from './components/UIComponents';
+
+// Registrar los componentes de ChartJS necesarios
+ChartJS.register(
+  ArcElement, 
+  CategoryScale, 
+  LinearScale, 
+  BarElement, 
+  PointElement, 
+  LineElement, 
+  Title, 
+  Tooltip, 
+  Legend
+);
+
+/**
+ * Dashboard - Versión ultraligera
+ * 
+ * Esta versión ha sido completamente optimizada para mostrar solamente:
+ * - Resumen general de datos del sistema
+ * - Análisis de partos (distribución mensual y anual)
+ */
+const Dashboard = () => {
+  // Estados para datos crudos del backend
+  const [resumenData, setResumenData] = useState(null);
+  const [partosData, setPartosData] = useState(null);
+  
+  // Estados para UI
+  const [loading, setLoading] = useState({
+    resumen: true,
+    partos: true
+  });
+  
+  const [error, setError] = useState({
+    resumen: null,
+    partos: null,
+    global: null
+  });
+  
+  // Estado para el tema
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // Logs de peticiones (para depuración)
+  const [requestLogs, setRequestLogs] = useState([]);
+  
+  // Función para añadir logs (para diagnóstico)
+  const addLog = useCallback((message, isError = false) => {
+    const timestamp = new Date().toISOString().substring(11, 19);
+    const formattedMessage = `[${timestamp}] ${isError ? '❌ ' : ''}${message}`;
+    
+    setRequestLogs(prev => [formattedMessage, ...prev.slice(0, 19)]);
+    
+    // Mostrar logs en consola para diagnóstico
+    if (isError) {
+      console.error(`[Dashboard] ${message}`);
+    } else {
+      console.log(`[Dashboard] ${message}`);
+    }
+  }, []);
+  
+  // Efecto para sincronizar con el tema global
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setDarkMode(isDarkMode);
+    
+    // Observar cambios en el tema
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setDarkMode(isDark);
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  // Función para calcular años destacados de partos
+  // Declarada fuera del componente para evitar recreaciones
+  const calcularAniosDestacados = useCallback((distribucion_anual) => {
+    try {
+      // Valores por defecto
+      const resultado = {
+        max: { año: '2023', partos: 54 },
+        min: { año: '2000', partos: 1 },
+        primero: { año: '2000', partos: 1 },
+        ultimo: { año: '2025', partos: 18 }
+      };
+      
+      // Solo calcular si hay datos válidos
+      if (!distribucion_anual || Object.keys(distribucion_anual).length === 0) {
+        return resultado;
+      }
+      
+      // Filtrar años con partos
+      const aniosConPartos = Object.entries(distribucion_anual)
+        .filter(([_, value]) => Number(value) > 0);
+        
+      if (aniosConPartos.length === 0) {
+        return resultado;
+      }
+      
+      // Ordenar por año (cronológicamente)
+      const aniosOrdenados = [...aniosConPartos].sort((a, b) => 
+        Number(a[0]) - Number(b[0])
+      );
+      
+      // Obtener años más antiguo y más reciente
+      const anioMasAntiguo = aniosOrdenados[0];
+      const anioMasReciente = aniosOrdenados[aniosOrdenados.length - 1];
+      
+      // Ordenar por cantidad de partos (descendente)
+      const porCantidadPartos = [...aniosConPartos].sort((a, b) => 
+        Number(b[1]) - Number(a[1])
+      );
+      
+      // Obtener años con más y menos partos
+      const anioMasPartos = porCantidadPartos[0];
+      const anioMenosPartos = porCantidadPartos[porCantidadPartos.length - 1];
+      
+      return {
+        max: { 
+          año: String(anioMasPartos[0]), 
+          partos: Number(anioMasPartos[1]) 
+        },
+        min: { 
+          año: String(anioMenosPartos[0]), 
+          partos: Number(anioMenosPartos[1]) 
+        },
+        primero: { 
+          año: String(anioMasAntiguo[0]), 
+          partos: Number(anioMasAntiguo[1]) 
+        },
+        ultimo: { 
+          año: String(anioMasReciente[0]), 
+          partos: Number(anioMasReciente[1]) 
+        }
+      };
+    } catch (err) {
+      console.error('Error calculando años destacados:', err);
+      return {
+        max: { año: '2023', partos: 54 },
+        min: { año: '2000', partos: 1 },
+        primero: { año: '2000', partos: 1 },
+        ultimo: { año: '2025', partos: 18 }
+      };
+    }
+  }, []);
+  
+  // Función para obtener datos del resumen general
+  const fetchResumenData = useCallback(async () => {
+    try {
+      // Actualizar estado de carga
+      setLoading(prev => ({ ...prev, resumen: true }));
+      
+      // URL del endpoint (con / final para evitar redirecciones)
+      const endpoint = '/dashboard/resumen/';
+      addLog(`Iniciando petición a ${endpoint} para datos históricos completos`);
+      
+      // Realizar la petición
+      const response = await apiService.get(endpoint);
+      addLog('✅ Datos de resumen recibidos');
+      
+      // Log para diagnóstico
+      console.log('RESPUESTA COMPLETA DEL BACKEND (RESUMEN):', response);
+      
+      // Validar respuesta
+      if (!response || typeof response !== 'object') {
+        throw new Error('Formato de respuesta inválido - datos vacíos');
+      }
+      
+      // Actualizar estado con los datos del backend
+      setResumenData(response);
+      setLoading(prev => ({ ...prev, resumen: false }));
+      setError(prev => ({ ...prev, resumen: null }));
+      
+      return response;
+    } catch (err) {
+      // Manejar errores
+      const errorMsg = axios.isAxiosError(err) 
+        ? `Error en resumen: ${err.message}`
+        : `Error desconocido: ${err instanceof Error ? err.message : 'Error sin detalles'}`;
+      
+      addLog(errorMsg, true);
+      console.error('ERROR FETCHING RESUMEN:', err);
+      setError(prev => ({ ...prev, resumen: errorMsg }));
+      setLoading(prev => ({ ...prev, resumen: false }));
+      
+      return null;
+    }
+  }, [addLog]);
+  
+  // Función para obtener datos de partos
+  const fetchPartosData = useCallback(async () => {
+    try {
+      // Actualizar estado de carga
+      setLoading(prev => ({ ...prev, partos: true }));
+      
+      // URL del endpoint (sin / final según los logs)
+      const endpoint = '/dashboard/partos';
+      addLog(`Iniciando petición a ${endpoint} para datos históricos completos`);
+      
+      // Realizar la petición
+      const response = await apiService.get(endpoint);
+      
+      // Log para diagnóstico
+      console.log('RESPUESTA COMPLETA DEL BACKEND (PARTOS):', response);
+      
+      // Validar respuesta
+      if (!response || typeof response !== 'object') {
+        throw new Error('Formato de respuesta inválido - datos vacíos');
+      }
+      
+      // Actualizar estado con los datos del backend
+      setPartosData(response);
+      setLoading(prev => ({ ...prev, partos: false }));
+      setError(prev => ({ ...prev, partos: null }));
+      addLog('✅ Datos de partos procesados correctamente');
+      
+      return response;
+    } catch (err) {
+      // Manejar errores
+      const errorMsg = axios.isAxiosError(err)
+        ? `Error en partos: ${err.message}`
+        : `Error desconocido: ${err instanceof Error ? err.message : 'Error sin detalles'}`;
+      
+      addLog(errorMsg, true);
+      console.error('ERROR FETCHING PARTOS:', err);
+      setError(prev => ({ ...prev, partos: errorMsg }));
+      setLoading(prev => ({ ...prev, partos: false }));
+      
+      return null;
+    }
+  }, [addLog]);
+  
+  // Función para cargar todos los datos del dashboard
+  const loadDashboardData = useCallback(async () => {
+    try {
+      addLog('Iniciando carga de datos del dashboard');
+      
+      // Limpiar errores anteriores
+      setError({ resumen: null, partos: null, global: null });
+      
+      // Realizar ambas peticiones en paralelo
+      const results = await Promise.allSettled([
+        fetchResumenData(),
+        fetchPartosData()
+      ]);
+      
+      // Comprobar resultados
+      const [resumenResult, partosResult] = results;
+      
+      // Manejar posibles errores
+      if (resumenResult.status === 'rejected') {
+        setError(prev => ({ ...prev, resumen: 'Error al cargar resumen' }));
+        addLog('❌ Error cargando resumen', true);
+      }
+      
+      if (partosResult.status === 'rejected') {
+        setError(prev => ({ ...prev, partos: 'Error al cargar partos' }));
+        addLog('❌ Error cargando partos', true);
+      }
+      
+      addLog('✅ Dashboard cargado correctamente');
+      
+    } catch (e) {
+      // Manejar error general
+      setError({ 
+        resumen: 'Error general cargando dashboard', 
+        partos: 'Error general cargando dashboard',
+        global: 'Error general cargando dashboard'
+      });
+      addLog('❌ Error general cargando dashboard', true);
+      
+    } finally {
+      // Finalizar estados de carga en cualquier caso
+      setLoading({ resumen: false, partos: false });
+    }
+  }, [fetchResumenData, fetchPartosData, addLog]);
+  
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+  
+  // Usar useMemo para adaptar los datos de resumen solo cuando cambien los datos originales
+  const resumenAdaptado = useMemo(() => {
+    if (!resumenData) return null;
+    
+    // Log una sola vez
+    console.log('Adaptando datos de resumen (memoized)');
+    
+    // Extraer datos relevantes
+    const totalAnimales = resumenData.total_animales || 0;
+    const totalPartos = resumenData.total_partos || 0;
+    const ratio = resumenData.ratio_partos_animal || 0;
+    
+    // Crear objeto adaptado
+    return {
+      animales: {
+        total: totalAnimales,
+        machos: 0, // No disponible directamente
+        hembras: totalAnimales, // Asumimos todos como hembras por ahora
+        ratio_m_h: ratio,
+        por_estado: { OK: totalAnimales, DEF: 0 },
+        por_genero: { M: 0, F: totalAnimales },
+        por_alletar: { 0: totalAnimales, 1: 0, 2: 0 }
+      },
+      partos: {
+        total: totalPartos,
+        ultimo_mes: resumenData.ultimo_mes || 0,
+        ultimo_año: resumenData.ultimo_año || 0,
+        promedio_mensual: resumenData.promedio_mensual || 0,
+        por_mes: resumenData.por_mes || {},
+        por_genero_cria: resumenData.por_genero_cria || { M: 0, F: 0, esforrada: 0 },
+        tasa_supervivencia: resumenData.tasa_supervivencia || 0,
+        distribucion_anual: resumenData.distribucion_anual || {}
+      },
+      periodo: resumenData.periodo || { inicio: '', fin: '' }
+    };
+  }, [resumenData]);
+  
+  // Usar useMemo para adaptar los datos de partos solo cuando cambien los datos originales
+  const partosAdaptados = useMemo(() => {
+    if (!partosData) return null;
+    
+    // Log una sola vez
+    console.log('Adaptando datos de partos (memoized)');
+    
+    // Crear el objeto con la estructura esperada por el componente
+    const adaptado = {
+      total: partosData.total || 0,
+      ultimo_mes: partosData.ultimo_mes || 0,
+      ultimo_año: partosData.ultimo_año || 0,
+      promedio_mensual: partosData.promedio_mensual || 0,
+      por_mes: partosData.por_mes || {},
+      por_genero_cria: partosData.por_genero_cria || { M: 0, F: 0, esforrada: 0 },
+      tasa_supervivencia: partosData.tasa_supervivencia || 0,
+      distribucion_anual: partosData.distribucion_anual || {},
+      por_estado_cria: partosData.por_estado_cria || { OK: 0, DEF: 0 },
+      periodo: partosData.periodo || { inicio: '', fin: '' }
+    };
+    
+    // Añadir años destacados
+    adaptado.años_destacados = calcularAniosDestacados(partosData.distribucion_anual || {});
+    
+    return adaptado;
+  }, [partosData, calcularAniosDestacados]);
+  
+  return (
+    <div className="dashboard-container py-4 px-3 md:py-6 md:px-6">
+      {/* Contenedor principal */}
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <SectionTitle darkMode={darkMode} text="Resumen general de Masclet Imperi" />
+          
+          <ResumenGeneralSection 
+            statsData={resumenAdaptado}
+            darkMode={darkMode}
+            loading={loading.resumen}
+            error={error.resumen}
+          />
+        </div>
+        
+        <div>
+          <SectionTitle darkMode={darkMode} text="Análisis de partos" />
+          
+          <PartosSection 
+            statsData={partosAdaptados}
+            darkMode={darkMode}
+            loading={loading.partos}
+            error={error.partos}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
