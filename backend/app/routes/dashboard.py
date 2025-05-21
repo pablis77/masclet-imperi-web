@@ -119,25 +119,39 @@ async def obtener_resumen(
             end_date=end_date_parsed
         )
         
+        # Calcular el ratio de partos por animal
+        total_animales = stats.get("animales", {}).get("total", 0)
+        total_partos = stats.get("partos", {}).get("total", 0)
+        ratio_partos_animal = round(total_partos / total_animales, 2) if total_animales > 0 else 0
+        
+        # Obtener el conteo de explotaciones (si está disponible)
+        count_explotaciones = 1  # Valor por defecto
+        if "explotaciones" in stats and isinstance(stats["explotaciones"], list):
+            count_explotaciones = len(stats["explotaciones"])
+        
+        # Calcular total de terneros (suma de vacas con 1 y 2 terneros)
+        por_alletar = stats.get("animales", {}).get("por_alletar", {"0": 0, "1": 0, "2": 0})
+        total_terneros = por_alletar.get("1", 0) + (por_alletar.get("2", 0) * 2)
+        
         # Estructura de respuesta que coincide con lo que espera el frontend
         return {
-            "total_animales": stats["animales"].get("total", 0),
-            "total_terneros": stats["partos"].get("total_terneros", 0),
-            "total_partos": stats["partos"].get("total", 0),
-            "ratio_partos_animal": stats["partos"].get("ratio_partos_animal", 0),
+            "total_animales": total_animales,
+            "total_terneros": total_terneros,
+            "total_partos": total_partos,
+            "ratio_partos_animal": ratio_partos_animal,
             "tendencias": {
-                "partos_mes_anterior": stats["tendencias"].get("partos_mes_anterior", 0),
-                "partos_actual": stats["tendencias"].get("partos_actual", 0),
-                "nacimientos_promedio": stats["tendencias"].get("nacimientos_promedio", 0)
+                "partos_mes_anterior": stats.get("tendencias", {}).get("partos_mes_anterior", 0),
+                "partos_actual": stats.get("tendencias", {}).get("partos_actual", 0),
+                "nacimientos_promedio": stats.get("tendencias", {}).get("nacimientos_promedio", 0)
             },
             "terneros": {
-                "total": stats["partos"].get("total_terneros", 0)
+                "total": total_terneros
             },
             "explotaciones": {
-                "count": len(stats.get("explotaciones", []))
+                "count": count_explotaciones
             },
             "partos": {
-                "total": stats["partos"].get("total", 0)
+                "total": total_partos
             },
             "periodo": {
                 "inicio": start_date_parsed.isoformat() if start_date_parsed else "2010-01-01",
