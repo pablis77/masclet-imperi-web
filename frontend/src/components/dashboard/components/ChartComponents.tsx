@@ -40,7 +40,6 @@ export const GenderChart = ({ data, darkMode }: { data: Record<string, number> |
   // Si el objeto está vacío o todos los valores son 0, mostrar un gráfico con valores de ejemplo
   const totalValue = Object.values(data).reduce((sum, value) => sum + value, 0);
   if (Object.keys(data).length === 0 || totalValue === 0) {
-    console.log('No hay datos para el gráfico de género, mostrando plantilla');
     data = {
       [t('dashboard.males', currentLang)]: 0,
       [t('dashboard.females', currentLang)]: 0,
@@ -98,9 +97,6 @@ export const GenderCriaChart = ({ data, darkMode }: { data: Record<string, numbe
 
   if (!data) return null;
   
-  // Imprimir los datos que llegan para depuración
-  console.log('Datos originales de género de crías:', JSON.stringify(data));
-  
   // Datos específicos para machos y hembras
   let formattedData: Record<string, number> = {
     'M': 0,
@@ -121,11 +117,9 @@ export const GenderCriaChart = ({ data, darkMode }: { data: Record<string, numbe
         'F': data['F'] || 0,
         'esforrada': data['esforrada'] || 0
       };
-      console.log('Usando datos directamente del formato esperado');
     } else {
       // Procesamiento estándar si no están en el formato esperado
       Object.entries(data).forEach(([key, value]) => {
-        console.log(`Procesando clave: ${key}, valor: ${value}`);
         if (key === 'M' || key === 'm') {
           formattedData['M'] += value;
         } else if (key === 'F' || key === 'f') {
@@ -136,8 +130,6 @@ export const GenderCriaChart = ({ data, darkMode }: { data: Record<string, numbe
       });
     }
   }
-  
-  console.log('Datos procesados:', JSON.stringify(formattedData));
   
   // Preparar etiquetas amigables para el usuario
   const labelsMap: Record<string, string> = {
@@ -179,7 +171,6 @@ export const StatusChart = ({ data, darkMode }: { data: Record<string, number> |
   // Si el objeto está vacío o todos los valores son 0, mostrar un gráfico con valores de ejemplo
   const totalValue = Object.values(data).reduce((sum, value) => sum + value, 0);
   if (Object.keys(data).length === 0 || totalValue === 0) {
-    console.log('No hay datos para el gráfico de estado, mostrando plantilla');
     data = {
       'Activos': 0,
       'Inactivos': 0
@@ -222,7 +213,6 @@ export const QuadraChart = ({ data, darkMode }: { data: Record<string, number> |
   // Si no hay datos válidos, mostrar gráfico con valores ejemplo
   const totalValue = Object.values(data).reduce((sum, value) => sum + value, 0);
   if (Object.keys(data).length === 0 || totalValue === 0) {
-    console.log('No hay datos para el gráfico de cuadra, mostrando plantilla');
     data = {
       'Cuadra A': 0,
       'Cuadra B': 0,
@@ -433,8 +423,6 @@ export const DistribucionAnualChart = ({ darkMode, data }: { darkMode: boolean, 
     );
   }
   
-  console.log('DistribucionAnualChart - Datos recibidos del backend:', data);
-  
   // Verificar si tenemos datos válidos
   if (!data || typeof data !== 'object') {
     console.error('No se recibieron datos válidos para el gráfico anual');
@@ -455,8 +443,6 @@ export const DistribucionAnualChart = ({ darkMode, data }: { darkMode: boolean, 
   const years = Object.keys(data)
     .filter(year => typeof data[year] === 'number' && data[year] > 0)
     .sort((a, b) => parseInt(a) - parseInt(b));
-  
-  console.log('Años con partos reales:', years);
   
   // IMPORTANTE: SOLO usar datos dinámicos del backend
   const chartData = {
@@ -509,7 +495,6 @@ export const DistribucionAnualChart = ({ darkMode, data }: { darkMode: boolean, 
 
 // Componente para gráfico de distribución mensual
 export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean, data?: Record<string, number> }) => {
-  console.log('Datos recibidos en DistribucionMensualChart:', data);
   
   // Estado para el idioma actual
   const [currentLang, setCurrentLang] = useState('es');
@@ -546,9 +531,6 @@ export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean
   const nombresMeses = currentLang === 'ca' ? mesesCat : meses;
   
   // Procesar los datos que vienen del API
-  console.log('Datos del API recibidos en DistribucionMensualChart:', data);
-  
-  // NUEVA IMPLEMENTACIÓN: Obtener datos mensuales de formato {1900-01: 0, 1900-02: 0, ...}
   // Definir el tipo para la distribución por mes
   type DistribucionMensual = Record<string, number>;
   
@@ -564,19 +546,14 @@ export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean
   if (data && typeof data === 'object') {
     // Verificar si los datos vienen en el formato por_mes
     if ('por_mes' in data && data.por_mes && typeof data.por_mes === 'object') {
-      console.log('Usando distribución por_mes del objeto data principal');
-      // Asegurar que es un objeto Record<string, number>
       distribucionPorMes = data.por_mes as DistribucionMensual;
     } 
     // Verificar si los datos contienen directamente los nombres de meses
     else if ('Enero' in data || 'enero' in data) {
-      console.log('Usando objeto data directamente, contiene meses');
       distribucionPorMes = data as DistribucionMensual;
     } 
     // Procesar datos en formato año-mes
     else {
-      console.log('Procesando datos en formato año-mes (1900-01)');
-      
       // Procesar cada clave del objeto data buscando patrones de año-mes
       Object.entries(data).forEach(([clave, valor]) => {
         // Verificar si la clave tiene el formato "YYYY-MM"
@@ -593,19 +570,12 @@ export const DistribucionMensualChart = ({ darkMode, data }: { darkMode: boolean
     }
   }
   
-  console.log('Distribución por mes procesada:', distribucionPorMes);
-  
   // Extraer valores de cada mes en orden para usar en el gráfico
   const valoresMeses = meses.map(mes => {
     // Cada mes ya está inicializado con su valor por defecto (0)
     // Devolvemos directamente el valor del mes de distribucionPorMes
     return distribucionPorMes[mes] || 0;
   });
-  
-  // Para fines de debug, mostrar el resultado final
-  console.log('Valores mensuales finales:', meses.map((mes, i) => `${mes}: ${valoresMeses[i]}`));
-  
-  console.log('Valores de meses procesados FINALES:', nombresMeses, valoresMeses);
   
   const chartData = {
     labels: nombresMeses,
