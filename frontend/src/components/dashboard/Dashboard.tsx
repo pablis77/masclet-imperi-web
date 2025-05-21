@@ -1,7 +1,7 @@
 /**
  * DashboardEnhancedV2.tsx
  * ======================
- * 
+ * SOLO SON VALIDOS LOS DATOS DINAMICOS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * PLAN DE DESPLIEGUE - PUNTO 1.2: OPTIMIZACIÓN DEL COMPONENTE DASHBOARD
  * 
  * Versión refactorizada del DashboardEnhanced que mantiene EXACTAMENTE la misma

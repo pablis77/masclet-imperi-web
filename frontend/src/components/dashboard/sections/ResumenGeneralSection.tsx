@@ -15,7 +15,7 @@ const COLORS = {
   NURSING_2: "#ef4444"    // Rojo
 };
 
-// Sección de Resumen General extraída directamente del dashboard original
+// Sección de Resumen General extraída directamente del dashboard original SOLO SON VALI
 // EXACTAMENTE con la misma estructura visual
 interface ResumenGeneralSectionProps {
   statsData: DashboardStats | null;
