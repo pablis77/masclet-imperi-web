@@ -1,0 +1,24 @@
+{
+  "total_animales": 95,
+  "total_terneros": 275,
+  "total_partos": 275,
+  "ratio_partos_animal": 2.89,
+  "tendencias": {
+    "partos_mes_anterior": 0,
+    "partos_actual": 275,
+    "nacimientos_promedio": 22.9
+  },
+  "terneros": {
+    "total": 275
+  },
+  "explotaciones": {
+    "count": 6
+  },
+  "partos": {
+    "total": 275
+  },
+  "periodo": {
+    "inicio": "1900-01-01",
+    "fin": "2025-05-22"
+  }
+}

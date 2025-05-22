@@ -3,12 +3,66 @@ Extensión del servicio de dashboard con funciones adicionales para estadística
 Debe importarse desde el archivo principal dashboard_service.py.
 """
 
-from typing import Dict, Optional
-from app.models import Animal
+from typing import Dict, Optional, Tuple
+from datetime import date
+from app.models import Animal, Part
 from app.models.animal import EstadoAlletar
 import logging
 
 logger = logging.getLogger(__name__)
+
+async def obtener_periodo_dinamico(explotacio: Optional[str] = None) -> Tuple[date, date]:
+    """
+    Obtiene el período dinámico para el dashboard, usando la fecha más antigua en la base de datos
+    como fecha de inicio y la fecha actual como fecha de fin.
+    
+    Args:
+        explotacio: Valor del campo explotacio para filtrar (opcional)
+        
+    Returns:
+        Tuple[date, date]: Tupla con (fecha_inicio, fecha_fin)
+    """
+    # Fecha de fin siempre es la fecha actual
+    fecha_fin = date.today()
+    
+    try:
+        # Preparar filtros
+        filtro = {}
+        if explotacio:
+            filtro["explotacio"] = explotacio
+        
+        # Buscar la fecha más antigua de nacimiento (dob) de animales
+        animal_min_date = await Animal.filter(**filtro).order_by('dob').first()
+        fecha_min_animal = animal_min_date.dob if animal_min_date and animal_min_date.dob else None
+        
+        # Buscar la fecha más antigua de partos
+        parto_min_date = await Part.filter(**filtro).order_by('part').first()
+        fecha_min_parto = parto_min_date.part if parto_min_date and parto_min_date.part else None
+        
+        # Determinar la fecha más antigua entre ambas
+        fechas_candidatas = []
+        if fecha_min_animal:
+            fechas_candidatas.append(fecha_min_animal)
+            logger.info(f"Fecha más antigua de animal: {fecha_min_animal}")
+        if fecha_min_parto:
+            fechas_candidatas.append(fecha_min_parto)
+            logger.info(f"Fecha más antigua de parto: {fecha_min_parto}")
+        
+        if fechas_candidatas:
+            # Usar la fecha más antigua encontrada
+            fecha_inicio = min(fechas_candidatas)
+            logger.info(f"Usando fecha más antigua del sistema como inicio: {fecha_inicio}")
+        else:
+            # Si no hay datos, usar un año atrás como fecha predeterminada
+            fecha_inicio = date.today().replace(year=date.today().year - 1)
+            logger.info(f"No se encontraron fechas, usando fecha predeterminada: {fecha_inicio}")
+    
+    except Exception as e:
+        # En caso de error, usar un año atrás como fecha predeterminada
+        logger.error(f"Error determinando fecha más antigua: {str(e)}")
+        fecha_inicio = date.today().replace(year=date.today().year - 1)
+    
+    return fecha_inicio, fecha_fin
 
 async def get_animales_detallado(explotacio: Optional[str] = None) -> Dict:
     """
