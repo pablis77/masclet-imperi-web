@@ -4,7 +4,7 @@ Debe importarse desde el archivo principal dashboard_service.py.
 """
 
 from typing import Dict, Optional, Tuple
-from datetime import date
+from datetime import date, timedelta
 from app.models import Animal, Part
 from app.models.animal import EstadoAlletar
 import logging
@@ -63,6 +63,50 @@ async def obtener_periodo_dinamico(explotacio: Optional[str] = None) -> Tuple[da
         fecha_inicio = date.today().replace(year=date.today().year - 1)
     
     return fecha_inicio, fecha_fin
+
+async def obtener_fecha_primer_parto(explotacio: Optional[str] = None) -> Tuple[date, date]:
+    """Obtiene la fecha del primer parto registrado en la base de datos,
+    para optimizar las gráficas de partos y evitar el 'salchichón' de datos vacíos
+    
+    Args:
+        explotacio: Valor del campo explotacio para filtrar (opcional)
+        
+    Returns:
+        Tuple[date, date]: Tupla con (fecha_inicio, fecha_fin)
+    """
+    # Fecha de fin siempre es la fecha actual
+    fecha_fin = date.today()
+    
+    try:
+        # Preparar filtros para partos
+        filtro = {}
+        if explotacio:
+            # Para filtrar partos por explotación, necesitamos los IDs de animales de esa explotación
+            animal_ids = await Animal.filter(explotacio=explotacio).values_list('id', flat=True)
+            if animal_ids:
+                filtro["animal_id__in"] = animal_ids
+        
+        # Buscar la fecha más antigua de partos
+        parto_min_date = await Part.filter(**filtro).order_by('part').first()
+        
+        if parto_min_date and parto_min_date.part:
+            # Tenemos un parto, usar su fecha como inicio
+            fecha_inicio = parto_min_date.part
+            # Restar un año para tener un poco de contexto visual en las gráficas
+            fecha_inicio = fecha_inicio.replace(year=fecha_inicio.year - 1)
+            logger.info(f"Usando primer parto como fecha inicio: {parto_min_date.part} (ajustado a {fecha_inicio})")
+            return fecha_inicio, fecha_fin
+        else:
+            # Si no hay partos, usar 5 años atrás como predeterminado
+            logger.info("No se encontraron partos, usando período predeterminado")
+            fecha_inicio = date.today().replace(year=date.today().year - 5)
+            return fecha_inicio, fecha_fin
+    
+    except Exception as e:
+        # En caso de error, usar 5 años atrás como predeterminado
+        logger.error(f"Error determinando fecha del primer parto: {str(e)}")
+        fecha_inicio = date.today().replace(year=date.today().year - 5)
+        return fecha_inicio, fecha_fin
 
 async def get_animales_detallado(explotacio: Optional[str] = None) -> Dict:
     """
