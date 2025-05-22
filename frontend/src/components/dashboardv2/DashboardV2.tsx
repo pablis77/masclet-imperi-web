@@ -57,6 +57,8 @@ import type {
  * coexistir con el Dashboard original sin afectarlo.
  */
 const DashboardV2: React.FC = () => {
+  console.log('🟢 DASHBOARD V2 CARGADO - VERSIÓN NUEVA');
+  // Este es el dashboard nuevo que reemplazará al original
   // [DASHBOARDV2] No usamos useNavigate() porque puede causar problemas si se renderiza fuera del Router
   // Estado para almacenar datos de la API
   const [statsData, setStatsData] = useState<DashboardStats | null>(null);
