@@ -1,0 +1,26 @@
+{
+  "total": 95,
+  "general": {
+    "machos": 11,
+    "hembras": 84,
+    "activos": 93,
+    "fallecidos": 2
+  },
+  "por_genero": {
+    "machos": {
+      "total": 11,
+      "activos": 9,
+      "fallecidos": 2
+    },
+    "hembras": {
+      "total": 84,
+      "activas": 84,
+      "fallecidas": 0
+    }
+  },
+  "por_alletar": {
+    "0": 42,
+    "1": 42,
+    "2": 0
+  }
+}
