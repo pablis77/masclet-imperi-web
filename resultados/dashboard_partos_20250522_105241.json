@@ -1,0 +1,54 @@
+{
+  "total": 275,
+  "por_mes": {
+    "Ene": 1,
+    "Feb": 2,
+    "Mar": 0,
+    "Abr": 0,
+    "May": 1,
+    "Jun": 0,
+    "Jul": 0,
+    "Ago": 0,
+    "Sep": 0,
+    "Oct": 0,
+    "Nov": 0,
+    "Dic": 0
+  },
+  "por_genero_cria": {
+    "M": 143,
+    "F": 132,
+    "esforrada": 0
+  },
+  "tasa_supervivencia": 100.0,
+  "distribucion_anual": {
+    "2010": 1,
+    "2011": 0,
+    "2012": 1,
+    "2013": 0,
+    "2014": 1,
+    "2015": 0,
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 1,
+    "2022": 0,
+    "2023": 0,
+    "2024": 0,
+    "2025": 0
+  },
+  "tendencia": {
+    "mensual": 0.0,
+    "anual": 0.0
+  },
+  "por_animal": null,
+  "ultimo_mes": 3,
+  "ultimo_año": 3,
+  "promedio_mensual": 0.33,
+  "explotacio": null,
+  "periodo": {
+    "inicio": "2010-01-01",
+    "fin": "2025-05-22"
+  }
+}
