@@ -17,8 +17,7 @@
  * - Integración con Tremor para visualizaciones más avanzadas
  */
 
-import React, { useState, useEffect } from 'react';
-// [DASHBOARDV2] NO USAMOS NAVIGATE PARA EVITAR PROBLEMAS DE ROUTER CONTEXT
+import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../services/apiService';
 
 // Importar y registrar los componentes de Chart.js
@@ -27,18 +26,17 @@ import { registerChartComponents } from '../../utils/chartConfig';
 // Registrar los componentes al inicio para asegurar que estén disponibles
 registerChartComponents();
 
-// [DASHBOARDV2] Importar componente de resumen visual con estilo original
-import ResumenOriginalCard from './cards/ResumenOriginalCard';
+// Importar componentes UI reutilizables
+import { SectionTitle } from '../dashboard/components/UIComponents';
 
-// [DASHBOARDV2] Reutilizamos el componente existente PartosSection ya que funciona perfectamente
-// Esto nos permite aprovechar código probado y estable sin tener que reimplementarlo
+// Importar componente PartosSection
 import PartosSection from '../dashboard/sections/PartosSection';
+
+// Importar ResumenOriginalCard
+import ResumenOriginalCard from './cards/ResumenOriginalCard';
 
 // Importar componente de diagnóstico para visualizar datos crudos
 import DiagnosticoDataCard from './cards/DiagnosticoDataCard';
-
-// Importar componentes UI reutilizables
-import { SectionTitle } from '../dashboard/components/UIComponents';
 
 // Importar tipos
 import type { 
@@ -234,16 +232,19 @@ const DashboardV2: React.FC = () => {
       
       {/* SECCIÓN 2: Análisis de Partos */}
       <SectionTitle number="2" title="Análisis de Partos" darkMode={darkMode} translationKey="dashboard.partos_analysis" />
-      <div className="stats-grid-lg">
-        {/* [DASHBOARDV2] Reutilizamos el componente actual de partos que ya funciona perfectamente */}
-        {/* Esto nos permite mantener la funcionalidad exacta sin tener que reimplementar esta sección */}
-        <PartosSection 
-          statsData={statsData} 
-          partosData={partosData}
-          darkMode={darkMode} 
-          loading={loading.stats || loading.partos} 
-          error={error.stats || error.partos} 
-        />
+      <div className="combined-stats-grid">
+        {/* Wrapper para que el PartosSection ocupe la mitad del ancho */}
+        <div style={{ display: 'contents' }}>
+          <PartosSection 
+            statsData={statsData} 
+            partosData={partosData}
+            darkMode={darkMode} 
+            loading={loading.stats || loading.partos} 
+            error={error.stats || error.partos} 
+          />
+        </div>
+        {/* Espacio vacío para equilibrar la cuadrícula */}
+        <div></div>
       </div>
       
       {/* SECCIÓN 3: Diagnóstico de Datos */}
