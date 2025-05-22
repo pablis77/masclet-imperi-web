@@ -27,8 +27,8 @@ import { registerChartComponents } from '../../utils/chartConfig';
 // Registrar los componentes al inicio para asegurar que estén disponibles
 registerChartComponents();
 
-// [DASHBOARDV2] Importar componente Tremor para el resumen general
-import TremorResumenGeneralCard from './cards/TremorResumenGeneralCard';
+// [DASHBOARDV2] Importar componente de resumen visual con estilo original
+import ResumenOriginalCard from './cards/ResumenOriginalCard';
 
 // [DASHBOARDV2] Reutilizamos el componente existente PartosSection ya que funciona perfectamente
 // Esto nos permite aprovechar código probado y estable sin tener que reimplementarlo
@@ -223,14 +223,11 @@ const DashboardV2: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6">BIENVENIDO A MASCLET IMPERI</h1>
       </div>
       
-      {/* SECCIÓN 1: Resumen General (Con Tremor) */}
-      <SectionTitle number="1" title="Resumen General con Tremor" darkMode={darkMode} translationKey="dashboard.summary" />
+      {/* SECCIÓN 1: Resumen General (Con estilo original) */}
+      <SectionTitle number="1" title="Resumen General" darkMode={darkMode} translationKey="dashboard.summary" />
       <div className="stats-grid-lg">
-        {/* Nuevo componente basado en Tremor con visualizaciones avanzadas */}
-        <TremorResumenGeneralCard
-          statsData={statsData}
-          loading={loading.stats}
-          error={error.stats}
+        {/* Componente visual con el estilo original que funcionaba correctamente */}
+        <ResumenOriginalCard
           darkMode={darkMode}
         />
       </div>
