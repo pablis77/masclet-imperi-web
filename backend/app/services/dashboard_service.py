@@ -1,7 +1,6 @@
 import logging
-import logging
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Union, Any, Tuple
 
 from tortoise.functions import Sum, Count, Min
 from tortoise.expressions import F
@@ -9,8 +8,13 @@ from tortoise.expressions import F
 from app.models import Animal, Part, Import
 from app.models.enums import ImportStatus
 from app.models.animal import Genere, EstadoAlletar
+from app.services.dashboard_service_extended import obtener_periodo_dinamico
 
+# Configurar logging
 logger = logging.getLogger(__name__)
+
+# Variable global para evitar logs duplicados
+_DEBUG_MODE = False
 
 async def get_dashboard_stats(explotacio: Optional[str] = None, 
                               start_date: Optional[date] = None,
@@ -28,12 +32,20 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
     """
     logger.info(f"Iniciando get_dashboard_stats: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
     try:
-        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
+        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
-            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
+            try:
+                # Obtener la fecha más antigua de la base de datos como inicio del período
+                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
+                start_date = fecha_inicio_dinamica
+                if _DEBUG_MODE:
+                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+            except Exception as e:
+                # En caso de error, usar 5 años atrás como predeterminado
+                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                start_date = date.today().replace(year=date.today().year - 5)
         
         # Filtro base para todos los queries
         base_filter = {}
@@ -77,7 +89,8 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
         # Total de terneros: cada vaca con un ternero cuenta como 1, cada vaca con dos terneros cuenta como 2
         total_terneros = un_ternero + (dos_terneros * 2)
         
-        logger.info("Calculando distribución por origen")
+        if _DEBUG_MODE:
+            logger.info("Calculando distribución por origen")
         por_origen = {}
         origenes = await Animal.filter(**base_filter).distinct().values_list('origen', flat=True)
         
@@ -125,7 +138,8 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
             "part__lte": end_date
         }
         
-        logger.info("Calculando estadísticas de partos")
+        if _DEBUG_MODE:
+            logger.info("Calculando estadísticas de partos")
         
         # Obtener partos históricos (sin filtro de fecha)
         total_partos_historicos = await Part.filter(**parto_filter).count()
@@ -151,22 +165,26 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
         total_partos_historicos = await Part.filter(**parto_filter).count()
         total_partos_periodo = total_partos_historicos  # Por ahora, mostramos el histórico siempre
         
-        # Log para depuración
-        logger.info(f"Conteo de partos para explotación '{explotacio}':")
-        logger.info(f"  - Total histórico: {total_partos_historicos}")
-        logger.info(f"  - Periodo seleccionado: {total_partos_periodo}")
-        logger.info(f"  - Total animales: {total_animales}")
+        # Log para depuración (solo en modo debug)
+        if _DEBUG_MODE:
+            logger.info(f"Conteo de partos para explotación '{explotacio}':")
+            logger.info(f"  - Total histórico: {total_partos_historicos}")
+            logger.info(f"  - Periodo seleccionado: {total_partos_periodo}")
+            logger.info(f"  - Total animales: {total_animales}")
         
         # Tasa de supervivencia (basada en TODOS los partos históricos)
         supervivientes = await Part.filter(**parto_filter, EstadoT="OK").count()
         tasa_supervivencia = 0.0
         if total_partos_historicos > 0:
             tasa_supervivencia = supervivientes / total_partos_historicos
-            logger.info(f"Tasa supervivencia: {tasa_supervivencia:.2f} ({supervivientes}/{total_partos_historicos})")
+            if _DEBUG_MODE:
+                logger.info(f"Tasa supervivencia: {tasa_supervivencia:.2f} ({supervivientes}/{total_partos_historicos})")
         else:
-            logger.info("No hay partos históricos para calcular tasa de supervivencia")
+            if _DEBUG_MODE:
+                logger.info("No hay partos históricos para calcular tasa de supervivencia")
         
-        logger.info("Calculando distribución de partos por mes")
+        if _DEBUG_MODE:
+            logger.info("Calculando distribución de partos por mes")
         partos_por_mes = {}
         current_date = start_date
         
@@ -196,7 +214,8 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
             else:
                 current_date = date(current_date.year, current_date.month + 1, 1)
         
-        logger.info("Calculando distribución de partos por año")
+        if _DEBUG_MODE:
+            logger.info("Calculando distribución de partos por año")
         distribucion_anual = {}
         
         # Obtener IDs de animales para filtrar partos
@@ -507,12 +526,20 @@ async def get_explotacio_dashboard(explotacio_value: str,
         if not exists:
             raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
         
-        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
+        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
-            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
+            try:
+                # Obtener la fecha más antigua de la base de datos como inicio del período
+                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
+                start_date = fecha_inicio_dinamica
+                if _DEBUG_MODE:
+                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+            except Exception as e:
+                # En caso de error, usar 5 años atrás como predeterminado
+                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                start_date = date.today().replace(year=date.today().year - 5)
         
         # Filtro base para todos los queries
         base_filter = {"explotacio": explotacio_value}
@@ -803,12 +830,20 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
     try:
         logger.info(f"Iniciando get_combined_dashboard: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
         
-        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
+        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
-            start_date = date(1900, 1, 1)
+            try:
+                # Obtener la fecha más antigua de la base de datos como inicio del período
+                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
+                start_date = fecha_inicio_dinamica
+                if _DEBUG_MODE:
+                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+            except Exception as e:
+                # En caso de error, usar 5 años atrás como predeterminado
+                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                start_date = date.today().replace(year=date.today().year - 5)
         
         # Obtener estadísticas básicas
         stats = await get_dashboard_stats(explotacio, start_date, end_date)
@@ -981,12 +1016,20 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
     try:
         logger.info(f"Iniciando get_partos_dashboard: explotacio={explotacio}, animal_id={animal_id}, start_date={start_date}, end_date={end_date}")
         
-        # Si no se especifican fechas, usar desde 1900 hasta hoy (para incluir TODOS los datos)
+        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
         if not end_date:
             end_date = date.today()
         if not start_date:
-            # Usar una fecha muy antigua (1900) para incluir TODOS los datos históricos
-            start_date = date(1900, 1, 1)  # Modificado para incluir TODOS los partos históricos
+            try:
+                # Obtener la fecha más antigua de la base de datos como inicio del período
+                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
+                start_date = fecha_inicio_dinamica
+                if _DEBUG_MODE:
+                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+            except Exception as e:
+                # En caso de error, usar 5 años atrás como predeterminado
+                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                start_date = date.today().replace(year=date.today().year - 5)
         
         # Inicializar el filtro de partos
         parto_filter = {}
