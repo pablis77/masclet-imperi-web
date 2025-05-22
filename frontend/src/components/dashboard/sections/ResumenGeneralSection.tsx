@@ -33,6 +33,23 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
   }, [externalError]);
 
   useEffect(() => {
+    // Añadir logs para depuración como hace PartosSection.tsx
+    if (statsData) {
+      console.log('DATOS DE ESTADÍSTICAS EN RESUMEN GENERAL:', statsData);
+      console.log('TIPO DE DATOS:', typeof statsData);
+      
+      if (statsData.animales) {
+        console.log('DATOS DE ANIMALES:', statsData.animales);
+        console.log('DATOS DE TOROS ACTIVOS:', statsData.animales.toros_activos);
+        console.log('DATOS DE TOROS FALLECIDOS:', statsData.animales.toros_fallecidos);
+        console.log('DATOS DE VACAS ACTIVAS:', statsData.animales.vacas_activas);
+        console.log('DATOS DE VACAS FALLECIDAS:', statsData.animales.vacas_fallecidas);
+        console.log('DATOS DE AMAMANTAMIENTO:', statsData.animales.por_alletar);
+      } else {
+        console.log('⚠️ NO HAY DATOS DE ANIMALES EN statsData');
+      }
+    }
+    
     setStats(statsData);
   }, [statsData]);
 
@@ -79,31 +96,23 @@ const ResumenGeneralSection: React.FC<ResumenGeneralSectionProps> = ({
     totalMales = stats.animales.machos || 0;
     totalFemales = stats.animales.hembras || 0;
     
-    // Usar el endpoint exactamente igual que el script verificar_contadores.py
-    // Obtener datos por género y estado directamente del backend
-    // Toros activos = genere="M" + estado="OK"
-    // Toros fallecidos = genere="M" + estado="DEF"
-    if (stats.animales.por_genero_estado) {
-      activeMales = stats.animales.por_genero_estado?.['M']?.['OK'] || 0;
-      inactiveMales = stats.animales.por_genero_estado?.['M']?.['DEF'] || 0;
-      
-      // Vacas activas = genere="F" + estado="OK"
-      // Vacas fallecidas = genere="F" + estado="DEF"
-      activeFemales = stats.animales.por_genero_estado?.['F']?.['OK'] || 0;
-      inactiveFemales = stats.animales.por_genero_estado?.['F']?.['DEF'] || 0;
-    }
-    // Si no tenemos datos exactos por género y estado, hacemos una estimación
-    else {
-      // Si conocemos el porcentaje de animales activos, aplicarlo proporcionalmente por género
-      const activeRatio = stats.animales.por_estado && totalAnimals > 0 ? 
-        (stats.animales.por_estado['OK'] / totalAnimals) : 0;
-      
-      // Calcular activos por género usando la misma proporción
-      activeMales = Math.round(totalMales * activeRatio);
-      activeFemales = Math.round(totalFemales * activeRatio);
-      inactiveMales = totalMales - activeMales;
-      inactiveFemales = totalFemales - activeFemales;
-    }
+    // Usar directamente las variables que nos envía el backend
+    // EXACTAMENTE como lo hace verificar_contadores.py
+    activeMales = stats.animales.toros_activos || 0;
+    inactiveMales = stats.animales.toros_fallecidos || 0;
+    activeFemales = stats.animales.vacas_activas || 0;
+    inactiveFemales = stats.animales.vacas_fallecidas || 0;
+    
+    // Verificar los datos con logging
+    console.log('VERIFICACIÓN DE CONTADORES:', {
+      toros_activos: activeMales,
+      toros_fallecidos: inactiveMales,
+      vacas_activas: activeFemales,
+      vacas_fallecidas: inactiveFemales,
+      total_machos: totalMales,
+      total_hembras: totalFemales,
+      total_animales: totalAnimals
+    });
   }
   
   // Calcular el total de animales activos - exactamente como lo hace verificar_contadores.py

@@ -36,6 +36,11 @@ export interface AnimalStats {
   hembras: number;
   machos_activos: number;  // Añadido
   hembras_activas: number;  // Añadido
+  // Variables exactas de verificar_contadores.py
+  toros_activos: number;    // Añadido - genere="M", estado="OK"
+  toros_fallecidos: number; // Añadido - genere="M", estado="DEF"
+  vacas_activas: number;    // Añadido - genere="F", estado="OK"
+  vacas_fallecidas: number; // Añadido - genere="F", estado="DEF"
   ratio_m_h: number;
   por_estado: Record<string, number>;
   por_alletar?: Record<string, number>;
