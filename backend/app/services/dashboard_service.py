@@ -8,7 +8,7 @@ from tortoise.expressions import F
 from app.models import Animal, Part, Import
 from app.models.enums import ImportStatus
 from app.models.animal import Genere, EstadoAlletar
-from app.services.dashboard_service_extended import obtener_periodo_dinamico
+from app.services.dashboard_service_extended import obtener_periodo_dinamico, obtener_fecha_primer_parto
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -32,19 +32,19 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
     """
     logger.info(f"Iniciando get_dashboard_stats: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
     try:
-        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
+        # Si no se especifican fechas, usar la fecha del primer parto como inicio del período
         if not end_date:
             end_date = date.today()
         if not start_date:
             try:
-                # Obtener la fecha más antigua de la base de datos como inicio del período
-                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
-                start_date = fecha_inicio_dinamica
+                # Obtener la fecha del primer parto como inicio del período (más eficiente)
+                fecha_inicio_partos, _ = await obtener_fecha_primer_parto(explotacio)
+                start_date = fecha_inicio_partos
                 if _DEBUG_MODE:
-                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+                    logger.info(f"Usando fecha del primer parto como inicio: {start_date}")
             except Exception as e:
                 # En caso de error, usar 5 años atrás como predeterminado
-                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                logger.warning(f"Error al obtener fecha del primer parto: {str(e)}")
                 start_date = date.today().replace(year=date.today().year - 5)
         
         # Filtro base para todos los queries
@@ -526,19 +526,19 @@ async def get_explotacio_dashboard(explotacio_value: str,
         if not exists:
             raise ValueError(f"No existen animales para la explotación '{explotacio_value}'")
         
-        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
+        # Si no se especifican fechas, usar la fecha del primer parto como inicio del período
         if not end_date:
             end_date = date.today()
         if not start_date:
             try:
-                # Obtener la fecha más antigua de la base de datos como inicio del período
-                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
-                start_date = fecha_inicio_dinamica
+                # Obtener la fecha del primer parto como inicio del período (más eficiente)
+                fecha_inicio_partos, _ = await obtener_fecha_primer_parto(explotacio)
+                start_date = fecha_inicio_partos
                 if _DEBUG_MODE:
-                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+                    logger.info(f"Usando fecha del primer parto como inicio: {start_date}")
             except Exception as e:
                 # En caso de error, usar 5 años atrás como predeterminado
-                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                logger.warning(f"Error al obtener fecha del primer parto: {str(e)}")
                 start_date = date.today().replace(year=date.today().year - 5)
         
         # Filtro base para todos los queries
@@ -830,19 +830,19 @@ async def get_combined_dashboard(explotacio: Optional[str] = None,
     try:
         logger.info(f"Iniciando get_combined_dashboard: explotacio={explotacio}, start_date={start_date}, end_date={end_date}")
         
-        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
+        # Si no se especifican fechas, usar la fecha del primer parto como inicio del período
         if not end_date:
             end_date = date.today()
         if not start_date:
             try:
-                # Obtener la fecha más antigua de la base de datos como inicio del período
-                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
-                start_date = fecha_inicio_dinamica
+                # Obtener la fecha del primer parto como inicio del período (más eficiente)
+                fecha_inicio_partos, _ = await obtener_fecha_primer_parto(explotacio)
+                start_date = fecha_inicio_partos
                 if _DEBUG_MODE:
-                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+                    logger.info(f"Usando fecha del primer parto como inicio: {start_date}")
             except Exception as e:
                 # En caso de error, usar 5 años atrás como predeterminado
-                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                logger.warning(f"Error al obtener fecha del primer parto: {str(e)}")
                 start_date = date.today().replace(year=date.today().year - 5)
         
         # Obtener estadísticas básicas
@@ -1016,19 +1016,19 @@ async def get_partos_dashboard(explotacio: Optional[str] = None,
     try:
         logger.info(f"Iniciando get_partos_dashboard: explotacio={explotacio}, animal_id={animal_id}, start_date={start_date}, end_date={end_date}")
         
-        # Si no se especifican fechas, usar período dinámico basado en la fecha más antigua
+        # Si no se especifican fechas, usar la fecha del primer parto como inicio del período
         if not end_date:
             end_date = date.today()
         if not start_date:
             try:
-                # Obtener la fecha más antigua de la base de datos como inicio del período
-                fecha_inicio_dinamica, _ = await obtener_periodo_dinamico(explotacio)
-                start_date = fecha_inicio_dinamica
+                # Obtener la fecha del primer parto como inicio del período (más eficiente)
+                fecha_inicio_partos, _ = await obtener_fecha_primer_parto(explotacio)
+                start_date = fecha_inicio_partos
                 if _DEBUG_MODE:
-                    logger.info(f"Usando fecha dinámica como inicio: {start_date}")
+                    logger.info(f"Usando fecha del primer parto como inicio: {start_date}")
             except Exception as e:
                 # En caso de error, usar 5 años atrás como predeterminado
-                logger.warning(f"Error al obtener período dinámico: {str(e)}")
+                logger.warning(f"Error al obtener fecha del primer parto: {str(e)}")
                 start_date = date.today().replace(year=date.today().year - 5)
         
         # Inicializar el filtro de partos
