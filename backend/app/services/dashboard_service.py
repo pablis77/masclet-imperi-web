@@ -1,8 +1,9 @@
 import logging
+import logging
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Union, Any
 
-from tortoise.functions import Sum, Count
+from tortoise.functions import Sum, Count, Min
 from tortoise.expressions import F
 
 from app.models import Animal, Part, Import
