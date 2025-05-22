@@ -2,8 +2,8 @@
 // Importar el layout completo
 import MainLayout from '../components/layout/MainLayout.astro';
 
-// Importar el componente Dashboard optimizado y funcional
-import Dashboard from '../components/dashboard/Dashboard';
+// Importar el componente DashboardV2 optimizado y funcional
+import DashboardV2 from '../components/dashboardv2/DashboardV2';
 
 // Definir rol de usuario
 const userRole = "administrador";
@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="mx-auto px-4 py-6 bg-white dark:bg-gray-900">
     <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8 welcome-title">{welcomeText}</h1>
     
-    <!-- Componente Dashboard optimizado - Renderizado solo en el cliente -->
-    <Dashboard client:only="react" />
+    <!-- Componente DashboardV2 optimizado - Renderizado solo en el cliente -->
+    <DashboardV2 client:only="react" />
     
     <!-- Botones de prueba eliminados -->
   </div>

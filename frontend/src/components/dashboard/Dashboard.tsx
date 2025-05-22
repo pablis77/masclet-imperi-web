@@ -69,6 +69,7 @@ ChartJS.register(
  * de los demás y obtiene todos los datos directamente de la API.
  */
 const Dashboard: React.FC = () => {
+  console.log('🔴 DASHBOARD ORIGINAL CARGADO');
   // [DASHBOARDV2] No usamos useNavigate() porque puede causar problemas si se renderiza fuera del Router
   // Estados para los diferentes endpoints
   const [resumenData, setResumenData] = useState<DashboardResumen | null>(null);
