@@ -165,9 +165,9 @@ const PartosSection: React.FC<PartosSectionProps> = ({
   }
   
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Resumen de Partos */}
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+      <div className="dashboard-card">
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.partos_analysis', currentLang)}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
           <StatCard
@@ -203,7 +203,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       </div>
       
       {/* Distribución Mensual - NUEVA */}
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+      <div className="dashboard-card">
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució mensual" : "Distribución mensual"}</h3>
         <div style={{ height: "300px" }}>
           <DistribucionMensualChart darkMode={darkMode} data={statsData.partos.por_mes} />
@@ -222,7 +222,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       </div>
       
       {/* Distribución Anual Detallada - NUEVA */}
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+      <div className="dashboard-card">
         <h3 className="text-lg font-semibold mb-4">{currentLang === 'ca' ? "Distribució anual detallada" : "Distribución anual detallada"}</h3>
         {/* Mostrar los datos de distribución anual que vienen directamente del backend */}
         <div style={{ height: "300px" }}>
@@ -296,7 +296,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
       </div>
 
       {/* Distribución por Género - CORREGIDA */}
-      <div className="dashboard-card" style={{ gridColumn: "span 6" }}>
+      <div className="dashboard-card">
         <h3 className="text-lg font-semibold mb-4">{t('dashboard.gender_distribution', currentLang)}</h3>
         <div style={{ height: "270px", display: "flex", justifyContent: "center" }}>
           <GenderCriaChart data={statsData.partos.por_genero_cria} darkMode={darkMode} />
@@ -372,7 +372,7 @@ const PartosSection: React.FC<PartosSectionProps> = ({
           }
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
