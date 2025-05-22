@@ -51,6 +51,14 @@ export interface AnimalStats {
     M?: Record<string, number>; // Machos por estado
     F?: Record<string, number>; // Hembras por estado
   };
+  // Campo 'edades' renombrado a 'por_edad' para mantener consistencia con la API
+  por_edad: {
+    menos_1_año: number;
+    "1_2_años": number;
+    "2_5_años": number;
+    mas_5_años: number;
+  };
+  // Mantenemos el campo 'edades' para compatibilidad con código existente
   edades?: {
     menos_1_año?: number;
     "1_2_años"?: number;

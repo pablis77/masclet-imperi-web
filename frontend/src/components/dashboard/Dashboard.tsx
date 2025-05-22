@@ -26,6 +26,7 @@ import ExplotacionesSection from './sections/ExplotacionesSection';
 
 // Importar componentes UI reutilizables
 import { SectionTitle } from './components/UIComponents';
+// [DASHBOARDV2] NO USAMOS NAVIGATE PARA EVITAR PROBLEMAS DE ROUTER CONTEXT
 
 // Importar tipos
 import type { 
@@ -68,6 +69,7 @@ ChartJS.register(
  * de los demás y obtiene todos los datos directamente de la API.
  */
 const Dashboard: React.FC = () => {
+  // [DASHBOARDV2] No usamos useNavigate() porque puede causar problemas si se renderiza fuera del Router
   // Estados para los diferentes endpoints
   const [resumenData, setResumenData] = useState<DashboardResumen | null>(null);
   const [statsData, setStatsData] = useState<DashboardStats | null>(null);
@@ -91,6 +93,13 @@ const Dashboard: React.FC = () => {
     por_estado: {},
     por_quadra: {},
     por_alletar: {},
+    // [DASHBOARDV2] Campo obligatorio en la nueva versión del dashboard
+    por_edad: {
+      menos_1_año: 0,
+      "1_2_años": 0,
+      "2_5_años": 0,
+      mas_5_años: 0
+    },
     edades: {}
   });
   
@@ -1158,6 +1167,16 @@ const Dashboard: React.FC = () => {
       className={`dashboard-container ${darkMode ? 'theme-dark' : 'theme-light'} ${allLoaded ? 'dashboard-ready' : ''}`}
       data-component-name="DashboardEnhancedV2"
     >
+      {/* [DASHBOARDV2] Enlace para navegar a la nueva versión del dashboard */}
+      <a 
+        href="/dashboard-v2" 
+        className="fixed top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full shadow-lg z-50 flex items-center gap-2"
+      >
+        <span>Ver DashboardV2</span>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </a>
       {/* Botón para cambiar tema */}
       <button 
         onClick={toggleTheme} 

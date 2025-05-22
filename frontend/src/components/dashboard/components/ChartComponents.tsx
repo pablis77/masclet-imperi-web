@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { t } from '../../../i18n/config';
 
+// Importar la configuración de Chart.js
+import { registerChartComponents } from '../../../utils/chartConfig';
+
+// Registrar los componentes de Chart.js antes de usarlos
+registerChartComponents();
+
 // Colores estandarizados para los gráficos (coinciden con los colores de las tarjetas)
 const CHART_COLORS = {
   TOROS_ACTIVOS: '#3b82f6', // Azul para toros activos

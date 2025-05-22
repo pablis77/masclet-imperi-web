@@ -6,6 +6,7 @@ from app.api.endpoints.animals import router as animals_router
 from app.api.endpoints.partos import router as partos_router
 from app.api.endpoints.partos_standalone import router as partos_standalone_router
 from app.api.endpoints.dashboard import router as dashboard_router
+from app.api.endpoints.dashboard_detallado import router as dashboard_detallado_router
 from app.api.endpoints.imports import router as imports_router
 from app.api.endpoints.auth import router as auth_router
 from app.api.endpoints.users import router as users_router
@@ -86,6 +87,13 @@ api_router.include_router(
     dashboard_router,
     prefix="/dashboard",
     tags=["dashboard"]
+)
+
+# Rutas para dashboard detallado
+api_router.include_router(
+    dashboard_detallado_router,
+    prefix="/dashboard-detallado",
+    tags=["dashboard"]    
 )
 
 # Rutas para health check (monitoreo)

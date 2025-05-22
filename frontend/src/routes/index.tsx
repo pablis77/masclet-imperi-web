@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '../components/dashboard/Dashboard';
+import DashboardV2 from '../components/dashboardv2/DashboardV2';
 import ImportCsv from '../components/imports/ImportCsv';
 import Explotaciones from '../components/Explotaciones';
 import IconosTest from '../pages/IconosTest';
@@ -14,6 +15,9 @@ const AppRouter: React.FC = () => {
         
         {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* Dashboard V2 - Nueva versión mejorada */}
+        <Route path="/dashboard-v2" element={<DashboardV2 />} />
         
         {/* Importación */}
         <Route path="/import" element={<ImportCsv />} />
