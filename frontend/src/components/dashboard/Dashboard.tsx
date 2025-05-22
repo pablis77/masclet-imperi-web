@@ -83,10 +83,14 @@ const Dashboard: React.FC = () => {
     hembras: 0,
     machos_activos: 0,  // Añadido
     hembras_activas: 0,  // Añadido
+    toros_activos: 0,    // Nuevos campos para ResumenGeneralSection
+    toros_fallecidos: 0, // Nuevos campos para ResumenGeneralSection
+    vacas_activas: 0,    // Nuevos campos para ResumenGeneralSection
+    vacas_fallecidas: 0, // Nuevos campos para ResumenGeneralSection
     ratio_m_h: 0,
     por_estado: {},
-    por_alletar: {},
     por_quadra: {},
+    por_alletar: {},
     edades: {}
   });
   
@@ -423,6 +427,10 @@ const Dashboard: React.FC = () => {
           hembras: 0,
           machos_activos: 0,  // Añadido
           hembras_activas: 0,  // Añadido
+          toros_activos: 0,    // Nuevos campos para ResumenGeneralSection
+          toros_fallecidos: 0, // Nuevos campos para ResumenGeneralSection
+          vacas_activas: 0,    // Nuevos campos para ResumenGeneralSection
+          vacas_fallecidas: 0, // Nuevos campos para ResumenGeneralSection
           ratio_m_h: 0,
           por_estado: {},
           por_quadra: {},
@@ -502,6 +510,10 @@ const Dashboard: React.FC = () => {
           hembras: 0,
           machos_activos: 0,  // Añadido
           hembras_activas: 0,  // Añadido
+          toros_activos: 0,    // Nuevos campos para ResumenGeneralSection
+          toros_fallecidos: 0, // Nuevos campos para ResumenGeneralSection
+          vacas_activas: 0,    // Nuevos campos para ResumenGeneralSection
+          vacas_fallecidas: 0, // Nuevos campos para ResumenGeneralSection
           ratio_m_h: 0,
           por_estado: {},
           por_quadra: {},

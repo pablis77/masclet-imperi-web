@@ -367,6 +367,11 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
                 "hembras": total_hembras,  # Total de hembras (activas + inactivas)
                 "machos_activos": await Animal.filter(**base_filter, genere="M", estado="OK").count(),  # Solo machos activos
                 "hembras_activas": await Animal.filter(**base_filter, genere="F", estado="OK").count(),  # Solo hembras activas
+                # Añadir variables EXACTAMENTE como en verificar_contadores.py
+                "toros_activos": await Animal.filter(**base_filter, genere="M", estado="OK").count(),
+                "toros_fallecidos": await Animal.filter(**base_filter, genere="M", estado="DEF").count(),
+                "vacas_activas": await Animal.filter(**base_filter, genere="F", estado="OK").count(),
+                "vacas_fallecidas": await Animal.filter(**base_filter, genere="F", estado="DEF").count(),
                 "ratio_m_h": ratio,
                 "por_estado": por_estado,
                 "por_alletar": por_alletar,
@@ -409,6 +414,12 @@ async def get_dashboard_stats(explotacio: Optional[str] = None,
                 "total": 0,
                 "machos": 0,
                 "hembras": 0,
+                "machos_activos": 0,
+                "hembras_activas": 0,
+                "toros_activos": 0,
+                "toros_fallecidos": 0,
+                "vacas_activas": 0,
+                "vacas_fallecidas": 0,
                 "ratio_m_h": 0.0,
                 "por_estado": {"OK": 0, "DEF": 0},
                 "por_alletar": {
