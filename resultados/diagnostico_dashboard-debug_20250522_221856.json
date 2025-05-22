@@ -1,0 +1,15 @@
+{
+  "total_animales": 95,
+  "total_machos": 11,
+  "total_hembras": 84,
+  "total_partos": 276,
+  "partos_por_genero": {
+    "M": 143,
+    "F": 133,
+    "esforrada": 0
+  },
+  "partos_por_estado": {
+    "OK": 272,
+    "DEF": 4
+  }
+}

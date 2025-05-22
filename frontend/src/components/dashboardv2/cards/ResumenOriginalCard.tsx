@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../../services/apiService';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+// Registrar componentes de Chart.js necesarios para el gráfico circular
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Interfaces
 interface ResumenOriginalCardProps {
@@ -137,62 +142,84 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
             <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Machos activos</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeMales}</p>
           </div>
-        </div>
-        
-        {/* Tarjeta 2 - Distribución por Género */}
-        <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
-          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Distribución por Género</h3>
-          
-          <div className="bg-blue-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Total machos</h3>
-            <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeMales + inactiveMales}</p>
-            <div className="w-full bg-blue-600 h-1 mt-2"></div>
-            <div className="flex justify-between text-blue-100 text-xs mt-1">
-              <span>Activos: {activeMales}</span>
-              <span>Fallecidos: {inactiveMales}</span>
-            </div>
-          </div>
           
           <div className="bg-fuchsia-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Total hembras</h3>
-            <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeFemales + inactiveFemales}</p>
-            <div className="w-full bg-fuchsia-600 h-1 mt-2"></div>
-            <div className="flex justify-between text-fuchsia-100 text-xs mt-1">
-              <span>Activas: {activeFemales}</span>
-              <span>Fallecidas: {inactiveFemales}</span>
-            </div>
-          </div>
-          
-          <div className="bg-gray-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Proporción M/F</h3>
-            <div className="flex items-center space-x-1">
-              <div className="bg-blue-600 h-6 rounded-l" style={{width: `${(activeMales + inactiveMales) / totalAnimals * 100}%`}}></div>
-              <div className="bg-fuchsia-600 h-6 rounded-r" style={{width: `${(activeFemales + inactiveFemales) / totalAnimals * 100}%`}}></div>
-            </div>
-            <div className="flex justify-between text-gray-100 text-xs mt-1">
-              <span>Machos: {Math.round((activeMales + inactiveMales) / totalAnimals * 100)}%</span>
-              <span>Hembras: {Math.round((activeFemales + inactiveFemales) / totalAnimals * 100)}%</span>
-            </div>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Hembras activas</h3>
+            <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeFemales}</p>
           </div>
         </div>
         
-        {/* Tarjeta 3 - Amamantamiento */}
+        {/* Tarjeta 2 - Amamantamiento */}
         <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
           <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Estado de Amamantamiento</h3>
           
           <div className="bg-amber-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Sin amamantar</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Vacas no amamantando</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing0}</p>
           </div>
           
           <div className="bg-amber-600" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>1 ternero</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 1 ternero</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing1}</p>
           </div>
           
           <div className="bg-amber-700" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>2 terneros</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 2 terneros</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing2}</p>
+          </div>
+        </div>
+        
+        {/* Tarjeta 3 - Distribución por Género con gráfico circular */}
+        <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
+          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Análisis Poblacional (Total)</h3>
+          
+          <div style={{ padding: '0.75rem', height: '260px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Pie 
+              data={{
+                labels: ['Toros', 'Vacas', 'Fallecidos'],
+                datasets: [
+                  {
+                    data: [activeMales, activeFemales, inactiveAnimals],
+                    backgroundColor: [
+                      '#3b82f6', // azul para toros
+                      '#ec4899', // fucsia para vacas
+                      '#6b7280', // gris para fallecidos
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      color: darkMode ? '#fff' : '#000',
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        let label = context.label || '';
+                        let value = context.raw || 0;
+                        let total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
+                        let percentage = Math.round((Number(value) / total) * 100);
+                        return `${label}: ${value} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+          
+          <div className="text-xs text-center mt-1" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
+            Ratio Machos/Hembras: {(activeMales / (activeFemales || 1)).toFixed(1)}
           </div>
         </div>
       </div>
