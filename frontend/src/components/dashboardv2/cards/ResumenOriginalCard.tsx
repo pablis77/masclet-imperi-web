@@ -88,19 +88,36 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
     );
   }
 
-  // Calcular totales
-  const totalAnimals = stats?.animales?.total || 0;
-  const activeMales = stats?.animales?.toros_activos || 0;
-  const inactiveMales = stats?.animales?.toros_fallecidos || 0;
-  const activeFemales = stats?.animales?.vacas_activas || 0;
-  const inactiveFemales = stats?.animales?.vacas_fallecidas || 0;
-  const activeAnimals = activeMales + activeFemales;
-  const inactiveAnimals = inactiveMales + inactiveFemales;
+  // Calcular totales usando los datos detallados (usando la estructura correcta del endpoint)
+  const totalAnimals = animalesDetallados?.total || 0;
+  const activeMales = animalesDetallados?.por_genero?.machos?.activos || 0;
+  const inactiveMales = animalesDetallados?.por_genero?.machos?.fallecidos || 0;
+  const activeFemales = animalesDetallados?.por_genero?.hembras?.activas || 0;
+  const inactiveFemales = animalesDetallados?.por_genero?.hembras?.fallecidas || 0;
+  const activeAnimals = animalesDetallados?.general?.activos || 0;
+  const inactiveAnimals = animalesDetallados?.general?.fallecidos || 0;
   
   // Datos de amamantamiento
-  const nursing0 = stats?.animales?.por_alletar?.['0'] || 0;
-  const nursing1 = stats?.animales?.por_alletar?.['1'] || 0;
-  const nursing2 = stats?.animales?.por_alletar?.['2'] || 0;
+  const nursing0 = animalesDetallados?.por_alletar?.['0'] || 0;
+  const nursing1 = animalesDetallados?.por_alletar?.['1'] || 0;
+  const nursing2 = animalesDetallados?.por_alletar?.['2'] || 0;
+  
+  // Imprimir datos para debugging
+  console.log('DATOS DETALLADOS USADOS:', {
+    totalAnimals,
+    activeMales,
+    inactiveMales,
+    activeFemales,
+    inactiveFemales,
+    activeAnimals,
+    inactiveAnimals,
+    nursing0,
+    nursing1,
+    nursing2
+  });
+  
+  // También imprimir la respuesta original para verificar la estructura
+  console.log('RESPUESTA ORIGINAL:', animalesDetallados);
 
   // Formato para fechas
   const formatDate = (dateStr: string) => {
@@ -153,17 +170,17 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
         <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
           <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Estado de Amamantamiento</h3>
           
-          <div className="bg-amber-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
+          <div className="bg-orange-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
             <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Vacas no amamantando</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing0}</p>
           </div>
           
-          <div className="bg-amber-600" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
+          <div className="bg-cyan-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
             <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 1 ternero</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing1}</p>
           </div>
           
-          <div className="bg-amber-700" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
+          <div className="bg-red-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
             <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 2 terneros</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing2}</p>
           </div>
