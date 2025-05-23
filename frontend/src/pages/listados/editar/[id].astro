@@ -1,0 +1,568 @@
+---
+import MainLayout from '../../../components/layout/MainLayout.astro';
+import { getCurrentLanguage } from '../../../i18n/config';
+import listadosService from '../../../services/listados-service';
+
+// Obtener el idioma actual
+const currentLang = getCurrentLanguage();
+
+// Obtener el ID del listado de los parámetros de la URL
+const { id } = Astro.params;
+
+// Traducciones
+const translations = {
+  es: {
+    title: "Editar Listado",
+    description: "Modifica los detalles del listado y los animales incluidos.",
+    name: "Nombre del listado",
+    namePlaceholder: "Ej: Vacunación octubre 2025",
+    description: "Descripción",
+    descriptionPlaceholder: "Ej: Animales para vacunación del 15 de octubre",
+    category: "Categoría",
+    categoryPlaceholder: "Seleccionar categoría",
+    categories: {
+      vaccination: "Vacunación",
+      treatment: "Tratamiento",
+      transport: "Transporte",
+      sale: "Venta",
+      other: "Otro"
+    },
+    animals: "Selección de Animales",
+    searchAnimals: "Buscar animales...",
+    noAnimals: "No hay animales disponibles.",
+    selectedCount: "Seleccionados:",
+    selectAll: "Seleccionar todos",
+    unselectAll: "Deseleccionar todos",
+    save: "Guardar Cambios",
+    saving: "Guardando...",
+    cancel: "Cancelar",
+    success: "Listado Actualizado",
+    successMessage: "El listado ha sido actualizado correctamente.",
+    error: "Error al actualizar el listado.",
+    required: "Este campo es obligatorio.",
+    back: "Volver a Listados",
+    loading: "Cargando datos del listado..."
+  },
+  ca: {
+    title: "Editar Llistat",
+    description: "Modifica els detalls del llistat i els animals inclosos.",
+    name: "Nom del llistat",
+    namePlaceholder: "Ex: Vacunació octubre 2025",
+    description: "Descripció",
+    descriptionPlaceholder: "Ex: Animals per a vacunació del 15 d'octubre",
+    category: "Categoria",
+    categoryPlaceholder: "Seleccionar categoria",
+    categories: {
+      vaccination: "Vacunació",
+      treatment: "Tractament",
+      transport: "Transport",
+      sale: "Venda",
+      other: "Altre"
+    },
+    animals: "Selecció d'Animals",
+    searchAnimals: "Cercar animals...",
+    noAnimals: "No hi ha animals disponibles.",
+    selectedCount: "Seleccionats:",
+    selectAll: "Seleccionar tots",
+    unselectAll: "Deseleccionar tots",
+    save: "Guardar Canvis",
+    saving: "Guardant...",
+    cancel: "Cancel·lar",
+    success: "Llistat Actualitzat",
+    successMessage: "El llistat ha estat actualitzat correctament.",
+    error: "Error al actualitzar el llistat.",
+    required: "Aquest camp és obligatori.",
+    back: "Tornar a Llistats",
+    loading: "Carregant dades del llistat..."
+  }
+};
+
+// Función para traducir (simplificada)
+function t(key) {
+  return translations[currentLang][key] || key;
+}
+
+// Función para traducir claves anidadas (simplificada)
+function tNested(parent, key) {
+  if (translations[currentLang] && translations[currentLang][parent] && translations[currentLang][parent][key]) {
+    return translations[currentLang][parent][key];
+  }
+  return key;
+}
+---
+
+<MainLayout title={t('title')}>
+  <div class="px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
+      <p class="mt-2 text-sm text-gray-700">{t('description')}</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+      <div class="p-4">
+        <!-- Mensaje de carga inicial -->
+        <div id="loading-message" class="py-8 flex justify-center">
+          <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <p class="mt-2 text-sm text-gray-500">{t('loading')}</p>
+          </div>
+        </div>
+
+        <!-- Formulario para editar listado (inicialmente oculto) -->
+        <form id="listado-form" class="space-y-6 hidden">
+          <!-- Información básica del listado -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <!-- Nombre del listado -->
+            <div>
+              <label for="listado-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('name')} <span class="text-red-500">*</span>
+              </label>
+              <div class="mt-1">
+                <input
+                  type="text"
+                  name="name"
+                  id="listado-name"
+                  class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder={t('namePlaceholder')}
+                  required
+                />
+              </div>
+              <p id="name-error" class="mt-1 text-sm text-red-600 hidden">{t('required')}</p>
+            </div>
+            
+            <!-- Categoría -->
+            <div>
+              <label for="listado-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('category')}
+              </label>
+              <div class="mt-1">
+                <select
+                  id="listado-category"
+                  name="category"
+                  class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="">{t('categoryPlaceholder')}</option>
+                  <option value="vaccination">{tNested('categories', 'vaccination')}</option>
+                  <option value="treatment">{tNested('categories', 'treatment')}</option>
+                  <option value="transport">{tNested('categories', 'transport')}</option>
+                  <option value="sale">{tNested('categories', 'sale')}</option>
+                  <option value="other">{tNested('categories', 'other')}</option>
+                </select>
+              </div>
+              <p id="category-error" class="mt-1 text-sm text-red-600 hidden">{t('required')}</p>
+            </div>
+          </div>
+          
+          <!-- Descripción -->
+          <div>
+            <label for="listado-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('description')}
+            </label>
+            <div class="mt-1">
+              <textarea
+                id="listado-description"
+                name="description"
+                rows="3"
+                class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder={t('descriptionPlaceholder')}
+              ></textarea>
+            </div>
+          </div>
+          
+          <!-- Selección de animales -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-3">{t('animals')}</h3>
+            
+            <!-- Estado de carga de animales -->
+            <div id="loading-animals" class="py-8 flex justify-center">
+              <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                <p class="mt-2 text-sm text-gray-500">{t('loading')}</p>
+              </div>
+            </div>
+            
+            <!-- Mensaje si no hay animales -->
+            <div id="no-animals" class="py-8 text-center hidden">
+              <p class="text-gray-500">{t('noAnimals')}</p>
+            </div>
+            
+            <!-- Contenedor de animales -->
+            <div id="animals-container" class="hidden">
+              <!-- Barra de búsqueda y filtros -->
+              <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div class="w-full sm:w-64 mb-3 sm:mb-0">
+                  <input
+                    type="text"
+                    id="animal-filter"
+                    placeholder={t('searchAnimals')}
+                    class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                  <button
+                    type="button"
+                    id="select-all"
+                    class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                  >
+                    {t('selectAll')}
+                  </button>
+                  <button
+                    type="button"
+                    id="unselect-all"
+                    class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                  >
+                    {t('unselectAll')}
+                  </button>
+                  <span class="text-sm text-gray-500">
+                    {t('selectedCount')} <span id="selected-count">0</span>
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Lista de animales -->
+              <div id="animals-list" class="border border-gray-200 rounded-md dark:border-gray-700 max-h-96 overflow-y-auto">
+                <!-- Los animales se cargarán con JavaScript -->
+              </div>
+              
+              <p id="animals-error" class="mt-1 text-sm text-red-600 hidden">Selecciona al menos un animal.</p>
+            </div>
+          </div>
+          
+          <!-- Mensaje de éxito -->
+          <div id="success-message" class="rounded-md bg-green-50 p-4 hidden">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-green-800">{t('success')}</h3>
+                <div class="mt-2 text-sm text-green-700">
+                  <p>{t('successMessage')}</p>
+                </div>
+                <div class="mt-4">
+                  <div class="-mx-2 -my-1.5 flex">
+                    <a href="/listados" class="px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                      {t('back')}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mensaje de error -->
+          <div id="error-message" class="rounded-md bg-red-50 p-4 hidden">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">{t('error')}</h3>
+                <div class="mt-2 text-sm text-red-700" id="error-details">
+                  <!-- Detalles del error se mostrarán aquí -->
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botones de acción -->
+          <div class="flex justify-end space-x-3">
+            <a href="/listados" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+              {t('cancel')}
+            </a>
+            <button
+              type="submit"
+              id="save-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              {t('save')}
+            </button>
+            <button
+              type="button"
+              id="saving-button"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hidden"
+              disabled
+            >
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {t('saving')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  // Importar el servicio específico para listados (usando nuestro servicio seguro)
+  import listadosService from '../../../services/listados-service';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Obtener el ID del listado de la URL
+    const urlParts = window.location.pathname.split('/');
+    const listadoId = urlParts[urlParts.length - 1];
+    
+    // Referencias a elementos del DOM
+    const form = document.getElementById('listado-form');
+    const nameInput = document.getElementById('listado-name');
+    const categorySelect = document.getElementById('listado-category');
+    const descriptionTextarea = document.getElementById('listado-description');
+    const loadingMessage = document.getElementById('loading-message');
+    const loadingAnimals = document.getElementById('loading-animals');
+    const noAnimals = document.getElementById('no-animals');
+    const animalsList = document.getElementById('animals-list');
+    const animalsContainer = document.getElementById('animals-container');
+    const animalFilter = document.getElementById('animal-filter');
+    const selectedCount = document.getElementById('selected-count');
+    const selectAllBtn = document.getElementById('select-all');
+    const unselectAllBtn = document.getElementById('unselect-all');
+    const saveButton = document.getElementById('save-button');
+    const savingButton = document.getElementById('saving-button');
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
+    const nameError = document.getElementById('name-error');
+    const categoryError = document.getElementById('category-error');
+    const animalsError = document.getElementById('animals-error');
+    
+    // Variable para almacenar los animales y el listado actual
+    let animals = [];
+    let currentListado = null;
+    let selectedAnimals = [];
+    
+    // Función para actualizar el contador de seleccionados
+    const updateSelectedCount = () => {
+      const checkboxes = document.querySelectorAll('.animal-checkbox:checked');
+      selectedCount.textContent = checkboxes.length;
+      
+      // Actualizar la lista de IDs seleccionados
+      selectedAnimals = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+    };
+    
+    // Función para filtrar animales
+    const filterAnimals = () => {
+      const filterText = animalFilter.value.toLowerCase();
+      const items = document.querySelectorAll('.animal-item');
+      
+      items.forEach(item => {
+        const name = item.dataset.name?.toLowerCase() || '';
+        const explotacion = item.dataset.explotacion?.toLowerCase() || '';
+        
+        if (name.includes(filterText) || explotacion.includes(filterText)) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    };
+    
+    // Cargar los datos del listado
+    try {
+      // Obtener el listado
+      currentListado = await listadosService.getListado(listadoId);
+      
+      if (currentListado) {
+        // Rellenar el formulario con los datos del listado
+        if (nameInput) nameInput.value = currentListado.nombre || '';
+        if (categorySelect) categorySelect.value = currentListado.categoria || '';
+        if (descriptionTextarea) descriptionTextarea.value = currentListado.descripcion || '';
+        
+        // Guardar los IDs de animales seleccionados
+        selectedAnimals = currentListado.animales?.map(animal => animal.id) || [];
+        
+        // Cargar los animales disponibles
+        await loadAnimals();
+        
+        // Mostrar el formulario y ocultar el mensaje de carga
+        if (loadingMessage) loadingMessage.classList.add('hidden');
+        if (form) form.classList.remove('hidden');
+      } else {
+        throw new Error('No se pudo cargar el listado');
+      }
+    } catch (error) {
+      console.error('Error al cargar el listado:', error);
+      if (loadingMessage) {
+        loadingMessage.innerHTML = '<p class="text-red-500">Error al cargar el listado. Por favor, intenta nuevamente.</p>';
+      }
+    }
+    
+    // Función para cargar los animales
+    async function loadAnimals() {
+      if (!animalsContainer || !loadingAnimals || !noAnimals || !animalsList) return;
+      
+      try {
+        // Mostrar estado de carga
+        loadingAnimals.classList.remove('hidden');
+        noAnimals.classList.add('hidden');
+        animalsList.classList.add('hidden');
+
+        // Obtener animales del servicio
+        animals = await listadosService.getAnimals();
+        
+        if (animals.length === 0) {
+          loadingAnimals.classList.add('hidden');
+          noAnimals.classList.remove('hidden');
+        } else {
+          loadingAnimals.classList.add('hidden');
+          animalsList.classList.remove('hidden');
+          animalsContainer.classList.remove('hidden');
+          
+          // Crear elementos para cada animal
+          animals.forEach(animal => {
+            const item = document.createElement('div');
+            item.className = 'animal-item flex items-center px-4 py-2 hover:bg-gray-50';
+            item.dataset.name = animal.nom || '';
+            item.dataset.explotacion = animal.explotacio || '';
+            
+            // Solo mostrar animales activos (estado = OK)
+            if (animal.estado === 'OK') {
+              // Verificar si el animal está en el listado actual
+              const isSelected = selectedAnimals.includes(animal.id);
+              
+              item.innerHTML = `
+                <input 
+                  type="checkbox" 
+                  id="animal-${animal.id}" 
+                  name="animals" 
+                  value="${animal.id}" 
+                  class="animal-checkbox h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  ${isSelected ? 'checked' : ''}
+                >
+                <label for="animal-${animal.id}" class="ml-3 flex-1 cursor-pointer">
+                  <div class="font-medium text-gray-800">${animal.nom || ''}</div>
+                  <div class="text-sm text-gray-500">
+                    ${animal.explotacio || ''} · 
+                    ${animal.genere === 'M' ? 'Toro' : 'Vaca'}
+                    ${animal.genere === 'F' && animal.alletar ? ` · Alletar: ${animal.alletar}` : ''}
+                  </div>
+                </label>
+              `;
+              
+              animalsList.appendChild(item);
+              
+              // Agregar evento al checkbox
+              const checkbox = item.querySelector('.animal-checkbox');
+              checkbox.addEventListener('change', updateSelectedCount);
+            }
+          });
+          
+          // Inicializar contador
+          updateSelectedCount();
+        }
+      } catch (error) {
+        console.error('Error al cargar animales:', error);
+        loadingAnimals.classList.add('hidden');
+        noAnimals.classList.remove('hidden');
+        noAnimals.innerHTML = '<p class="text-red-500">Error al cargar los animales. Por favor, intenta nuevamente.</p>';
+      }
+    }
+    
+    // Eventos para los botones de selección
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.animal-checkbox:not(:checked)');
+        checkboxes.forEach(checkbox => {
+          if (!checkbox.closest('.animal-item').classList.contains('hidden')) {
+            checkbox.checked = true;
+          }
+        });
+        updateSelectedCount();
+      });
+    }
+    
+    if (unselectAllBtn) {
+      unselectAllBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.animal-checkbox:checked');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        updateSelectedCount();
+      });
+    }
+    
+    // Evento para el filtro de animales
+    if (animalFilter) {
+      animalFilter.addEventListener('input', filterAnimals);
+    }
+    
+    // Evento para el formulario
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Validar el formulario
+        let isValid = true;
+        
+        // Validar nombre (obligatorio)
+        if (!nameInput.value.trim()) {
+          nameError.classList.remove('hidden');
+          isValid = false;
+        } else {
+          nameError.classList.add('hidden');
+        }
+        
+        // Validar que haya al menos un animal seleccionado
+        if (selectedAnimals.length === 0) {
+          animalsError.classList.remove('hidden');
+          isValid = false;
+        } else {
+          animalsError.classList.add('hidden');
+        }
+        
+        if (!isValid) return;
+        
+        // Mostrar estado de guardado
+        saveButton.classList.add('hidden');
+        savingButton.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        errorMessage.classList.add('hidden');
+        
+        try {
+          // Crear objeto con los datos del formulario
+          const formData = {
+            id: parseInt(listadoId),
+            nombre: nameInput.value.trim(),
+            categoria: categorySelect.value,
+            descripcion: descriptionTextarea.value.trim(),
+            animales: selectedAnimals
+          };
+          
+          // Enviar datos al servidor
+          const updatedListado = await listadosService.updateListado(listadoId, formData);
+          
+          // Mostrar mensaje de éxito
+          successMessage.classList.remove('hidden');
+          
+          // Ocultar formulario
+          form.querySelectorAll('input, select, textarea, button').forEach(el => {
+            if (el.type !== 'submit') {
+              el.disabled = true;
+            }
+          });
+          
+          // Scroll al mensaje de éxito
+          successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Redirigir a la página principal de listados después de 1.5 segundos
+          setTimeout(() => {
+            window.location.href = '/listados';
+          }, 1500);
+        } catch (error) {
+          console.error('Error al actualizar listado:', error);
+          errorMessage.classList.remove('hidden');
+          saveButton.classList.remove('hidden');
+          savingButton.classList.add('hidden');
+          // Hacer scroll al mensaje de error
+          errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+  });
+</script>

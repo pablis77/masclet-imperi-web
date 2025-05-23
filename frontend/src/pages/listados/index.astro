@@ -1,7 +1,5 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Card from '../../components/ui/Card.astro';
-import PageTitle from '../../components/ui/PageTitle.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 import { getCurrentLanguage } from '../../i18n/config';
 
 // Obtener el idioma actual
@@ -23,7 +21,7 @@ const translations = {
     edit: "Editar",
     delete: "Eliminar",
     confirmDelete: "¿Estás seguro de que quieres eliminar este listado?",
-    export: "Exportar",
+    "export": "Exportar",
     table: {
       name: "Nombre",
       category: "Categoría",
@@ -46,7 +44,7 @@ const translations = {
     edit: "Editar",
     delete: "Eliminar",
     confirmDelete: "Estàs segur que vols eliminar aquest llistat?",
-    export: "Exportar",
+    "export": "Exportar",
     table: {
       name: "Nom",
       category: "Categoria",
@@ -57,22 +55,25 @@ const translations = {
   }
 };
 
-// Función para traducir
-const t = (key) => {
-  return translations[currentLang]?.[key] || key;
-};
+// Función para traducir (simplificada)
+function t(key) {
+  return translations[currentLang][key] || key;
+}
 
-// Función para traducir claves anidadas
-const tNested = (parent, key) => {
-  return translations[currentLang]?.[parent]?.[key] || key;
-};
+// Función para traducir claves anidadas (simplificada)
+function tNested(parent, key) {
+  if (translations[currentLang] && translations[currentLang][parent] && translations[currentLang][parent][key]) {
+    return translations[currentLang][parent][key];
+  }
+  return key;
+}
 ---
 
-<BaseLayout title={t('title')}>
+<MainLayout title={t('title')}>
   <div class="px-4 py-6 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center mb-6">
       <div class="sm:flex-auto">
-        <PageTitle title={t('title')} />
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
         <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
           {t('description')}
         </p>
@@ -80,14 +81,15 @@ const tNested = (parent, key) => {
       <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
         <a 
           href="/listados/nuevo" 
-          class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
+          class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+          style="display: block; padding: 10px 16px; font-size: 16px; font-weight: bold;"
         >
-          {t('create')}
+          Crear Nuevo Listado
         </a>
       </div>
     </div>
 
-    <Card>
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
       <div class="overflow-x-auto">
         <div id="listados-container" class="min-h-[300px] flex items-center justify-center">
           <p id="loading-message" class="text-gray-500">
@@ -145,13 +147,13 @@ const tNested = (parent, key) => {
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   </div>
-</BaseLayout>
+</MainLayout>
 
 <script>
-  // Importar el servicio de listados
-  import listadosService from '../../services/listadosService';
+  // Importar el servicio de listados (usando nuestro servicio seguro y separado)
+  import listadosService from '../../services/listados-service';
   
   // Script para cargar los listados desde la API
   document.addEventListener('DOMContentLoaded', async () => {
@@ -178,7 +180,7 @@ const tNested = (parent, key) => {
         view: "Ver",
         edit: "Editar",
         delete: "Eliminar",
-        export: "Exportar",
+        "export": "Exportar",
         confirmDelete: "¿Estás seguro de que quieres eliminar este listado?",
         error: "Error al cargar los listados.",
         dateFormat: {
@@ -191,7 +193,7 @@ const tNested = (parent, key) => {
         view: "Veure",
         edit: "Editar",
         delete: "Eliminar",
-        export: "Exportar",
+        "export": "Exportar",
         confirmDelete: "Estàs segur que vols eliminar aquest llistat?",
         error: "Error al carregar els llistats.",
         dateFormat: {
@@ -208,7 +210,7 @@ const tNested = (parent, key) => {
     };
 
     try {
-      // Cargar los listados usando el servicio
+      // Cargar los listados usando nuestro servicio seguro
       const listados = await listadosService.getListados();
 
       // Ocultar mensaje de carga

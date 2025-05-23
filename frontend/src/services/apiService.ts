@@ -1,3 +1,20 @@
+/**
+ * ¡¡¡ADVERTENCIA!!! - NO MODIFICAR ESTE ARCHIVO
+ * ========================================
+ * 
+ * Este archivo es CRÍTICO para el funcionamiento de toda la aplicación.
+ * Modificarlo puede romper la conexión entre frontend y backend.
+ * 
+ * REGLAS ESTRICTAS:
+ * 1. NUNCA modificar este archivo directamente - crear servicios independientes si es necesario
+ * 2. NUNCA cambiar la estructura existente de llamadas API que funcionan
+ * 3. NUNCA tocar la configuración de conexión, URLs base o los interceptors
+ * 4. Si necesitas implementar nuevas funcionalidades, hazlo en archivos separados
+ * 
+ * Si aparecen errores como "ERR_NETWORK_CHANGED" o problemas de CORS tras modificaciones,
+ * restaurar inmediatamente este archivo y revisar la configuración CORS en backend/app/main.py
+ */
+
 import axios from 'axios';
 
 // Constantes de entorno

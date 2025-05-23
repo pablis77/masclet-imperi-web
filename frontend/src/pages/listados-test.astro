@@ -1,0 +1,115 @@
+---
+import DefaultLayout from '../layouts/DefaultLayout.astro';
+import Card from '../components/ui/Card.astro';
+import PageTitle from '../components/ui/PageTitle.astro';
+---
+
+<DefaultLayout title="Test de Listados">
+  <div class="px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+      <PageTitle title="Test de Listados" />
+      <p class="mt-2 text-sm text-gray-700">Esta página comprueba la conexión con el endpoint de listados.</p>
+    </div>
+
+    <Card>
+      <div class="p-4">
+        <div id="loading-message" class="flex justify-center py-8">
+          <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <p class="mt-2 text-sm text-gray-500">Probando conexión con el endpoint de listados...</p>
+          </div>
+        </div>
+
+        <div id="error-message" class="hidden text-center py-8">
+          <div class="text-red-500">
+            <p class="text-lg font-semibold">Error al conectar con el endpoint</p>
+            <p id="error-details" class="mt-2"></p>
+          </div>
+        </div>
+
+        <div id="success-message" class="hidden text-center py-8">
+          <div class="text-green-500">
+            <p class="text-lg font-semibold">¡Conexión exitosa!</p>
+            <p class="mt-2">El endpoint de listados está funcionando correctamente.</p>
+          </div>
+        </div>
+
+        <div id="result-container" class="hidden mt-4">
+          <h3 class="text-lg font-medium text-gray-900">Respuesta del servidor:</h3>
+          <pre id="result-content" class="mt-2 p-4 bg-gray-100 rounded-md overflow-auto max-h-96 text-sm"></pre>
+        </div>
+      </div>
+    </Card>
+  </div>
+</DefaultLayout>
+
+<script>
+  // Importamos el servicio API general para probar la conexión directamente
+  import apiService from '../services/apiService';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const loadingMessage = document.getElementById('loading-message');
+    const errorMessage = document.getElementById('error-message');
+    const errorDetails = document.getElementById('error-details');
+    const successMessage = document.getElementById('success-message');
+    const resultContainer = document.getElementById('result-container');
+    const resultContent = document.getElementById('result-content');
+
+    // Funciones para mostrar diferentes estados
+    const showError = (message) => {
+      loadingMessage.classList.add('hidden');
+      errorMessage.classList.remove('hidden');
+      errorDetails.textContent = message;
+    };
+
+    const showSuccess = (data) => {
+      loadingMessage.classList.add('hidden');
+      successMessage.classList.remove('hidden');
+      
+      if (data) {
+        resultContainer.classList.remove('hidden');
+        resultContent.textContent = JSON.stringify(data, null, 2);
+      }
+    };
+
+    // Probar la conexión con diferentes variaciones del endpoint
+    try {
+      // Intento 1: Llamada normal al endpoint (con barra diagonal final)
+      console.log('Intento 1: Probando endpoint con barra diagonal final (/listados/)');
+      try {
+        const response1 = await apiService.get('listados/');
+        console.log('Respuesta 1:', response1);
+        showSuccess(response1);
+        return;
+      } catch (error1) {
+        console.error('Error en intento 1:', error1);
+        
+        // Intento 2: Llamada sin barra diagonal final
+        console.log('Intento 2: Probando endpoint sin barra diagonal final (/listados)');
+        try {
+          const response2 = await apiService.get('listados');
+          console.log('Respuesta 2:', response2);
+          showSuccess(response2);
+          return;
+        } catch (error2) {
+          console.error('Error en intento 2:', error2);
+          
+          // Intento 3: Llamada con ?skip=0&limit=10
+          console.log('Intento 3: Probando endpoint con parámetros (/listados/?skip=0&limit=10)');
+          try {
+            const response3 = await apiService.get('listados/?skip=0&limit=10');
+            console.log('Respuesta 3:', response3);
+            showSuccess(response3);
+            return;
+          } catch (error3) {
+            console.error('Error en intento 3:', error3);
+            showError(`Error en todos los intentos de conexión. Revise la consola para más detalles.`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error general:', error);
+      showError(`Error general: ${error.message || 'Sin detalles'}`);
+    }
+  });
+</script>
