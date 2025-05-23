@@ -545,21 +545,60 @@ const ExplotacionesPage: React.FC = () => {
       ? `Llistat d'Animals - ${currentExplotacion}`
       : `Listado de Animales - ${currentExplotacion}`;
     
-    const headers = currentLang === 'ca' 
-      ? [['ID', 'Nom', 'Gènere', 'Estat', 'Data Naixement', 'Alletant']]
-      : [['ID', 'Nombre', 'Género', 'Estado', 'Fecha Nacimiento', 'Amamantando']];
+    const columns = [
+      currentLang === 'ca' ? 'Codi' : 'Código',
+      currentLang === 'ca' ? 'Nom' : 'Nombre',
+      currentLang === 'ca' ? 'Gènere' : 'Género',
+      currentLang === 'ca' ? 'Estat' : 'Estado',
+      currentLang === 'ca' ? 'Data Naixement' : 'Fecha Nacimiento',
+      currentLang === 'ca' ? 'Alletant' : 'Amamantando',
+    ];
     
-    // Preparar los datos para la tabla
-    const data = filteredAnimals.map(animal => [
-      animal.id,
+    // Ordenar los animales por categorías:
+    // 1. Activos primero (y dentro de activos: toros, vacas amamantando, vacas no amamantando)
+    // 2. Fallecidos al final
+    const sortedAnimals = [...filteredAnimals].sort((a, b) => {
+      // Primero por estado (activos antes que fallecidos)
+      if (a.estado !== b.estado) {
+        return a.estado === 'OK' ? -1 : 1;
+      }
+      
+      // Dentro de cada estado, ordenar por género (toros primero)
+      if (a.genere !== b.genere) {
+        return a.genere === 'M' ? -1 : 1;
+      }
+      
+      // Para las vacas (F), ordenar por amamantando
+      if (a.genere === 'F') {
+        const aAlletar = a.alletar ? Number(a.alletar) : 0;
+        const bAlletar = b.alletar ? Number(b.alletar) : 0;
+        if (aAlletar !== bAlletar) {
+          return bAlletar - aAlletar; // Las que amamantan más primero
+        }
+      }
+      
+      // Si todo lo demás es igual, ordenar por nombre
+      return a.nom.localeCompare(b.nom);
+    });
+    
+    // Preparar los datos de animales
+    const data = sortedAnimals.map(animal => [
+      animal.codi || 'N/A', // Usamos el código en lugar del ID
       animal.nom,
-      animal.genere === 'M' ? (currentLang === 'ca' ? 'Toro' : 'Toro') : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
-      animal.estado === 'OK' ? (currentLang === 'ca' ? 'Actiu' : 'Activo') : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
-      animal.dob || (currentLang === 'ca' ? 'No disponible' : 'No disponible'),
-      animal.genere === 'F' ? 
-        (animal.alletar === '1' ? (currentLang === 'ca' ? '1 vedell' : '1 ternero') : 
-        animal.alletar === '2' ? (currentLang === 'ca' ? '2 vedells' : '2 terneros') : 
-        (currentLang === 'ca' ? 'Sense alletar' : 'No amamantando')) : 'N/A'
+      animal.genere === 'M' 
+        ? (currentLang === 'ca' ? 'Toro' : 'Toro') 
+        : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
+      animal.estado === 'OK' 
+        ? (currentLang === 'ca' ? 'Actiu' : 'Activo') 
+        : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
+      animal.dob ? new Date(animal.dob).toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES') : 'N/A',
+      animal.genere === 'F' 
+        ? (['1', 1].includes(animal.alletar as any) 
+            ? (currentLang === 'ca' ? '1 vedell' : '1 ternero')
+            : ['2', 2].includes(animal.alletar as any) 
+              ? (currentLang === 'ca' ? '2 vedells' : '2 terneros')
+              : 'N/A')
+        : 'N/A'
     ]);
     
     // Añadir una cabecera atractiva al PDF
@@ -576,52 +615,126 @@ const ExplotacionesPage: React.FC = () => {
       195, 20, { align: 'right' }
     );
     
-    // Añadir logo/ícono de animal (dibujo básico de un toro/vaca usando gráficos vectoriales)
-    doc.setDrawColor(0);
-    doc.setFillColor(65, 105, 225); // Color azul para el icono
+    // Añadir logo oficial de Masclet Imperi
+    try {
+      // Intentamos cargar el logo oficial desde una imagen base64
+      // Nota: Esta línea requiere que la imagen exista en la ruta especificada
+      // La ruta es relativa a la ubicación desde donde se sirve la aplicación
+      const logoUrl = '/images/logo_masclet.png';
+      
+      // Mantenemos el ratio original de la imagen
+      // Tamaño base para el ancho
+      const logoWidth = 40;
+      // La altura se calcula en función del ratio cuando la imagen cargue
+      let logoHeight = 30; // Valor por defecto
+      
+      // Intentamos obtener las dimensiones reales para mantener el ratio
+      const img = new Image();
+      img.onload = function() {
+        // Cuando la imagen carga, calculamos la altura proporcional
+        const ratio = img.height / img.width;
+        logoHeight = logoWidth * ratio;
+      };
+      img.src = logoUrl;
+      
+      // Añadir la imagen al PDF (ajustamos posición y mantenemos ratio)
+      doc.addImage(logoUrl, 'PNG', 15, 8, logoWidth, logoHeight);
+    } catch (error) {
+      console.error('Error al cargar el logo:', error);
+      
+      // Si hay error, usamos el logo alternativo (rectángulo verde)
+      doc.setDrawColor(0);
+      doc.setFillColor(126, 211, 33); // Color verde lima corporativo
+      
+      const logoX = 30;
+      const logoY = 25;
+      const logoSize = 15;
+      
+      // Dibujamos un cuadrado redondeado como fondo del logo
+      doc.roundedRect(logoX - logoSize/2, logoY - logoSize/2, logoSize, logoSize, 2, 2, 'F');
+      
+      // Dibujamos la "M" de Masclet en blanco
+      doc.setDrawColor(255);
+      doc.setTextColor(255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('M', logoX - 5, logoY + 5, { align: 'center' });
+    }
     
-    // Dibujar silueta simple de animal (círculo para la cabeza y óvalo para el cuerpo)
-    doc.circle(30, 25, 5, 'F'); // Cabeza
-    doc.ellipse(40, 25, 10, 5, 'F'); // Cuerpo
-    
-    // Añadir cuernos si corresponde (para darle más estilo)
-    doc.setLineWidth(0.5);
-    doc.line(27, 21, 25, 19); // Cuerno izquierdo
-    doc.line(33, 21, 35, 19); // Cuerno derecho
-    
-    // Añadir estadísticas resumen
+    // Añadir estadísticas resumen similar a la tarjeta de explotaciones
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
     
-    const statTitles = currentLang === 'ca' 
-      ? ['Total Animals:', 'Toros:', 'Vaques:', 'Alletant:']
-      : ['Total Animales:', 'Toros:', 'Vacas:', 'Amamantando:'];
-      
-    const stats = [
-      filteredAnimals.length,
-      filteredAnimals.filter(a => a.genere === 'M').length,
-      filteredAnimals.filter(a => a.genere === 'F').length,
-      filteredAnimals.filter(a => a.genere === 'F' && ['1', 1, '2', 2].includes(a.alletar as any)).length
-    ];
+    // Calcular estadísticas detalladas para coincidan con el formato de las tarjetas
+    const totalAnimales = filteredAnimals.length;
+    const animalesActivos = filteredAnimals.filter(a => a.estado === 'OK').length;
+    const torosActivos = filteredAnimals.filter(a => a.genere === 'M' && a.estado === 'OK').length;
+    const vacasActivas = filteredAnimals.filter(a => a.genere === 'F' && a.estado === 'OK').length;
+    const terneros = filteredAnimals.filter(a => 
+      a.genere === 'F' && ['1', 1, '2', 2].includes(a.alletar as any)
+    ).reduce((total, animal) => {
+      const alletar = String(animal.alletar);
+      return total + (alletar === '1' ? 1 : alletar === '2' ? 2 : 0);
+    }, 0);
+    const amamantando = filteredAnimals.filter(a => 
+      a.genere === 'F' && ['1', 1, '2', 2].includes(a.alletar as any)
+    ).length;
     
-    let yPosition = 40;
-    for (let i = 0; i < statTitles.length; i++) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(statTitles[i], 20, yPosition);
-      doc.setFont('helvetica', 'normal');
-      doc.text(stats[i].toString(), 60, yPosition);
-      yPosition += 7;
-    }
+    // Crear estructura de dos columnas para la primera fila (Total y Activos)
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(20, 40, 170, 15, 2, 2, 'F');
+    
+    // Títulos de las columnas
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 80, 80);
+    doc.text(currentLang === 'ca' ? 'Total Animals' : 'Total Animales', 60, 46, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Animals Actius' : 'Animales Activos', 150, 46, { align: 'center' });
+    
+    // Valores de las columnas
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text(totalAnimales.toString(), 60, 52, { align: 'center' });
+    doc.setTextColor(34, 139, 34); // Verde para animales activos
+    doc.text(animalesActivos.toString(), 150, 52, { align: 'center' });
+    
+    // Segunda fila - Tres columnas (Toros, Vacas, Terneros)
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(20, 60, 170, 15, 2, 2, 'F');
+    
+    // Títulos
+    doc.setFontSize(12);
+    doc.setTextColor(80, 80, 80);
+    doc.text(currentLang === 'ca' ? 'Toros Actius' : 'Toros Activos', 55, 66, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Vaques Actives' : 'Vacas Activas', 105, 66, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Vedells' : 'Terneros', 155, 66, { align: 'center' });
+    
+    // Valores
+    doc.setTextColor(51, 102, 204); // Azul para toros
+    doc.text(torosActivos.toString(), 55, 72, { align: 'center' });
+    doc.setTextColor(233, 30, 99); // Rosa para vacas
+    doc.text(vacasActivas.toString(), 105, 72, { align: 'center' });
+    doc.setTextColor(255, 152, 0); // Naranja para terneros
+    doc.text(terneros.toString(), 155, 72, { align: 'center' });
+    
+    // Tercera fila - Amamantando
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(20, 80, 80, 15, 2, 2, 'F');
+    
+    // Título y valor
+    doc.setTextColor(80, 80, 80);
+    doc.text(currentLang === 'ca' ? 'Alletant' : 'Amamantando', 40, 86, { align: 'center' });
+    doc.setTextColor(3, 169, 244); // Azul para amamantando
+    doc.text(amamantando.toString(), 70, 86, { align: 'center' });
     
     // Añadir tabla de animales usando jspdf-autotable
     autoTable(doc, {
-      head: headers,
+      head: [columns],
       body: data,
-      startY: 70,
+      startY: 105, // Ajustamos el inicio de la tabla para dejar espacio al resumen mejorado
       theme: 'grid',
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { 
-        fillColor: [65, 105, 225], 
+        fillColor: [126, 211, 33], // Color verde lima corporativo
         textColor: 255,
         fontStyle: 'bold' 
       },
