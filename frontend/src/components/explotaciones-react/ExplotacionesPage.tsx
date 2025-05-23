@@ -581,64 +581,104 @@ const ExplotacionesPage: React.FC = () => {
       return a.nom.localeCompare(b.nom);
     });
     
-    // Preparar los datos de animales
-    const data = sortedAnimals.map(animal => [
-      animal.codi || 'N/A', // Usamos el código en lugar del ID
-      animal.nom,
-      animal.genere === 'M' 
-        ? (currentLang === 'ca' ? 'Toro' : 'Toro') 
-        : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
-      animal.estado === 'OK' 
-        ? (currentLang === 'ca' ? 'Actiu' : 'Activo') 
-        : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
-      animal.dob ? new Date(animal.dob).toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES') : 'N/A',
-      animal.genere === 'F' 
-        ? (['1', 1].includes(animal.alletar as any) 
-            ? (currentLang === 'ca' ? '1 vedell' : '1 ternero')
-            : ['2', 2].includes(animal.alletar as any) 
-              ? (currentLang === 'ca' ? '2 vedells' : '2 terneros')
-              : 'N/A')
-        : 'N/A'
-    ]);
+    // Preparar los datos de animales con manejo adecuado de fechas y códigos
+    const data = sortedAnimals.map(animal => {
+      // Para el código, usar preferentemente cod (campo oficial), luego id
+      let codigo = 'N/A';
+      if (animal.cod && animal.cod !== '') {
+        codigo = animal.cod;
+      } else if (animal.id) {
+        codigo = animal.id.toString();
+      }
+      
+      // Para la fecha, asegurarnos de que esté en formato español DD/MM/AAAA
+      let fechaNacimiento = 'N/A';
+      if (animal.dob) {
+        try {
+          // Intentar convertir la fecha
+          let fecha;
+          
+          // Primero ver si es un string con formato ya adecuado (DD/MM/AAAA)
+          if (typeof animal.dob === 'string' && animal.dob.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+            fechaNacimiento = animal.dob; // Ya tiene el formato correcto
+          } 
+          // Si es una fecha ISO o similar, convertirla al formato español
+          else {
+            fecha = new Date(animal.dob);
+            if (!isNaN(fecha.getTime())) {
+              // Formatear manualmente al formato DD/MM/AAAA
+              const dia = fecha.getDate().toString().padStart(2, '0');
+              const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+              const anio = fecha.getFullYear();
+              fechaNacimiento = `${dia}/${mes}/${anio}`;
+            } else {
+              // Si el formato no es reconocible, mostrarlo como está
+              fechaNacimiento = typeof animal.dob === 'string' ? animal.dob : 'N/A';
+            }
+          }
+        } catch (e) {
+          // Si hay error al convertir, mostramos el valor original
+          fechaNacimiento = typeof animal.dob === 'string' ? animal.dob : 'N/A';
+        }
+      }
+      
+      return [
+        codigo,
+        animal.nom,
+        animal.genere === 'M' 
+          ? (currentLang === 'ca' ? 'Toro' : 'Toro') 
+          : (currentLang === 'ca' ? 'Vaca' : 'Vaca'),
+        animal.estado === 'OK' 
+          ? (currentLang === 'ca' ? 'Actiu' : 'Activo') 
+          : (currentLang === 'ca' ? 'Mort' : 'Fallecido'),
+        fechaNacimiento,
+        animal.genere === 'F' 
+          ? (['1', 1].includes(animal.alletar as any) 
+              ? (currentLang === 'ca' ? '1 vedell' : '1 ternero')
+              : ['2', 2].includes(animal.alletar as any) 
+                ? (currentLang === 'ca' ? '2 vedells' : '2 terneros')
+                : 'N/A')
+          : 'N/A'
+      ];
+    });
     
-    // Añadir una cabecera atractiva al PDF
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text(title, 105, 15, { align: 'center' });
-    
-    // Añadir fecha
+    // Añadir fecha en la esquina superior derecha
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     const date = new Date().toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES');
     doc.text(
       currentLang === 'ca' ? `Data: ${date}` : `Fecha: ${date}`, 
-      195, 20, { align: 'right' }
+      195, 15, { align: 'right' }
     );
+    
+    // Definimos la posición inicial para el resumen (usada en todo el documento)
+    const logoY = 10; // Valor predeterminado por si falla la carga del logo
+    const logoHeight = 35; // Valor predeterminado por si falla la carga del logo
+    let resumenStartY = logoY + logoHeight + 20; // Posición inicial del resumen
     
     // Añadir logo oficial de Masclet Imperi
     try {
       // Intentamos cargar el logo oficial desde una imagen base64
-      // Nota: Esta línea requiere que la imagen exista en la ruta especificada
       // La ruta es relativa a la ubicación desde donde se sirve la aplicación
       const logoUrl = '/images/logo_masclet.png';
       
-      // Mantenemos el ratio original de la imagen
-      // Tamaño base para el ancho
-      const logoWidth = 40;
-      // La altura se calcula en función del ratio cuando la imagen cargue
-      let logoHeight = 30; // Valor por defecto
+      // Tamaño y posicionamiento del logo (centrado arriba)
+      const logoWidth = 45;
+      let logoHeight = 35;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const logoX = (pageWidth / 2) - (logoWidth / 2); // Centrado horizontalmente
+      const logoY = 10; // Margen superior
       
-      // Intentamos obtener las dimensiones reales para mantener el ratio
-      const img = new Image();
-      img.onload = function() {
-        // Cuando la imagen carga, calculamos la altura proporcional
-        const ratio = img.height / img.width;
-        logoHeight = logoWidth * ratio;
-      };
-      img.src = logoUrl;
+      // Añadir la imagen al PDF
+      doc.addImage(logoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
       
-      // Añadir la imagen al PDF (ajustamos posición y mantenemos ratio)
-      doc.addImage(logoUrl, 'PNG', 15, 8, logoWidth, logoHeight);
+      // Añadir el título debajo del logo (con más espacio para evitar que se tape)
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text(title, pageWidth / 2, logoY + logoHeight + 5, { align: 'center' });
+      
+      // Actualizamos la posición inicial del resumen con los valores reales del logo
+      resumenStartY = logoY + logoHeight + 20;
     } catch (error) {
       console.error('Error al cargar el logo:', error);
       
@@ -681,56 +721,58 @@ const ExplotacionesPage: React.FC = () => {
     ).length;
     
     // Crear estructura de dos columnas para la primera fila (Total y Activos)
+    // Reducimos ligeramente el tamaño para que quepa mejor
     doc.setFillColor(245, 245, 245);
-    doc.roundedRect(20, 40, 170, 15, 2, 2, 'F');
+    doc.roundedRect(30, resumenStartY, 150, 13, 2, 2, 'F');
     
     // Títulos de las columnas
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(80, 80, 80);
-    doc.text(currentLang === 'ca' ? 'Total Animals' : 'Total Animales', 60, 46, { align: 'center' });
-    doc.text(currentLang === 'ca' ? 'Animals Actius' : 'Animales Activos', 150, 46, { align: 'center' });
+    doc.setFontSize(11); // Reducimos un poco el tamaño
+    doc.text(currentLang === 'ca' ? 'Total Animals' : 'Total Animales', 65, resumenStartY + 5, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Animals Actius' : 'Animales Activos', 145, resumenStartY + 5, { align: 'center' });
     
     // Valores de las columnas
-    doc.setFontSize(14);
+    doc.setFontSize(13); // Reducimos un poco el tamaño
     doc.setTextColor(40, 40, 40);
-    doc.text(totalAnimales.toString(), 60, 52, { align: 'center' });
+    doc.text(totalAnimales.toString(), 65, resumenStartY + 10, { align: 'center' });
     doc.setTextColor(34, 139, 34); // Verde para animales activos
-    doc.text(animalesActivos.toString(), 150, 52, { align: 'center' });
+    doc.text(animalesActivos.toString(), 145, resumenStartY + 10, { align: 'center' });
     
     // Segunda fila - Tres columnas (Toros, Vacas, Terneros)
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(20, 60, 170, 15, 2, 2, 'F');
+    doc.roundedRect(30, resumenStartY + 15, 150, 13, 2, 2, 'F');
     
     // Títulos
-    doc.setFontSize(12);
+    doc.setFontSize(11); // Tamaño reducido
     doc.setTextColor(80, 80, 80);
-    doc.text(currentLang === 'ca' ? 'Toros Actius' : 'Toros Activos', 55, 66, { align: 'center' });
-    doc.text(currentLang === 'ca' ? 'Vaques Actives' : 'Vacas Activas', 105, 66, { align: 'center' });
-    doc.text(currentLang === 'ca' ? 'Vedells' : 'Terneros', 155, 66, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Toros Actius' : 'Toros Activos', 55, resumenStartY + 20, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Vaques Actives' : 'Vacas Activas', 105, resumenStartY + 20, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Vedells' : 'Terneros', 155, resumenStartY + 20, { align: 'center' });
     
     // Valores
     doc.setTextColor(51, 102, 204); // Azul para toros
-    doc.text(torosActivos.toString(), 55, 72, { align: 'center' });
+    doc.text(torosActivos.toString(), 55, resumenStartY + 25, { align: 'center' });
     doc.setTextColor(233, 30, 99); // Rosa para vacas
-    doc.text(vacasActivas.toString(), 105, 72, { align: 'center' });
+    doc.text(vacasActivas.toString(), 105, resumenStartY + 25, { align: 'center' });
     doc.setTextColor(255, 152, 0); // Naranja para terneros
-    doc.text(terneros.toString(), 155, 72, { align: 'center' });
+    doc.text(terneros.toString(), 155, resumenStartY + 25, { align: 'center' });
     
     // Tercera fila - Amamantando
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(20, 80, 80, 15, 2, 2, 'F');
+    doc.roundedRect(30, resumenStartY + 30, 70, 13, 2, 2, 'F');
     
     // Título y valor
     doc.setTextColor(80, 80, 80);
-    doc.text(currentLang === 'ca' ? 'Alletant' : 'Amamantando', 40, 86, { align: 'center' });
+    doc.text(currentLang === 'ca' ? 'Alletant' : 'Amamantando', 45, resumenStartY + 35, { align: 'center' });
     doc.setTextColor(3, 169, 244); // Azul para amamantando
-    doc.text(amamantando.toString(), 70, 86, { align: 'center' });
+    doc.text(amamantando.toString(), 75, resumenStartY + 35, { align: 'center' });
     
     // Añadir tabla de animales usando jspdf-autotable
     autoTable(doc, {
       head: [columns],
       body: data,
-      startY: 105, // Ajustamos el inicio de la tabla para dejar espacio al resumen mejorado
+      startY: resumenStartY + 50, // Ajustamos el inicio de la tabla para dejar espacio al resumen
       theme: 'grid',
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { 
