@@ -106,6 +106,7 @@ class Settings(BaseModel):
         "app.models.animal",  # Contiene Animal y Part
         "app.models.user", 
         "app.models.import_model",  # Modelo para historial de importaciones
+        "app.models.listado",  # Modelo para listados personalizados
         "aerich.models"  # Este es necesario para las migraciones
     ]
 
