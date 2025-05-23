@@ -64,11 +64,10 @@ export async function getAnimals() {
   try {
     console.log('Obteniendo animales desde el backend...');
     
-    // Ahora podemos obtener hasta 1000 animales en una sola petición
-    // Esto debería cubrir todas nuestras necesidades actuales y futuras
+    // Vamos a obtener todos los animales en lotes de 100
     const allAnimals: any[] = [];
     let offset = 0;
-    const limit = 1000; // Nuevo límite máximo permitido por el backend
+    const limit = 100;
     let hasMoreAnimals = true;
     
     // Hacer peticiones paginadas hasta obtener todos los animales
@@ -130,18 +129,6 @@ export async function updateListadoAnimales(id: string | number, animales: any[]
     return await apiService.put(`listados/${id}/animales`, { animales });
   } catch (error) {
     console.error(`Error al actualizar los animales del listado ${id}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Eliminar un listado por su ID
- */
-export async function deleteListado(id: string | number) {
-  try {
-    return await apiService.del(`listados/${id}`);
-  } catch (error) {
-    console.error(`Error al eliminar el listado ${id}:`, error);
     throw error;
   }
 }
