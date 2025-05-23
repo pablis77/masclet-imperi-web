@@ -1,0 +1,14 @@
+---
+// Card.astro - Componente puente para Card.tsx
+import Card from './Card';
+
+interface Props {
+  className?: string;
+}
+
+const { className = '' } = Astro.props;
+---
+
+<Card client:load className={className}>
+  <slot />
+</Card>

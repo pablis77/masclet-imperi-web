@@ -57,9 +57,15 @@ app = FastAPI(
     redoc_url="/api/v1/redoc",
 )
 
-# Configurar CORS para desarrollo
+# Configurar CORS para desarrollo - FORZAR ACEPTACIÓN DE TODAS LAS CONEXIONES
 origins = [
-    "*"  # En desarrollo, permitimos todos los orígenes
+    "*",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4321",
+    "http://127.0.0.1:4321",
+    "http://10.5.0.2:3000",
+    "http://192.168.1.147:3000"
 ]
 
 # Configuración de CORS simplificada
