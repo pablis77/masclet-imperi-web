@@ -185,9 +185,9 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
   <div class="mb-6">
-    <div class="flex items-center gap-2 mb-2">
-      <a href="/animals" id="back-to-list-link" class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
-        <span class="mr-1">←</span> {t('back_to_list')}
+    <div class="flex justify-center items-center gap-2 mb-2 mt-4">
+      <a href="/animals" id="back-to-list-link" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
+        <span class="mr-2">←</span> {t('back_to_animal_list')}
       </a>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
@@ -326,8 +326,14 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           <!-- Acciones -->
           <div class="flex flex-col gap-2">
             <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-              ↻ {t('update')}
+              ↻ Actualizar
             </a>
+            <button id="export-animal-pdf" class="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Exportar PDF
+            </button>
           </div>
         </div>
       </div>
@@ -461,12 +467,15 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                 </div>
               </div>
               
-              <!-- Botón Volver al listado al final de la pestaña Información -->
-              <div class="mt-6 text-center">
-                <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  <span class="mr-2">←</span> {t('back_to_animal_list')}
-                </a>
-              </div>
+            </div>
+          </div>
+          
+          <!-- Barra de ancho completo para el botón, separada de la sección anterior -->
+          <div class="w-full mt-8 py-4 border-t border-gray-100 dark:border-gray-700">
+            <div class="flex justify-center">
+              <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors shadow-md">
+                <span class="mr-2">←</span> {t('back_to_animal_list')}
+              </a>
             </div>
           </div>
 
@@ -626,10 +635,134 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   )}
 </MainLayout>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
 <script>
   // Script para manejar interacciones de la página y traducciones
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente cargado y analizado');
+    
+    // Configurar botón de exportar PDF
+    const exportPdfBtn = document.getElementById('export-animal-pdf');
+    if (exportPdfBtn) {
+      exportPdfBtn.addEventListener('click', exportAnimalToPDF);
+    }
+    
+    // Función para exportar ficha del animal a PDF
+    function exportAnimalToPDF() {
+      // Obtener los datos del animal
+      const animalName = document.querySelector('h2.text-2xl').textContent;
+      const animalId = document.getElementById('animal-id-text').textContent.split(':')[1].trim();
+      const currentLang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Crear el documento PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const autoTable = window.jspdf.jspdf ? window.jspdf.jspdf.autoTable : window.jspdf.autoTable;
+      
+      // Configurar título del documento
+      const title = currentLang === 'ca' ? `Fitxa d'Animal - ${animalName}` : `Ficha de Animal - ${animalName}`;
+      
+      // Añadir fecha en la esquina superior derecha
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const date = new Date().toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES');
+      doc.text(
+        currentLang === 'ca' ? `Data: ${date}` : `Fecha: ${date}`, 
+        195, 15, { align: 'right' }
+      );
+      
+      // Añadir logo oficial de Masclet Imperi
+      try {
+        // La ruta es relativa a la ubicación desde donde se sirve la aplicación
+        const logoUrl = '/images/logo_masclet.png';
+        
+        // Tamaño y posicionamiento del logo (centrado arriba)
+        const logoWidth = 45;
+        let logoHeight = 35;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const logoX = (pageWidth / 2) - (logoWidth / 2); // Centrado horizontalmente
+        const logoY = 10; // Margen superior
+        
+        // Añadir la imagen al PDF
+        doc.addImage(logoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        
+        // Añadir el título debajo del logo
+        doc.setFontSize(20);
+        doc.setTextColor(40, 40, 40);
+        doc.text(title, pageWidth / 2, logoY + logoHeight + 10, { align: 'center' });
+        
+        // Definimos la posición inicial para el contenido
+        const contentStartY = logoY + logoHeight + 25;
+        
+        // Añadir datos básicos del animal
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text(currentLang === 'ca' ? 'Dades de l\'animal:' : 'Datos del animal:', 20, contentStartY);
+        
+        // Recopilar datos del animal
+        const datos = [];
+        document.querySelectorAll('#content-info .space-y-3').forEach(section => {
+          section.querySelectorAll('div').forEach(item => {
+            const label = item.querySelector('p.text-sm')?.textContent;
+            const value = item.querySelector('p.font-medium')?.textContent;
+            if (label && value) {
+              datos.push([label, value]);
+            }
+          });
+        });
+        
+        // Añadir tabla con datos del animal
+        autoTable(doc, {
+          startY: contentStartY + 10,
+          head: [[currentLang === 'ca' ? 'Camp' : 'Campo', currentLang === 'ca' ? 'Valor' : 'Valor']],
+          body: datos,
+          theme: 'grid',
+          styles: { fontSize: 10, cellPadding: 4 },
+          headStyles: { 
+            fillColor: [126, 211, 33], // Color verde lima corporativo
+            textColor: 255,
+            fontStyle: 'bold' 
+          },
+          alternateRowStyles: {
+            fillColor: [245, 245, 245]
+          }
+        });
+        
+        // Añadir observaciones si existen
+        const observacionesTitle = doc.autoTable.previous.finalY + 15;
+        const observaciones = document.querySelector('.p-4.bg-gray-50 p')?.textContent;
+        
+        if (observaciones && observaciones !== (currentLang === 'ca' ? 'No hi ha observacions' : 'No hay observaciones')) {
+          doc.setFontSize(14);
+          doc.setTextColor(50, 50, 50);
+          doc.text(currentLang === 'ca' ? 'Observacions:' : 'Observaciones:', 20, observacionesTitle);
+          
+          doc.setFontSize(10);
+          doc.setTextColor(80, 80, 80);
+          const observacionesText = doc.splitTextToSize(observaciones, 170);
+          doc.text(observacionesText, 20, observacionesTitle + 10);
+        }
+        
+        // Pie de página
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          doc.text('Masclet Imperi - Sistema de Gestión Ganadera', 105, doc.internal.pageSize.height - 10, { align: 'center' });
+          doc.text(`Página ${i} de ${pageCount}`, 195, doc.internal.pageSize.height - 10, { align: 'right' });
+        }
+        
+        // Guardar el PDF
+        doc.save(`${animalName}_ficha_${date.replace(/\//g, '')}.pdf`);
+        
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert(currentLang === 'ca' ? 'Error en generar el PDF' : 'Error al generar el PDF');
+      }
+    }
     
     // Traducciones del lado del cliente
     const translations = {
