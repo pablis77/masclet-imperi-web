@@ -635,8 +635,23 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   )}
 </MainLayout>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<!-- Importaciones para PDF (misma estructura que en ExplotacionesPage.tsx) -->
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script is:inline>
+  // Aseguramos que autoTable esté disponible globalmente
+  window.jsPDF = window.jspdf.jsPDF;
+  window.autoTable = function() {
+    const doc = arguments[0];
+    if (typeof doc.autoTable === 'function') {
+      doc.autoTable.apply(doc, Array.prototype.slice.call(arguments, 1));
+    } else if (window.jspdf && window.jspdf.jspdf && typeof window.jspdf.jspdf.autoTable === 'function') {
+      window.jspdf.jspdf.autoTable.apply(doc, Array.prototype.slice.call(arguments, 1));
+    } else {
+      console.error('autoTable function not found');
+    }
+  };
+</script>
 
 <script>
   // Script para manejar interacciones de la página y traducciones
@@ -649,52 +664,69 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
       exportPdfBtn.addEventListener('click', exportAnimalToPDF);
     }
     
-    // Función para exportar ficha del animal a PDF
+    // Función para exportar ficha del animal a PDF - estructura idéntica a ExplotacionesPage.tsx
     function exportAnimalToPDF() {
-      // Obtener los datos del animal
-      const animalName = document.querySelector('h2.text-2xl').textContent;
-      const animalId = document.getElementById('animal-id-text').textContent.split(':')[1].trim();
-      const currentLang = localStorage.getItem('userLanguage') || 'es';
-      
-      // Crear el documento PDF
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const autoTable = window.jspdf.jspdf ? window.jspdf.jspdf.autoTable : window.jspdf.autoTable;
-      
-      // Configurar título del documento
-      const title = currentLang === 'ca' ? `Fitxa d'Animal - ${animalName}` : `Ficha de Animal - ${animalName}`;
-      
-      // Añadir fecha en la esquina superior derecha
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      const date = new Date().toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES');
-      doc.text(
-        currentLang === 'ca' ? `Data: ${date}` : `Fecha: ${date}`, 
-        195, 15, { align: 'right' }
-      );
-      
-      // Añadir logo oficial de Masclet Imperi
       try {
-        // La ruta es relativa a la ubicación desde donde se sirve la aplicación
-        const logoUrl = '/images/logo_masclet.png';
+        // Obtener los datos del animal
+        const animalName = document.querySelector('h2.text-2xl').textContent;
+        const animalId = document.getElementById('animal-id-text').textContent.split(':')[1].trim();
+        const currentLang = localStorage.getItem('userLanguage') || 'es';
         
-        // Tamaño y posicionamiento del logo (centrado arriba)
-        const logoWidth = 45;
-        let logoHeight = 35;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const logoX = (pageWidth / 2) - (logoWidth / 2); // Centrado horizontalmente
-        const logoY = 10; // Margen superior
+        // Crear el documento PDF - igual que en ExplotacionesPage.tsx
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
         
-        // Añadir la imagen al PDF
-        doc.addImage(logoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        // Configurar título del documento
+        const title = currentLang === 'ca' ? `Fitxa d'Animal - ${animalName}` : `Ficha de Animal - ${animalName}`;
         
-        // Añadir el título debajo del logo
-        doc.setFontSize(20);
-        doc.setTextColor(40, 40, 40);
-        doc.text(title, pageWidth / 2, logoY + logoHeight + 10, { align: 'center' });
+        // Añadir fecha en la esquina superior derecha
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        const date = new Date().toLocaleDateString(currentLang === 'ca' ? 'ca-ES' : 'es-ES');
+        doc.text(
+          currentLang === 'ca' ? `Data: ${date}` : `Fecha: ${date}`, 
+          195, 15, { align: 'right' }
+        );
         
-        // Definimos la posición inicial para el contenido
-        const contentStartY = logoY + logoHeight + 25;
+        // Definimos la posición inicial para el resumen (usada en todo el documento)
+        const logoY = 10; // Valor predeterminado por si falla la carga del logo
+        const logoHeight = 35; // Valor predeterminado por si falla la carga del logo
+        let contentStartY = logoY + logoHeight + 20; // Posición inicial del contenido
+        
+        // Añadir logo oficial de Masclet Imperi
+        try {
+          // Intentamos cargar el logo oficial desde una imagen base64
+          // La ruta es relativa a la ubicación desde donde se sirve la aplicación
+          const logoUrl = '/images/logo_masclet.png';
+          
+          // Tamaño y posicionamiento del logo (centrado arriba)
+          const logoWidth = 45;
+          const logoHeight = 35;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const logoX = (pageWidth / 2) - (logoWidth / 2); // Centrado horizontalmente
+          
+          // Añadir la imagen al PDF
+          doc.addImage(logoUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+          
+          // Añadir el título debajo del logo
+          doc.setFontSize(20);
+          doc.setTextColor(40, 40, 40);
+          doc.text(title, pageWidth / 2, logoY + logoHeight + 10, { align: 'center' });
+          
+          // Actualizamos la posición inicial del contenido con los valores reales del logo
+          contentStartY = logoY + logoHeight + 25;
+        } catch (error) {
+          console.error('Error al cargar el logo:', error);
+          
+          // Si hay error, usamos un título simple centrado sin logo
+          const pageWidth = doc.internal.pageSize.getWidth();
+          doc.setFontSize(20);
+          doc.setTextColor(40, 40, 40);
+          doc.text(title, pageWidth / 2, 30, { align: 'center' });
+          
+          // Ajustamos la posición inicial del contenido sin logo
+          contentStartY = 45;
+        }
         
         // Añadir datos básicos del animal
         doc.setFontSize(14);
@@ -713,8 +745,8 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           });
         });
         
-        // Añadir tabla con datos del animal
-        autoTable(doc, {
+        // Añadir tabla con datos del animal - usando autoTable como en ExplotacionesPage
+        window.autoTable(doc, {
           startY: contentStartY + 10,
           head: [[currentLang === 'ca' ? 'Camp' : 'Campo', currentLang === 'ca' ? 'Valor' : 'Valor']],
           body: datos,
@@ -731,18 +763,19 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         });
         
         // Añadir observaciones si existen
-        const observacionesTitle = doc.autoTable.previous.finalY + 15;
+        // Necesitamos obtener la posición final de la tabla para ubicar las observaciones
+        const observacionesY = doc.previousAutoTable.finalY + 15;
         const observaciones = document.querySelector('.p-4.bg-gray-50 p')?.textContent;
         
         if (observaciones && observaciones !== (currentLang === 'ca' ? 'No hi ha observacions' : 'No hay observaciones')) {
           doc.setFontSize(14);
           doc.setTextColor(50, 50, 50);
-          doc.text(currentLang === 'ca' ? 'Observacions:' : 'Observaciones:', 20, observacionesTitle);
+          doc.text(currentLang === 'ca' ? 'Observacions:' : 'Observaciones:', 20, observacionesY);
           
           doc.setFontSize(10);
           doc.setTextColor(80, 80, 80);
           const observacionesText = doc.splitTextToSize(observaciones, 170);
-          doc.text(observacionesText, 20, observacionesTitle + 10);
+          doc.text(observacionesText, 20, observacionesY + 10);
         }
         
         // Pie de página
@@ -760,7 +793,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
         
       } catch (error) {
         console.error('Error al generar PDF:', error);
-        alert(currentLang === 'ca' ? 'Error en generar el PDF' : 'Error al generar el PDF');
+        alert(localStorage.getItem('userLanguage') === 'ca' ? 'Error en generar el PDF' : 'Error al generar el PDF');
       }
     }
     
