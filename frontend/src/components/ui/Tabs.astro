@@ -23,7 +23,7 @@ const { tabs, contentId } = Astro.props;
         id={`tab-${tab.id}`}
         data-content={`content-${tab.id}`}
         class={`tab px-6 py-3 ${tab.active 
-          ? 'bg-blue-500 text-white' 
+          ? 'bg-lime-500 text-white' 
           : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} font-medium`}
       >
         {tab.label}
@@ -52,13 +52,13 @@ const { tabs, contentId } = Astro.props;
       // Desactivar todas las pestañas
       const tabs = document.querySelectorAll('.tab');
       tabs.forEach(tab => {
-        tab.classList.remove('bg-blue-500', 'text-white');
+        tab.classList.remove('bg-lime-500', 'text-white');
         tab.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
       });
       
       // Activar la pestaña seleccionada
       activeTab.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
-      activeTab.classList.add('bg-blue-500', 'text-white');
+      activeTab.classList.add('bg-lime-500', 'text-white');
       
       // Mostrar el contenido seleccionado
       const activeContent = document.getElementById(contentId);

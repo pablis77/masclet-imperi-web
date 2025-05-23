@@ -199,20 +199,38 @@ function formatDateForInput(dob) {
   
   <!-- Leyenda para campos obligatorios -->
   <div class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-4">
-    <span class="text-black dark:text-white font-bold">*</span> <span class="font-bold">Campos obligatorios</span>
+    Los campos marcados con borde azul indican cambios pendientes de guardar.
   </div>
   
-  <div class="flex justify-between items-center">
-    <div class="flex space-x-2">
-      <a href="/animals" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center">
-        <span class="mr-1">←</span> Volver
-      </a>
-      <a href={`/animals/${animal.id}`} class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
-        Ver Detalle
-      </a>
+  <!-- Navegación y botones secundarios -->
+  <div class="flex space-x-2 mt-6">
+    <a href="/animals" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center">
+      <span class="mr-1">←</span> Volver
+    </a>
+    <a href={`/animals/${animal.id}`} class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+      Ver Detalle
+    </a>
+  </div>
+  
+  <!-- Botones de acción principales -->
+  <div class="flex justify-between items-center mt-8">
+    <!-- Espacio vacío a la izquierda para mantener el botón eliminar a la derecha -->
+    <div></div>
+    
+    <!-- Contenedor central para el botón de guardar cambios -->
+    <div class="flex justify-center">
+      <!-- Botón para guardar cambios (verde lima, centrado) -->
+      <button type="submit" id="submit-button" class="px-4 py-2 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+        Guardar Cambios
+      </button>
     </div>
-    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-      Guardar Cambios
+    
+    <!-- Botón para eliminar animal (rojo, a la derecha) -->
+    <button type="button" id="delete-animal-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center shadow-md">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+      </svg>
+      Eliminar Animal
     </button>
   </div>
 </form>

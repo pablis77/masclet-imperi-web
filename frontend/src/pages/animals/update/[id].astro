@@ -36,10 +36,10 @@ try {
   title = 'Error al cargar animal';
 }
 
-// Configurar las pestañas
+// Configurar las pestañas con color verde lima como color principal
 const tabs = [
-  { id: 'general', label: 'Datos Generales', active: true },
-  { id: 'habitual', label: 'Cambios Habituales' }
+  { id: 'general', label: 'Datos Generales', active: true, activeClass: 'text-lime-500 border-lime-500' },
+  { id: 'habitual', label: 'Cambios Habituales', activeClass: 'text-lime-500 border-lime-500' }
 ];
 ---
 
@@ -89,6 +89,32 @@ const tabs = [
           <!-- Pestaña 2: Cambios Habituales -->
           <div id="content-habitual" class="tab-content hidden">
             <HabitualesForm animal={animal} />
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal de confirmación para borrar animal -->
+      <div id="delete-animal-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 mx-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Confirmar eliminación</h3>
+            <button id="close-delete-modal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="mb-6">
+            <p class="text-gray-700 dark:text-gray-300 mb-4">¿Estás seguro de que quieres eliminar <span class="font-bold" id="animal-name-confirm"></span>?</p>
+            <p class="text-red-600 dark:text-red-400 font-medium">Esta acción no se puede deshacer.</p>
+          </div>
+          <div class="flex justify-end space-x-4">
+            <button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+              Cancelar
+            </button>
+            <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+              Eliminar definitivamente
+            </button>
           </div>
         </div>
       </div>
@@ -159,9 +185,9 @@ const tabs = [
       tab.addEventListener('click', function() {
         const tabId = this.getAttribute('data-tab');
         
-        // Activar tab
-        tabs.forEach(t => t.classList.remove('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light'));
-        this.classList.add('text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light');
+        // Activar tab (usando color verde lima para las pestañas activas)
+        tabs.forEach(t => t.classList.remove('text-lime-500', 'border-lime-500', 'text-primary', 'border-primary', 'dark:text-primary-light', 'dark:border-primary-light'));
+        this.classList.add('text-lime-500', 'border-lime-500', 'dark:text-lime-400', 'dark:border-lime-400');
         
         // Mostrar contenido
         tabContents.forEach(content => content.classList.add('hidden'));
@@ -466,6 +492,93 @@ const tabs = [
     }
   }
   
+  // Configurar el botón de borrar animal y su modal
+  const deleteBtn = document.getElementById('delete-animal-btn');
+  const deleteModal = document.getElementById('delete-animal-modal');
+  const closeModalBtn = document.getElementById('close-delete-modal');
+  const cancelDeleteBtn = document.getElementById('cancel-delete');
+  const confirmDeleteBtn = document.getElementById('confirm-delete');
+  const animalNameSpan = document.getElementById('animal-name-confirm');
+  
+  if (deleteBtn && deleteModal) {
+    // Obtener el nombre del animal para mostrar en la confirmación
+    const animalName = document.querySelector('h1.text-3xl')?.textContent || 'este animal';
+    const animalId = window.animalId;
+    
+    // Mostrar el modal al hacer clic en el botón de borrar
+    deleteBtn.addEventListener('click', () => {
+      if (animalNameSpan) {
+        animalNameSpan.textContent = animalName;
+      }
+      deleteModal.classList.remove('hidden');
+    });
+    
+    // Cerrar el modal
+    const closeModal = () => {
+      deleteModal.classList.add('hidden');
+    };
+    
+    // Configurar eventos para cerrar el modal
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeModal);
+    
+    // Confirmar la eliminación
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', async () => {
+        try {
+          // Mostrar estado de carga en el botón
+          confirmDeleteBtn.disabled = true;
+          confirmDeleteBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Eliminando...';
+          
+          // Obtener token de autenticación si está disponible
+          const token = localStorage.getItem('token');
+          
+          // Realizar la solicitud DELETE al endpoint con URL completa
+          // Construimos la URL correcta para acceder a la API
+          const apiBaseUrl = 'http://localhost:8000'; // URL local
+          // También podríamos usar 'https://api-masclet-imperi.loca.lt' para acceso externo
+          
+          const response = await fetch(`${apiBaseUrl}/api/v1/animals/${animalId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          
+          if (response.ok) {
+            // Mostrar mensaje de éxito
+            window.mostrarMensaje('Animal eliminado correctamente', 'success');
+            // Redirigir al listado de animales después de un breve retraso
+            setTimeout(() => {
+              window.location.href = '/animals';
+            }, 1500);
+          } else {
+            // Obtener detalles del error si están disponibles
+            let errorMsg = 'Error al eliminar el animal';
+            try {
+              const errorData = await response.json();
+              errorMsg = errorData.detail || errorData.message || errorMsg;
+            } catch (e) {
+              // Si no se puede analizar la respuesta JSON, usar el mensaje genérico
+            }
+            
+            window.mostrarMensaje(`Error: ${errorMsg}`, 'error');
+            closeModal();
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.textContent = 'Eliminar definitivamente';
+          }
+        } catch (error) {
+          console.error('Error al eliminar animal:', error);
+          window.mostrarMensaje('Error de conexión al intentar eliminar el animal', 'error');
+          closeModal();
+          confirmDeleteBtn.disabled = false;
+          confirmDeleteBtn.textContent = 'Eliminar definitivamente';
+        }
+      });
+    }
+  }
+
   // Función para manejar el registro de un nuevo parto
   async function handleRegistrarParto() {
     console.log('Iniciando proceso de registro de parto...');
