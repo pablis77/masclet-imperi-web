@@ -16,6 +16,7 @@ from app.api.endpoints.diagnostico import router as diagnostico_router
 from app.api.endpoints.explotacions import router as explotacions_router
 from app.api.endpoints.health import router as health_router
 from app.api.endpoints.backup import router as backup_router
+from app.api.endpoints.listados import router as listados_router  # Rehabilitado después de corregir el error de Pydantic
 
 # Crear router principal
 api_router = APIRouter()
@@ -115,4 +116,11 @@ api_router.include_router(
     backup_router,
     prefix="/backup",
     tags=["backup"]
+)
+
+# Rutas para listados personalizados
+api_router.include_router(
+    listados_router,
+    prefix="/listados",
+    tags=["listados"]
 )

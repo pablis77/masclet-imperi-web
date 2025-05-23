@@ -34,6 +34,7 @@ const menuTranslations = {
   es: {
     dashboard: "Dashboard",
     animals: "Animales",
+    listings: "Listados",
     exploitations: "Explotaciones",
     users: "Usuarios",
     imports: "Importación",
@@ -43,6 +44,7 @@ const menuTranslations = {
   ca: {
     dashboard: "Tauler de control",
     animals: "Animals",
+    listings: "Llistats",
     exploitations: "Explotacions",
     users: "Usuaris",
     imports: "Importació",
@@ -68,6 +70,7 @@ const menuSections = [
       { name: t("dashboard"), key: "dashboard", url: "/", icon: "📊", roles: ["administrador", "gerente", "editor", "usuario"] },
       { name: t("exploitations"), key: "exploitations", url: "/explotaciones-react", icon: "🏡", roles: ["administrador", "gerente", "editor", "usuario"] },
       { name: t("animals"), key: "animals", url: "/animals", icon: "🐄", roles: ["administrador", "gerente", "editor", "usuario"] },
+      { name: t("listings"), key: "listings", url: "/listados", icon: "📋", roles: ["administrador", "gerente", "editor", "usuario"] },
     ]
   },
   {
@@ -151,6 +154,7 @@ const isActive = (itemUrl: string) => {
       es: {
         dashboard: "Dashboard",
         animals: "Animales",
+        listings: "Listados",
         exploitations: "Explotaciones",
         users: "Usuarios",
         imports: "Importación",
@@ -162,6 +166,7 @@ const isActive = (itemUrl: string) => {
       ca: {
         dashboard: "Tauler de control",
         animals: "Animals",
+        listings: "Llistats",
         exploitations: "Explotacions",
         users: "Usuaris",
         imports: "Importació",

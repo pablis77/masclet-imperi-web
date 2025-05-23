@@ -1,0 +1,323 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import PageTitle from '../../components/ui/PageTitle.astro';
+import { getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual
+const currentLang = getCurrentLanguage();
+
+// Traducciones
+const translations = {
+  es: {
+    title: "Listados Personalizados",
+    description: "Crea y gestiona listados personalizados de animales para vacunación y otros propósitos.",
+    empty: "No hay listados personalizados disponibles.",
+    create: "Crear Nuevo Listado",
+    loading: "Cargando listados...",
+    error: "Error al cargar los listados.",
+    category: "Categoría",
+    animals: "Animales",
+    actions: "Acciones",
+    view: "Ver",
+    edit: "Editar",
+    delete: "Eliminar",
+    confirmDelete: "¿Estás seguro de que quieres eliminar este listado?",
+    export: "Exportar",
+    table: {
+      name: "Nombre",
+      category: "Categoría",
+      animals: "Animales",
+      createdAt: "Creado el",
+      actions: "Acciones"
+    }
+  },
+  ca: {
+    title: "Llistats Personalitzats",
+    description: "Crea i gestiona llistats personalitzats d'animals per a vacunació i altres propòsits.",
+    empty: "No hi ha llistats personalitzats disponibles.",
+    create: "Crear Nou Llistat",
+    loading: "Carregant llistats...",
+    error: "Error al carregar els llistats.",
+    category: "Categoria",
+    animals: "Animals",
+    actions: "Accions",
+    view: "Veure",
+    edit: "Editar",
+    delete: "Eliminar",
+    confirmDelete: "Estàs segur que vols eliminar aquest llistat?",
+    export: "Exportar",
+    table: {
+      name: "Nom",
+      category: "Categoria",
+      animals: "Animals",
+      createdAt: "Creat el",
+      actions: "Accions"
+    }
+  }
+};
+
+// Función para traducir
+const t = (key) => {
+  return translations[currentLang]?.[key] || key;
+};
+
+// Función para traducir claves anidadas
+const tNested = (parent, key) => {
+  return translations[currentLang]?.[parent]?.[key] || key;
+};
+---
+
+<BaseLayout title={t('title')}>
+  <div class="px-4 py-6 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center mb-6">
+      <div class="sm:flex-auto">
+        <PageTitle title={t('title')} />
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+          {t('description')}
+        </p>
+      </div>
+      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <a 
+          href="/listados/nuevo" 
+          class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
+        >
+          {t('create')}
+        </a>
+      </div>
+    </div>
+
+    <Card>
+      <div class="overflow-x-auto">
+        <div id="listados-container" class="min-h-[300px] flex items-center justify-center">
+          <p id="loading-message" class="text-gray-500">
+            {t('loading')}
+          </p>
+        </div>
+
+        <!-- Plantilla para la tabla (se llena con JavaScript) -->
+        <table id="listados-table" class="min-w-full divide-y divide-gray-300 hidden">
+          <thead class="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">
+                {tNested('table', 'name')}
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {tNested('table', 'category')}
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {tNested('table', 'animals')}
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {tNested('table', 'createdAt')}
+              </th>
+              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {tNested('table', 'actions')}
+              </th>
+            </tr>
+          </thead>
+          <tbody id="listados-body" class="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
+            <!-- Se llenará con JavaScript -->
+          </tbody>
+        </table>
+
+        <!-- Mensaje de error (oculto por defecto) -->
+        <div id="error-message" class="p-4 text-center text-red-600 hidden">
+          {t('error')}
+        </div>
+
+        <!-- Mensaje de vacío (oculto por defecto) -->
+        <div id="empty-message" class="p-8 text-center text-gray-500 dark:text-gray-400 hidden">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{t('empty')}</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t('description')}
+          </p>
+          <div class="mt-6">
+            <a
+              href="/listados/nuevo"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              {t('create')}
+            </a>
+          </div>
+        </div>
+      </div>
+    </Card>
+  </div>
+</BaseLayout>
+
+<script>
+  // Script para cargar los listados desde la API
+  document.addEventListener('DOMContentLoaded', async () => {
+    const listadosContainer = document.getElementById('listados-container');
+    const listadosTable = document.getElementById('listados-table');
+    const listadosBody = document.getElementById('listados-body');
+    const loadingMessage = document.getElementById('loading-message');
+    const errorMessage = document.getElementById('error-message');
+    const emptyMessage = document.getElementById('empty-message');
+
+    // Verificar que el usuario esté autenticado
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    // Obtener el idioma actual
+    const currentLang = localStorage.getItem('userLanguage') || 'es';
+    
+    // Traducciones para JavaScript
+    const translations = {
+      es: {
+        view: "Ver",
+        edit: "Editar",
+        delete: "Eliminar",
+        export: "Exportar",
+        confirmDelete: "¿Estás seguro de que quieres eliminar este listado?",
+        error: "Error al cargar los listados.",
+        dateFormat: {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }
+      },
+      ca: {
+        view: "Veure",
+        edit: "Editar",
+        delete: "Eliminar",
+        export: "Exportar",
+        confirmDelete: "Estàs segur que vols eliminar aquest llistat?",
+        error: "Error al carregar els llistats.",
+        dateFormat: {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }
+      }
+    };
+
+    // Función para traducir
+    const t = (key) => {
+      return translations[currentLang]?.[key] || key;
+    };
+
+    try {
+      // Cargar los listados desde la API
+      const response = await fetch('/api/v1/listados', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const listados = await response.json();
+
+      // Ocultar mensaje de carga
+      loadingMessage.classList.add('hidden');
+
+      if (listados.length === 0) {
+        // Mostrar mensaje de vacío
+        emptyMessage.classList.remove('hidden');
+      } else {
+        // Mostrar tabla y llenarla con datos
+        listadosTable.classList.remove('hidden');
+
+        // Limpiar cualquier contenido previo
+        listadosBody.innerHTML = '';
+
+        // Formatear fechas según el idioma
+        const dateFormatter = new Intl.DateTimeFormat(
+          currentLang === 'ca' ? 'ca-ES' : 'es-ES', 
+          t('dateFormat')
+        );
+
+        // Añadir cada fila a la tabla
+        listados.forEach(listado => {
+          const row = document.createElement('tr');
+          
+          // Formatear fecha
+          const createdDate = new Date(listado.created_at);
+          const formattedDate = dateFormatter.format(createdDate);
+          
+          row.innerHTML = `
+            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-6">
+              ${listado.nombre}
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              ${listado.categoria || '-'}
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              ${listado.animales_count || 0}
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              ${formattedDate}
+            </td>
+            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+              <div class="flex justify-end space-x-2">
+                <a href="/listados/${listado.id}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
+                  ${t('view')}
+                </a>
+                <a href="/listados/editar/${listado.id}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
+                  ${t('edit')}
+                </a>
+                <button 
+                  data-listado-id="${listado.id}" 
+                  class="delete-button text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  ${t('delete')}
+                </button>
+                <a href="/api/v1/listados/${listado.id}/export-pdf" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300" target="_blank">
+                  ${t('export')}
+                </a>
+              </div>
+            </td>
+          `;
+          
+          listadosBody.appendChild(row);
+        });
+
+        // Añadir listeners para botones de eliminar
+        document.querySelectorAll('.delete-button').forEach(button => {
+          button.addEventListener('click', async (e) => {
+            const listadoId = e.target.dataset.listadoId;
+            if (confirm(t('confirmDelete'))) {
+              try {
+                const response = await fetch(`/api/v1/listados/${listadoId}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+
+                if (!response.ok) {
+                  throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                // Recargar la página para mostrar la lista actualizada
+                window.location.reload();
+              } catch (error) {
+                console.error('Error al eliminar listado:', error);
+                alert(error.message);
+              }
+            }
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar listados:', error);
+      
+      // Ocultar mensaje de carga
+      loadingMessage.classList.add('hidden');
+      
+      // Mostrar mensaje de error
+      errorMessage.classList.remove('hidden');
+      errorMessage.textContent = `${t('error')} ${error.message}`;
+    }
+  });
+</script>
