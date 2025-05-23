@@ -14,6 +14,7 @@ interface ExplotacionInfo {
   toros?: number;
   toros_activos?: number;
   vacas?: number;
+  vacas_activas?: number;
   alletar_0?: number;
   alletar_1?: number;
   alletar_2?: number;
@@ -208,8 +209,15 @@ const ExplotacionesPage: React.FC = () => {
       // Calcular estadísticas para cada explotación
       const explotacionesDataArray = Object.values(explotacionesMap).map((exp: ExplotacionInfo) => {
         const animales = exp.animales || [];
+        
+        // Total de animales por género
         const toros = animales.filter((a: Animal) => a.genere === 'M').length;
         const vacas = animales.filter((a: Animal) => a.genere === 'F').length;
+        
+        // Animales activos (estado=OK)
+        const toros_activos = animales.filter((a: Animal) => a.genere === 'M' && a.estado === 'OK').length;
+        const vacas_activas = animales.filter((a: Animal) => a.genere === 'F' && a.estado === 'OK').length;
+        
         // Contar las vacas amamantando (alletar 1 o 2)
         const vacasAletar1 = animales.filter((a: Animal) => a.genere === 'F' && ['1', 1].includes(a.alletar as any)).length;
         const vacasAletar2 = animales.filter((a: Animal) => a.genere === 'F' && ['2', 2].includes(a.alletar as any)).length;
@@ -224,11 +232,17 @@ const ExplotacionesPage: React.FC = () => {
         // Cálculo correcto de terneros: cada vaca con alletar=1 amamanta 1 ternero y cada vaca con alletar=2 amamanta 2 terneros
         const terneros = vacasAletar1 + (vacasAletar2 * 2);
         
+        // Total de animales activos
+        const total_animales_activos = toros_activos + vacas_activas + terneros;
+        
         return {
           explotacio: exp.explotacio,
           total: animales.length,
+          total_animales_activos: total_animales_activos,
           toros: toros,
+          toros_activos: toros_activos,
           vacas: vacas,
+          vacas_activas: vacas_activas,
           amamantando: amamantando,
           noAmamantando: noAmamantando,
           terneros: terneros,
@@ -270,7 +284,10 @@ const ExplotacionesPage: React.FC = () => {
           updatedExp = {
             ...updatedExp,
             toros: animales.toros || updatedExp.toros,
+            toros_activos: animales.toros_activos || updatedExp.toros_activos,
             vacas: animales.vacas || updatedExp.vacas,
+            vacas_activas: animales.vacas_activas || updatedExp.vacas_activas,
+            total_animales_activos: updatedExp.total_animales_activos,
             terneros: animales.terneros || updatedExp.terneros,
             amamantando: animales.vacas_amamantando || updatedExp.amamantando,
             noAmamantando: animales.vacas_no_amamantando || updatedExp.noAmamantando,
@@ -734,31 +751,40 @@ const ExplotacionesPage: React.FC = () => {
                 
                 {/* Cuerpo de la tarjeta */}
                 <div className="card-body p-4">
-                  {/* Primera fila: Total de Animales alineado con Vacas */}
-                  <div className="grid grid-cols-3 mb-4 pb-3 border-b border-gray-100">
-                    {/* Columna izquierda vacía para alinear */}
-                    <div></div>
-                    {/* Columna central: Total Animales */}
+                  {/* Primera fila: Animales totales y activos */}
+                  <div className="grid grid-cols-2 mb-4 pb-3 border-b border-gray-100">
+                    {/* Columna izquierda: Total Animales */}
                     <div className="text-center">
                       <div className="stat-label font-bold text-gray-700 mb-2">{currentLang === 'ca' ? "Total Animals" : "Total Animales"}</div>
-                      <div className="stat-value total font-bold text-3xl text-primary-dark">
-                        {/* Calcular total como suma de toros + vacas + terneros */}
+                      <div className="stat-value total font-bold text-2xl text-primary-dark">
                         {(exp.toros || 0) + (exp.vacas || 0) + (exp.terneros || 0)}
                       </div>
                     </div>
-                    {/* Columna derecha vacía para alinear */}
-                    <div></div>
+                    {/* Columna derecha: Animales Activos */}
+                    <div className="text-center">
+                      <div className="stat-label font-bold text-gray-700 mb-2">{currentLang === 'ca' ? "Animals Actius" : "Animales Activos"}</div>
+                      <div className="stat-value total font-bold text-2xl text-green-600">
+                        {/* Filtrar solo los animales con estado=OK */}
+                        {((exp.toros_activos !== undefined ? exp.toros_activos : exp.toros) || 0) + 
+                         ((exp.vacas_activas !== undefined ? exp.vacas_activas : exp.vacas) || 0) + 
+                         (exp.terneros || 0)}
+                      </div>
+                    </div>
                   </div>
                   
-                  {/* Segunda fila: Toros, Vacas, Terneros */}
+                  {/* Segunda fila: Toros, Vacas, Terneros (solo activos) */}
                   <div className="animal-stats grid grid-cols-3 gap-1 text-center mb-3">
                     <div>
-                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Toros" : "Toros"}</div>
-                      <div className="stat-value toros font-bold text-primary">{exp.toros || 0}</div>
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Toros Actius" : "Toros Activos"}</div>
+                      <div className="stat-value toros font-bold text-primary">
+                        {exp.toros_activos !== undefined ? exp.toros_activos : exp.toros || 0}
+                      </div>
                     </div>
                     <div>
-                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Vaques" : "Vacas"}</div>
-                      <div className="stat-value vacas font-bold text-pink-500">{exp.vacas || 0}</div>
+                      <div className="stat-label font-medium">{currentLang === 'ca' ? "Vaques Actives" : "Vacas Activas"}</div>
+                      <div className="stat-value vacas font-bold text-pink-500">
+                        {exp.vacas_activas !== undefined ? exp.vacas_activas : exp.vacas || 0}
+                      </div>
                     </div>
                     <div>
                       <div className="stat-label font-medium">{currentLang === 'ca' ? "Vedells" : "Terneros"}</div>
