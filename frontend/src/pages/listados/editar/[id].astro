@@ -1,7 +1,6 @@
 ---
 import MainLayout from '../../../components/layout/MainLayout.astro';
 import { getCurrentLanguage } from '../../../i18n/config';
-import listadosService from '../../../services/listados-service';
 
 // Obtener el idioma actual
 const currentLang = getCurrentLanguage();
@@ -9,89 +8,39 @@ const currentLang = getCurrentLanguage();
 // Obtener el ID del listado de los parámetros de la URL
 const { id } = Astro.params;
 
-// Traducciones
-const translations = {
-  es: {
-    title: "Editar Listado",
-    description: "Modifica los detalles del listado y los animales incluidos.",
-    name: "Nombre del listado",
-    namePlaceholder: "Ej: Vacunación octubre 2025",
-    description: "Descripción",
-    descriptionPlaceholder: "Ej: Animales para vacunación del 15 de octubre",
-    category: "Categoría",
-    categoryPlaceholder: "Seleccionar categoría",
-    categories: {
-      vaccination: "Vacunación",
-      treatment: "Tratamiento",
-      transport: "Transporte",
-      sale: "Venta",
-      other: "Otro"
-    },
-    animals: "Selección de Animales",
-    searchAnimals: "Buscar animales...",
-    noAnimals: "No hay animales disponibles.",
-    selectedCount: "Seleccionados:",
-    selectAll: "Seleccionar todos",
-    unselectAll: "Deseleccionar todos",
-    save: "Guardar Cambios",
-    saving: "Guardando...",
-    cancel: "Cancelar",
-    success: "Listado Actualizado",
-    successMessage: "El listado ha sido actualizado correctamente.",
-    error: "Error al actualizar el listado.",
-    required: "Este campo es obligatorio.",
-    back: "Volver a Listados",
-    loading: "Cargando datos del listado..."
-  },
-  ca: {
-    title: "Editar Llistat",
-    description: "Modifica els detalls del llistat i els animals inclosos.",
-    name: "Nom del llistat",
-    namePlaceholder: "Ex: Vacunació octubre 2025",
-    description: "Descripció",
-    descriptionPlaceholder: "Ex: Animals per a vacunació del 15 d'octubre",
-    category: "Categoria",
-    categoryPlaceholder: "Seleccionar categoria",
-    categories: {
-      vaccination: "Vacunació",
-      treatment: "Tractament",
-      transport: "Transport",
-      sale: "Venda",
-      other: "Altre"
-    },
-    animals: "Selecció d'Animals",
-    searchAnimals: "Cercar animals...",
-    noAnimals: "No hi ha animals disponibles.",
-    selectedCount: "Seleccionats:",
-    selectAll: "Seleccionar tots",
-    unselectAll: "Deseleccionar tots",
-    save: "Guardar Canvis",
-    saving: "Guardant...",
-    cancel: "Cancel·lar",
-    success: "Llistat Actualitzat",
-    successMessage: "El llistat ha estat actualitzat correctament.",
-    error: "Error al actualitzar el llistat.",
-    required: "Aquest camp és obligatori.",
-    back: "Tornar a Llistats",
-    loading: "Carregant dades del llistat..."
-  }
-};
+// Traducciones simples sin objetos anidados
+const titulo = currentLang === 'es' ? "Editar Listado" : "Editar Llistat";
+const descripcion = currentLang === 'es' ? "Modifica los detalles del listado y los animales incluidos." : "Modifica els detalls del llistat i els animals inclosos.";
+const nombreLabel = currentLang === 'es' ? "Nombre del listado" : "Nom del llistat";
+const nombrePlaceholder = currentLang === 'es' ? "Ej: Vacunación octubre 2025" : "Ex: Vacunació octubre 2025";
+const descripcionLabel = currentLang === 'es' ? "Descripción" : "Descripció";
+const descripcionPlaceholder = currentLang === 'es' ? "Ej: Animales para vacunación del 15 de octubre" : "Ex: Animals per a vacunació del 15 d'octubre";
+const categoriaLabel = currentLang === 'es' ? "Categoría" : "Categoria";
+const categoriaPlaceholder = currentLang === 'es' ? "Seleccionar categoría" : "Seleccionar categoria";
+const categoriaVacunacion = currentLang === 'es' ? "Vacunación" : "Vacunació";
+const categoriaTratamiento = currentLang === 'es' ? "Tratamiento" : "Tractament";
+const categoriaTransporte = currentLang === 'es' ? "Transporte" : "Transport";
+const categoriaVenta = currentLang === 'es' ? "Venta" : "Venda";
+const categoriaOtro = currentLang === 'es' ? "Otro" : "Altre";
+const animalesLabel = currentLang === 'es' ? "Selección de Animales" : "Selecció d'Animals";
+const buscarAnimales = currentLang === 'es' ? "Buscar animales..." : "Cercar animals...";
+const noAnimales = currentLang === 'es' ? "No hay animales disponibles." : "No hi ha animals disponibles.";
+const seleccionados = currentLang === 'es' ? "Seleccionados:" : "Seleccionats:";
+const seleccionarTodos = currentLang === 'es' ? "Seleccionar todos" : "Seleccionar tots";
+const deseleccionarTodos = currentLang === 'es' ? "Deseleccionar todos" : "Deseleccionar tots";
+const guardar = currentLang === 'es' ? "Guardar Cambios" : "Guardar Canvis";
+const guardando = currentLang === 'es' ? "Guardando..." : "Guardant...";
+const cancelar = currentLang === 'es' ? "Cancelar" : "Cancel·lar";
+const exito = currentLang === 'es' ? "Listado Actualizado" : "Llistat Actualitzat";
+const mensajeExito = currentLang === 'es' ? "El listado ha sido actualizado correctamente." : "El llistat ha estat actualitzat correctament.";
+const error = currentLang === 'es' ? "Error al actualizar el listado." : "Error al actualitzar el llistat.";
+const requerido = currentLang === 'es' ? "Este campo es obligatorio." : "Aquest camp és obligatori.";
+const volver = currentLang === 'es' ? "Volver a Listados" : "Tornar a Llistats";
+const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carregant dades del llistat...";
 
-// Función para traducir (simplificada)
-function t(key) {
-  return translations[currentLang][key] || key;
-}
-
-// Función para traducir claves anidadas (simplificada)
-function tNested(parent, key) {
-  if (translations[currentLang] && translations[currentLang][parent] && translations[currentLang][parent][key]) {
-    return translations[currentLang][parent][key];
-  }
-  return key;
-}
 ---
 
-<MainLayout title={t('title')}>
+<MainLayout title={titulo}>
   <div class="px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
@@ -142,11 +91,11 @@ function tNested(parent, key) {
                   class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="">{t('categoryPlaceholder')}</option>
-                  <option value="vaccination">{tNested('categories', 'vaccination')}</option>
-                  <option value="treatment">{tNested('categories', 'treatment')}</option>
-                  <option value="transport">{tNested('categories', 'transport')}</option>
-                  <option value="sale">{tNested('categories', 'sale')}</option>
-                  <option value="other">{tNested('categories', 'other')}</option>
+                  <option value="vaccination">{t('categoryVaccination')}</option>
+                  <option value="treatment">{t('categoryTreatment')}</option>
+                  <option value="transport">{t('categoryTransport')}</option>
+                  <option value="sale">{t('categorySale')}</option>
+                  <option value="other">{t('categoryOther')}</option>
                 </select>
               </div>
               <p id="category-error" class="mt-1 text-sm text-red-600 hidden">{t('required')}</p>
@@ -156,7 +105,7 @@ function tNested(parent, key) {
           <!-- Descripción -->
           <div>
             <label for="listado-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('description')}
+              {t('descriptionLabel')}
             </label>
             <div class="mt-1">
               <textarea
@@ -303,7 +252,7 @@ function tNested(parent, key) {
 
 <script>
   // Importar el servicio específico para listados (usando nuestro servicio seguro)
-  import listadosService from '../../../services/listados-service';
+  import * as listadosService from '../../../services/listados-service';
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Obtener el ID del listado de la URL

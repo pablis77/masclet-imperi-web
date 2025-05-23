@@ -70,19 +70,18 @@ function tNested(parent, key) {
 ---
 
 <MainLayout title={t('title')}>
-  <div class="px-4 py-6 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center mb-6">
+  <div class="px-4 py-2 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center mb-2">
       <div class="sm:flex-auto">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
-        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
+        <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
           {t('description')}
         </p>
       </div>
-      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+      <div class="sm:flex-none">
         <a 
           href="/listados/nuevo" 
           class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
-          style="display: block; padding: 10px 16px; font-size: 16px; font-weight: bold;"
         >
           Crear Nuevo Listado
         </a>
@@ -91,7 +90,7 @@ function tNested(parent, key) {
 
     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
       <div class="overflow-x-auto">
-        <div id="listados-container" class="min-h-[300px] flex items-center justify-center">
+        <div id="listados-container" class="min-h-[50px] flex items-center justify-center">
           <p id="loading-message" class="text-gray-500">
             {t('loading')}
           </p>
@@ -153,7 +152,7 @@ function tNested(parent, key) {
 
 <script>
   // Importar el servicio de listados (usando nuestro servicio seguro y separado)
-  import listadosService from '../../services/listados-service';
+  import * as listadosService from '../../services/listados-service';
   
   // Script para cargar los listados desde la API
   document.addEventListener('DOMContentLoaded', async () => {

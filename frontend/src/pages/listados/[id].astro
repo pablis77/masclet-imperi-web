@@ -1,7 +1,6 @@
 ---
 import MainLayout from '../../components/layout/MainLayout.astro';
 import { getCurrentLanguage } from '../../i18n/config';
-import listadosService from '../../services/listados-service';
 
 // Obtener el idioma actual
 const currentLang = getCurrentLanguage();
@@ -9,92 +8,32 @@ const currentLang = getCurrentLanguage();
 // Obtener el ID del listado de los parámetros de la URL
 const { id } = Astro.params;
 
-// Traducciones
-const translations = {
-  es: {
-    title: "Detalles del Listado",
-    loading: "Cargando detalles del listado...",
-    error: "Error al cargar los detalles del listado.",
-    empty: "No hay animales en este listado.",
-    back: "Volver a Listados",
-    edit: "Editar Listado",
-    delete: "Eliminar Listado",
-    export: "Exportar",
-    confirmDelete: "¿Estás seguro de que quieres eliminar este listado?",
-    category: "Categoría",
-    animals: "Animales",
-    createdAt: "Creado el",
-    table: {
-      name: "Nombre",
-      explotacion: "Explotación",
-      gender: "Género",
-      status: "Estado",
-      actions: "Acciones"
-    }
-  },
-  ca: {
-    title: "Detalls del Llistat",
-    loading: "Carregant detalls del llistat...",
-    error: "Error al carregar els detalls del llistat.",
-    empty: "No hi ha animals en aquest llistat.",
-    back: "Tornar a Llistats",
-    edit: "Editar Llistat",
-    delete: "Eliminar Llistat",
-    export: "Exportar",
-    confirmDelete: "Estàs segur que vols eliminar aquest llistat?",
-    category: "Categoria",
-    animals: "Animals",
-    createdAt: "Creat el",
-    table: {
-      name: "Nom",
-      explotacion: "Explotació",
-      gender: "Gènere",
-      status: "Estat",
-      actions: "Accions"
-    }
-  }
-};
-
-// Función para traducir (simplificada)
-function t(key) {
-  return translations[currentLang][key] || key;
-}
-
-// Función para traducir claves anidadas (simplificada)
-function tNested(parent, key) {
-  if (translations[currentLang] && translations[currentLang][parent] && translations[currentLang][parent][key]) {
-    return translations[currentLang][parent][key];
-  }
-  return key;
-}
-
-// Intentar obtener el listado (esto se ejecuta en el servidor)
-let listado = null;
-try {
-  if (id) {
-    // Intentar obtener el listado
-    const response = await listadosService.getListado(id);
-    if (response && response.id) {
-      listado = response;
-    }
-  }
-} catch (error) {
-  console.error(`Error al obtener el listado ${id}:`, error);
-}
+// Traducciones simples sin objetos anidados
+const titulo = currentLang === 'es' ? "Detalles del Listado" : "Detalls del Llistat";
+const cargando = currentLang === 'es' ? "Cargando detalles del listado..." : "Carregant detalls del llistat...";
+const volver = currentLang === 'es' ? "Volver a Listados" : "Tornar a Llistats";
+const editar = currentLang === 'es' ? "Editar Listado" : "Editar Llistat";
+const categoria = currentLang === 'es' ? "Categoría" : "Categoria";
+const animales = currentLang === 'es' ? "Animales" : "Animals";
+const creado = currentLang === 'es' ? "Creado el" : "Creat el";
+const vacio = currentLang === 'es' ? "No hay animales en este listado." : "No hi ha animals en aquest llistat.";
+const colNombre = currentLang === 'es' ? "Nombre" : "Nom";
+const colCodigo = currentLang === 'es' ? "Código" : "Codi";
+const colExplotacion = currentLang === 'es' ? "Explotación" : "Explotació";
+const colGenero = currentLang === 'es' ? "Género" : "Gènere";
+const colEstado = currentLang === 'es' ? "Confirmación" : "Confirmació";
+const colObservaciones = currentLang === 'es' ? "Observaciones" : "Observacions";
+const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
 ---
 
-<MainLayout title={listado ? listado.nombre : t('title')}>
+<MainLayout title={titulo}>
   <div class="px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-          {listado ? listado.nombre : t('title')}
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white" id="listado-title">
+          {titulo}
         </h1>
-        {listado && listado.descripcion && (
-          <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            {listado.descripcion}
-          </p>
-        )}
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300" id="listado-descripcion"></p>
       </div>
       
       <div class="mt-4 sm:mt-0 flex space-x-3">
@@ -102,94 +41,112 @@ try {
           href="/listados" 
           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
-          {t('back')}
+          {volver}
         </a>
         
-        {listado && (
-          <a 
-            href={`/listados/editar/${id}`} 
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            {t('edit')}
-          </a>
-        )}
+        <a 
+          href={`/listados/editar/${id}`} 
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          {editar}
+        </a>
+
+        <a 
+          href={`/api/v1/listados/${id}/export-pdf`} 
+          target="_blank"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          {exportarPdf}
+        </a>
       </div>
     </div>
     
     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-      {!listado && (
-        <div class="p-4 flex justify-center items-center min-h-[200px]">
-          <p class="text-gray-500" id="loading-message">
-            {t('loading')}
-          </p>
+      <div class="p-4">
+        <div id="loading-message" class="p-4 flex justify-center items-center min-h-[200px]">
+          <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <p class="mt-2 text-sm text-gray-500">{cargando}</p>
+          </div>
         </div>
-      )}
-      
-      {listado && (
-        <div class="p-4">
+        
+        <div id="listado-content" class="hidden">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {listado.categoria && (
-              <div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{t('category')}</h3>
-                <p class="mt-1 text-sm text-gray-900 dark:text-white">{listado.categoria}</p>
-              </div>
-            )}
-            
             <div>
-              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{t('animals')}</h3>
-              <p class="mt-1 text-sm text-gray-900 dark:text-white">
-                {listado.animales ? listado.animales.length : 0}
-              </p>
+              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{categoria}</h3>
+              <p class="mt-1 text-sm text-gray-900 dark:text-white" id="listado-categoria"></p>
             </div>
             
             <div>
-              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{t('createdAt')}</h3>
-              <p class="mt-1 text-sm text-gray-900 dark:text-white">
-                {new Date(listado.created_at).toLocaleDateString()}
-              </p>
+              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{animales}</h3>
+              <p class="mt-1 text-sm text-gray-900 dark:text-white" id="listado-animales-count">0</p>
+            </div>
+            
+            <div>
+              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">{creado}</h3>
+              <p class="mt-1 text-sm text-gray-900 dark:text-white" id="listado-fecha"></p>
             </div>
           </div>
           
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">{t('animals')}</h3>
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{animales}</h3>
+            <button id="guardar-cambios" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+              Guardar cambios
+            </button>
+          </div>
           
-          {(!listado.animales || listado.animales.length === 0) ? (
-            <div class="py-8 text-center">
-              <p class="text-gray-500">{t('empty')}</p>
-            </div>
-          ) : (
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">
-                      {tNested('table', 'name')}
-                    </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                      {tNested('table', 'explotacion')}
-                    </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                      {tNested('table', 'gender')}
-                    </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                      {tNested('table', 'status')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800" id="animals-container">
-                  <!-- Los animales se cargarán con JavaScript -->
-                </tbody>
-              </table>
-            </div>
-          )}
+          <!-- Mensaje de éxito al guardar -->
+          <div id="mensaje-exito" class="mb-3 p-2 bg-green-100 text-green-700 rounded-md hidden">
+            Cambios guardados correctamente
+          </div>
+          
+          <!-- Mensaje de error al guardar -->
+          <div id="mensaje-error" class="mb-3 p-2 bg-red-100 text-red-700 rounded-md hidden">
+            Error al guardar los cambios
+          </div>
+          
+          <div id="empty-message" class="py-8 text-center hidden">
+            <p class="text-gray-500">{vacio}</p>
+          </div>
+          
+          <div id="animals-table" class="overflow-x-auto hidden">
+            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">
+                    {colNombre}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    {colCodigo}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    {colExplotacion}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    {colGenero}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    {colEstado}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    {colObservaciones}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800" id="animals-container">
+                <!-- Los animales se cargarán con JavaScript -->
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   </div>
 </MainLayout>
 
 <script>
   // Importar el servicio de listados
-  import listadosService from '../../services/listados-service';
+  import * as listadosService from '../../services/listados-service';
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Obtener el ID del listado de la URL
@@ -198,54 +155,176 @@ try {
     
     // Referencias a elementos del DOM
     const loadingMessage = document.getElementById('loading-message');
+    const listadoContent = document.getElementById('listado-content');
+    const listadoTitle = document.getElementById('listado-title');
+    const listadoDescripcion = document.getElementById('listado-descripcion');
+    const listadoCategoria = document.getElementById('listado-categoria');
+    const listadoAnimalesCount = document.getElementById('listado-animales-count');
+    const listadoFecha = document.getElementById('listado-fecha');
+    const emptyMessage = document.getElementById('empty-message');
+    const animalsTable = document.getElementById('animals-table');
     const animalsContainer = document.getElementById('animals-container');
-    
-    if (!animalsContainer) return;
     
     try {
       // Obtener los detalles del listado
       const listado = await listadosService.getListado(listadoId);
       
-      // Si hay animales, mostrarlos en la tabla
-      if (listado && listado.animales && listado.animales.length > 0) {
-        // Limpiar el contenedor
-        animalsContainer.innerHTML = '';
+      if (listado) {
+        // Actualizar el título y descripción
+        if (listadoTitle) listadoTitle.textContent = listado.nombre || '';
+        if (listadoDescripcion) listadoDescripcion.textContent = listado.descripcion || '';
         
-        // Crear una fila para cada animal
-        listado.animales.forEach(animal => {
-          const row = document.createElement('tr');
+        // Actualizar los detalles del listado
+        if (listadoCategoria) {
+          // Convertir la categoría a un nombre legible en español
+          let categoriaTexto = '-';
+          switch(listado.categoria) {
+            case 'vaccination':
+            case 'vacunacion':
+              categoriaTexto = 'Vacunación';
+              break;
+            case 'treatment':
+            case 'tratamiento':
+              categoriaTexto = 'Tratamiento';
+              break;
+            case 'inspection':
+            case 'inspeccion':
+              categoriaTexto = 'Inspección';
+              break;
+            case 'other':
+            case 'otro':
+              categoriaTexto = 'Otro';
+              break;
+            default:
+              categoriaTexto = listado.categoria || '-';
+          }
+          listadoCategoria.textContent = categoriaTexto;
+        }
+        if (listadoAnimalesCount) listadoAnimalesCount.textContent = listado.animales?.length || 0;
+        if (listadoFecha) listadoFecha.textContent = listado.created_at ? new Date(listado.created_at).toLocaleDateString() : '-';
+        
+        // Mostrar los animales si hay
+        if (listado.animales && listado.animales.length > 0) {
+          if (emptyMessage) emptyMessage.classList.add('hidden');
+          if (animalsTable) animalsTable.classList.remove('hidden');
           
-          // Determinar el género en formato legible
-          const genero = animal.genere === 'M' ? 'Toro' : 'Vaca';
+          // Limpiar el contenedor
+          if (animalsContainer) animalsContainer.innerHTML = '';
           
-          // Determinar el estado en formato legible
-          const estado = animal.estado === 'OK' ? 'Activo' : 'Inactivo';
-          
-          // Crear las celdas
-          row.innerHTML = `
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
-              ${animal.nom || ''}
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              ${animal.explotacio || ''}
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              ${genero}
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              ${estado}
-            </td>
-          `;
-          
-          // Añadir la fila a la tabla
-          animalsContainer.appendChild(row);
-        });
+          // Crear una fila para cada animal
+          listado.animales.forEach(animal => {
+            const row = document.createElement('tr');
+            
+            // Determinar el género en formato legible
+            const genero = animal.genere === 'M' ? 'Toro' : 'Vaca';
+            
+            // Determinar el estado en formato legible
+            const estado = animal.estado === 'OK' ? 'Activo' : 'Inactivo';
+            
+            // Crear las celdas
+            row.innerHTML = `
+              <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
+                ${animal.nom || ''}
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                ${animal.id || ''}
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                ${animal.explotacio || ''}
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                ${genero}
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <select class="estado-animal border-gray-300 rounded-md text-sm" data-animal-id="${animal.id}">
+                  <option value="OK" ${estado === 'Activo' ? 'selected' : ''}>OK</option>
+                  <option value="NO" ${estado !== 'Activo' ? 'selected' : ''}>NO</option>
+                </select>
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <input type="text" class="observaciones-animal border-gray-300 rounded-md text-sm w-full" data-animal-id="${animal.id}" placeholder="Observaciones" value="${animal.observaciones || ''}">
+              </td>
+            `;
+            
+            // Añadir la fila a la tabla
+            if (animalsContainer) animalsContainer.appendChild(row);
+          });
+        } else {
+          // Mostrar mensaje de que no hay animales
+          if (emptyMessage) emptyMessage.classList.remove('hidden');
+          if (animalsTable) animalsTable.classList.add('hidden');
+        }
+        
+        // Ocultar el mensaje de carga y mostrar el contenido
+        if (loadingMessage) loadingMessage.classList.add('hidden');
+        if (listadoContent) listadoContent.classList.remove('hidden');
+        
+        // Configurar el botón de guardar cambios
+        const guardarCambiosBtn = document.getElementById('guardar-cambios');
+        const mensajeExito = document.getElementById('mensaje-exito');
+        const mensajeError = document.getElementById('mensaje-error');
+        
+        if (guardarCambiosBtn) {
+          guardarCambiosBtn.addEventListener('click', async () => {
+            try {
+              // Recopilar los datos de los animales
+              const animalesActualizados = [];
+              
+              // Obtener todos los selectores de estado
+              const estadoSelects = document.querySelectorAll('.estado-animal');
+              const observacionesInputs = document.querySelectorAll('.observaciones-animal');
+              
+              // Procesar los estados
+              estadoSelects.forEach(select => {
+                const animalId = parseInt(select.getAttribute('data-animal-id'));
+                const estado = select.value;
+                
+                // Buscar el input de observaciones correspondiente
+                const observacionInput = document.querySelector(`.observaciones-animal[data-animal-id="${animalId}"]`);
+                const observaciones = observacionInput ? observacionInput.value : '';
+                
+                // Añadir a la lista de animales actualizados
+                animalesActualizados.push({
+                  id: animalId,
+                  estado: estado,
+                  observaciones: observaciones
+                });
+              });
+              
+              // Enviar los datos al servidor
+              const response = await listadosService.updateListadoAnimales(listadoId, animalesActualizados);
+              
+              // Mostrar mensaje de éxito
+              if (mensajeExito) {
+                mensajeExito.classList.remove('hidden');
+                mensajeError.classList.add('hidden');
+                
+                // Ocultar mensaje después de 3 segundos
+                setTimeout(() => {
+                  mensajeExito.classList.add('hidden');
+                }, 3000);
+              }
+            } catch (error) {
+              console.error('Error al guardar los cambios:', error);
+              
+              // Mostrar mensaje de error
+              if (mensajeError) {
+                mensajeError.classList.remove('hidden');
+                mensajeExito.classList.add('hidden');
+                
+                // Ocultar mensaje después de 3 segundos
+                setTimeout(() => {
+                  mensajeError.classList.add('hidden');
+                }, 3000);
+              }
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Error al cargar los detalles del listado:', error);
       if (loadingMessage) {
-        loadingMessage.textContent = 'Error al cargar los detalles del listado.';
-        loadingMessage.classList.add('text-red-500');
+        loadingMessage.innerHTML = '<p class="text-red-500">Error al cargar los detalles del listado. Por favor, intenta nuevamente.</p>';
       }
     }
   });

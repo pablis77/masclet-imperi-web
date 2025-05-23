@@ -128,10 +128,10 @@ function t(key) {
                   required
                 >
                   <option value="" disabled selected>{t('categoryPlaceholder')}</option>
-                  <option value="vaccination">{t('categories.vaccination')}</option>
-                  <option value="treatment">{t('categories.treatment')}</option>
-                  <option value="inspection">{t('categories.inspection')}</option>
-                  <option value="other">{t('categories.other')}</option>
+                  <option value="vacunacion">Vacunación</option>
+                  <option value="tratamiento">Tratamiento</option>
+                  <option value="inspeccion">Inspección</option>
+                  <option value="otro">Otro</option>
                 </select>
                 <p class="mt-1 text-sm text-red-500 hidden" id="category-error">{t('requiredField')}</p>
               </div>
@@ -294,7 +294,7 @@ function t(key) {
 
 <script>
   // Importar el servicio específico para listados (usando nuestro servicio seguro)
-  import listadosService from '../../services/listados-service';
+  import * as listadosService from '../../services/listados-service';
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Referencias a elementos del DOM

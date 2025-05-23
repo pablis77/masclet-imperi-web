@@ -229,7 +229,7 @@ async def list_animals(
     search: Optional[str] = None,
     num_serie: Optional[str] = None,
     offset: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100)
+    limit: int = Query(10, ge=1, le=1000)
 ) -> dict:
     """Listar animales con filtros opcionales"""
     try:
