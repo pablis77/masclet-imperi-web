@@ -150,6 +150,9 @@ const tNested = (parent, key) => {
 </BaseLayout>
 
 <script>
+  // Importar el servicio de listados
+  import listadosService from '../../services/listadosService';
+  
   // Script para cargar los listados desde la API
   document.addEventListener('DOMContentLoaded', async () => {
     const listadosContainer = document.getElementById('listados-container');
@@ -205,18 +208,8 @@ const tNested = (parent, key) => {
     };
 
     try {
-      // Cargar los listados desde la API
-      const response = await fetch('/api/v1/listados', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const listados = await response.json();
+      // Cargar los listados usando el servicio
+      const listados = await listadosService.getListados();
 
       // Ocultar mensaje de carga
       loadingMessage.classList.add('hidden');
@@ -288,16 +281,8 @@ const tNested = (parent, key) => {
             const listadoId = e.target.dataset.listadoId;
             if (confirm(t('confirmDelete'))) {
               try {
-                const response = await fetch(`/api/v1/listados/${listadoId}`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                });
-
-                if (!response.ok) {
-                  throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
+                // Eliminar el listado usando el servicio
+                await listadosService.deleteListado(listadoId);
 
                 // Recargar la página para mostrar la lista actualizada
                 window.location.reload();

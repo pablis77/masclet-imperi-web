@@ -9,6 +9,7 @@ Este documento describe la implementación de un sistema modular de listados per
 - **Desarrollo Modular**: Todos los componentes se desarrollarán en archivos separados y compartimentados.
 - **Sección Independiente**: Se creará una nueva sección en la aplicación, independiente del código existente.
 - **Pruebas Aisladas**: Se probará toda la funcionalidad de forma aislada antes de integrarse con el resto de la aplicación.
+- **Manejo Correcto de Relaciones**: Se ha implementado un enfoque manual para la creación de respuestas en los endpoints para evitar problemas con campos como `created_by` al convertir entre modelos ORM y esquemas Pydantic.
 
 ## Estructura de Archivos
 
@@ -137,26 +138,26 @@ GET    /api/v1/listados/{id}/export-pdf     # Exportar listado a PDF
 
 ### Fase 1: Crear estructura básica y modelos
 
-- [  ] Crear estructura de archivos y directorios
-- [  ] Implementar modelos y esquemas en el backend
-- [  ] Crear endpoints básicos
-- [  ] Pruebas de la API
+- [x] Crear estructura de archivos y directorios
+- [x] Implementar modelos y esquemas en el backend
+- [x] Crear endpoints básicos
+- [x] Pruebas de la API
 
 ### Fase 2: Implementar componentes básicos
 
-- [  ] Desarrollar componentes de UI principales
+- [x] Desarrollar componentes de UI principales (Página principal implementada)
 - [  ] Crear el selector de animales con casillas
 - [  ] Implementar filtros avanzados
 
 ### Fase 3: Funcionalidad principal
 
-- [  ] Implementar guardado de listados
-- [  ] Crear vista de gestión de listados
-- [  ] Desarrollar la exportación PDF específica
+- [x] Implementar guardado de listados (API backend implementada)
+- [x] Crear vista de gestión de listados (Estructura base implementada)
+- [  ] Desarrollar la exportación PDF específica (API endpoint creado, falta implementación en frontend)
 
 ### Fase 4: Pruebas y refinamiento
 
-- [  ] Probar la funcionalidad completa en la sección separada
+- [x] Probar la funcionalidad completa en la sección separada (Tests de backend completados)
 - [  ] Refinar la interfaz y corregir errores
 - [  ] Optimizar rendimiento
 
@@ -178,12 +179,54 @@ Basándonos en la información proporcionada sobre los endpoints y la estructura
 - Los endpoints de `animals` nos permitirán obtener los datos de los animales
 - No hay endpoints específicos para "explotaciones" operativos actualmente
 
+
+## Estado Actual (23/05/2025)
+
+### Backend ✅
+
+- **Endpoints desarrollados y funcionando correctamente:**
+  - GET /api/v1/listados
+  - POST /api/v1/listados
+  - GET /api/v1/listados/{id}
+  - PUT /api/v1/listados/{id}
+  - DELETE /api/v1/listados/{id}
+  - POST /api/v1/listados/{id}/animals
+  - DELETE /api/v1/listados/{id}/animals/{animalId}
+  - GET /api/v1/listados/{id}/export-pdf
+
+- **Modelos y esquemas completados:**
+  - Modelo `Listado`  
+  - Relación `ListadoAnimal`
+  - Esquemas Pydantic para validación
+
+- **Tests:**
+  - Tests funcionales que verifican todos los endpoints
+  - Corregidos problemas con el campo `created_by`
+
+### Frontend 🔄
+- **Implementado:**
+  - Página principal (`index.astro`) con estructura base para mostrar listados
+  - Interfaz para visualizar listados existentes
+
+- **Pendiente de implementar:**
+  - Página de creación de listados (`nuevo.astro`)
+  - Página de detalle/edición de listados (`[id].astro`)
+  - Componentes para selección de animales
+  - Filtros avanzados
+  - Exportación a PDF en el frontend
+
 ## Próximos Pasos
 
-1. Empezar por la implementación de los modelos de base de datos para listados
-2. Implementar los endpoints básicos para gestionar listados
-3. Desarrollar la interfaz de usuario para la selección de animales
-4. Implementar la exportación a PDF específica para listados
+1. Completar las páginas del frontend:
+   - Crear la página `nuevo.astro` para crear listados
+   - Implementar la página `[id].astro` para ver/editar listados
+
+2. Desarrollar los componentes esenciales:
+   - `AnimalesSelector.tsx`: Para seleccionar animales en los listados
+   - `FiltrosAvanzados.tsx`: Para filtrar animales
+   - `ListadoForm.tsx`: Formulario para crear/editar listados
+
+3. Implementar la funcionalidad de exportación a PDF en el frontend
 
 ## Notas Adicionales
 
