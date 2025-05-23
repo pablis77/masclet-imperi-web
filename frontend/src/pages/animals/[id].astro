@@ -187,7 +187,7 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   <div class="mb-6">
     <div class="flex justify-center items-center gap-2 mb-2 mt-4">
       <a href="/animals" id="back-to-list-link" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-        <span class="mr-2">←</span> {t('back_to_animal_list')}
+        <span class="mr-2">←</span> Volver al listado de animales
       </a>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>
@@ -328,12 +328,6 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
             <a href={`/animals/update/${id}`} class="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
               ↻ Actualizar
             </a>
-            <button id="export-animal-pdf" class="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Exportar PDF
-            </button>
           </div>
         </div>
       </div>
@@ -470,12 +464,25 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
             </div>
           </div>
           
-          <!-- Barra de ancho completo para el botón, separada de la sección anterior -->
+          <!-- Barra de ancho completo para los botones, separada de la sección anterior -->
           <div class="w-full mt-8 py-4 border-t border-gray-100 dark:border-gray-700">
-            <div class="flex justify-center">
-              <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors shadow-md">
-                <span class="mr-2">←</span> {t('back_to_animal_list')}
-              </a>
+            <div class="relative"> <!-- Usamos posicionamiento relativo para el contenedor -->
+              <!-- Botón Volver al centro -->
+              <div class="flex justify-center"> <!-- Contenedor centrado para el botón de volver -->
+                <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors shadow-md">
+                  <span class="mr-2">←</span> {t('back_to_animal_list')}
+                </a>
+              </div>
+              
+              <!-- Botón Exportar PDF a la derecha con posicionamiento absoluto -->
+              <div class="absolute right-0 top-0">
+                <button id="export-animal-pdf" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Exportar PDF
+                </button>
+              </div>
             </div>
           </div>
 
@@ -751,31 +758,126 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
           head: [[currentLang === 'ca' ? 'Camp' : 'Campo', currentLang === 'ca' ? 'Valor' : 'Valor']],
           body: datos,
           theme: 'grid',
-          styles: { fontSize: 10, cellPadding: 4 },
+          styles: { 
+            fontSize: 9, 
+            cellPadding: 2,
+            lineWidth: 0.1,
+            lineColor: [200, 200, 200],
+            minCellHeight: 8,
+            valign: 'middle'
+          },
           headStyles: { 
             fillColor: [126, 211, 33], // Color verde lima corporativo
             textColor: 255,
-            fontStyle: 'bold' 
+            fontStyle: 'bold',
+            minCellHeight: 10
           },
           alternateRowStyles: {
             fillColor: [245, 245, 245]
+          },
+          columnStyles: {
+            0: { cellWidth: 40, halign: 'left' }, // Columna de "Campo" más estrecha
+            1: { cellWidth: 'auto', halign: 'left' } // Columna de "Valor" usa el resto del espacio
           }
         });
         
+        // Verificar si es una vaca (género F) para añadir tabla de partos
+        const generoAnimal = datos.find(d => d[0].includes('Sexo') || d[0].includes('Género'));
+        const esVaca = generoAnimal && (generoAnimal[1] === 'Hembra' || generoAnimal[1] === 'Femella' || generoAnimal[1] === 'F');
+        
+        // Posición para el siguiente elemento (observaciones o tabla de partos)
+        let nextY = doc.previousAutoTable.finalY + 15;
+        
+        // Si es una vaca, verificamos si tiene partos y añadimos la tabla
+        if (esVaca) {
+          // Obtener los datos de partos
+          const partosRows = [];
+          const partosContainer = document.querySelector('#content-partos table tbody');
+          
+          if (partosContainer) {
+            const partosFilas = partosContainer.querySelectorAll('tr');
+            let hayPartos = false;
+            
+            partosFilas.forEach(fila => {
+              // Verificar si es una fila de datos (no de mensaje "no hay partos")
+              const celdas = fila.querySelectorAll('td');
+              if (celdas.length >= 3 && !fila.textContent.includes('No hay registros')) {
+                hayPartos = true;
+                // Extraer información de las celdas: fecha, género, estado, observaciones
+                const fecha = celdas[0]?.textContent?.trim() || 'N/A';
+                const genero = celdas[1]?.textContent?.trim() || 'N/A';
+                const estado = celdas[2]?.querySelector('span')?.textContent?.trim() || 'N/A';
+                const obs = celdas[3]?.textContent?.trim() || 'N/A';
+                
+                // Añadir a los datos de la tabla
+                partosRows.push([fecha, genero, estado, obs]);
+              }
+            });
+            
+            // Si hay partos, añadir la tabla
+            if (hayPartos && partosRows.length > 0) {
+              // Título de la sección de partos
+              doc.setFontSize(14);
+              doc.setTextColor(50, 50, 50);
+              doc.text(currentLang === 'ca' ? 'Historial de Parts:' : 'Historial de Partos:', 20, nextY);
+              
+              // Cabecera de la tabla de partos
+              const partosHead = [
+                currentLang === 'ca' ? 'Data' : 'Fecha', 
+                currentLang === 'ca' ? 'Gènere' : 'Género', 
+                currentLang === 'ca' ? 'Estat' : 'Estado', 
+                currentLang === 'ca' ? 'Observacions' : 'Observaciones'
+              ];
+              
+              // Añadir tabla de partos
+              window.autoTable(doc, {
+                startY: nextY + 5,
+                head: [partosHead],
+                body: partosRows,
+                theme: 'grid',
+                styles: { 
+                  fontSize: 8, 
+                  cellPadding: 2,
+                  lineWidth: 0.1,
+                  lineColor: [200, 200, 200],
+                  minCellHeight: 6,
+                  valign: 'middle'
+                },
+                headStyles: { 
+                  fillColor: [126, 211, 33], // Color verde lima corporativo
+                  textColor: 255,
+                  fontStyle: 'bold',
+                  minCellHeight: 8
+                },
+                alternateRowStyles: {
+                  fillColor: [245, 245, 245]
+                },
+                columnStyles: {
+                  0: { cellWidth: 25, halign: 'center' }, // Fecha
+                  1: { cellWidth: 30, halign: 'center' }, // Género
+                  2: { cellWidth: 25, halign: 'center' }, // Estado
+                  3: { cellWidth: 'auto', halign: 'left' } // Observaciones
+                }
+              });
+              
+              // Actualizar la posición para las observaciones
+              nextY = doc.previousAutoTable.finalY + 15;
+            }
+          }
+        }
+        
         // Añadir observaciones si existen
-        // Necesitamos obtener la posición final de la tabla para ubicar las observaciones
-        const observacionesY = doc.previousAutoTable.finalY + 15;
         const observaciones = document.querySelector('.p-4.bg-gray-50 p')?.textContent;
         
         if (observaciones && observaciones !== (currentLang === 'ca' ? 'No hi ha observacions' : 'No hay observaciones')) {
           doc.setFontSize(14);
           doc.setTextColor(50, 50, 50);
-          doc.text(currentLang === 'ca' ? 'Observacions:' : 'Observaciones:', 20, observacionesY);
+          doc.text(currentLang === 'ca' ? 'Observacions:' : 'Observaciones:', 20, nextY);
           
           doc.setFontSize(10);
           doc.setTextColor(80, 80, 80);
           const observacionesText = doc.splitTextToSize(observaciones, 170);
-          doc.text(observacionesText, 20, observacionesY + 10);
+          doc.text(observacionesText, 20, nextY + 10);
         }
         
         // Pie de página
@@ -915,12 +1017,14 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
       // Traducir título y encabezados principales
       document.querySelector('h1.text-3xl').textContent = t('title', currentLang);
       
-      // Corregir problema del enlace de volver al listado
+      // Mantener el texto completo "Volver al listado de animales" en el botón superior
+      // Comentamos esta parte para que no sobrescriba el texto que ya establecimos
+      /* 
       const backLink = document.getElementById('back-to-list-link');
       if (backLink) {
-        // Restablecer contenido correcto
         backLink.innerHTML = `<span class="mr-1">←</span> ${t('back_to_list', currentLang)}`;
       }
+      */
       
       // Corregir problema de ID duplicado
       const idElement = document.getElementById('animal-id-text');
