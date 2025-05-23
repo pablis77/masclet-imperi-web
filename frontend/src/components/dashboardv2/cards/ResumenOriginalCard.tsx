@@ -130,7 +130,7 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
     <div className={`dashboard-card ${darkMode ? 'bg-gray-800 text-white' : ''}`} style={{ gridColumn: "span 12" }}>
       {/* Cabecera con período */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Resumen general</h3>
+        {/* Título eliminado para evitar duplicación */}
         {periodoData && (
           <div className="text-sm bg-blue-100 text-blue-800 rounded-full px-3 py-1">
             Período: {formatDate(periodoData.inicio)} a {formatDate(periodoData.fin)}

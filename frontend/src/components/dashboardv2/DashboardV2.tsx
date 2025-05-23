@@ -211,7 +211,7 @@ const DashboardV2: React.FC = () => {
       
       {/* Cabecera */}
       <div className="dashboard-header">
-        <h1 className="text-2xl font-bold mb-6">BIENVENIDO A MASCLET IMPERI</h1>
+        {/* Título eliminado para evitar duplicación */}
       </div>
       
       {/* SECCIÓN 1: Resumen General (Con estilo original) */}
