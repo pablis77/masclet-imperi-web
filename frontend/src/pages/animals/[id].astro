@@ -473,30 +473,33 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               </div>
               
             </div>
-          </div>
-          
-          <!-- Barra de ancho completo para los botones, separada de la sección anterior -->
-          <div class="w-full mt-8 py-4 border-t border-gray-100 dark:border-gray-700">
-            <div class="relative"> <!-- Usamos posicionamiento relativo para el contenedor -->
-              <!-- Botón Volver al centro -->
-              <div class="flex justify-center"> <!-- Contenedor centrado para el botón de volver -->
-                <a href="/animals" id="partos-back-btn" class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors shadow-md">
-                  <span class="mr-2">←</span> {t('back_to_animal_list')}
-                </a>
-              </div>
-              
-              <!-- Grupo de botones de acción a la derecha -->
-              <div class="absolute right-0 top-0 flex space-x-4">
-                <!-- Botón Exportar PDF -->
-                <button id="export-animal-pdf" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  Exportar PDF
-                </button>
+            
+            <!-- Barra de ancho completo para los botones al final de la pestaña Información Completa -->
+            <div class="w-full col-span-1 md:col-span-2 mt-10 py-4 border-t border-gray-100 dark:border-gray-700">
+              <div class="container mx-auto px-4 flex justify-between items-center">
+                <!-- Botón Volver al centro -->
+                <div class="flex-1 text-center">
+                  <a href="/animals" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                    <span class="mr-2">←</span> Volver al listado de animales
+                  </a>
+                </div>
+                
+                <!-- Botón Exportar PDF a la derecha -->
+                <div class="flex-none">
+                  <button id="export-animal-pdf" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exportar PDF
+                  </button>
+                </div>
               </div>
             </div>
+              
+            </div>
           </div>
+          
+          <!-- Eliminados los botones de la parte superior -->
 
           <!-- Pestaña 2: Historial de Partos (oculta por defecto) -->
           <div id="content-partos" class="hidden">
@@ -615,11 +618,26 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
                 <p>{t('no_births')}</p>
               )}
               
-              <!-- Botón Volver al listado al final de la pestaña Partos -->
-              <div class="mt-6 text-center">
-                <a href="/animals" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                  <span class="mr-2">←</span> Volver al listado de animales
-                </a>
+              <!-- Barra de ancho completo para los botones al final de la pestaña Partos -->
+              <div class="w-full mt-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="container mx-auto px-4 flex justify-between items-center">
+                  <!-- Botón Volver al centro -->
+                  <div class="flex-1 text-center">
+                    <a href="/animals" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                      <span class="mr-2">←</span> Volver al listado de animales
+                    </a>
+                  </div>
+                  
+                  <!-- Botón Exportar PDF a la derecha -->
+                  <div class="flex-none">
+                    <button id="export-partos-pdf" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      Exportar PDF
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -634,11 +652,26 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
               <p>{t('no_changes')}</p>
             </div>
             
-            <!-- Botón Volver al listado al final de la pestaña Historial de Cambios -->
-            <div class="mt-6 text-center">
-              <a href="/animals" id="changes-back-btn" class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors">
-                <span class="mr-2">←</span> {t('back_to_animal_list')}
-              </a>
+            <!-- Barra de ancho completo para los botones al final de la pestaña Historial de Cambios -->
+            <div class="w-full mt-6 py-4 border-t border-gray-100 dark:border-gray-700">
+              <div class="container mx-auto px-4 flex justify-between items-center">
+                <!-- Botón Volver al centro -->
+                <div class="flex-1 text-center">
+                  <a href="/animals" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                    <span class="mr-2">←</span> Volver al listado de animales
+                  </a>
+                </div>
+                
+                <!-- Botón Exportar PDF a la derecha -->
+                <div class="flex-none">
+                  <button id="export-changes-pdf" class="inline-flex items-center justify-center px-5 py-2.5 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exportar PDF
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -679,10 +712,21 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente cargado y analizado');
     
-    // Configurar botón de exportar PDF
+    // Configurar botones de exportar PDF para todas las pestañas
     const exportPdfBtn = document.getElementById('export-animal-pdf');
+    const exportPartosPdfBtn = document.getElementById('export-partos-pdf');
+    const exportChangesPdfBtn = document.getElementById('export-changes-pdf');
+    
     if (exportPdfBtn) {
       exportPdfBtn.addEventListener('click', exportAnimalToPDF);
+    }
+    
+    if (exportPartosPdfBtn) {
+      exportPartosPdfBtn.addEventListener('click', exportAnimalToPDF);
+    }
+    
+    if (exportChangesPdfBtn) {
+      exportChangesPdfBtn.addEventListener('click', exportAnimalToPDF);
     }
     
     // Función para exportar ficha del animal a PDF - estructura idéntica a ExplotacionesPage.tsx
