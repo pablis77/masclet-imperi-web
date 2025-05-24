@@ -42,6 +42,8 @@ class AnimalBasico(BaseModel):
     explotacio: str
     genere: str
     estado: str
+    confirmacion: str = "NO"  # Estado de confirmación en el listado (OK/NO)
+    observaciones: Optional[str] = None  # Observaciones del animal en el listado
     cod: Optional[str] = None
     num_serie: Optional[str] = None
     dob: Optional[datetime] = None
@@ -71,7 +73,7 @@ class ListadoConAnimalesResponse(ListadoResponse):
 
 class AnimalUpdateData(BaseModel):
     id: int
-    estado: str  # OK o NO
+    confirmacion: str  # OK o NO
     observaciones: Optional[str] = None
 
 

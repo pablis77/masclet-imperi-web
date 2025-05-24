@@ -260,6 +260,34 @@ async def show_record_counts():
     
     print(tabulate(results, headers=["Tabla", "Número de registros"], tablefmt="grid"))
 
+async def show_table_data(table_name, limit=5):
+    """Mostrar los primeros registros de una tabla"""
+    query = f"SELECT * FROM {table_name} LIMIT {limit}"
+    rows = await execute_query(query)
+    
+    if not rows:
+        print(f"No hay datos en la tabla {table_name}.")
+        return
+    
+    print(f"\n=== DATOS DE LA TABLA {table_name} (primeros {limit} registros) ===\n")
+    
+    # Obtener los nombres de las columnas
+    column_query = """
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = $1
+    ORDER BY ordinal_position
+    """
+    columns = await execute_query(column_query, [table_name])
+    column_names = [col['column_name'] for col in columns]
+    
+    # Preparar los datos para tabulate
+    data = []
+    for row in rows:
+        data.append([row.get(col, None) for col in column_names])
+    
+    print(tabulate(data, headers=column_names, tablefmt="grid"))
+
 async def main():
     # Configurar parser de argumentos
     parser = argparse.ArgumentParser(description="Muestra la estructura de la base de datos")
@@ -289,9 +317,13 @@ async def main():
         await show_tables()
         
         # Mostrar estructura de tablas principales
-        main_tables = ['animals', 'part', 'explotacions', 'users']
+        main_tables = ['animals', 'part', 'explotacions', 'users', 'listado_animal', 'listados']
         for table in main_tables:
             await show_table_structure(table)
+        
+        # Mostrar datos de las tablas listado_animal y listados
+        await show_table_data('listado_animal')
+        await show_table_data('listados')
         
         # Mostrar relaciones entre tablas
         await show_relationships()

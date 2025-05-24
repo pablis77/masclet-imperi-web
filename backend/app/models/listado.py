@@ -42,7 +42,7 @@ class ListadoAnimal(models.Model):
     listado = fields.ForeignKeyField("models.Listado", related_name="listado_animales")
     animal = fields.ForeignKeyField("models.Animal", related_name="animal_listados")
     notas = fields.TextField(null=True)
-    estado = fields.CharField(max_length=10, default="NO", null=True)  # OK o NO
+    confirmacion = fields.CharField(max_length=10, default="NO", null=True)  # OK o NO
     observaciones = fields.TextField(null=True)
     
     class Meta:
