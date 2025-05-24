@@ -43,13 +43,6 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
         >
           {volver}
         </a>
-        
-        <a 
-          href={`/listados/editar/${id}`} 
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          {editar}
-        </a>
 
         <button 
           id="export-listado-pdf"
@@ -95,8 +88,11 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
           
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">{animales}</h3>
-            <button id="guardar-cambios" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-              Guardar cambios
+            <button id="guardar-cambios" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Guardar confirmaciones
             </button>
           </div>
           
@@ -260,8 +256,8 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
               </td>
               <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                 <select class="estado-animal border-gray-300 rounded-md text-sm" data-animal-id="${animal.id}">
-                  <option value="OK" ${estado === 'Activo' ? 'selected' : ''}>OK</option>
-                  <option value="NO" ${estado !== 'Activo' ? 'selected' : ''}>NO</option>
+                  <option value="OK">OK</option>
+                  <option value="NO" selected>NO</option>
                 </select>
               </td>
               <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -293,25 +289,23 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
               // Recopilar los datos de los animales
               const animalesActualizados = [];
               
-              // Obtener todos los selectores de estado
+              // Obtener todos los elementos de estado y observaciones
               const estadoSelects = document.querySelectorAll('.estado-animal');
               const observacionesInputs = document.querySelectorAll('.observaciones-animal');
               
-              // Procesar los estados
-              estadoSelects.forEach(select => {
+              // Crear array con los datos de los animales
+              estadoSelects.forEach((select, index) => {
                 const animalId = parseInt(select.getAttribute('data-animal-id'));
                 const estado = select.value;
+                const observaciones = observacionesInputs[index]?.value || '';
                 
-                // Buscar el input de observaciones correspondiente
-                const observacionInput = document.querySelector(`.observaciones-animal[data-animal-id="${animalId}"]`);
-                const observaciones = observacionInput ? observacionInput.value : '';
-                
-                // Añadir a la lista de animales actualizados
                 animalesActualizados.push({
                   id: animalId,
                   estado: estado,
                   observaciones: observaciones
                 });
+                
+                console.log(`Animal ${animalId}: estado=${estado}, observaciones=${observaciones}`);
               });
               
               // Enviar los datos al servidor
@@ -321,6 +315,14 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
               if (mensajeExito) {
                 mensajeExito.classList.remove('hidden');
                 mensajeError.classList.add('hidden');
+                
+                // Actualizar el contador de animales confirmados
+                const confirmados = animalesActualizados.filter(a => a.estado === 'OK').length;
+                const total = animalesActualizados.length;
+                const listadoAnimalesCount = document.getElementById('listado-animales-count');
+                if (listadoAnimalesCount) {
+                  listadoAnimalesCount.innerHTML = `<span class="text-green-600 font-medium">${confirmados}</span>/${total}`;
+                }
                 
                 // Ocultar mensaje después de 3 segundos
                 setTimeout(() => {
@@ -403,20 +405,30 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
               const logoHeight = 35;
               let contentStartY = logoY + logoHeight + 20;
               
-              // Simplificamos la generación del PDF sin depender de imágenes externas
-              // Esto evita problemas de CORS y carga de recursos
+              // Añadir logo oficial de Masclet Imperi
               try {
-                // En lugar de cargar una imagen, dibujamos un rectángulo de color con el título
+                // Cargar el logo desde la ruta pública
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = '/images/logo_masclet.png';
+                
+                // Esperar a que la imagen se cargue
+                await new Promise((resolve, reject) => {
+                  img.onload = resolve;
+                  img.onerror = (e) => {
+                    console.error('Error al cargar la imagen:', e);
+                    reject(e);
+                  };
+                });
+                
+                // Tamaño y posicionamiento del logo (centrado arriba)
                 const pageWidth = doc.internal.pageSize.getWidth();
+                const logoWidth = 60; // Ancho del logo
+                const logoHeight = 35; // Altura proporcional
+                const logoX = (pageWidth / 2) - (logoWidth / 2); // Centrado
                 
-                // Rectángulo de color verde corporativo en la parte superior
-                doc.setFillColor(126, 211, 33);
-                doc.rect(0, 0, pageWidth, 25, 'F');
-                
-                // Título en blanco sobre el rectángulo verde
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(16);
-                doc.text('MASCLET IMPERI', pageWidth / 2, 15, { align: 'center' });
+                // Añadir la imagen al PDF
+                doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
                 
                 // Añadir el título debajo del logo
                 doc.setFontSize(20);
@@ -500,15 +512,18 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
                   const celdas = fila.querySelectorAll('td');
                   if (celdas.length >= 4 && !fila.textContent.includes('No hay animales')) {
                     hayAnimales = true;
-                    // Extraer información de las celdas: nombre, código, explotación, género, estado
+                    // Extraer información de las celdas: nombre, código, explotación, género, confirmación y observaciones
                     const nombre = celdas[0]?.textContent?.trim() || 'N/A';
                     const codigo = celdas[1]?.textContent?.trim() || 'N/A';
                     const explotacion = celdas[2]?.textContent?.trim() || 'N/A';
                     const genero = celdas[3]?.textContent?.trim() || 'N/A';
-                    const estado = celdas[4]?.querySelector('span')?.textContent?.trim() || 'N/A';
+                    // Ponemos NO/OK en la columna de confirmación para que el operario solo tenga que marcar la opción correcta
+                    const confirmacion = 'NO/OK';
+                    // Dejamos observaciones vacía para que puedan rellenarla manualmente
+                    const observaciones = '';
                     
                     // Añadir a los datos de la tabla
-                    animalesRows.push([nombre, codigo, explotacion, genero, estado]);
+                    animalesRows.push([nombre, codigo, explotacion, genero, confirmacion, observaciones]);
                   }
                 });
                 
@@ -525,10 +540,11 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
                     currentLang === 'ca' ? 'Codi' : 'Código', 
                     currentLang === 'ca' ? 'Explotació' : 'Explotación', 
                     currentLang === 'ca' ? 'Gènere' : 'Género',
-                    currentLang === 'ca' ? 'Estat' : 'Estado'
+                    currentLang === 'ca' ? 'Confirmació' : 'Confirmación',
+                    currentLang === 'ca' ? 'Observacions' : 'Observaciones'
                   ];
                   
-                  // Añadir tabla de animales
+                  // Añadir tabla de animales con anchos de columna ajustados
                   window.autoTable(doc, {
                     startY: nextY + 5,
                     head: [animalesHead],
@@ -550,6 +566,14 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
                     },
                     alternateRowStyles: {
                       fillColor: [245, 245, 245]
+                    },
+                    columnStyles: {
+                      0: { cellWidth: 25 }, // Nombre - ancho ajustado
+                      1: { cellWidth: 20 }, // Código - ancho ajustado
+                      2: { cellWidth: 25 }, // Explotación - ancho ajustado
+                      3: { cellWidth: 15 }, // Género - ancho más pequeño
+                      4: { cellWidth: 25 }, // Confirmación - espacio para marcar
+                      5: { cellWidth: 'auto' } // Observaciones - usa el resto del espacio disponible
                     }
                   });
                   

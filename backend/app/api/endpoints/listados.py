@@ -8,7 +8,8 @@ from app.schemas.listado import (
     ListadoResponse, 
     ListadoDetalleResponse,
     ListadoAnimalCreate,
-    ExportarListadoConfig
+    ExportarListadoConfig,
+    ListadoAnimalesUpdate
 )
 from app.models.listado import Listado, ListadoAnimal
 from app.models.animal import Animal
@@ -166,7 +167,37 @@ async def obtener_listado(
         
         # Obtener animales relacionados
         await listado.fetch_related("animales")
-        animales = await listado.animales.all()
+        animales_raw = await listado.animales.all()
+        
+        # Obtener la información de estado y observaciones desde los campos correspondientes
+        animales = []
+        for animal in animales_raw:
+            animal_dict = {
+                "id": animal.id,
+                "nom": animal.nom,
+                "explotacio": animal.explotacio,
+                "genere": animal.genere,
+                "estado": "NO",  # Valor por defecto
+                "cod": animal.cod,
+                "num_serie": animal.num_serie,
+                "dob": animal.dob
+            }
+            
+            # Buscar la relación para obtener estado y observaciones
+            try:
+                listado_animal = await ListadoAnimal.get_or_none(
+                    listado_id=listado_id,
+                    animal_id=animal.id
+                )
+                
+                if listado_animal:
+                    # Usar directamente los campos estado y observaciones
+                    animal_dict["estado"] = listado_animal.estado or "NO"
+                    animal_dict["observaciones"] = listado_animal.observaciones or ""
+            except Exception as e:
+                logger.warning(f"Error al obtener datos del animal {animal.id}: {str(e)}")
+            
+            animales.append(animal_dict)
         
         # Preparar respuesta manual para evitar problemas con relaciones
         response = ListadoDetalleResponse(
@@ -419,6 +450,53 @@ async def quitar_animal_de_listado(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al quitar animal del listado: {str(e)}"
+        )
+
+
+@router.put("/{listado_id}/animales", response_model=dict)
+async def actualizar_animales_listado(
+    animales_update: ListadoAnimalesUpdate,
+    listado_id: int = Path(..., gt=0),
+    current_user: UserSchema = Depends(get_current_user)
+):
+    """
+    Actualizar el estado y observaciones de los animales en un listado
+    """
+    try:
+        # Verificar que el listado existe
+        listado = await Listado.get_or_none(id=listado_id)
+        if not listado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Listado con ID {listado_id} no encontrado"
+            )
+        
+        # Actualizar cada animal en el listado
+        actualizados = 0
+        for animal_data in animales_update.animales:
+            # Buscar la relación entre el listado y el animal
+            listado_animal = await ListadoAnimal.get_or_none(
+                listado_id=listado_id,
+                animal_id=animal_data.id
+            )
+            
+            if listado_animal:
+                # Actualizar directamente los campos estado y observaciones
+                listado_animal.estado = animal_data.estado
+                listado_animal.observaciones = animal_data.observaciones or ""
+                await listado_animal.save()
+                actualizados += 1
+        
+        return {
+            "message": f"Se actualizaron {actualizados} animales en el listado",
+            "actualizados": actualizados
+        }
+    
+    except Exception as e:
+        logger.error(f"Error al actualizar animales del listado: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar animales: {str(e)}"
         )
 
 
