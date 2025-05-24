@@ -69,6 +69,16 @@ class ListadoConAnimalesResponse(ListadoResponse):
     animales: List[ListadoAnimalResponse] = []
 
 
+class AnimalUpdateData(BaseModel):
+    id: int
+    estado: str  # OK o NO
+    observaciones: Optional[str] = None
+
+
+class ListadoAnimalesUpdate(BaseModel):
+    animales: List[AnimalUpdateData]
+
+
 class ExportarListadoConfig(BaseModel):
     incluir_observaciones: bool = True
     formato: str = "pdf"  # pdf, csv, etc.
