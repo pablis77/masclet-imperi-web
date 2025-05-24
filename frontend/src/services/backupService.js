@@ -2,9 +2,10 @@
  * Servicio para gestionar backups del sistema
  */
 
-// URL base de la API
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// URL base de la API - usamos la URL directa al backend
+const API_URL = 'http://localhost:8000/api/v1';
 
+// Registrar la URL para depuración
 console.log('BackupService inicializado - URL de API:', API_URL);
 
 /**
@@ -12,25 +13,78 @@ console.log('BackupService inicializado - URL de API:', API_URL);
  * @returns {Promise<Array>} Lista de backups
  */
 export async function getBackupsList() {
+  console.log(`Intentando obtener lista de backups desde: ${API_URL}/backup/list`);
   try {
+    // Obtener token de autenticación
+    const token = localStorage.getItem('token');
+    
+    // Verificar si tenemos token
+    if (!token) {
+      console.error('No hay token de autenticación disponible');
+      throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.');
+    }
+    
+    console.log(`Token de autenticación: ${token.substring(0, 15)}...`);
+    console.log(`Intentando conectar a: ${API_URL}/backup/list`);
+    
+    // Configurar headers con el token
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+    
+    console.log('Headers de la petición:', headers);
+    
     const response = await fetch(`${API_URL}/backup/list`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      credentials: 'include'
+      headers
     });
-
+    
+    console.log(`Respuesta recibida: Status ${response.status} ${response.statusText}`);
+    console.log('Headers:', response.headers);
+    
+    // Registrar la URL completa para depuración
+    console.log(`URL completa de la petición: ${API_URL}/backup/list`);
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Error al obtener la lista de backups');
+      console.error(`Error HTTP: ${response.status} ${response.statusText}`);
+      
+      // Crear una copia de la respuesta para poder leerla múltiples veces
+      const responseClone = response.clone();
+      
+      // Intentar obtener detalles del error
+      try {
+        const errorData = await responseClone.json();
+        console.error('Detalles del error:', errorData);
+      } catch (jsonError) {
+        console.error('No se pudo parsear la respuesta de error como JSON:', jsonError);
+        
+        try {
+          const errorText = await response.text();
+          console.error('Texto de error:', errorText);
+        } catch (textError) {
+          console.error('No se pudo obtener el texto de la respuesta:', textError);
+        }
+      }
+      
+      throw new Error(`Error al obtener la lista de backups: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`Datos recibidos:`, data);
+    return data;
   } catch (error) {
     console.error('Error en getBackupsList:', error);
-    throw error;
+    // Mostrar más información sobre el error para facilitar la depuración
+    console.error('Detalles del error:', {
+      mensaje: error.message,
+      url: `${API_URL}/backup/list`,
+      stack: error.stack
+    });
+    
+    // Devolver un array vacío en lugar de lanzar el error
+    // para evitar que la interfaz se rompa completamente
+    return [];
   }
 }
 
@@ -40,26 +94,71 @@ export async function getBackupsList() {
  * @returns {Promise<Object>} Información del backup creado
  */
 export async function createBackup(options = {}) {
+  console.log(`Intentando crear backup en: ${API_URL}/backup/create`, options);
   try {
+    const token = localStorage.getItem('token');
+    console.log(`Token de autenticación: ${token ? 'Presente' : 'No encontrado'}`);
+    
+    // Añadir información adicional al backup
+    const backupOptions = {
+      ...options,
+      created_by: 'usuario_web',
+      description: options.description || `Backup manual creado el ${new Date().toLocaleString()}`
+    };
+    
+    console.log('Opciones de backup:', backupOptions);
+    
+    // Usamos la URL directa al backend para evitar problemas con el proxy
+    console.log(`URL completa para crear backup: ${API_URL}/backup/create`);
     const response = await fetch(`${API_URL}/backup/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': token ? `Bearer ${token}` : ''
       },
-      body: JSON.stringify(options),
-      credentials: 'include'
+      body: JSON.stringify(backupOptions)
+      // Quitamos credentials: 'include' para evitar problemas de CORS
     });
 
+    console.log(`Respuesta recibida: Status ${response.status} ${response.statusText}`);
+    
+    // Si la respuesta no es OK, intentar obtener el mensaje de error
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Error al crear el backup');
+      console.error(`Error HTTP: ${response.status} ${response.statusText}`);
+      let errorDetail = 'Error al crear el backup';
+      
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.detail || errorDetail;
+      } catch (parseError) {
+        console.error('No se pudo parsear la respuesta de error como JSON:', parseError);
+        // Intentar obtener el texto de la respuesta
+        try {
+          const errorText = await response.text();
+          console.error('Contenido de la respuesta de error:', errorText.substring(0, 500));
+        } catch (textError) {
+          console.error('No se pudo obtener el texto de la respuesta:', textError);
+        }
+      }
+      
+      throw new Error(errorDetail);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`Backup creado correctamente:`, data);
+    return data;
   } catch (error) {
-    console.error('Error en createBackup:', error);
-    throw error;
+    console.error('Error al crear backup:', error);
+    // Mostrar más información sobre el error para facilitar la depuración
+    console.error('Detalles del error:', {
+      mensaje: error.message,
+      url: `${API_URL}/backup/create`,
+      opciones: options,
+      stack: error.stack
+    });
+    
+    // Lanzar un error más descriptivo
+    throw new Error(`Error al crear backup: ${error.message}`);
   }
 }
 
@@ -80,8 +179,8 @@ export async function restoreBackup(filename) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      credentials: 'include'
+      }
+      // Quitamos credentials: 'include' para evitar problemas de CORS
     });
 
     if (!response.ok) {
@@ -113,8 +212,8 @@ export async function deleteBackup(filename) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      credentials: 'include'
+      }
+      // Quitamos credentials: 'include' para evitar problemas de CORS
     });
 
     if (!response.ok) {

@@ -1,0 +1,22 @@
+[
+  {
+    "filename": "backup_masclet_imperi_20250524_161102.sql",
+    "date": "2025-05-24 16:11:02",
+    "size": "0.10 MB",
+    "size_bytes": 107230,
+    "description": "Backup automático ejecutado manualmente el 20250524_161102",
+    "created_by": "sistema",
+    "is_auto": true,
+    "after_change": true
+  },
+  {
+    "filename": "backup_masclet_imperi_20250524_161407.sql",
+    "date": "2025-05-24 16:14:07",
+    "size": "0.10 MB",
+    "size_bytes": 107230,
+    "description": "Backup automático ejecutado manualmente el 20250524_161407",
+    "created_by": "sistema",
+    "is_auto": true,
+    "after_change": true
+  }
+]
