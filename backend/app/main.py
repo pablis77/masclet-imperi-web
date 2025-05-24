@@ -59,11 +59,14 @@ app = FastAPI(
 
 # Configurar CORS para desarrollo - FORZAR ACEPTACIÓN DE TODAS LAS CONEXIONES
 origins = [
-    "*",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:4321",
     "http://127.0.0.1:4321",
+    "http://localhost:52944",
+    "http://127.0.0.1:52944",
+    "https://masclet-imperi-web-frontend-2025.loca.lt",
+    "https://api-masclet-imperi.loca.lt",
     "http://10.5.0.2:3000",
     "http://192.168.1.147:3000"
 ]
@@ -78,7 +81,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"],
     expose_headers=["*"],
     max_age=600  # 10 minutos
 )
@@ -86,14 +89,21 @@ app.add_middleware(
 # Middleware para manejar manualmente las peticiones OPTIONS
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
+    # Obtener el origen de la solicitud
+    origin = request.headers.get("origin", "")
+    
+    # Si el origen no está en la lista de orígenes permitidos, usar el primer origen de la lista
+    if origin not in origins and origins:
+        origin = origins[0]
+    
     # Si es una petición OPTIONS, responder inmediatamente
     if request.method == "OPTIONS":
         response = Response(
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": origin,
                 "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
                 "Access-Control-Allow-Credentials": "true",
                 "Access-Control-Expose-Headers": "*",
                 "Access-Control-Max-Age": "600"  # 10 minutos
@@ -105,9 +115,9 @@ async def add_cors_headers(request: Request, call_next):
     response = await call_next(request)
     
     # Añadir encabezados CORS a la respuesta
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Expose-Headers"] = "*"
     response.headers["Access-Control-Max-Age"] = "600"  # 10 minutos

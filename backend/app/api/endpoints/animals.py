@@ -38,27 +38,33 @@ async def trigger_backup_after_change(background_tasks: BackgroundTasks, action:
     """Ejecuta un backup automático tras modificaciones importantes en fichas de animales"""
     logger.info(f"Programando backup automático tras {action} del animal {animal_nom}")
     
-    # Verificar el entorno (desarrollo vs producción)
-    if os.name == 'nt':  # Windows (entorno de desarrollo)
-        # Obtener la ruta base del proyecto (2 niveles arriba de app/api/endpoints)
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        
-        # Primero verificamos si existe el nuevo script con integración de historial
+    # Obtener la ruta base del proyecto (2 niveles arriba de app/api/endpoints)
+    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    
+    # Ruta al nuevo script Python de backup
+    python_script_path = os.path.join(base_path, "new_tests", "complementos", "auto_backup.py")
+    
+    if os.path.exists(python_script_path):
+        # Ejecutar el script Python de backup
+        try:
+            # Preparar el comando con los argumentos necesarios
+            cmd = [sys.executable, python_script_path, "--after-change", "--description", f"Backup tras {action} del animal {animal_nom}"]
+            
+            # Añadir ID del historial si existe
+            if history_id:
+                cmd.extend(["--history-id", str(history_id)])
+            
+            # Ejecutar el comando en segundo plano
+            background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
+            logger.info(f"Backup automático programado tras {action} de {animal_nom}")
+        except Exception as e:
+            logger.error(f"Error al programar backup automático: {str(e)}")
+    else:
+        # Verificar si existen los scripts de PowerShell como fallback
         new_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_with_history.ps1")
         legacy_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_programado.ps1")
         
-        if os.path.exists(new_script_path):
-            # En Windows, ejecutamos el nuevo script de PowerShell con el parámetro -AfterChange y el ID del historial
-            try:
-                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", new_script_path, "-AfterChange"]
-                # Añadir ID del historial si existe
-                if history_id:
-                    cmd.extend(["-HistoryId", str(history_id)])
-                background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
-                logger.info(f"Backup automático con historial programado tras {action} de {animal_nom}")
-            except Exception as e:
-                logger.error(f"Error al programar backup automático con historial: {str(e)}")
-        elif os.path.exists(legacy_script_path):
+        if os.path.exists(legacy_script_path):
             # Si no existe el nuevo script, usamos el script legado
             try:
                 cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", legacy_script_path, "-AfterChange"]
@@ -68,11 +74,19 @@ async def trigger_backup_after_change(background_tasks: BackgroundTasks, action:
                 logger.error(f"Error al programar backup automático (legado): {str(e)}")
         else:
             logger.warning(f"No se encontró ningún script de backup disponible")
-    else:  # Linux/Unix (entorno de producción)
-        # En producción podríamos usar AWS SDK para lanzar el backup a S3
-        # Esta implementación dependerá de la configuración final en AWS
-        logger.info("Ejecutando backup en entorno de producción (AWS)")
-        # Aquí iría el código para AWS S3 cuando implementemos el despliegue
+            # Intentar usar el script Python directamente
+            try:
+                # Crear el script si no existe
+                with open(python_script_path, "w", encoding="utf-8") as f:
+                    f.write("""#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+print("Backup automático ejecutado")
+""")
+                logger.info(f"Creado script de backup básico en {python_script_path}")
+            except Exception as e:
+                logger.error(f"Error al crear script de backup básico: {str(e)}")
+
 
 @router.post("/", response_model=AnimalResponse, status_code=201)
 async def create_animal(

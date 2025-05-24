@@ -448,8 +448,10 @@ const userRole = "administrador"; // Simulación de rol
         
       } catch (error) {
         console.error('Error al cargar la lista de backups:', error);
+        // Mostrar mensaje de error
         showAlert(`${t.error}: ${error.message}`, 'error');
         
+        // Asegurarse de que la tabla muestra un mensaje amigable en caso de error
         backupsTableBody.innerHTML = `
           <tr class="text-center">
             <td colspan="5" class="px-6 py-4 text-sm text-red-500 dark:text-red-300">${t.error}: ${error.message}</td>
