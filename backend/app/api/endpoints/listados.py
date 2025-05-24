@@ -177,7 +177,8 @@ async def obtener_listado(
                 "nom": animal.nom,
                 "explotacio": animal.explotacio,
                 "genere": animal.genere,
-                "estado": "NO",  # Valor por defecto
+                "estado": animal.estado,  # Estado del animal (OK/DEF)
+                "confirmacion": "NO",  # Valor por defecto para la confirmación en el listado
                 "cod": animal.cod,
                 "num_serie": animal.num_serie,
                 "dob": animal.dob
@@ -191,11 +192,17 @@ async def obtener_listado(
                 )
                 
                 if listado_animal:
-                    # Usar directamente los campos estado y observaciones
-                    animal_dict["estado"] = listado_animal.estado or "NO"
+                    # Usar directamente los campos confirmacion y observaciones
+                    animal_dict["confirmacion"] = listado_animal.confirmacion or "NO"
                     animal_dict["observaciones"] = listado_animal.observaciones or ""
+                    logger.info(f"Estado del animal {animal.id}: {animal_dict['confirmacion']} (valor en BD: {listado_animal.confirmacion})")
+                    # Imprimir el objeto completo para depuración
+                    logger.info(f"Datos completos del animal {animal.id}: {animal_dict}")
             except Exception as e:
                 logger.warning(f"Error al obtener datos del animal {animal.id}: {str(e)}")
+                # En caso de error, usar valores por defecto
+                animal_dict["confirmacion"] = "NO"
+                animal_dict["observaciones"] = ""
             
             animales.append(animal_dict)
         
@@ -481,8 +488,8 @@ async def actualizar_animales_listado(
             )
             
             if listado_animal:
-                # Actualizar directamente los campos estado y observaciones
-                listado_animal.estado = animal_data.estado
+                # Actualizar directamente los campos confirmacion y observaciones
+                listado_animal.confirmacion = animal_data.confirmacion
                 listado_animal.observaciones = animal_data.observaciones or ""
                 await listado_animal.save()
                 actualizados += 1

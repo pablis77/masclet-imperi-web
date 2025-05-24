@@ -44,15 +44,7 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
           {volver}
         </a>
 
-        <button 
-          id="export-listado-pdf"
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          <span id="export-btn-text">{exportarPdf}</span>
-        </button>
+        <!-- Botón de exportar PDF eliminado -->
         
         <!-- Mensaje de estado para la exportación -->
         <div id="pdf-export-status" class="hidden mt-2 text-sm font-medium"></div>
@@ -88,7 +80,7 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
           
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">{animales}</h3>
-            <button id="guardar-cambios" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <button id="guardar-cambios" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-lime-500 hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
@@ -256,8 +248,8 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
               </td>
               <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                 <select class="estado-animal border-gray-300 rounded-md text-sm" data-animal-id="${animal.id}">
-                  <option value="OK">OK</option>
-                  <option value="NO" selected>NO</option>
+                  <option value="OK" ${animal.confirmacion === 'OK' ? 'selected' : ''}>OK</option>
+                  <option value="NO" ${animal.confirmacion === 'NO' || !animal.confirmacion ? 'selected' : ''}>NO</option>
                 </select>
               </td>
               <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -301,11 +293,11 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
                 
                 animalesActualizados.push({
                   id: animalId,
-                  estado: estado,
+                  confirmacion: estado,
                   observaciones: observaciones
                 });
                 
-                console.log(`Animal ${animalId}: estado=${estado}, observaciones=${observaciones}`);
+                console.log(`Animal ${animalId}: confirmacion=${estado}, observaciones=${observaciones}`);
               });
               
               // Enviar los datos al servidor
@@ -317,7 +309,7 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
                 mensajeError.classList.add('hidden');
                 
                 // Actualizar el contador de animales confirmados
-                const confirmados = animalesActualizados.filter(a => a.estado === 'OK').length;
+                const confirmados = animalesActualizados.filter(a => a.confirmacion === 'OK').length;
                 const total = animalesActualizados.length;
                 const listadoAnimalesCount = document.getElementById('listado-animales-count');
                 if (listadoAnimalesCount) {
