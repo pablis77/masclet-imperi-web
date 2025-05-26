@@ -15,12 +15,13 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 1. **Token JWT incluye información de rol**: El token JWT devuelto por el backend ya contiene el campo `role` (ej: `UserRole.ADMIN`).
 2. **Usuarios configurados en el sistema**:
-   - `admin` → `UserRole.ADMIN`
-   - `editor` → `UserRole.EDITOR`
-   - `usuario` → `UserRole.USER`
-   - El usuario `ramon` (gerente) no existe actualmente en el sistema.
+   - `admin` → `UserRole.ADMIN` (Rol fundamental - Acceso completo)
+   - `ramon` → `UserRole.GERENTE` (Rol fundamental - Acceso casi completo, sin importación)
+   - `editor` → `UserRole.EDITOR` (Rol secundario - Consulta y actualización)
+   - `usuario` → `UserRole.USER` (Rol secundario - Solo consulta)
 3. **Respuesta del login**: No incluye el objeto usuario completo, solo el token JWT.
 4. **Almacenamiento en localStorage**: El frontend guarda el token en `localStorage.token` pero no extrae ni almacena el rol.
+5. **Discrepancia en el frontend**: Partes del código se refieren a `ramon` como nombre de rol en lugar de `gerente`.
 
 ### 1.2 Análisis de Estructura de Código Existente
 
@@ -33,9 +34,10 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 2.1 Mejora del Servicio de Autenticación
 
-- [ ] Actualizar `authService.ts` para mejorar detección de roles
-- [ ] Agregar funciones auxiliares para verificación de permisos
-- [ ] Implementar función para verificar permisos específicos basados en matriz
+- [ ] Actualizar `authService.ts` para extraer correctamente el rol del token JWT
+- [ ] Implementar jerarquía de roles priorizando ADMINISTRADOR y GERENTE
+- [ ] Estandarizar el uso de "gerente" vs "Ramon" en todo el código
+- [ ] Crear funciones para verificar permisos basándose en la matriz de permisos
 
 ### 2.2 Creación de Componentes de Protección
 
@@ -47,9 +49,11 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 3.1 Implementación en Ruta de Prueba
 
-- [ ] Seleccionar una ruta específica para pruebas (ej: `/users`)
+- [ ] Seleccionar la ruta `/users` para pruebas (accesible por ADMIN y GERENTE)
 - [ ] Implementar protección de ruta usando componentes desarrollados
-- [ ] Verificar comportamiento con diferentes roles de usuario
+- [ ] Probar acceso con usuario `admin` (debe funcionar)
+- [ ] Probar acceso con usuario `ramon` (debe funcionar)
+- [ ] Probar acceso con usuario `editor` y `usuario` (debe denegar)
 - [ ] Ajustar componentes según resultados de pruebas
 
 ### 3.2 Adaptación del Sidebar y Navbar
