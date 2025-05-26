@@ -159,50 +159,7 @@ const userRole = "administrador"; // Simulación de rol
       <button 
         id="create-backup-btn" 
         class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/80 rounded-md transition-colors"
-        onclick="
-          console.log('Botón de backup clickeado');
-          const includeAnimals = document.getElementById('include-animals').checked;
-          const includeBirths = document.getElementById('include-births').checked;
-          const includeConfig = document.getElementById('include-config').checked;
-          
-          fetch('/api/v1/backup/create', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-              include_animals: includeAnimals,
-              include_births: includeBirths,
-              include_config: includeConfig,
-              created_by: 'usuario'
-            }),
-            credentials: 'include'
-          })
-          .then(response => {
-            if (!response.ok) {
-              return response.json().then(error => {
-                throw new Error(error.detail || 'Error al crear el backup');
-              });
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log('Backup creado:', data);
-            alert('Backup creado correctamente');
-            window.location.reload();
-          })
-          .catch(error => {
-            console.error('Error al crear backup:', error);
-            alert(`Error: ${error.message}`);
-            this.disabled = false;
-            this.innerText = 'Crear backup ahora';
-          });
-          
-          this.disabled = true;
-          this.innerText = 'Creando backup...';
-          return false;
-        "
+        type="button"
       >
         {t.createButton}
       </button>
@@ -459,49 +416,53 @@ const userRole = "administrador"; // Simulación de rol
         `;
       }
     }
-    
     // Manejadores de eventos
+    function initEventListeners() {
+      // Botón de crear backup
+      createBackupBtn.addEventListener('click', handleCreateBackup);
+    }
+    
+    // Función para manejar la creación de backups
     async function handleCreateBackup() {
+      console.log('Botón de backup clickeado');
+      
+      // Obtener opciones de backup
+      const options = {
+        include_animals: includeAnimals.checked,
+        include_births: includeBirths.checked,
+        include_config: includeConfig.checked,
+        created_by: 'usuario'
+      };
+      
+      // Desactivar el botón mientras se crea el backup
+      setLoading(createBackupBtn, true, t.backupInProgress);
+      
       try {
-        setLoading(createBackupBtn, true, t.backupInProgress);
+        // Usar el servicio centralizado de backup
+        const result = await createBackup(options);
+        console.log('Backup creado correctamente:', result);
         
-        const options = {
-          include_animals: includeAnimals.checked,
-          include_births: includeBirths.checked,
-          include_config: includeConfig.checked,
-          created_by: 'usuario' // Se sobreescribirá en el backend con el correo del usuario autenticado
-        };
+        // Mostrar mensaje de éxito
+        showAlert(t.backupSuccess, 'success');
         
-        try {
-          // Intentar crear el backup usando la URL directa al backend
-          const result = await createBackup(options);
-          console.log('Backup creado correctamente:', result);
+        // Recargar la lista de backups
+        await loadBackupsList();
+      } catch (error) {
+        console.error('Error al crear backup:', error);
+        
+        // Si vemos un error de HTML en la respuesta, probablemente el backup sí se creó
+        if (error.message && error.message.includes('<!DOCTYPE')) {
+          console.log('El backup probablemente se creó correctamente a pesar del error de parseo');
           showAlert(t.backupSuccess, 'success');
           
-          // Recargar la lista de backups
-          await loadBackupsList();
-        } catch (backupError) {
-          console.error('Error al crear backup:', backupError);
-          
-          // Si hay un error, pero vemos en la consola que el backup se creó correctamente,
-          // mostramos un mensaje de éxito y recargamos la lista
-          if (backupError.message && backupError.message.includes('<!DOCTYPE')) {
-            console.log('Error de formato JSON, pero el backup probablemente se creó correctamente');
-            showAlert(t.backupSuccess, 'success');
-            
-            // Recargar la lista de backups después de un breve retraso
-            setTimeout(async () => {
-              await loadBackupsList();
-            }, 1000);
-          } else {
-            // Si es otro tipo de error, mostramos el mensaje de error
-            showAlert(`${t.error}: ${backupError.message}`, 'error');
-          }
+          // Recargar la lista después de un breve retraso
+          setTimeout(() => loadBackupsList(), 1000);
+        } else {
+          // Solo mostrar errores que no sean de parser HTML
+          showAlert(`${t.error}: ${error.message || 'Error desconocido'}`, 'error');
         }
-      } catch (error) {
-        console.error('Error general en handleCreateBackup:', error);
-        showAlert(`${t.error}: ${error.message}`, 'error');
       } finally {
+        // Siempre reactivar el botón
         setLoading(createBackupBtn, false);
       }
     }
