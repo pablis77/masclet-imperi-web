@@ -33,59 +33,31 @@ import sys
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+from app.services.scheduled_backup_service import ScheduledBackupService, BackupType
+
 # Función auxiliar para ejecutar backup tras modificaciones
-async def trigger_backup_after_change(background_tasks: BackgroundTasks, action: str, animal_nom: str, history_id: str = None):
+async def trigger_backup_after_change(background_tasks: BackgroundTasks, action: str, animal_nom: str, animal_id: str = None):
     """Ejecuta un backup automático tras modificaciones importantes en fichas de animales"""
     logger.info(f"Programando backup automático tras {action} del animal {animal_nom}")
     
-    # Obtener la ruta base del proyecto (2 niveles arriba de app/api/endpoints)
-    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    
-    # Ruta al nuevo script Python de backup
-    python_script_path = os.path.join(base_path, "new_tests", "complementos", "auto_backup.py")
-    
-    if os.path.exists(python_script_path):
-        # Ejecutar el script Python de backup
-        try:
-            # Preparar el comando con los argumentos necesarios
-            cmd = [sys.executable, python_script_path, "--after-change", "--description", f"Backup tras {action} del animal {animal_nom}"]
-            
-            # Añadir ID del historial si existe
-            if history_id:
-                cmd.extend(["--history-id", str(history_id)])
-            
-            # Ejecutar el comando en segundo plano
-            background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
-            logger.info(f"Backup automático programado tras {action} de {animal_nom}")
-        except Exception as e:
-            logger.error(f"Error al programar backup automático: {str(e)}")
-    else:
-        # Verificar si existen los scripts de PowerShell como fallback
-        new_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_with_history.ps1")
-        legacy_script_path = os.path.join(base_path, "new_tests", "complementos", "backup_programado.ps1")
+    if not background_tasks:
+        logger.warning("No se proporcionó objeto BackgroundTasks para programar el backup")
+        return
         
-        if os.path.exists(legacy_script_path):
-            # Si no existe el nuevo script, usamos el script legado
-            try:
-                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", legacy_script_path, "-AfterChange"]
-                background_tasks.add_task(lambda: subprocess.run(cmd, capture_output=True))
-                logger.info(f"Backup automático (legado) programado tras {action} de {animal_nom}")
-            except Exception as e:
-                logger.error(f"Error al programar backup automático (legado): {str(e)}")
-        else:
-            logger.warning(f"No se encontró ningún script de backup disponible")
-            # Intentar usar el script Python directamente
-            try:
-                # Crear el script si no existe
-                with open(python_script_path, "w", encoding="utf-8") as f:
-                    f.write("""#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+    try:
+        # Usar el servicio de backups programados para crear el backup
+        await ScheduledBackupService.trigger_backup_after_animal_change(
+            background_tasks=background_tasks,
+            action=action,
+            animal_id=str(animal_id),
+            animal_nom=animal_nom
+        )
+        
+        logger.info(f"Backup automático programado tras {action} del animal {animal_nom}")
+    except Exception as e:
+        logger.error(f"Error al programar backup automático: {str(e)}")
+        logger.error(f"Detalles del error: animal_id={animal_id}, action={action}")
 
-print("Backup automático ejecutado")
-""")
-                logger.info(f"Creado script de backup básico en {python_script_path}")
-            except Exception as e:
-                logger.error(f"Error al crear script de backup básico: {str(e)}")
 
 
 @router.post("/", response_model=AnimalResponse, status_code=201)
@@ -498,7 +470,12 @@ async def update_animal_patch(
         
         # Disparar backup automático tras la modificación
         if background_tasks and len(raw_data) > 0:
-            await trigger_backup_after_change(background_tasks, "modificación (PATCH)", animal.nom)
+            await trigger_backup_after_change(
+                background_tasks=background_tasks, 
+                action="modificación (PATCH)", 
+                animal_nom=animal.nom, 
+                animal_id=str(animal.id)
+            )
             
         return {
             "status": "success",
@@ -600,7 +577,7 @@ async def update_animal(
                 descripcion = f"Actualización de {campo}"
                 
             # Registrar en historial
-            await AnimalHistory.create(
+            history_record = await AnimalHistory.create(
                 animal=animal,
                 usuario=current_user.username,
                 cambio=descripcion,
@@ -608,6 +585,15 @@ async def update_animal(
                 valor_anterior=str(valor_anterior) if valor_anterior is not None else None,
                 valor_nuevo=str(nuevo_valor) if nuevo_valor is not None else None
             )
+    
+    # Crear backup automático tras la actualización
+    if background_tasks:
+        await trigger_backup_after_change(
+            background_tasks=background_tasks, 
+            action="modificación", 
+            animal_nom=animal.nom, 
+            animal_id=str(animal.id)
+        )
     
     # Devolver el animal actualizado
     return {

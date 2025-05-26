@@ -34,6 +34,12 @@ class BackupInfo(BaseModel):
     is_complete: bool = True
     content_type: str = "SQL"
     can_restore: bool = True
+    backup_type: Optional[str] = "manual"  # Tipo de backup: daily, animal_created, animal_updated, import, manual
+    description: Optional[str] = ""  # Descripción del backup
+    
+    class Config:
+        # Permitir campos adicionales para mayor compatibilidad
+        extra = "ignore"
 
 class BackupOptions(BaseModel):
     include_animals: bool = True
@@ -41,6 +47,7 @@ class BackupOptions(BaseModel):
     include_config: bool = True
     created_by: str = "admin"
     description: str = ""
+    backup_type: str = "manual"  # Tipo de backup: daily, animal_created, animal_updated, import, manual
 
 class BackupService:
     # Directorio de backups
@@ -134,7 +141,9 @@ class BackupService:
                 created_by=options.created_by,
                 is_complete=True,
                 content_type="SQL",
-                can_restore=True
+                can_restore=True,
+                backup_type=options.backup_type if hasattr(options, 'backup_type') else "manual",
+                description=options.description if options.description else "Backup manual"
             )
             
             return backup_info
@@ -159,6 +168,20 @@ class BackupService:
         # Patrón para extraer la fecha del nombre del archivo
         pattern = re.compile(r'backup_masclet_imperi_(\d{8}_\d{6})\.sql')
         
+        # Cargar el historial de backups para obtener la información adicional
+        history_path = os.path.join(cls.BACKUP_DIR, "backup_log.json")
+        history = []
+        
+        if os.path.exists(history_path):
+            try:
+                with open(history_path, "r", encoding="utf-8") as f:
+                    history = json.load(f)
+            except Exception as e:
+                logger.error(f"Error al cargar historial de backups: {str(e)}")
+        
+        # Crear un diccionario con la información del historial para búsqueda rápida
+        history_dict = {entry.get("filename"): entry for entry in history}
+        
         for filename in os.listdir(cls.BACKUP_DIR):
             if filename.startswith("backup_masclet_imperi_") and filename.endswith(".sql"):
                 file_path = os.path.join(cls.BACKUP_DIR, filename)
@@ -180,15 +203,20 @@ class BackupService:
                 size_bytes = os.path.getsize(file_path)
                 size = cls._format_size(size_bytes)
                 
+                # Obtener información adicional del historial si existe
+                history_entry = history_dict.get(filename, {})
+                
                 backup_info = BackupInfo(
                     filename=filename,
                     date=formatted_date,
                     size=size,
                     size_bytes=size_bytes,
-                    created_by="sistema",  # Por ahora todos son del sistema
+                    created_by=history_entry.get("created_by", "sistema"),
                     is_complete=True,
                     content_type="SQL",
-                    can_restore=True
+                    can_restore=True,
+                    backup_type=history_entry.get("backup_type", "manual"),
+                    description=history_entry.get("description", "")
                 )
                 
                 backup_files.append(backup_info)

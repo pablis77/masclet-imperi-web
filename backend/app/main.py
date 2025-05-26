@@ -20,6 +20,10 @@ import json
 import traceback
 from app.core.json_utils import EnhancedJSONEncoder
 
+# Importar servicios de backup programado
+from app.services.scheduled_backup_service import ScheduledBackupService
+from app.services.scheduler_service import SchedulerService
+
 # Importar nuestras utilidades JSON
 from app.core.json_utils import patch_pydantic_encoder
 
@@ -329,6 +333,27 @@ register_tortoise(
     generate_schemas=True,
     add_exception_handlers=True,
 )
+
+# Inicializar servicios de backup programado
+@app.on_event("startup")
+async def init_backup_services():
+    try:
+        logger.info("Inicializando servicios de backup programado...")
+        
+        # Inicializar servicio de backup programado
+        await ScheduledBackupService.initialize()
+        logger.info("Servicio de backup programado inicializado correctamente")
+        
+        # Inicializar planificador de tareas
+        SchedulerService.start()
+        logger.info("Planificador de tareas inicializado correctamente")
+        logger.info("Backup diario programado para las 02:00 AM")
+        
+        # Registrar backups automáticos en eventos importantes
+        logger.info("Backups automáticos configurados para: creación/edición de animales, importaciones")
+    except Exception as e:
+        logger.error(f"Error al inicializar servicios de backup: {str(e)}")
+        # No interrumpir el inicio de la aplicación si falla la inicialización de backups
 
 # Función para asegurar que existe un usuario administrador
 @app.on_event("startup")

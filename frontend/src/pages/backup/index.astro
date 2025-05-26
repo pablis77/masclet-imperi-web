@@ -197,7 +197,8 @@ const userRole = "administrador"; // Simulación de rol
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.date}</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.size}</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.createdBy}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.content}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Descripción</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t.actions}</th>
           </tr>
         </thead>
@@ -345,13 +346,50 @@ const userRole = "administrador"; // Simulación de rol
       }
     }
     
-    function getBackupTypeLabel(filename) {
-      if (filename.includes('diario-auto')) {
+    function getBackupTypeLabel(backup) {
+      // Si tenemos información de tipo de backup, usarla
+      if (backup.backup_type) {
+        switch (backup.backup_type) {
+          case 'daily':
+            return 'Backup diario programado';
+          case 'animal_created':
+            return 'Backup tras crear animal';
+          case 'animal_updated':
+            return 'Backup tras modificar animal';
+          case 'import':
+            return 'Backup tras importación';
+          case 'manual':
+            return t.manualBackup;
+          default:
+            return backup.backup_type;
+        }
+      }
+
+      // Compatibilidad con versiones anteriores
+      if (backup.filename.includes('diario-auto')) {
         return t.autoBackup;
-      } else if (filename.includes('cambio-sistema')) {
+      } else if (backup.filename.includes('cambio-sistema')) {
         return t.systemBackup;
       } else {
         return t.manualBackup;
+      }
+    }
+    
+    function getBackupTypeColor(backupType) {
+      // Asignar colores según el tipo de backup para mejorar la visualización
+      switch (backupType) {
+        case 'animal_created':
+          return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+        case 'animal_updated':
+          return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200';
+        case 'daily':
+          return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+        case 'import':
+          return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+        case 'manual':
+          return 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200';
+        default:
+          return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
       }
     }
     
@@ -376,9 +414,12 @@ const userRole = "administrador"; // Simulación de rol
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.size}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.created_by}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                ${getBackupTypeLabel(backup.filename)}
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getBackupTypeColor(backup.backup_type)}">
+                ${backup.backup_type || 'manual'}
               </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
+              ${backup.description || ''}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
