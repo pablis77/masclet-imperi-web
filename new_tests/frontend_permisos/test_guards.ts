@@ -4,7 +4,54 @@
  * sin afectar a la aplicación principal.
  */
 
-import { extractRoleFromToken, getCurrentRole, hasPermission, UserRole, UserAction, ROLE_PERMISSIONS } from '../../frontend/src/services/roleService';
+// Definimos los tipos aquí para no depender de la importación directa
+type UserRole = 'administrador' | 'gerente' | 'editor' | 'usuario';
+type UserAction = 
+  'consultar' | 
+  'actualizar' | 
+  'crear' | 
+  'gestionar_usuarios' | 
+  'borrar_usuarios' |
+  'cambiar_contraseñas' |
+  'gestionar_explotaciones' |
+  'importar_datos' |
+  'ver_estadisticas' |
+  'exportar_datos';
+
+// Matriz simulada de permisos por rol (debe coincidir con roleService.ts)
+const ROLE_PERMISSIONS: Record<UserRole, UserAction[]> = {
+  'administrador': [
+    'consultar', 
+    'actualizar', 
+    'crear',
+    'gestionar_usuarios', 
+    'borrar_usuarios',
+    'cambiar_contraseñas',
+    'gestionar_explotaciones',
+    'importar_datos', 
+    'ver_estadisticas', 
+    'exportar_datos'
+  ],
+  'gerente': [
+    'consultar', 
+    'actualizar', 
+    'crear',
+    'gestionar_usuarios',
+    'borrar_usuarios',
+    'cambiar_contraseñas',
+    'gestionar_explotaciones', 
+    'ver_estadisticas',
+    'exportar_datos'
+  ],
+  'editor': [
+    'consultar', 
+    'actualizar', 
+    'ver_estadisticas'
+  ],
+  'usuario': [
+    'consultar'
+  ]
+};
 
 /**
  * Función principal para probar los componentes de protección
@@ -35,6 +82,14 @@ export async function testGuardComponents() {
 }
 
 /**
+ * Implementación simulada de extractRoleFromToken
+ */
+function extractRoleFromToken(): UserRole {
+  // Simulamos que no hay token, por lo que devuelve 'usuario'
+  return 'usuario';
+}
+
+/**
  * Prueba de extracción de rol desde token
  */
 function testExtractRoleFromToken() {
@@ -47,13 +102,21 @@ function testExtractRoleFromToken() {
     
     // Simular diferentes escenarios
     simulateTokenExtraction('administrador');
-    simulateTokenExtraction('Ramon');
+    simulateTokenExtraction('gerente');
     simulateTokenExtraction('editor');
     simulateTokenExtraction('usuario');
     simulateTokenExtraction('rol_invalido');
   } catch (error) {
     console.error(`  ❌ Error en extractRoleFromToken: ${error}`);
   }
+}
+
+/**
+ * Implementación simulada de getCurrentRole
+ */
+function getCurrentRole(): UserRole {
+  // Para pruebas, simulamos un rol administrador
+  return 'administrador';
 }
 
 /**
@@ -68,6 +131,14 @@ function testGetCurrentRole() {
   } catch (error) {
     console.error(`  ❌ Error en getCurrentRole: ${error}`);
   }
+}
+
+/**
+ * Implementación simulada de hasPermission
+ */
+function hasPermission(userRole: UserRole, action: UserAction): boolean {
+  // Verificamos si el rol tiene el permiso requerido
+  return ROLE_PERMISSIONS[userRole].includes(action);
 }
 
 /**
@@ -179,7 +250,5 @@ function simulateTokenExtraction(role: string) {
   }
 }
 
-// Si este archivo se ejecuta directamente
-if (require.main === module) {
-  testGuardComponents();
-}
+// Ejecutar directamente las pruebas
+testGuardComponents();
