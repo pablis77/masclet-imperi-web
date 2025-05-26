@@ -25,10 +25,46 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 1.2 Análisis de Estructura de Código Existente
 
-- [ ] Confirmar estructura de roles en backend (`app/core/config.py`)
-- [ ] Verificar middleware de autenticación existente
-- [ ] Analizar componentes de navegación (Sidebar, Navbar) y su integración con roles
-- [ ] Revisar lógica de redirección existente tras login
+- [x] Confirmar estructura de roles en backend (`app/core/config.py`)
+- [x] Verificar middleware de autenticación existente
+- [x] Analizar componentes de navegación (Sidebar, Navbar) y su integración con roles
+- [x] Revisar lógica de redirección existente tras login
+
+#### Conclusiones del Análisis
+
+1. **Estructura de Roles en Backend**:
+   - Definición clara mediante `UserRole` (enum): ADMIN, GERENTE, EDITOR, USER
+   - Matriz de permisos `ROLES` con acciones específicas para cada rol
+   - Acciones definidas mediante `Action` (enum): CONSULTAR, ACTUALIZAR, CREAR, etc.
+
+2. **Middleware de Autenticación**:
+   - Usa OAuth2 con JWT para autenticación
+   - En desarrollo hay un bypass que siempre devuelve un usuario administrador
+   - Funciones para: autenticar usuario, extraer usuario del token, verificar permisos, etc.
+
+3. **Componentes de Navegación**:
+   - `Navbar.tsx` filtra el menú según el rol del usuario
+   - Filtrado mediante: `menuItems.filter(item => item.roles.includes(userRole))`
+   - Controles de acceso ya implementados para opciones de menú
+
+4. **Lógica de Redirección tras Login**:
+   - Almacena token JWT en `localStorage.setItem('token', token)`
+   - Redirección al dashboard principal tras login exitoso
+   - No extrae ni almacena el rol desde el token
+
+#### Áreas de Mejora Identificadas
+
+1. **Extracción y almacenamiento del rol**:
+   - **Problema**: No se extrae ni almacena el rol del token JWT en el frontend
+   - **Solución**: Implementar en la fase 2.1 (ya completada) la extracción del rol del token
+
+2. **Verificación de permisos**:
+   - **Problema**: No hay un mecanismo consistente para verificar permisos en componentes/páginas
+   - **Solución**: Implementar en la fase 2.2 (componentes de protección) - en curso
+
+3. **Estandarización de nomenclatura**:
+   - **Problema**: Inconsistencia en nomenclatura (gerente vs Ramon)
+   - **Solución**: Cambiar todos los sitios donde aparezca "gerente" por "Ramon" - incluir en fase 3.2
 
 ## 2. Mejoras No Invasivas
 
@@ -49,9 +85,16 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 3.1 Implementación en Ruta de Prueba
 
-- [ ] Seleccionar la ruta `/users` para pruebas (accesible por ADMIN y GERENTE)
+- [ ] Seleccionar la ruta `/users` para pruebas (accesible por ADMIN y Ramon)
 - [ ] Implementar protección de ruta usando componentes desarrollados
 - [ ] Probar acceso con usuario `admin` (debe funcionar)
+
+### 3.2 Estandarización de Nomenclatura
+
+- [ ] Cambiar todas las referencias de "gerente" a "Ramon" en el frontend
+- [ ] Verificar y mantener la compatibilidad con el backend (que usa "gerente")
+- [ ] Actualizar filtros de menú y componentes de protección
+- [ ] Probar que la navegación y permisos funcionan correctamente con el cambio
 - [ ] Probar acceso con usuario `ramon` (debe funcionar)
 - [ ] Probar acceso con usuario `editor` y `usuario` (debe denegar)
 - [ ] Ajustar componentes según resultados de pruebas
