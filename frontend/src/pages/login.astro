@@ -1,12 +1,18 @@
 ---
-import DefaultLayout from '../layouts/DefaultLayout.astro';
+import LoginLayout from '../layouts/LoginLayout.astro';
+import PasswordErrorModal from '../components/modals/PasswordErrorModal';
 ---
 
-<DefaultLayout title="Login - Masclet Imperi">
+<LoginLayout title="Login - Masclet Imperi">
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+      {/* Modal de error de contraseña */}
+      <PasswordErrorModal client:only="react" isOpen={false} onClose={() => {}} id="passwordErrorModal" />
+      <div class="flex flex-col items-center">
+        <!-- Logo grande -->        
+        <img src="/images/logo_masclet.jpg" alt="Logo Masclet Imperi" class="w-48 h-auto mb-6">
+        
+        <h2 class="mt-2 text-center text-3xl font-extrabold text-gray-900">
           Iniciar sesión
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
@@ -34,7 +40,7 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
           </div>
 
           <div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
               Iniciar sesión
             </button>
           </div>
@@ -57,54 +63,79 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
       </div>
     </div>
   </div>
-</DefaultLayout>
+</LoginLayout>
 
 <script>
   // Importar el servicio de API
-  import { login } from '../services/apiService';
+  import apiService from '../services/apiService';
+
+  // Definimos una variable global para el estado del modal
+  window.showPasswordErrorModal = function() {
+    // Acceder al componente React directamente mediante eventos personalizados
+    document.dispatchEvent(new CustomEvent('show-password-error'));
+  };
   
+  // Función para manejar el inicio de sesión
   document.addEventListener('DOMContentLoaded', () => {
-    // Verificar si ya hay un token válido
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Redirigir a la página principal
-      window.location.href = '/';
-    }
-    
     const loginForm = document.getElementById('loginForm');
-    const loginStatus = document.getElementById('loginStatus');
     
-    loginForm?.addEventListener('submit', async (e) => {
+    // Crear un script que maneje la interacción con el componente React
+    const script = document.createElement('script');
+    script.textContent = `
+      // Esta función se ejecutará cuando el componente React esté listo
+      document.addEventListener('astro:page-load', () => {
+        // Escuchar el evento personalizado para mostrar el modal
+        document.addEventListener('show-password-error', () => {
+          // Buscar el elemento modal por su ID
+          const modal = document.getElementById('passwordErrorModal');
+          if (modal) {
+            // Enviar mensaje al componente React para cambiar su estado
+            const event = new CustomEvent('update-modal-state', { 
+              detail: { isOpen: true } 
+            });
+            modal.dispatchEvent(event);
+          }
+        });
+      });
+    `;
+    document.head.appendChild(script);
+    
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const username = (document.getElementById('username') as HTMLInputElement)?.value;
-      const password = (document.getElementById('password') as HTMLInputElement)?.value;
-      
-      if (!username || !password) {
-        showStatus('Por favor, complete todos los campos', 'error');
-        return;
-      }
-      
-      showStatus('Iniciando sesión...', 'info');
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
       
       try {
-        // Usar el servicio de API para iniciar sesión
-        const data = await login(username, password);
+        const response = await apiService.login(username, password);
         
-        // Por defecto, asignar el rol de administrador para probar
-        // En producción, esto debería venir del backend
-        const userRole = username === 'admin' ? 'administrador' : 'usuario';
-        localStorage.setItem('userRole', userRole);
+        // Verificar la estructura de la respuesta para obtener el token
+        const token = response.data?.access_token || response.access_token;
         
-        showStatus(`Inicio de sesión exitoso como ${userRole}. Redirigiendo...`, 'success');
-        
-        // Redirigir a la página principal después de 1 segundo
-        setTimeout(() => {
+        if (token) {
+          console.log('Login exitoso, token recibido:', token);
+          // Guardar el token y redirigir al dashboard
+          localStorage.setItem('token', token);
+          
+          // Guardar info del usuario si está disponible
+          if (response.data?.user || response.user) {
+            const userData = response.data?.user || response.user;
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+          
+          // Redireccionar al dashboard principal
+          console.log('Redirigiendo a la página principal (dashboard)');
           window.location.href = '/';
-        }, 1000);
+          return; // Importante: salir de la función para evitar ejecutar código después de la redirección
+        } else {
+          console.error('Error de autenticación: No se encontró token en la respuesta:', response);
+          // Mostrar el modal con el perro de Ramon
+          window.showPasswordErrorModal();
+        }
       } catch (error) {
         console.error('Error al iniciar sesión:', error);
-        showStatus(`Error al iniciar sesión: ${error.message || 'Error desconocido'}`, 'error');
+        // Mostrar el modal con el perro de Ramon
+        window.showPasswordErrorModal();
       }
     });
     
