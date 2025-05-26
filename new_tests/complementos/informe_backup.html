@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Prueba de Backup Automático</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1, h2, h3 { color: #333; }
+        .success { color: green; }
+        .warning { color: orange; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .summary { display: flex; margin: 20px 0; }
+        .summary div { flex: 1; padding: 15px; margin: 5px; border-radius: 5px; }
+        .success-bg { background-color: #dff0d8; }
+        .warning-bg { background-color: #fcf8e3; }
+        .error-bg { background-color: #f2dede; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Informe de Prueba de Backup Automático</h1>
+        <p><strong>Fecha:</strong> 26/05/2025 18:46:16</p>
+        
+        <div class="summary">
+            <div class="success-bg">
+                <h3>Éxitos</h3>
+                <p>10</p>
+            </div>
+            <div class="warning-bg">
+                <h3>Advertencias</h3>
+                <p>0</p>
+            </div>
+            <div class="error-bg">
+                <h3>Errores</h3>
+                <p>0</p>
+            </div>
+        </div>
+        
+        <h2>Detalles de la prueba</h2>
+        <h3>Errores</h3>
+        <pre>No se encontraron errores.</pre>
+        
+        <h3>Advertencias</h3>
+        <pre>No se encontraron advertencias.</pre>
+        
+        <h3>Éxitos</h3>
+        <pre>[2025-05-26 18:46:05.827] [SUCCESS] Sesión iniciada correctamente\n[2025-05-26 18:46:06.432] [SUCCESS] Animal creado correctamente con ID: None\n[2025-05-26 18:46:06.434] [SUCCESS] Animal creado con éxito. ID: None, Nombre: Lucía_184605\n[2025-05-26 18:46:16.436] [SUCCESS] Último backup encontrado: backup_masclet_imperi_20250526_184606.sql\n[2025-05-26 18:46:16.444] [SUCCESS] El animal 'Lucía_184605' aparece en el contenido del backup\n[2025-05-26 18:46:16.453] [SUCCESS] Último backup en historial:\n[2025-05-26 18:46:16.878] [SUCCESS] Se encontraron 7 backups a través de la API\n[2025-05-26 18:46:16.878] [SUCCESS] Último backup según API:\n[2025-05-26 18:46:16.881] [SUCCESS] Tasa de éxito: 100.0%\n[2025-05-26 18:46:16.881] [SUCCESS] TEST EXITOSO: El sistema de backup automático funciona correctamente</pre>
+        
+        <h2>Conclusión</h2>
+        <p class="success">
+            El sistema de backup automático funciona correctamente.
+        </p>
+    </div>
+</body>
+</html>
