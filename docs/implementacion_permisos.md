@@ -34,16 +34,16 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 2.1 Mejora del Servicio de Autenticación
 
-- [ ] Actualizar `authService.ts` para extraer correctamente el rol del token JWT
-- [ ] Implementar jerarquía de roles priorizando ADMINISTRADOR y GERENTE
-- [ ] Estandarizar el uso de "gerente" vs "Ramon" en todo el código
-- [ ] Crear funciones para verificar permisos basándose en la matriz de permisos
+- [x] Crear `roleService.ts` para extraer correctamente el rol del token JWT
+- [x] Implementar jerarquía de roles priorizando ADMINISTRADOR y GERENTE
+- [x] Estandarizar el uso de "gerente" vs "Ramon" en todo el código nuevo
+- [x] Crear funciones para verificar permisos basándose en la matriz de permisos
 
 ### 2.2 Creación de Componentes de Protección
 
-- [ ] Desarrollar componente `RoleGuard` para protección basada en roles
-- [ ] Desarrollar componente `PermissionGuard` para protección basada en permisos específicos
-- [ ] Crear integración cliente-servidor para validación de permisos
+- [x] Desarrollar componente `RoleGuard` para protección basada en roles
+- [x] Desarrollar componente `PermissionGuard` para protección basada en permisos específicos
+- [ ] Crear script de prueba para validar el funcionamiento de los componentes
 
 ## 3. Integración Controlada
 
@@ -102,4 +102,6 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 | Fecha | Paso Completado | Resultado | Commit |
 |-------|-----------------|-----------|--------|
 | 27/05/2025 | Creación del plan de implementación | Documento detallado con fases y checklist | 286e126 |
-| 27/05/2025 | Verificación del sistema actual de autenticación | Script de prueba creado y ejecutado con éxito | Pendiente |
+| 27/05/2025 | Verificación del sistema actual de autenticación | Script de prueba creado y ejecutado con éxito | 9676447 |
+| 27/05/2025 | Actualización del plan priorizando roles | Enfoque en roles ADMINISTRADOR y GERENTE | f4e6b3b |
+| 27/05/2025 | Implementación de componentes básicos | Creación de roleService, RoleGuard y PermissionGuard | f637c4b |
