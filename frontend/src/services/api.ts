@@ -63,12 +63,67 @@ api.interceptors.request.use(
 // Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
     (response: AxiosResponse) => {
+        // Primero, loguear información detallada sobre la respuesta
+        console.log('Respuesta del servidor recibida:', {
+            url: response.config.url,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            contentType: response.headers['content-type']
+        });
+        
+        // Inspeccionar el cuerpo de la respuesta en detalle
+        console.log('Cuerpo completo de la respuesta:', response);
+        console.log('Datos de la respuesta (data):', response.data);
+        console.log('Tipo de data:', typeof response.data);
+        
+        // Si la respuesta es un string JSON, intentar parsearlo
+        if (typeof response.data === 'string' && response.data.trim().startsWith('{')) {
+            try {
+                console.log('Intentando parsear respuesta como JSON...');
+                const parsedData = JSON.parse(response.data);
+                console.log('Datos parseados:', parsedData);
+                return parsedData;
+            } catch (e) {
+                console.warn('Error al parsear respuesta como JSON:', e);
+            }
+        }
+        
+        // Manejar caso de respuesta indefinida (probablemente un error en la comunicación)
+        if (response.data === undefined) {
+            console.warn('Respuesta con data undefined, verificando respuesta bruta...');
+            
+            // Si hay un código de estado 200, pero data es undefined, extraer de otra parte
+            if (response.status === 200) {
+                // Intentar diferentes propiedades donde podrían estar los datos
+                if (response.request && response.request.response) {
+                    try {
+                        console.log('Intentando extraer datos de request.response...');
+                        const rawData = response.request.response;
+                        if (typeof rawData === 'string') {
+                            const parsedData = JSON.parse(rawData);
+                            console.log('Datos extraídos de request.response:', parsedData);
+                            return parsedData;
+                        }
+                    } catch (e) {
+                        console.warn('Error al procesar request.response:', e);
+                    }
+                }
+                
+                // Si llegamos aquí y no hay datos, devolver un objeto vacío en lugar de undefined
+                console.warn('No se pudieron extraer datos de la respuesta, devolviendo objeto vacío');
+                return {};
+            }
+        }
+        
         // Si la API devuelve datos en la propiedad 'data', lo extraemos
-        if (response.data && response.data.hasOwnProperty('data')) {
+        if (response.data && typeof response.data === 'object' && response.data.hasOwnProperty('data')) {
+            console.log('Extrayendo datos de response.data.data');
             return response.data.data;
         }
 
-        return response.data;
+        // En cualquier otro caso, devolver los datos como vienen
+        return response.data || {}; // Evitar devolver undefined
     },
     (error: AxiosError) => {
         // Manejar errores específicos por código

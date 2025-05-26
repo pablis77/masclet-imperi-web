@@ -2,15 +2,15 @@
 import DefaultLayout from '../layouts/DefaultLayout.astro';
 ---
 
-<DefaultLayout title="Login - Masclet Imperi">
+<DefaultLayout title="Test Login - Masclet Imperi">
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Iniciar sesión
+          Iniciar sesión (Prueba de roles)
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
-          Accede a la plataforma de gestión
+          Selecciona el rol para probar los permisos
         </p>
       </div>
       <div class="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -34,8 +34,22 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
           </div>
 
           <div>
+            <label for="role" class="block text-sm font-medium text-gray-700">
+              Rol para pruebas
+            </label>
+            <div class="mt-1">
+              <select id="role" name="role" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="administrador">Administrador</option>
+                <option value="gerente">Ramon</option>
+                <option value="editor">Editor</option>
+                <option value="usuario">Usuario (solo lectura)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
             <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Iniciar sesión
+              Iniciar sesión como rol seleccionado
             </button>
           </div>
         </form>
@@ -49,7 +63,7 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-gray-500">
-                Masclet Imperi
+                Modo de prueba - Masclet Imperi
               </span>
             </div>
           </div>
@@ -67,8 +81,9 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
     // Verificar si ya hay un token válido
     const token = localStorage.getItem('token');
     if (token) {
-      // Redirigir a la página principal
-      window.location.href = '/';
+      // Limpiar el token existente si estamos en la página de prueba
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_role');
     }
     
     const loginForm = document.getElementById('loginForm');
@@ -79,6 +94,7 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
       
       const username = (document.getElementById('username') as HTMLInputElement)?.value;
       const password = (document.getElementById('password') as HTMLInputElement)?.value;
+      const role = (document.getElementById('role') as HTMLSelectElement)?.value;
       
       if (!username || !password) {
         showStatus('Por favor, complete todos los campos', 'error');
@@ -91,12 +107,10 @@ import DefaultLayout from '../layouts/DefaultLayout.astro';
         // Usar el servicio de API para iniciar sesión
         const data = await login(username, password);
         
-        // Por defecto, asignar el rol de administrador para probar
-        // En producción, esto debería venir del backend
-        const userRole = username === 'admin' ? 'administrador' : 'usuario';
-        localStorage.setItem('userRole', userRole);
+        // Guardar el rol seleccionado para pruebas
+        localStorage.setItem('user_role', role);
         
-        showStatus(`Inicio de sesión exitoso como ${userRole}. Redirigiendo...`, 'success');
+        showStatus(`Inicio de sesión exitoso como: ${role}. Redirigiendo...`, 'success');
         
         // Redirigir a la página principal después de 1 segundo
         setTimeout(() => {

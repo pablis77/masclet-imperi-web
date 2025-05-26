@@ -19,7 +19,7 @@ if (isBrowser) {
 }
 
 // Definición de tipos común para toda la aplicación
-export type UserRole = 'administrador' | 'gerente' | 'editor' | 'usuario';
+export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
 
 // Definición de usuario base con campos obligatorios
 export interface User {
@@ -187,10 +187,28 @@ export function getStoredUser(): User | null {
   try {
     const userJson = localStorage.getItem('user');
     if (!userJson) {
+      console.warn('No se encontró información de usuario en localStorage');
       return null;
     }
     
-    const user = JSON.parse(userJson);
+    const user = JSON.parse(userJson) as User;
+    
+    // Asegurarse que el usuario tiene un rol válido
+    if (!user.role) {
+      // Si el usuario no tiene rol, asumimos que es 'usuario' normal
+      console.warn('Usuario sin rol definido, asignando rol por defecto');
+      user.role = 'usuario';
+    }
+    
+    // Verificar si el usuario es admin o gerente para compatibilidad
+    if (user.username === 'admin') {
+      console.log('Usuario admin detectado, asegurando rol de administrador');
+      user.role = 'administrador';
+      // Guardar usuario actualizado
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    
+    console.log('Usuario obtenido de localStorage:', user);
     return user;
   } catch (error) {
     console.error('Error al obtener el usuario almacenado:', error);
@@ -203,6 +221,23 @@ export function getStoredUser(): User | null {
  * @returns Rol del usuario actual
  */
 export const getCurrentUserRole = (): UserRole => {
+  // Para el modo de prueba, intentar obtener el rol seleccionado en login
+  if (typeof window !== 'undefined') {
+    // Primero verificar si hay un rol explícito guardado en localStorage
+    const userRole = localStorage.getItem('userRole');
+    if (userRole && ['administrador', 'gerente', 'editor', 'usuario'].includes(userRole)) {
+      console.log(`Usando rol guardado: ${userRole}`);
+      return userRole as UserRole;
+    }
+    
+    // Compatibilidad con implementación anterior
+    const testRole = localStorage.getItem('user_role');
+    if (testRole && ['administrador', 'gerente', 'editor', 'usuario'].includes(testRole)) {
+      console.log(`Usando rol de prueba: ${testRole}`);
+      return testRole as UserRole;
+    }
+  }
+
   const user = getCurrentUser();
   if (!user) {
     return 'usuario'; // Por defecto, si no hay usuario o no tiene rol
@@ -212,14 +247,14 @@ export const getCurrentUserRole = (): UserRole => {
   if (user.role?.includes('UserRole.')) {
     const rolePart = user.role.split('.')[1]; // Obtener la parte después del punto
     if (rolePart === 'ADMIN') return 'administrador';
-    if (rolePart === 'GERENTE') return 'gerente';
+    if (rolePart === 'GERENTE') return 'Ramon';
     if (rolePart === 'EDITOR') return 'editor';
     if (rolePart === 'USUARIO') return 'usuario';
   }
   
   // Usar el rol ya procesado si está disponible
   if (user.role && typeof user.role === 'string') {
-    if (['administrador', 'gerente', 'editor', 'usuario'].includes(user.role)) {
+    if (['administrador', 'Ramon', 'editor', 'usuario'].includes(user.role)) {
       return user.role as UserRole;
     }
   }
@@ -227,8 +262,8 @@ export const getCurrentUserRole = (): UserRole => {
   // Asignar rol por defecto basado en atributos del usuario
   if (user.is_superuser) {
     return 'administrador';
-  } else if (user.username === 'gerente') {
-    return 'gerente';
+  } else if (user.username === 'ramon') {
+    return 'Ramon';
   } else if (user.username.includes('editor')) {
     return 'editor';
   }
@@ -264,7 +299,7 @@ export const getRedirectPathForUser = (): string => {
   switch (userRole) {
     case 'administrador':
       return '/dashboard';
-    case 'gerente':
+    case 'Ramon':
       return '/dashboard';
     case 'editor':
       return '/animals';
@@ -422,7 +457,22 @@ export const getUserById = async (id: number): Promise<User> => {
  * Actualiza un usuario (solo para administradores)
  */
 export const updateUser = async (id: number, userData: Partial<User>): Promise<User> => {
-  return await post<User>(`/users/${id}`, userData);
+  console.log('Actualizando usuario:', id, userData);
+  // Usar PUT en lugar de POST para actualizar recursos
+  try {
+    // Usamos la ruta correcta para la API
+    const response = await axios.put(`${API_URL}/api/v1/users/${id}`, userData, {
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Respuesta de actualización:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    throw error;
+  }
 };
 
 /**

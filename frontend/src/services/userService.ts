@@ -68,11 +68,11 @@ const MOCK_USERS: User[] = [
   },
   {
     id: 4,
-    username: 'gerente',
-    email: 'gerente@example.com',
-    full_name: 'Gerente de Explotaciones',
-    role: 'gerente',
-    is_active: false,
+    username: 'ramon',
+    email: 'ramon@example.com',
+    full_name: 'Ramon de Explotaciones',
+    role: 'Ramon',
+    is_active: true,
     created_at: '2023-04-15T10:00:00Z',
     updated_at: '2023-05-20T11:30:00Z'
   }
@@ -85,58 +85,36 @@ const userService = {
     try {
       console.log(`Obteniendo usuarios - Página: ${page}, Límite: ${limit}, Búsqueda: ${search || 'ninguna'}`);
       
-      // DESARROLLO: Usar datos simulados
-      let filteredUsers = [...MOCK_USERS];
+      // Construir parámetros de consulta
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (search) params.append('search', search);
       
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredUsers = filteredUsers.filter(u => 
-          u.username.toLowerCase().includes(searchLower) || 
-          u.email.toLowerCase().includes(searchLower) || 
-          u.full_name.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      const start = (page - 1) * limit;
-      const end = start + limit;
-      const paginatedUsers = filteredUsers.slice(start, end);
-      
-      return {
-        items: paginatedUsers,
-        total: filteredUsers.length,
-        page: page,
-        limit: limit,
-        pages: Math.ceil(filteredUsers.length / limit)
-      };
-      
-      // Código real comentado
-      /*
-      const response = await api.get('/users', {
-        params: { page, limit, search }
-      });
-      return response as PaginatedResponse<User>;
-      */
+      // Llamar al endpoint real
+      const response = await api.get<PaginatedResponse<User>>(`/users/?${params.toString()}`);
+      return response.data;
     } catch (error) {
       console.error('Error al obtener usuarios:', error);
-      throw error;
+      // Si falla, devolver datos vacíos con formato correcto
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        pages: 0
+      };
     }
   },
 
   // Obtiene un usuario por su ID
   async getUserById(id: number): Promise<User> {
     try {
-      // DESARROLLO: Usar datos simulados
-      const user = MOCK_USERS.find(u => u.id === id);
-      if (!user) {
-        throw new Error(`Usuario con ID ${id} no encontrado`);
-      }
-      return user;
+      console.log(`Obteniendo usuario con ID: ${id}`);
       
-      // Código real comentado
-      /*
-      const response = await api.get(`/users/${id}`);
-      return response as User;
-      */
+      // Llamar al endpoint real
+      const response = await api.get<User>(`/users/${id}`);
+      return response.data;
     } catch (error) {
       console.error(`Error al obtener usuario con ID ${id}:`, error);
       throw error;
@@ -146,26 +124,11 @@ const userService = {
   // Crea un nuevo usuario
   async createUser(userData: UserCreateDto): Promise<User> {
     try {
-      // DESARROLLO: Simular creación
-      const newUser: User = {
-        id: Math.max(...MOCK_USERS.map(u => u.id)) + 1,
-        username: userData.username,
-        email: userData.email,
-        full_name: userData.full_name || '',
-        role: userData.role,
-        is_active: userData.is_active !== undefined ? userData.is_active : true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      console.log('Creando nuevo usuario:', userData);
       
-      MOCK_USERS.push(newUser);
-      return newUser;
-      
-      // Código real comentado
-      /*
-      const response = await api.post('/users', userData);
-      return response as User;
-      */
+      // Llamar al endpoint real
+      const response = await api.post<User>('/users/', userData);
+      return response.data;
     } catch (error) {
       console.error('Error al crear usuario:', error);
       throw error;
@@ -175,51 +138,24 @@ const userService = {
   // Actualiza un usuario existente
   async updateUser(id: number, userData: UserUpdateDto): Promise<User> {
     try {
-      // DESARROLLO: Simular actualización
-      const index = MOCK_USERS.findIndex(u => u.id === id);
-      if (index === -1) {
-        throw new Error(`Usuario con ID ${id} no encontrado`);
-      }
+      console.log(`Actualizando usuario con ID ${id}:`, userData);
       
-      const updatedUser = {
-        ...MOCK_USERS[index],
-        ...userData,
-        updated_at: new Date().toISOString()
-      };
-      
-      MOCK_USERS[index] = updatedUser;
-      return updatedUser;
-      
-      // Código real comentado
-      /*
-      const response = await api.put(`/users/${id}`, userData);
-      return response as User;
-      */
+      // Llamar al endpoint real
+      const response = await api.put<User>(`/users/${id}`, userData);
+      return response.data;
     } catch (error) {
       console.error(`Error al actualizar usuario con ID ${id}:`, error);
       throw error;
     }
   },
 
-  // Elimina un usuario (desactivarlo)
+  // Elimina un usuario
   async deleteUser(id: number): Promise<void> {
     try {
-      // DESARROLLO: Simular eliminación
-      const index = MOCK_USERS.findIndex(u => u.id === id);
-      if (index === -1) {
-        throw new Error(`Usuario con ID ${id} no encontrado`);
-      }
+      console.log(`Eliminando usuario con ID: ${id}`);
       
-      MOCK_USERS[index] = {
-        ...MOCK_USERS[index],
-        is_active: false,
-        updated_at: new Date().toISOString()
-      };
-      
-      // Código real comentado
-      /*
+      // Llamar al endpoint real
       await api.delete(`/users/${id}`);
-      */
     } catch (error) {
       console.error(`Error al eliminar usuario con ID ${id}:`, error);
       throw error;

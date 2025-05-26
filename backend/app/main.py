@@ -107,18 +107,26 @@ def custom_openapi():
         }
 
 # Configurar CORS para desarrollo - FORZAR ACEPTACIÓN DE TODAS LAS CONEXIONES
+# Incluir todos los orígenes posibles para desarrollo local
 origins = [
+    "*",  # Permitir todos los orígenes en desarrollo
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:4321",
     "http://127.0.0.1:4321",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080", 
     "http://localhost:52944",
     "http://127.0.0.1:52944",
-    "http://127.0.0.1:59313",  # Añadido para el puerto 59313
-    "https://masclet-imperi-web-frontend-2025.loca.lt",
-    "https://api-masclet-imperi.loca.lt",
+    "http://127.0.0.1:59313",
+    "http://127.0.0.1:*",
+    "http://localhost:*",
     "http://10.5.0.2:3000",
-    "http://192.168.1.147:3000"
+    "http://192.168.1.147:3000",
+    "http://192.168.68.56:3000",
+    "http://172.20.160.1:3000",
+    "https://masclet-imperi-web-frontend-2025.loca.lt",
+    "https://api-masclet-imperi.loca.lt"
 ]
 
 # Configuración de CORS simplificada
@@ -130,6 +138,7 @@ logger.info(f"Modo {'desarrollo' if is_dev else 'producción'} detectado")
 # ========================================================================
 
 # 1. Configuración permisiva para el middleware estándar
+# CONFIGURACIÓN EXTREMADAMENTE PERMISIVA PARA DESARROLLO
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permitir todos los orígenes
@@ -137,7 +146,7 @@ app.add_middleware(
     allow_methods=["*"],  # Permitir todos los métodos
     allow_headers=["*"],  # Permitir todos los encabezados
     expose_headers=["*"],
-    max_age=600  # 10 minutos
+    max_age=86400  # 24 horas
 )
 
 # Middleware personalizado para manejar todas las solicitudes CORS correctamente

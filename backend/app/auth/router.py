@@ -50,4 +50,30 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 
 @router.get("/users", response_model=list[UserResponse])
 async def get_users(current_user: User = Depends(check_permission(Action.GESTIONAR_USUARIOS))):
-    return await User.all()
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Obtenemos todos los usuarios
+    usuarios = await User.all()
+    
+    # Agregamos logs detallados
+    logger.info(f"Endpoint /users: Se encontraron {len(usuarios)} usuarios")
+    
+    for idx, usuario in enumerate(usuarios):
+        logger.info(f"Usuario {idx+1}: {usuario.username} (role: {usuario.role})")
+    
+    # Convertimos explícitamente a lista para asegurar serialización correcta
+    respuesta = [{
+        "id": u.id,
+        "username": u.username,
+        "email": u.email,
+        "full_name": u.full_name,
+        "role": u.role,
+        "is_active": u.is_active,
+        "created_at": u.created_at.isoformat() if u.created_at else None,
+        "updated_at": u.updated_at.isoformat() if u.updated_at else None
+    } for u in usuarios]
+    
+    logger.info(f"Respuesta final serializada: {respuesta}")
+    
+    return respuesta
