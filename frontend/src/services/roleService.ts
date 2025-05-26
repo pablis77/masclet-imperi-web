@@ -4,8 +4,22 @@
  * específicas de validación de roles y permisos
  */
 
-import jwt_decode from 'jwt-decode';
-import { getCurrentUser, getToken } from './authService';
+import { jwtDecode } from 'jwt-decode';
+import { getCurrentUser } from './authService';
+
+// Obtener token directamente para evitar dependencias circulares
+const getToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  try {
+    return localStorage.getItem('token');
+  } catch (e) {
+    console.warn('Error al acceder a localStorage:', e);
+    return null;
+  }
+};
 
 // Definición de roles en el sistema
 export type UserRole = 'administrador' | 'gerente' | 'editor' | 'usuario';
@@ -76,7 +90,7 @@ export function extractRoleFromToken(): UserRole {
     if (!token) return 'usuario';
 
     // Decodificar el token JWT
-    const decoded = jwt_decode<{ role?: string }>(token);
+    const decoded = jwtDecode<{ role?: string }>(token);
     
     // Extraer el rol del token (puede venir como UserRole.XXXX o directamente)
     if (decoded.role) {
