@@ -121,54 +121,55 @@ origins = [
 is_dev = os.getenv("DEV_MODE", "true").lower() == "true"
 logger.info(f"Modo {'desarrollo' if is_dev else 'producción'} detectado")
 
-# Configuración detallada de CORS
+# ========================================================================
+# SOLUCIÓN COMPLETA DE CORS PARA DESARROLLO
+# ========================================================================
+
+# 1. Configuración permisiva para el middleware estándar
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Permitir todos los orígenes
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"],
+    allow_methods=["*"],  # Permitir todos los métodos
+    allow_headers=["*"],  # Permitir todos los encabezados
     expose_headers=["*"],
     max_age=600  # 10 minutos
 )
 
-# Middleware para manejar manualmente las peticiones OPTIONS
+# Middleware personalizado para manejar todas las solicitudes CORS correctamente
 @app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    # Obtener el origen de la solicitud
-    origin = request.headers.get("origin", "")
-    
-    # Si el origen no está en la lista de orígenes permitidos, usar el primer origen de la lista
-    if origin not in origins and origins:
-        origin = origins[0]
-    
-    # Si es una petición OPTIONS, responder inmediatamente
+async def cors_middleware_universal(request: Request, call_next):
+    # 1. Preparar los encabezados CORS para todas las solicitudes
     if request.method == "OPTIONS":
-        response = Response(
+        # Responder inmediatamente a las solicitudes OPTIONS (preflight)
+        return Response(
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+                "Access-Control-Allow-Origin": "*",  # O configura un origen específico si lo prefieres
+                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": "*",  # Permitir todos los encabezados
                 "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Expose-Headers": "*",
-                "Access-Control-Max-Age": "600"  # 10 minutos
+                "Access-Control-Max-Age": "86400",  # Cache por 24 horas
+                "Vary": "Origin"
             }
         )
+    
+    # 2. Para otras solicitudes, continuar con el procesamiento normal
+    try:
+        # Procesar la solicitud
+        response = await call_next(request)
+        
+        # 3. Agregar encabezados CORS a todas las respuestas
+        response.headers["Access-Control-Allow-Origin"] = "*"  # O configura un origen específico
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Vary"] = "Origin"
+        
         return response
-    
-    # Para el resto de peticiones, procesar normalmente y añadir encabezados CORS
-    response = await call_next(request)
-    
-    # Añadir encabezados CORS a la respuesta
-    response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Expose-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "600"  # 10 minutos
-    
-    return response
+    except Exception as e:
+        logger.error(f"Error en middleware CORS: {str(e)}")
+        raise
 
 # Configurar medidas de seguridad
 setup_security(app)
