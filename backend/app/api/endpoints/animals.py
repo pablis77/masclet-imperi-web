@@ -198,11 +198,11 @@ async def get_animal(animal_id: int) -> AnimalResponse:
         logger.error(f"Error obteniendo animal {animal_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{animal_id}/history", response_model=List[dict])
+@router.get("/{animal_id}/history", response_model=schemas.AnimalHistoryResponse)
 async def get_animal_history(
     animal_id: int,
     current_user: User = Depends(get_current_user)
-) -> List[dict]:
+) -> dict:
     """
     Obtener el historial de cambios de un animal
     """
@@ -221,9 +221,25 @@ async def get_animal_history(
         # Convertir a diccionarios
         resultado = []
         for registro in historial:
-            resultado.append(await registro.to_dict())
+            try:
+                reg_dict = await registro.to_dict()
+                resultado.append(reg_dict)
+            except Exception as conversion_error:
+                logger.warning(f"Error al convertir registro de historial {registro.id}: {str(conversion_error)}")
+                # Crear un diccionario mínimo con la información básica
+                resultado.append({
+                    "id": registro.id,
+                    "animal_id": registro.animal_id,
+                    "usuario": registro.usuario,
+                    "cambio": registro.cambio,
+                    "timestamp": registro.timestamp.strftime("%d/%m/%Y %H:%M:%S") if registro.timestamp else None,
+                    "action": registro.action
+                })
             
-        return resultado
+        return {
+            "status": "success",
+            "data": resultado
+        }
         
     except HTTPException:
         raise

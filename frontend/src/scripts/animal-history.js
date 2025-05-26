@@ -62,31 +62,54 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`🔍 Preparando carga de historial para animal ID: ${animalId}`);
         
         // Crear una función para cargar el historial
-        const loadAnimalHistory = () => {
-            console.log('🔄 Cargando historial de cambios del animal...');
-            
-            // Mostrar indicador de carga
-            showLoadingIndicator();
-            
-            // URL del endpoint
-            const apiUrl = `/api/v1/animals/${animalId}/history`;
-            
-            // Hacer la petición
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Status: ${response.status}`);
+        const loadAnimalHistory = async () => {
+            try {
+                console.log('🟡 INICIO: Cargando historial de cambios...');
+                
+                // Mostrar indicador de carga
+                showLoadingIndicator();
+                
+                // Obtener ID del animal
+                console.log(`🔍 ID de animal extraído de URL: ${animalId}`);
+                
+                // Obtener token de autenticación
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No hay token de autenticación');
+                }
+                
+                console.log(`🔎 Iniciando solicitud de historial para animal ID: ${animalId}`);
+                
+                // Obtener URL base de la API
+                const apiBaseUrl = window.apiBaseUrl || 'http://localhost:8000/api/v1';
+                
+                // URL completa del endpoint
+                const apiUrl = `${apiBaseUrl}/animals/${animalId}/history`;
+                console.log(`🔗 URL de petición: ${apiUrl}`);
+                console.log(`🔑 Token (primeros caracteres): ${token.substring(0, 10)}...`);
+                
+                // Configuración de la petición con autenticación
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ Historial cargado correctamente:', data);
-                    displayHistoryData(data);
-                })
-                .catch(error => {
-                    console.error('❌ Error al cargar el historial:', error);
-                    showErrorMessage(error);
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Historial cargado correctamente:', data);
+                
+                // Mostrar los datos en la interfaz
+                displayHistoryData(data.data || []);
+            } catch (error) {
+                console.error('❌ ERROR en fetchHistorial:', error);
+                showErrorMessage(error);
+            }
         };
         
         // Función para mostrar indicador de carga

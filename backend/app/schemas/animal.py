@@ -249,3 +249,33 @@ class AnimalListResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+class AnimalHistoryItem(BaseModel):
+    """Esquema para un elemento individual del historial de animales"""
+    id: int
+    animal_id: int
+    usuario: str
+    cambio: str
+    campo: Optional[str] = None
+    valor_anterior: Optional[str] = None
+    valor_nuevo: Optional[str] = None
+    action: str
+    timestamp: str
+    field: Optional[str] = None
+    description: Optional[str] = None
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    changes: Optional[Dict] = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+    
+class AnimalHistoryResponse(BaseModel):
+    """Esquema para respuestas del historial de animales"""
+    status: str = "success"
+    data: List[Dict]
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
