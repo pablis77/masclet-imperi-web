@@ -6,10 +6,21 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 1.1 Verificación del Sistema Actual de Autenticación
 
-- [ ] Crear script de prueba para verificar roles actuales
-- [ ] Probar login con diferentes usuarios (admin, gerente, editor, usuario)
-- [ ] Analizar la respuesta del backend y verificar si incluye información de rol
-- [ ] Verificar cómo se almacena actualmente la información de usuario en localStorage
+- [x] Crear script de prueba para verificar roles actuales
+- [x] Probar login con diferentes usuarios (admin, gerente, editor, usuario)
+- [x] Analizar la respuesta del backend y verificar si incluye información de rol
+- [x] Verificar cómo se almacena actualmente la información de usuario en localStorage
+
+#### Hallazgos Importantes
+
+1. **Token JWT incluye información de rol**: El token JWT devuelto por el backend ya contiene el campo `role` (ej: `UserRole.ADMIN`).
+2. **Usuarios configurados en el sistema**:
+   - `admin` → `UserRole.ADMIN`
+   - `editor` → `UserRole.EDITOR`
+   - `usuario` → `UserRole.USER`
+   - El usuario `ramon` (gerente) no existe actualmente en el sistema.
+3. **Respuesta del login**: No incluye el objeto usuario completo, solo el token JWT.
+4. **Almacenamiento en localStorage**: El frontend guarda el token en `localStorage.token` pero no extrae ni almacena el rol.
 
 ### 1.2 Análisis de Estructura de Código Existente
 
@@ -86,4 +97,5 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 | Fecha | Paso Completado | Resultado | Commit |
 |-------|-----------------|-----------|--------|
-|       |                 |           |        |
+| 27/05/2025 | Creación del plan de implementación | Documento detallado con fases y checklist | 286e126 |
+| 27/05/2025 | Verificación del sistema actual de autenticación | Script de prueba creado y ejecutado con éxito | Pendiente |
