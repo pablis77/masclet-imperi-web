@@ -13,6 +13,19 @@ from tortoise.contrib.fastapi import register_tortoise
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
+# Importar nuestras utilidades para la generación de OpenAPI
+from app.core.openapi_utils import get_enhanced_openapi
+from fastapi.responses import JSONResponse
+import json
+import traceback
+from app.core.json_utils import EnhancedJSONEncoder
+
+# Importar nuestras utilidades JSON
+from app.core.json_utils import patch_pydantic_encoder
+
+# Aplicar el parche al encoder de Pydantic antes de importar cualquier otro módulo
+patch_pydantic_encoder()
+
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.security import setup_security
@@ -57,6 +70,38 @@ app = FastAPI(
     redoc_url="/api/v1/redoc",
 )
 
+# Función personalizada para generar el esquema OpenAPI con nuestro encoder JSON mejorado
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    # Usar la función original de FastAPI para generar el esquema
+    try:
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+        )
+        
+        # Serializar y deserializar usando nuestro encoder personalizado para eliminar tipos problemáticos
+        openapi_json = json.dumps(openapi_schema, cls=EnhancedJSONEncoder)
+        app.openapi_schema = json.loads(openapi_json)
+        
+        return app.openapi_schema
+    except Exception as e:
+        logger.error(f"Error generando esquema OpenAPI: {e}")
+        # Devolver un esquema mínimo en caso de error
+        return {
+            "openapi": "3.0.2",
+            "info": {
+                "title": app.title,
+                "description": app.description,
+                "version": app.version
+            },
+            "paths": {}
+        }
+
 # Configurar CORS para desarrollo - FORZAR ACEPTACIÓN DE TODAS LAS CONEXIONES
 origins = [
     "http://localhost:3000",
@@ -65,6 +110,7 @@ origins = [
     "http://127.0.0.1:4321",
     "http://localhost:52944",
     "http://127.0.0.1:52944",
+    "http://127.0.0.1:59313",  # Añadido para el puerto 59313
     "https://masclet-imperi-web-frontend-2025.loca.lt",
     "https://api-masclet-imperi.loca.lt",
     "http://10.5.0.2:3000",
@@ -185,28 +231,45 @@ async def localtunnel_fix(request: Request, call_next):
     
     return response
 
+# Definir una función personalizada para el esquema OpenAPI que use nuestro generador mejorado
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+        
+    # Usar nuestra versión mejorada del generador de OpenAPI
+    openapi_schema = get_enhanced_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+# Asignar nuestra función personalizada a la propiedad openapi de la aplicación
+app.openapi = custom_openapi
+
 # Middleware de depuración para diagnóstico de errores
 @app.middleware("http")
 async def debug_request(request: Request, call_next):
-    logger.info(f"Solicitud recibida: {request.method} {request.url.path}")
-    
     try:
+        # Registrar la solicitud entrante
+        path = request.url.path
+        logger.info(f"Solicitud recibida: {request.method} {path}")
+        
         # Procesar la solicitud normalmente
         response = await call_next(request)
         return response
     except Exception as e:
-        # Registrar detalles del error para depuración
-        logger.error(f"Error en solicitud: {str(e)}")
-        logger.exception("Detalles del error:")
+        # Registrar el error
+        logger.error(f"Error en solicitud: {e}")
+        logger.error(f"Detalles del error:\n{traceback.format_exc()}")
         
-        # Convertir la excepción en una respuesta JSON para el cliente
-        import traceback
+        # Devolver una respuesta de error
         return JSONResponse(
             status_code=500,
-            content={
-                "detail": f"Error interno del servidor: {str(e)}",
-                "type": str(type(e).__name__)
-            }
+            content={"detail": "Error interno del servidor"},
         )
 
 # Montar router API con prefijo /api/v1

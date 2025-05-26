@@ -1,0 +1,475 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Masclet Imperi API",
+    "description": "API para la gestión de animales de ganadería",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/animals/": {
+      "get": {
+        "summary": "Listar Animales",
+        "operationId": "list_animals",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear Animal",
+        "operationId": "create_animal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimalCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Animal creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/animals/{animal_id}": {
+      "get": {
+        "summary": "Obtener Animal",
+        "operationId": "get_animal",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar Animal",
+        "operationId": "update_animal",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimalUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Animal actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar Animal",
+        "operationId": "delete_animal",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Animal eliminado"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Actualizar Parcialmente Animal",
+        "operationId": "update_animal_patch",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimalUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Animal actualizado parcialmente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/backup/": {
+      "get": {
+        "summary": "Listar Backups",
+        "operationId": "list_backups",
+        "responses": {
+          "200": {
+            "description": "Lista de backups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear Backup",
+        "operationId": "create_backup",
+        "responses": {
+          "201": {
+            "description": "Backup creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnimalBase": {
+        "type": "object",
+        "properties": {
+          "nom": {
+            "type": "string"
+          },
+          "genere": {
+            "type": "string"
+          },
+          "explotacio": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "default": "OK"
+          },
+          "alletar": {
+            "type": "string",
+            "default": "0"
+          },
+          "dob": {
+            "type": "string",
+            "nullable": true
+          },
+          "mare": {
+            "type": "string",
+            "nullable": true
+          },
+          "pare": {
+            "type": "string",
+            "nullable": true
+          },
+          "origen": {
+            "type": "string",
+            "nullable": true
+          },
+          "cod": {
+            "type": "string",
+            "nullable": true
+          },
+          "num_serie": {
+            "type": "string",
+            "nullable": true
+          },
+          "part": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["nom", "genere", "explotacio"]
+      },
+      "AnimalCreate": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AnimalBase"
+          }
+        ]
+      },
+      "AnimalUpdate": {
+        "type": "object",
+        "properties": {
+          "nom": {
+            "type": "string",
+            "nullable": true
+          },
+          "genere": {
+            "type": "string",
+            "nullable": true
+          },
+          "explotacio": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "alletar": {
+            "type": "string",
+            "nullable": true
+          },
+          "dob": {
+            "type": "string",
+            "nullable": true
+          },
+          "mare": {
+            "type": "string",
+            "nullable": true
+          },
+          "pare": {
+            "type": "string",
+            "nullable": true
+          },
+          "origen": {
+            "type": "string",
+            "nullable": true
+          },
+          "cod": {
+            "type": "string",
+            "nullable": true
+          },
+          "num_serie": {
+            "type": "string",
+            "nullable": true
+          },
+          "part": {
+            "type": "string",
+            "nullable": true
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "genere_t": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado_t": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AnimalResponseData": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AnimalBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "partos": {
+                "type": "object",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "nullable": true
+              },
+              "updated_at": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": ["id"]
+          }
+        ]
+      },
+      "AnimalResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "default": "success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AnimalResponseData"
+          }
+        },
+        "required": ["status", "data"]
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnimalResponseData"
+            }
+          }
+        },
+        "required": ["total", "offset", "limit", "items"]
+      },
+      "AnimalListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "default": "success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedResponse"
+          }
+        },
+        "required": ["status", "data"]
+      }
+    }
+  }
+}
