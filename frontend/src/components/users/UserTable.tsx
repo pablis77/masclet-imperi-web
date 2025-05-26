@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getStoredUser } from '../../services/authService';
-import userService from '../../services/userService';
-import type { User } from '../../services/userService';
+import userServiceProxy from '../../services/userServiceProxy';
+import type { User } from '../../services/userServiceProxy';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Pagination } from '../common/Pagination';
 
@@ -24,22 +24,62 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Cargar usuarios al montar el componente o cuando cambia la página
+  // Cargar usuarios al montar el componente o cuando cambia la página o el refreshTrigger
   useEffect(() => {
     loadUsers();
     const user = getStoredUser();
     if (user) {
       setCurrentUser(user);
     }
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, onRefresh]);
 
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await userService.getUsers(currentPage, pageSize);
-      setUsers(response.items || []);
-      setTotalPages(response.pages);
-      setTotalItems(response.total);
+      console.log('Solicitando usuarios: página', currentPage, 'tamaño', pageSize);
+      const response = await userServiceProxy.getUsers(currentPage, pageSize);
+      console.log('Respuesta del servidor (tipo):', typeof response);
+      console.log('Respuesta del servidor (valor):', response);
+      
+      let usersData: User[] = [];
+      let totalPagesCount = 1;
+      let totalItemsCount = 0;
+      
+      // Determinar el formato de la respuesta y extraer usuarios
+      if (Array.isArray(response)) {
+        // Si es un array directo de usuarios
+        console.log('Formato detectado: Array directo de usuarios');
+        usersData = [...response];
+        totalPagesCount = 1;
+        totalItemsCount = response.length;
+      } else if (response && typeof response === 'object') {
+        // Si es un objeto paginado
+        if (response.items && Array.isArray(response.items)) {
+          console.log('Formato detectado: Objeto con items[]');
+          usersData = [...response.items];
+          totalPagesCount = response.pages || 1;
+          totalItemsCount = response.total || response.items.length;
+        } else {
+          // Intentar otros formatos comunes
+          const responseObj = response as Record<string, any>;
+          const possibleItems = responseObj.users || responseObj.data || responseObj.results;
+          
+          if (Array.isArray(possibleItems) && possibleItems.length > 0) {
+            console.log('Formato alternativo detectado con usuarios');
+            usersData = [...possibleItems];
+          }
+          
+          totalPagesCount = responseObj.pages || responseObj.totalPages || 1;
+          totalItemsCount = responseObj.total || responseObj.totalItems || responseObj.count || usersData.length;
+        }
+      }
+      
+      console.log('Usuarios encontrados:', usersData.length);
+      
+      // Actualizar estado con los datos procesados
+      setUsers(usersData);
+      setTotalPages(totalPagesCount);
+      setTotalItems(totalItemsCount);
       setError(null);
     } catch (err: any) {
       console.error('Error al cargar usuarios:', err);
@@ -68,7 +108,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
     if (!userToDelete) return;
     
     try {
-      await userService.deleteUser(userToDelete.id);
+      await userServiceProxy.deleteUser(userToDelete.id);
       setShowConfirmDialog(false);
       setUserToDelete(null);
       // Recargar la lista de usuarios
@@ -204,17 +244,23 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
                       {user.is_active ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => onEdit(user)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                      className="text-indigo-600 hover:text-indigo-900 focus:outline-none"
                     >
                       Editar
                     </button>
-                    {currentUser && currentUser.id !== user.id && (
+                    {/* No permitir eliminar:
+                        1. Al usuario actual
+                        2. A usuarios con rol administrador (excepto si eres administrador)
+                        3. A usuarios con rol gerente (Ramon) */}
+                    {(currentUser?.id !== user.id && 
+                      user.role !== 'Ramon' && 
+                      (user.role !== 'administrador' || currentUser?.role === 'administrador')) && (
                       <button
                         onClick={() => handleDeleteClick(user)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 focus:outline-none"
                       >
                         Eliminar
                       </button>
@@ -226,27 +272,26 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
           </tbody>
         </table>
       </div>
-
-      {/* Paginación */}
-      <Pagination 
-        currentPage={currentPage} 
-        totalPages={totalPages} 
-        onPageChange={handlePageChange} 
-      />
-
-      {/* Diálogo de confirmación para eliminar usuario */}
-      {userToDelete && (
-        <ConfirmDialog
-          isOpen={showConfirmDialog}
-          title="Eliminar Usuario"
-          message={`¿Estás seguro de que deseas eliminar al usuario ${userToDelete.username}? Esta acción no se puede deshacer.`}
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-          type="danger"
-        />
+      
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
+      
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirmar eliminación"
+        message={`¿Estás seguro de que deseas eliminar al usuario ${userToDelete?.username}?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </>
   );
 };

@@ -84,7 +84,24 @@ const menuSections = [
   }
 ];
 
-// Mostrar todas las secciones y elementos sin filtrar por rol
+// Importar getCurrentUserRole con nombre diferente para evitar conflictos
+import { getCurrentUserRole as getUserRole } from '../../services/authService';
+
+// Obtener el rol del usuario actual desde el servicio de autenticación
+let currentUserRole = 'usuario';
+
+// Verificar si estamos en un entorno de navegador (client-side)
+if (typeof window !== 'undefined') {
+  // Ejecutar esto solo en el cliente para evitar problemas de hidratación
+  document.addEventListener('DOMContentLoaded', () => {
+    currentUserRole = getUserRole();
+    console.log('Rol actual:', currentUserRole);
+  });
+}
+
+// Filtrar las secciones según el rol del usuario
+// Por ahora mostramos todos los elementos para evitar problemas de hidratación
+// El filtrado real ocurrirá en el cliente via JavaScript
 const filteredSections = menuSections;
 
 // Función para determinar si un elemento está activo
@@ -155,27 +172,72 @@ const isActive = (itemUrl: string) => {
 <script>
   // Script para manejar el cierre del sidebar en móvil y traducir elementos
   document.addEventListener('DOMContentLoaded', () => {
+    // El sistema de permisos original estaba ocultando todos los elementos
+    // Desactivamos temporalmente el filtrado para solucionar el problema
+    
+    // NOTA: Vamos a simplificar el enfoque para permitir a todos los usuarios ver todas las opciones
+    // En el futuro, implementaremos un sistema más robusto con roles desde el backend
+    
+    /*
+    // CÓDIGO COMENTADO - Sistema de filtrado que estaba causando problemas
+    const userRole = localStorage.getItem('userRole') || 'usuario';
+    console.log('Rol detectado para filtrado:', userRole);
+    
+    // Añadir atributo data-roles a cada elemento del menú
+    const menuLinks = document.querySelectorAll('nav a');
+    menuLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      // Asignar roles permitidos según la URL
+      if (href === '/' || href.includes('/animals') || href.includes('/explotaciones') || href.includes('/listados')) {
+        // Páginas accesibles para todos los roles
+        link.setAttribute('data-roles', 'administrador,gerente,editor,usuario');
+      } else if (href.includes('/users')) {
+        // Usuarios: solo admin y gerente (Ramon)
+        link.setAttribute('data-roles', 'administrador,gerente');
+      } else {
+        // El resto de páginas administrativas: solo admin
+        link.setAttribute('data-roles', 'administrador');
+      }
+    });
+    */
+    
     // Traducciones del menú para cliente - sin incluir títulos de secciones
     const translations = {
       es: {
+        // Menú principal
         dashboard: "Dashboard",
         animals: "Animales",
         listings: "Listados",
         exploitations: "Explotaciones",
+        // Menú administrativo
         users: "Usuarios",
         imports: "Importación",
         backup: "Copias de seguridad",
-        management_system: "Sistema de Gestión Ganadera"
+        // Títulos
+        management_system: "Sistema de Gestión",
+        // Roles
+        administrador: "Administrador",
+        gerente: "Ramon",
+        editor: "Editor",
+        usuario: "Usuario"
       },
       ca: {
+        // Menú principal
         dashboard: "Tauler de control",
         animals: "Animals",
         listings: "Llistats",
         exploitations: "Explotacions",
+        // Menú administrativo
         users: "Usuaris",
         imports: "Importació",
         backup: "Còpies de seguretat",
-        management_system: "Sistema de Gestió Ramadera"
+        // Títulos
+        management_system: "Sistema de Gestió",
+        // Roles
+        administrador: "Administrador",
+        gerente: "Ramon",
+        editor: "Editor",
+        usuario: "Usuari"
       }
     };
 

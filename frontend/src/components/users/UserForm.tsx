@@ -1,25 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { register, updateUser } from '../../services/authService';
-import type { User, UserRole } from '../../services/authService';
+import userServiceProxy from '../../services/userServiceProxy';
+import type { User } from '../../services/userServiceProxy';
+import type { UserRole } from '../../services/authService';
+import { getStoredUser } from '../../services/authService';
 
 interface UserFormProps {
   user?: User;
   onSuccess: () => void;
   onCancel: () => void;
+  // Lista de roles disponibles para seleccionar
+  availableRoles?: UserRole[];
 }
 
-export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
+export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, availableRoles }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    full_name: '',
     role: 'usuario' as UserRole
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Inicializar isAdmin directamente con el valor del usuario almacenado
+  const loggedUser = getStoredUser();
+  const [currentUser, setCurrentUser] = useState<User | null>(loggedUser);
+  const [isAdmin, setIsAdmin] = useState(loggedUser?.role === 'administrador');
+
+  // Mostrar la información de depuración para verificar el estado
+  console.log('UserForm - Estado de usuario actual:', {
+    currentUser,
+    isAdmin: isAdmin,
+    role: loggedUser?.role
+  });
 
   useEffect(() => {
     if (user) {
@@ -29,11 +46,26 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
         email: user.email,
         password: '',
         confirmPassword: '',
-        full_name: user.full_name,
         role: user.role
       });
+      console.log('UserForm - Usuario cargado para edición:', user);
+      console.log('UserForm - Datos de formulario inicializados:', {
+        username: user.username,
+        email: user.email,
+        role: user.role
+      });
+    } else {
+      // Resetear el formulario cuando no hay usuario seleccionado
+      setIsEdit(false);
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'usuario' as UserRole
+      });
     }
-  }, [user]);
+  }, [user]);  // Este efecto se ejecuta cuando cambia el usuario seleccionado
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -70,9 +102,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     setLoading(true);
     setError(null);
@@ -83,24 +113,32 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
         const userData = {
           username: formData.username,
           email: formData.email,
-          full_name: formData.full_name,
           role: formData.role
         };
         
-        await updateUser(user.id, userData);
+        // Si se proporcionó contraseña, la incluimos en la actualización
+        if (formData.password && isAdmin) {
+          Object.assign(userData, { password: formData.password });
+        }
+        
+        console.log('UserForm - Enviando datos para actualizar usuario:', userData);
+        const updatedUser = await userServiceProxy.updateUser(user.id, userData);
+        console.log('UserForm - Usuario actualizado correctamente:', updatedUser);
       } else {
         // Registrar nuevo usuario
         const userData = {
           username: formData.username,
           email: formData.email,
           password: formData.password,
-          full_name: formData.full_name,
           role: formData.role
         };
         
-        await register(userData);
+        console.log('UserForm - Enviando datos para crear usuario:', userData);
+        const createdUser = await userServiceProxy.createUser(userData);
+        console.log('UserForm - Usuario creado correctamente:', createdUser);
       }
       
+      // Notificar al componente padre que la operación fue exitosa
       onSuccess();
     } catch (err: any) {
       console.error('Error al guardar usuario:', err);
@@ -148,7 +186,6 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
               id="username"
               value={formData.username}
               onChange={handleChange}
-              disabled={isEdit}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               required
             />
@@ -172,38 +209,43 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
           </div>
         </div>
 
-        <div className="sm:col-span-6">
-          <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-            Nombre completo
-          </label>
-          <div className="mt-1">
-            <input
-              type="text"
-              name="full_name"
-              id="full_name"
-              value={formData.full_name}
-              onChange={handleChange}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
-        </div>
-
-        {!isEdit && (
+        {(!isEdit || isAdmin) && (
           <>
             <div className="sm:col-span-3">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Contraseña
               </label>
               <div className="mt-1">
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  required={!isEdit}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    id="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required={!isEdit && !isAdmin}
+                  />
+                  {isAdmin && (
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                    >
+                      {showPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -212,15 +254,36 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
                 Confirmar contraseña
               </label>
               <div className="mt-1">
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  required={!isEdit}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    id="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required={!isEdit && !isAdmin}
+                  />
+                  {isAdmin && (
+                    <button 
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                    >
+                      {showConfirmPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </>
@@ -231,6 +294,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
             Rol
           </label>
           <div className="mt-1">
+            {/* Utilizar la prop availableRoles si existe, o utilizar roles predeterminados según el tipo de usuario */}
             <select
               id="role"
               name="role"
@@ -238,10 +302,36 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel })
               onChange={handleChange}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             >
-              <option value="administrador">Administrador</option>
-              <option value="gerente">Gerente</option>
-              <option value="editor">Editor</option>
-              <option value="usuario">Usuario</option>
+              {/* Si se proporcionaron roles disponibles, usar esos */}
+              {availableRoles ? (
+                // Mapear los roles disponibles a opciones
+                availableRoles.map(role => {
+                  let label = role;
+                  if (role === 'Ramon') label = 'Gerente (Ramon)';
+                  else if (role === 'administrador') label = 'Administrador';
+                  else if (role === 'editor') label = 'Editor';
+                  else if (role === 'usuario') label = 'Usuario';
+                  
+                  return <option key={role} value={role}>{label}</option>
+                })
+              ) : (
+                // Opciones por defecto si no se proporcionaron roles
+                loggedUser?.role === 'administrador' ? (
+                  // Si es administrador, mostrar todas las opciones
+                  <>
+                    <option value="administrador">Administrador</option>
+                    <option value="Ramon">Gerente (Ramon)</option>
+                    <option value="editor">Editor</option>
+                    <option value="usuario">Usuario</option>
+                  </>
+                ) : (
+                  // Si NO es administrador, solo roles básicos
+                  <>
+                    <option value="editor">Editor</option>
+                    <option value="usuario">Usuario</option>
+                  </>
+                )
+              )}
             </select>
           </div>
         </div>

@@ -29,6 +29,7 @@ const role = Astro.cookies.get('userRole')?.value || userRole;
 ---
 
 <!DOCTYPE html>
+<!-- Script para actualizar la cookie de rol de usuario -->
 <html lang="es" class="light">
   <head>
     <meta charset="UTF-8" />
@@ -38,6 +39,8 @@ const role = Astro.cookies.get('userRole')?.value || userRole;
     <title>{title} | Masclet Imperi</title>
   </head>
   <body class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
+  <!-- Script para actualizar la cookie de rol de usuario -->
+  <script src="/src/scripts/updateUserRole.js"></script>
     <AuthMiddleware client:load currentPath={currentPath}>
       <Navbar title={title} userRole={role} currentPath={currentPath} />
       
@@ -49,8 +52,8 @@ const role = Astro.cookies.get('userRole')?.value || userRole;
         
         <Sidebar userRole={role} currentPath={currentPath} />
         
-        <!-- Contenido principal con padding adaptativo -->
-        <main class="flex-1 p-3 sm:p-4 md:p-6 relative z-10 overflow-auto">
+        <!-- Contenido principal con padding adaptativo y margen para la barra lateral -->
+        <main class="flex-1 p-3 sm:p-4 md:p-6 relative z-10 overflow-auto md:ml-64">
           <!-- Contenedor con ancho máximo para mejorar legibilidad en pantallas grandes -->
           <div class="max-w-7xl mx-auto">
             <slot />

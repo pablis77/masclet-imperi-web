@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class UserRole(str, Enum):
     """Roles de usuario en el sistema"""
     ADMIN = "administrador"
-    GERENTE = "gerente"
+    GERENTE = "gerente"  # Volvemos al valor original para recuperar la compatibilidad
     EDITOR = "editor"
     USER = "usuario"
 
@@ -50,7 +50,7 @@ ROLES: Dict[UserRole, List[Action]] = {
         Action.VER_ESTADISTICAS, 
         Action.EXPORTAR_DATOS
     ],
-    UserRole.GERENTE: [
+    UserRole.GERENTE: [  # Restaurado a GERENTE para mantener compatibilidad
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,
