@@ -198,7 +198,7 @@ Para realizar pruebas con diferentes roles:
   - Usuario: `admin`
   - Contraseña: `admin123`
 - **Ramon (Gerente)**:
-  - Usuario: `ramon`
+  - Usuario: `Ramon`
   - Contraseña: `Ramon123`
 - **Editor**:
   - Usuario: `editor`

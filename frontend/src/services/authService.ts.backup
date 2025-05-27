@@ -3,7 +3,6 @@ import api from './api';
 import { post, get } from './apiService';
 import authApi from '../api/authApi';
 import apiConfig from '../config/apiConfig';
-import { jwtDecode } from 'jwt-decode';
 import type { LoginResponse as ApiLoginResponse } from '../api/authApi';
 
 // Verificar si estamos en un entorno de navegador
@@ -194,18 +193,6 @@ export function getStoredUser(): User | null {
     
     const user = JSON.parse(userJson) as User;
     
-    // Verificar si el usuario es Ramon y corregir el rol si es necesario
-    if (user.username && user.username.toLowerCase() === 'ramon') {
-      if (user.role !== 'Ramon') {
-        console.log('Corrigiendo rol para usuario Ramon (rol anterior: ' + user.role + ')');
-        user.role = 'Ramon';
-        // Guardar la corrección en localStorage
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('userRole', 'Ramon');
-        localStorage.setItem('ramonFix', 'true');
-      }
-    }
-    
     // Asegurarse que el usuario tiene un rol válido
     if (!user.role) {
       // Si el usuario no tiene rol, asumimos que es 'usuario' normal
@@ -234,32 +221,9 @@ export function getStoredUser(): User | null {
  * @returns Rol del usuario actual
  */
 export const getCurrentUserRole = (): UserRole => {
-  // PRIORIDAD MÁXIMA: Verificar si es Ramon (comprobación directa)
+  // Para el modo de prueba, intentar obtener el rol seleccionado en login
   if (typeof window !== 'undefined') {
-    // Verificar indicador específico para Ramon
-    const ramonFix = localStorage.getItem('ramonFix');
-    if (ramonFix === 'true') {
-      console.log('🔴 Indicador ramonFix encontrado, asignando rol Ramon con máxima prioridad');
-      return 'Ramon';
-    }
-    
-    // Verificar usuario en localStorage
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        if (user.username && user.username.toLowerCase() === 'ramon') {
-          console.log('🔴 Usuario Ramon detectado en localStorage, asignando rol Ramon');
-          // Guardar indicador para futuras verificaciones
-          localStorage.setItem('ramonFix', 'true');
-          return 'Ramon';
-        }
-      } catch (e) {
-        console.error('Error al verificar usuario en localStorage:', e);
-      }
-    }
-    
-    // Para el modo de prueba, intentar obtener el rol seleccionado en login
+    // Primero verificar si hay un rol explícito guardado en localStorage
     let storedRole = localStorage.getItem('userRole');
     if (storedRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole) || storedRole === 'gerente')) {
       // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
@@ -400,9 +364,6 @@ export const login = async ({ username, password }: LoginRequest): Promise<Login
           if (username.toLowerCase() === 'ramon') {
             console.log('CORRECCIÓN AUTOMÁTICA: Usuario Ramon detectado, forzando rol Ramon');
             data.user.role = 'Ramon';
-            // Guardar indicador especial para Ramon
-            localStorage.setItem('ramonFix', 'true');
-            console.log('Indicador ramonFix guardado para verificaciones futuras');
           } else if (data.user.role === 'gerente') {
             console.log('CORRECCIÓN AUTOMÁTICA: Rol gerente detectado, convirtiendo a Ramon');
             data.user.role = 'Ramon';
@@ -415,12 +376,6 @@ export const login = async ({ username, password }: LoginRequest): Promise<Login
           if (data.user.role) {
             localStorage.setItem('userRole', data.user.role);
             console.log(`Rol guardado: ${data.user.role}`);
-            
-            // Guardado adicional para Ramon
-            if (data.user.role === 'Ramon') {
-              localStorage.setItem('ramonFix', 'true');
-              console.log('Rol Ramon guardado con indicador adicional de seguridad');
-            }
           }
         }
       } catch (e) {
@@ -567,7 +522,6 @@ export const changePassword = async (oldPassword: string, newPassword: string): 
 
 // Exportar todas las funciones del servicio
 const authService = {
-  getStoredUser,
   login,
   logout,
   isAuthenticated,
@@ -586,80 +540,3 @@ const authService = {
 };
 
 export default authService;
-
-/**
- * Extrae el rol del token JWT para compatibilidad con tests
- * @returns Rol del usuario o 'usuario' si no se puede extraer
- */
-export function extractRoleFromToken(): UserRole {
-  console.log('extractRoleFromToken llamada desde authService');
-  
-  // PRIORIDAD MÁXIMA: Verificación directa de Ramon
-  try {
-    if (typeof window !== 'undefined') {
-      // Verificar el indicador especial de Ramon
-      const ramonFix = localStorage.getItem('ramonFix');
-      if (ramonFix === 'true') {
-        console.log('⭐ Indicador ramonFix encontrado, retornando rol Ramon');
-        return 'Ramon';
-      }
-      
-      // Verificar directamente en localStorage por nombre de usuario
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        if (user.username && user.username.toLowerCase() === 'ramon') {
-          console.log('⭐ Usuario Ramon detectado en extractRoleFromToken de authService');
-          // Establecer el indicador para futuras verificaciones
-          localStorage.setItem('ramonFix', 'true');
-          // Asegurar que el rol esté guardado correctamente
-          if (user.role !== 'Ramon') {
-            user.role = 'Ramon';
-            localStorage.setItem('user', JSON.stringify(user));
-          }
-          localStorage.setItem('userRole', 'Ramon');
-          return 'Ramon';
-        }
-      }
-      
-      // Verificar por token JWT si está disponible
-      const token = getToken();
-      if (token) {
-        try {
-          // Decodificar el token JWT
-          const decoded = jwtDecode<{ role?: string; username?: string; sub?: string }>(token);
-          
-          // Verificación específica para Ramon - PRIORIDAD MÁXIMA
-          if (decoded.username && decoded.username.toLowerCase() === 'ramon') {
-            console.log('⭐ USUARIO RAMON DETECTADO por username en token, asignando rol Ramon');
-            localStorage.setItem('ramonFix', 'true');
-            return 'Ramon';
-          }
-          
-          if (decoded.sub && decoded.sub.toLowerCase() === 'ramon') {
-            console.log('⭐ USUARIO RAMON DETECTADO por sub en token, asignando rol Ramon');
-            localStorage.setItem('ramonFix', 'true');
-            return 'Ramon';
-          }
-        } catch (e) {
-          console.error('Error al decodificar el token JWT:', e);
-        }
-      }
-      
-      // Verificar en userRole como última opción
-      const userRole = localStorage.getItem('userRole');
-      if (userRole === 'Ramon' || userRole === 'gerente') {
-        if (userRole === 'gerente') {
-          localStorage.setItem('userRole', 'Ramon');
-        }
-        return 'Ramon';
-      }
-    }
-  } catch (e) {
-    console.error('Error al verificar usuario Ramon:', e);
-  }
-  
-  // Si no es Ramon, obtener el rol del usuario actual
-  const role = getCurrentUserRole();
-  return role;
-}

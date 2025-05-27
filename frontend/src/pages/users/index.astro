@@ -1,17 +1,14 @@
 ---
 // Importar el layout
-import DefaultLayout from '../../layouts/DefaultLayout.astro';
+import MainLayout from '../../components/layout/MainLayout.astro';
 import { UsersManagement } from '../../components/users/UsersManagement';
 import { RoleGuard } from '../../components/guards/RoleGuard';
-
-// Definir título
-const title = "Gestión de Usuarios | Masclet Imperi";
 
 // Roles que tienen acceso a esta página
 const allowedRoles = ['administrador', 'Ramon'];
 ---
 
-<DefaultLayout title={title}>
+<MainLayout title="Usuarios">
   <RoleGuard client:load allowedRoles={allowedRoles}>
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
@@ -20,4 +17,4 @@ const allowedRoles = ['administrador', 'Ramon'];
 
     <UsersManagement client:load />
   </RoleGuard>
-</DefaultLayout>
+</MainLayout>

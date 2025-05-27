@@ -1,0 +1,423 @@
+=== DIAGNÓSTICO DEL SISTEMA DE ROLES PARA RAMON ===
+
+
+==== ANALIZANDO: Servicio de roles (frontend/src/services/roleService.ts) ====
+  ✅ Archivo encontrado (10102 bytes)
+  ✅ Función encontrada: extractRoleFromToken - Extracción de rol del token JWT
+  --- Código relevante (primeras líneas) ---
+  export function extractRoleFromToken(): UserRole {
+    try {
+      const token = getToken();
+      if (!token) {
+        console.warn('No hay token JWT disponible');
+        return 'usuario';
+      }
+      // Decodificar el token JWT
+      const decoded = jwtDecode<{ role?: string; username?: string; sub?: string }>(token);
+      console.log('Token decodificado:', decoded);
+      // IMPORTANTE: Verificación de usuario Ramon tiene prioridad máxima
+      // Primero verificamos por username y sub (identificadores principales)
+      // Verificación específica para Ramon - MÁXIMA PRIORIDAD
+      if (decoded.username && decoded.username.toLowerCase() === 'ramon') {
+        console.log('⭐ USUARIO RAMON DETECTADO por username, asignando rol Ramon');...
+  --- Fin del código relevante ---
+  ❌ Función NO encontrada: getCurrentUserRole
+  ❌ Función NO encontrada: login
+  ❌ Función NO encontrada: getStoredUser
+
+  --- Buscando patrones de problemas ---
+  ✅ No se encontró el patrón: Problema: Se está asignando rol "administrador" cuando sub o username es "admin"
+  ⚠️ PATRÓN DETECTADO: Comprobación de usuario Ramon
+  --- Líneas con el patrón ---
+  export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
+  'Ramon': 3,
+  'Ramon': [
+  // IMPORTANTE: Verificación de usuario Ramon tiene prioridad máxima
+  // Verificación específica para Ramon - MÁXIMA PRIORIDAD
+  if (decoded.username && decoded.username.toLowerCase() === 'ramon') {
+  console.log('⭐ USUARIO RAMON DETECTADO por username, asignando rol Ramon');
+  return 'Ramon';
+  if (decoded.sub && decoded.sub.toLowerCase() === 'ramon') {
+  console.log('⭐ USUARIO RAMON DETECTADO por sub, asignando rol Ramon');
+  return 'Ramon';
+  if (rolePart === 'GERENTE' || rolePart === 'RAMON') {
+  console.log('Mapeando GERENTE/RAMON a Ramon');
+  return 'Ramon';
+  if (['administrador', 'Ramon', 'editor', 'usuario'].includes(decoded.role)) {
+  console.log('Convertiendo gerente a Ramon');
+  return 'Ramon';
+  if (decoded.sub === 'ramon' || decoded.sub === 'Ramon') {
+  console.log('Usuario Ramon detectado en sub, asignando rol Ramon');
+  return 'Ramon';
+  if (storedRole && ['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole)) {
+  if (rolePart === 'GERENTE') return 'Ramon';
+  ['administrador', 'Ramon', 'editor', 'usuario'].includes(user.role)) {
+  if (user.username === 'ramon') return 'Ramon';
+  ⚠️ PATRÓN DETECTADO: Compatibilidad con rol "gerente"
+  --- Líneas con el patrón ---
+  if (rolePart === 'GERENTE' || rolePart === 'RAMON') {
+  console.log('Mapeando GERENTE/RAMON a Ramon');
+  if (decoded.role === 'gerente') {
+  console.log('Convertiendo gerente a Ramon');
+  if (rolePart === 'GERENTE') return 'Ramon';
+  ✅ No se encontró el patrón: Almacenamiento del usuario en localStorage
+
+
+==== ANALIZANDO: Servicio de autenticación (frontend/src/services/authService.ts) ====
+  ✅ Archivo encontrado (15987 bytes)
+  ❌ Función NO encontrada: extractRoleFromToken
+  ✅ Función encontrada: getCurrentUserRole - Obtención del rol del usuario actual
+  --- Código relevante (primeras líneas) ---
+  export const getCurrentUserRole = (): UserRole => {
+    // Para el modo de prueba, intentar obtener el rol seleccionado en login
+    if (typeof window !== 'undefined') {
+      // Primero verificar si hay un rol explícito guardado en localStorage
+      let storedRole = localStorage.getItem('userRole');
+      if (storedRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole) || storedRole === 'gerente')) {
+        // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+        if (storedRole === 'gerente') {
+          console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+          localStorage.setItem('userRole', 'Ramon');
+          storedRole = 'Ramon';
+        }
+        console.log(`Usando rol guardado: ${storedRole}`);
+        return storedRole as UserRole;
+      }...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: login - Proceso de inicio de sesión
+  --- Código relevante (primeras líneas) ---
+  export const login = async ({ username, password }: LoginRequest): Promise<LoginResponse> => {
+    try {
+      if (!username || !password) {
+        throw new Error('Usuario y contraseña son obligatorios');
+      }
+      console.log(`Intentando iniciar sesión con usuario: ${username}`);
+      // Crear los datos en formato URLEncoded como espera el backend OAuth2
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
+      formData.append('grant_type', 'password');
+      // Configurar cabeceras para enviar datos en formato correcto
+      const config = {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: getStoredUser - Obtención del usuario almacenado
+  --- Código relevante (primeras líneas) ---
+  export function getStoredUser(): User | null {
+    if (typeof window === 'undefined') {
+      return null; // No hay usuario en el servidor
+    }
+    try {
+      const userJson = localStorage.getItem('user');
+      if (!userJson) {
+        console.warn('No se encontró información de usuario en localStorage');
+        return null;
+      }
+      const user = JSON.parse(userJson) as User;
+      // Asegurarse que el usuario tiene un rol válido
+      if (!user.role) {
+        // Si el usuario no tiene rol, asumimos que es 'usuario' normal
+        console.warn('Usuario sin rol definido, asignando rol por defecto');...
+  --- Fin del código relevante ---
+
+  --- Buscando patrones de problemas ---
+  ✅ No se encontró el patrón: Problema: Se está asignando rol "administrador" cuando sub o username es "admin"
+  ⚠️ PATRÓN DETECTADO: Comprobación de usuario Ramon
+  --- Líneas con el patrón ---
+  export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
+  // Verificar si el usuario es admin o Ramon (antes 'gerente') para compatibilidad
+  if (storedRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole) || storedRole === 'gerente')) {
+  // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+  console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+  localStorage.setItem('userRole', 'Ramon');
+  storedRole = 'Ramon';
+  if (testRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(testRole) || testRole === 'gerente')) {
+  // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+  console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+  localStorage.setItem('user_role', 'Ramon');
+  testRole = 'Ramon';
+  if (rolePart === 'GERENTE') return 'Ramon';
+  if (['administrador', 'Ramon', 'editor', 'usuario'].includes(user.role)) {
+  } else if (user.username === 'ramon') {
+  return 'Ramon';
+  case 'Ramon':
+  // Guardar datos del usuario con ajuste especial para Ramon
+  // IMPORTANTE: Verificar si es Ramon y ajustar el rol
+  if (username.toLowerCase() === 'ramon') {
+  console.log('CORRECCIÓN AUTOMÁTICA: Usuario Ramon detectado, forzando rol Ramon');
+  data.user.role = 'Ramon';
+  console.log('CORRECCIÓN AUTOMÁTICA: Rol gerente detectado, convirtiendo a Ramon');
+  data.user.role = 'Ramon';
+  ⚠️ PATRÓN DETECTADO: Compatibilidad con rol "gerente"
+  --- Líneas con el patrón ---
+  // Verificar si el usuario es admin o Ramon (antes 'gerente') para compatibilidad
+  if (storedRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole) || storedRole === 'gerente')) {
+  // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+  if (storedRole === 'gerente') {
+  console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+  if (testRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(testRole) || testRole === 'gerente')) {
+  // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+  if (testRole === 'gerente') {
+  console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+  if (rolePart === 'GERENTE') return 'Ramon';
+  } else if (data.user.role === 'gerente') {
+  console.log('CORRECCIÓN AUTOMÁTICA: Rol gerente detectado, convirtiendo a Ramon');
+  ⚠️ PATRÓN DETECTADO: Almacenamiento del usuario en localStorage
+  --- Líneas con el patrón ---
+  localStorage.setItem('user', JSON.stringify(user));
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+
+==== ANALIZANDO: Utilidades de autenticación (frontend/src/middlewares/authUtils.ts) ====
+  ✅ Archivo encontrado (6120 bytes)
+  ✅ Función encontrada: extractRoleFromToken - Extracción de rol del token JWT
+  --- Código relevante (primeras líneas) ---
+  export function extractRoleFromToken(): UserRole {
+    console.log('extractRoleFromToken llamada desde authUtils (proxy)');
+    // Verificar si es Ramon primero
+    try {
+      if (typeof window !== 'undefined') {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          if (user.username && user.username.toLowerCase() === 'ramon') {
+            console.log('Usuario Ramon detectado en extractRoleFromToken (authUtils)');
+            return 'Ramon';
+          }
+        }
+      }
+    } catch (e) {...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: getCurrentUserRole - Obtención del rol del usuario actual
+  --- Código relevante (primeras líneas) ---
+  getCurrentUserRole();
+    // El administrador tiene acceso a todo
+    if (userRole === 'administrador') {
+      return true;
+    }
+    // Verificar acceso para cada patrón de ruta
+    for (const [routePattern, allowedRoles] of Object.entries(protectedRoutes)) {
+      if (route.startsWith(routePattern) && allowedRoles.includes(userRole)) {
+        return true;
+      }
+    }
+    return false;
+    */
+  };
+  /**...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: login - Proceso de inicio de sesión
+  --- Código relevante (primeras líneas) ---
+  export function login(credentials: any): Promise<any> {
+    console.log('login llamada desde authUtils (proxy)');
+    // Si es usuario Ramon, asegurar que tenga rol Ramon
+    if (credentials.username && credentials.username.toLowerCase() === 'ramon') {
+      console.log('Asignando rol Ramon explícitamente desde authUtils');
+      setTimeout(() => {
+        try {
+          if (typeof window !== 'undefined') {
+            const userJson = localStorage.getItem('user');
+            if (userJson) {
+              const user = JSON.parse(userJson);
+              user.role = 'Ramon';
+              localStorage.setItem('user', JSON.stringify(user));
+              localStorage.setItem('userRole', 'Ramon');
+              console.log('Rol Ramon asignado correctamente desde authUtils');...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: getStoredUser - Obtención del usuario almacenado
+  --- Código relevante (primeras líneas) ---
+  export function getStoredUser(): any {
+    console.log('getStoredUser llamada desde authUtils (proxy)');
+    try {
+      if (typeof window !== 'undefined') {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          // Verificar si es Ramon y corregir rol si es necesario
+          if (user.username && user.username.toLowerCase() === 'ramon' && user.role !== 'Ramon') {
+            console.log('Corrigiendo rol de Ramon en getStoredUser (authUtils)');
+            user.role = 'Ramon';
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+          return user;
+        }...
+  --- Fin del código relevante ---
+
+  --- Buscando patrones de problemas ---
+  ✅ No se encontró el patrón: Problema: Se está asignando rol "administrador" cuando sub o username es "admin"
+  ⚠️ PATRÓN DETECTADO: Comprobación de usuario Ramon
+  --- Líneas con el patrón ---
+  '/dashboard': ['administrador', 'Ramon'],
+  // Nota: El backend sigue usando 'gerente', el frontend usa 'Ramon'
+  '/users': ['administrador', 'Ramon'],
+  '/animals': ['administrador', 'Ramon', 'editor', 'usuario'],
+  '/animals/create': ['administrador', 'Ramon'],
+  '/animals/edit': ['administrador', 'Ramon', 'editor'],
+  '/explotacions': ['administrador', 'Ramon', 'editor', 'usuario'],
+  '/explotacions/create': ['administrador', 'Ramon'],
+  '/explotacions/edit': ['administrador', 'Ramon', 'editor'],
+  // Verificar si es Ramon primero
+  if (user.username && user.username.toLowerCase() === 'ramon') {
+  console.log('Usuario Ramon detectado en extractRoleFromToken (authUtils)');
+  return 'Ramon';
+  // Si es usuario Ramon, asegurar que tenga rol Ramon
+  if (credentials.username && credentials.username.toLowerCase() === 'ramon') {
+  console.log('Asignando rol Ramon explícitamente desde authUtils');
+  user.role = 'Ramon';
+  localStorage.setItem('userRole', 'Ramon');
+  console.log('Rol Ramon asignado correctamente desde authUtils');
+  console.error('Error al asignar rol Ramon desde authUtils:', e);
+  user: { username: credentials.username, role: credentials.username.toLowerCase() === 'ramon' ? 'Ramon' : 'usuario' }
+  // Verificar si es Ramon y corregir rol si es necesario
+  if (user.username && user.username.toLowerCase() === 'ramon' && user.role !== 'Ramon') {
+  console.log('Corrigiendo rol de Ramon en getStoredUser (authUtils)');
+  user.role = 'Ramon';
+  ⚠️ PATRÓN DETECTADO: Compatibilidad con rol "gerente"
+  --- Líneas con el patrón ---
+  // Nota: El backend sigue usando 'gerente', el frontend usa 'Ramon'
+  case 'gerente':
+  ⚠️ PATRÓN DETECTADO: Almacenamiento del usuario en localStorage
+  --- Líneas con el patrón ---
+  localStorage.setItem('user', JSON.stringify(user));
+  localStorage.setItem('user', JSON.stringify(user));
+
+
+==== ANALIZANDO: Página de login (frontend/src/pages/login.astro) ====
+  ✅ Archivo encontrado (10601 bytes)
+  ✅ Función encontrada: extractRoleFromToken - Extracción de rol del token JWT
+  --- Código relevante (primeras líneas) ---
+  function extractRoleFromToken() {
+      console.log('extractRoleFromToken llamada desde login.astro');
+      // Verificar primero por localStorage (prioridad más alta)
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          // Verificación especial para Ramon
+          if (user.username && user.username.toLowerCase() === 'ramon') {
+            console.log('Usuario Ramon detectado en extractRoleFromToken de login.astro');
+            return 'Ramon';
+          }
+          // Si hay un rol definido, usarlo
+          if (user.role) {
+            // Convertir 'gerente' a 'Ramon' por compatibilidad...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: getCurrentUserRole - Obtención del rol del usuario actual
+  --- Código relevante (primeras líneas) ---
+  function getCurrentUserRole() {
+      console.log('getCurrentUserRole llamada desde login.astro');
+      // Verificar el indicador especial de Ramon
+      const ramonFix = localStorage.getItem('ramonFix');
+      if (ramonFix === 'true') {
+        console.log('Indicador ramonFix encontrado, retornando rol Ramon');
+        return 'Ramon';
+      }
+      // Usar extractRoleFromToken como fallback
+      return extractRoleFromToken();
+    }
+    /**
+     * Obtiene el objeto de usuario almacenado
+     * @returns El objeto de usuario o null si no existe
+     */...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: login - Proceso de inicio de sesión
+  --- Código relevante (primeras líneas) ---
+  const loginForm = document.getElementById('loginForm');
+      // Crear un script que maneje la interacción con el componente React
+      const script = document.createElement('script');
+      script.textContent = `
+        // Esta función se ejecutará cuando el componente React esté listo
+        document.addEventListener('astro:page-load', () => {
+          // Escuchar el evento personalizado para mostrar el modal
+          document.addEventListener('show-password-error', () => {
+            // Buscar el elemento modal por su ID
+            const modal = document.getElementById('passwordErrorModal');
+            if (modal) {
+              // Enviar mensaje al componente React para cambiar su estado
+              const event = new CustomEvent('update-modal-state', { 
+                detail: { isOpen: true } 
+              });...
+  --- Fin del código relevante ---
+  ✅ Función encontrada: getStoredUser - Obtención del usuario almacenado
+  --- Código relevante (primeras líneas) ---
+  function getStoredUser() {
+      console.log('getStoredUser llamada desde login.astro');
+      const userJson = localStorage.getItem('user');
+      if (!userJson) {
+        return null;
+      }
+      try {
+        const user = JSON.parse(userJson);
+        // Verificación especial para Ramon
+        if (user.username && user.username.toLowerCase() === 'ramon') {
+          if (user.role !== 'Ramon') {
+            console.log('Corrigiendo rol de Ramon en getStoredUser de login.astro');
+            user.role = 'Ramon';
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('userRole', 'Ramon');...
+  --- Fin del código relevante ---
+
+  --- Buscando patrones de problemas ---
+  ✅ No se encontró el patrón: Problema: Se está asignando rol "administrador" cuando sub o username es "admin"
+  ⚠️ PATRÓN DETECTADO: Comprobación de usuario Ramon
+  --- Líneas con el patrón ---
+  // SOLUCIÓN MEJORADA: Corregir el rol para Ramon
+  if (userData.username && userData.username.toLowerCase() === 'ramon') {
+  console.log('🔴 Usuario Ramon detectado, FORZANDO rol Ramon');
+  userData.role = 'Ramon';
+  localStorage.setItem('userRole', 'Ramon');
+  console.log('🔴 Rol Ramon guardado separadamente para mayor seguridad');
+  localStorage.setItem('ramonFix', 'true');
+  console.log('Rol gerente detectado, convirtiendo a Ramon');
+  userData.role = 'Ramon';
+  localStorage.setItem('userRole', 'Ramon');
+  // Mostrar el modal con el perro de Ramon
+  // Mostrar el modal con el perro de Ramon
+  // Funciones agregadas para el test de permisos de Ramon
+  // Verificación especial para Ramon
+  if (user.username && user.username.toLowerCase() === 'ramon') {
+  console.log('Usuario Ramon detectado en extractRoleFromToken de login.astro');
+  return 'Ramon';
+  // Convertir 'gerente' a 'Ramon' por compatibilidad
+  console.log('Rol gerente detectado, convirtiendo a Ramon');
+  return 'Ramon';
+  return 'Ramon'; // Compatibilidad
+  // Verificar el indicador especial de Ramon
+  const ramonFix = localStorage.getItem('ramonFix');
+  if (ramonFix === 'true') {
+  console.log('Indicador ramonFix encontrado, retornando rol Ramon');
+  return 'Ramon';
+  // Verificación especial para Ramon
+  if (user.username && user.username.toLowerCase() === 'ramon') {
+  if (user.role !== 'Ramon') {
+  console.log('Corrigiendo rol de Ramon en getStoredUser de login.astro');
+  user.role = 'Ramon';
+  localStorage.setItem('userRole', 'Ramon');
+  ⚠️ PATRÓN DETECTADO: Compatibilidad con rol "gerente"
+  --- Líneas con el patrón ---
+  } else if (userData.role === 'gerente') {
+  console.log('Rol gerente detectado, convirtiendo a Ramon');
+  // Convertir 'gerente' a 'Ramon' por compatibilidad
+  if (user.role === 'gerente') {
+  console.log('Rol gerente detectado, convirtiendo a Ramon');
+  if (explicitRole === 'gerente') {
+  ⚠️ PATRÓN DETECTADO: Almacenamiento del usuario en localStorage
+  --- Líneas con el patrón ---
+  localStorage.setItem('user', JSON.stringify(userData));
+  localStorage.setItem('user', JSON.stringify(user));
+
+
+==== DIAGNÓSTICO FINAL Y PROPUESTA DE SOLUCIÓN ====
+
+El problema probablemente está en alguna de estas áreas:
+1. El proceso de login no está asignando correctamente el rol a Ramon
+2. La función extractRoleFromToken está priorizando incorrectamente la detección de "admin"
+3. El objeto de usuario guardado en localStorage tiene información incorrecta
+
+SOLUCIÓN PROPUESTA:
+1. Modificar roleService.ts para priorizar la detección de Ramon por nombre de usuario
+2. Corregir el proceso de login para asignar explícitamente el rol Ramon cuando corresponda
+3. Revisar cómo se guarda el usuario en localStorage después del login
+
+=== FIN DEL DIAGNÓSTICO ===

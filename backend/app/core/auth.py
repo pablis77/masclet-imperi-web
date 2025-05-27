@@ -52,10 +52,14 @@ async def get_current_user(
     settings: Settings = Depends(get_settings)
 ) -> User:
     """Obtener usuario actual del token JWT"""
-    # Bypass para desarrollo - SIEMPRE retorna un usuario administrador
-    # Esto permite que el sistema funcione sin autenticación en desarrollo
-    # IMPORTANTE: Solo activar en entorno de desarrollo
-    return get_dev_user()
+    # RESTAURAMOS EL BYPASS: Necesario para que funcione el sistema
+    # mientras resolvemos los problemas de autenticación
+    return get_dev_user()  # BYPASS ACTIVADO - Retorna admin por ahora
+    
+    # Autenticación real basada en token JWT - COMENTADA TEMPORALMENTE
+    # import logging
+    # logger = logging.getLogger(__name__)
+    # logger.info(f"Verificando token JWT para obtener usuario actual")
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
