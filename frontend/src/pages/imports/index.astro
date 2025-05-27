@@ -4,9 +4,29 @@ import MainLayout from '../../components/layout/MainLayout.astro';
 import ImportContainer from '../../components/imports/ImportContainer';
 import ResetDatabaseButton from '../../components/admin/ResetDatabaseButton';
 import PermissionsManager from '../../components/permissions/PermissionsManager.astro';
+import { decode } from 'js-base64';
 
 // Obtener el idioma del usuario (del localStorage en el cliente)
 let currentLang = 'es'; // Valor predeterminado
+
+// Detectar el rol del usuario desde el token (ejecución en servidor)
+let userRole = 'guest';
+const token = Astro.cookies.get('token')?.value;
+if (token) {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length > 1) {
+      const payload = JSON.parse(atob(tokenParts[1]));
+      userRole = payload.role || 'guest';
+    }
+  } catch (e) {
+    console.error('Error al decodificar token:', e);
+  }
+}
+
+// Verificar acceso - Solo admin y Ramon pueden acceder a esta página
+const isEditor = userRole.toLowerCase() === 'editor';
+const hasAccess = !isEditor;
 
 // Definir traducciones
 const translations = {
@@ -30,13 +50,73 @@ const translations = {
   }
 };
 
-// Definir título y rol de usuario
-const userRole = "administrador"; // Simulación de rol
+// Definir título para la página
+const pageTitle = translations[currentLang].title;
 ---
 
-<MainLayout title={translations[currentLang].title} userRole={userRole} currentPath="/imports">
-  <!-- Componente para gestionar permisos de UI basados en rol -->
-  <PermissionsManager />
+<MainLayout title={pageTitle} userRole={userRole} currentPath="/imports">
+  <!-- Bloqueo total para usuarios no autorizados -->
+  <script is:inline>
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+            console.log('ACCESO DENEGADO: Redirigiendo...');
+            window.location.href = '/';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  
+  <!-- Script de limpieza de mensajes duplicados - Se ejecuta inmediatamente -->
+  <script is:inline>
+    // Función para eliminar mensajes duplicados
+    function limpiarMensajesDuplicados() {
+      // Seleccionar todos los mensajes de advertencia
+      const mensajes = document.querySelectorAll('.bg-yellow-50.border-l-4.border-yellow-400.p-4.mb-4');
+      
+      // Si hay más de uno, eliminar todos excepto el primero
+      if (mensajes.length > 1) {
+        console.log(`Eliminando ${mensajes.length - 1} mensajes duplicados`);
+        for (let i = 1; i < mensajes.length; i++) {
+          mensajes[i].remove();
+        }
+      }
+    }
+    
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', limpiarMensajesDuplicados);
+    
+    // También ejecutar cuando la ventana esté completamente cargada
+    window.addEventListener('load', limpiarMensajesDuplicados);
+    
+    // Ejecutar de nuevo después de un breve retraso para capturar mensajes añadidos dinámicamente
+    setTimeout(limpiarMensajesDuplicados, 500);
+    setTimeout(limpiarMensajesDuplicados, 1000);
+    setTimeout(limpiarMensajesDuplicados, 2000);
+    
+    // Observar cambios en el DOM para eliminar mensajes duplicados que se añadan dinámicamente
+    const observer = new MutationObserver(() => {
+      limpiarMensajesDuplicados();
+    });
+    
+    // Iniciar observación cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  </script>
+  
+  <!-- Componente para gestionar permisos de UI basados en rol (versión modificada) -->
+  <script src="/scripts/permissions-ui.js" is:inline></script>
   
   <div class="mb-6">
     <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white" id="imports-title">{translations[currentLang].title}</h1>
@@ -87,6 +167,8 @@ const userRole = "administrador"; // Simulación de rol
     </p>
     <ResetDatabaseButton client:load />
   </div>
+
+
   <script>
     // Obtener el idioma del usuario del localStorage
     document.addEventListener('DOMContentLoaded', function() {

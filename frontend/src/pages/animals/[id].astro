@@ -692,6 +692,9 @@ const estadoClass = animal ? animalService.getAnimalStatusClass(animal.estado) :
 <!-- Importaciones para PDF (misma estructura que en ExplotacionesPage.tsx) -->
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Script para bloquear el botón de eliminar animales para editores -->
+<script is:inline src="/scripts/block-delete-button.js"></script>
 <script is:inline>
   // Aseguramos que autoTable esté disponible globalmente
   window.jsPDF = window.jspdf.jsPDF;

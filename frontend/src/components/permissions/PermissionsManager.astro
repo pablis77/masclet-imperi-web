@@ -1,12 +1,55 @@
 ---
-// Componente para gestionar permisos en la UI
+// Este componente gestiona los permisos de UI basados en el rol del usuario
+// Se ejecuta en todas las páginas que lo incluyen y bloquea el acceso a páginas restringidas para roles no autorizados
+
+// Obtener la ruta actual
+const currentPath = Astro.url.pathname;
+
+// Verificar si es una ruta restringida (que solo debe ser accesible por administradores)
+const isRestrictedPath = [
+  '/imports',
+  '/backup',
+  '/users'
+].some(path => currentPath.startsWith(path));
 ---
 
-<!-- Script para gestionar permisos en la UI -->
+<!-- Bloqueo de acceso para páginas restringidas -->
+{isRestrictedPath && (
+  <script is:inline>
+    // Este script se ejecuta inmediatamente al cargar la página, antes de mostrar el contenido
+    (function() {
+      try {
+        // Obtener el token del localStorage
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Decodificar el payload del JWT
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          
+          // Si el usuario es editor o user, redirigir a la página principal
+          if (userRole.toLowerCase() === 'editor' || userRole.toLowerCase() === 'user') {
+            console.log('Acceso denegado para rol:', userRole);
+            window.location.href = '/';
+          }
+        } else {
+          // Si no hay token, redirigir a login
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error al verificar permisos:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+)}
+
+<!-- Script general para ocultar elementos de UI basados en rol -->
+<script src="/scripts/permissions-ui.js" is:inline></script>
+
+<!-- Script para inicialización inmediata -->
 <script is:inline>
 /**
- * Script para gestionar la visualización de elementos de UI según permisos
- * Este script oculta botones y añade mensajes informativos para funciones restringidas
+ * Inicialización del sistema de permisos
  */
 
 // Función principal para gestionar permisos en la UI
@@ -44,7 +87,16 @@ function setupPermissionsUI() {
 
 // Gestionar restricciones en la página de importaciones
 function handleImportPageRestrictions() {
-  console.log("Aplicando restricciones a la página de importaciones...");
+  // Evitar ejecutar múltiples veces
+  if (window.ramonImportRestrictionApplied) return;
+  window.ramonImportRestrictionApplied = true;
+  
+  console.log("Aplicando restricciones a la página de importaciones para Ramon...");
+  
+  // Eliminar todos los mensajes de advertencia existentes para evitar duplicados
+  document.querySelectorAll('.bg-yellow-50.border-l-4.border-yellow-400.p-4.mb-4').forEach(el => {
+    el.remove();
+  });
   
   // Ocultar botones de importación excepto los de descarga
   document.querySelectorAll('.import-btn:not(.download-btn)').forEach(btn => {
@@ -57,10 +109,11 @@ function handleImportPageRestrictions() {
     uploadForm.style.display = 'none';
   }
   
-  // Añadir mensaje informativo
+  // Añadir un único mensaje informativo
   const container = document.querySelector('.import-container');
   if (container) {
     const infoMsg = document.createElement('div');
+    infoMsg.id = 'mensaje-restriccion-ramon';
     infoMsg.className = 'bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4';
     infoMsg.innerHTML = `
       <div class="flex">
@@ -76,33 +129,91 @@ function handleImportPageRestrictions() {
         </div>
       </div>
     `;
-    container.insertBefore(infoMsg, container.querySelector('h2').nextSibling);
+    
+    // Insertar al principio del contenedor
+    const titleElement = container.querySelector('h2');
+    if (titleElement) {
+      container.insertBefore(infoMsg, titleElement.nextSibling);
+    } else {
+      container.prepend(infoMsg);
+    }
   }
 }
 
 // Gestionar restricciones en la página de backup/restore
 function handleBackupPageRestrictions() {
-  console.log("Aplicando restricciones a la página de backup...");
+  // Evitar ejecutar múltiples veces
+  if (window.ramonBackupRestrictionApplied) return;
+  window.ramonBackupRestrictionApplied = true;
   
-  // 1. Deshabilitar botones con atributo data-requires-admin
+  console.log("Aplicando restricciones a la página de backup para Ramon...");
+  
+  // Función para deshabilitar completamente un elemento
+  function deshabilitarElemento(elemento, mensaje) {
+    // 1. Modificar atributos
+    elemento.disabled = true;
+    elemento.setAttribute('disabled', 'true');
+    
+    // 2. Modificar estilos
+    elemento.style.opacity = '0.5';
+    elemento.style.cursor = 'not-allowed';
+    elemento.style.pointerEvents = 'none';
+    elemento.title = mensaje || 'Solo disponible para administradores';
+    
+    // 3. Añadir clases visuales
+    elemento.classList.add('opacity-50', 'cursor-not-allowed');
+    elemento.classList.remove('hover:bg-gray-300', 'dark:hover:bg-gray-600');
+    
+    // 4. Evitar eventos de clic
+    elemento.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }, true);
+    
+    // 5. Añadir texto de candado si no existe
+    if (!elemento.querySelector('.lock-icon')) {
+      const lockIcon = document.createElement('span');
+      lockIcon.textContent = ' \ud83d\udd12';
+      lockIcon.className = 'lock-icon ml-2';
+      elemento.appendChild(lockIcon);
+    }
+  }
+  
+  // 1. Deshabilitar botón de selección de backup específicamente
+  const selectBackupBtn = document.getElementById('select-backup-btn');
+  if (selectBackupBtn) {
+    deshabilitarElemento(selectBackupBtn, 'No tienes permisos para restaurar copias de seguridad');
+    console.log('Botón de selección de backup deshabilitado correctamente');
+  } else {
+    console.log('Botón de selección de backup no encontrado, buscando con retraso...');
+    // Intentar encontrarlo con retraso (a veces se carga dinámicamente)
+    setTimeout(() => {
+      const btnDelayed = document.getElementById('select-backup-btn');
+      if (btnDelayed) {
+        deshabilitarElemento(btnDelayed, 'No tienes permisos para restaurar copias de seguridad');
+        console.log('Botón de selección de backup encontrado y deshabilitado con retraso');
+      }
+    }, 500);
+  }
+
+  // 2. Deshabilitar todos los elementos con data-requires-admin="true"
   document.querySelectorAll('[data-requires-admin="true"]').forEach(element => {
-    element.disabled = true;
-    element.classList.add('opacity-50', 'cursor-not-allowed');
+    deshabilitarElemento(element);
   });
 
-  // 2. Deshabilitar botones de restauración y eliminación en la tabla
+  // 3. Deshabilitar botones de restauración y eliminación en la tabla
   document.querySelectorAll('.restore-btn, .delete-btn').forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add('opacity-50', 'cursor-not-allowed');
-    btn.title = "Solo disponible para administradores";
+    deshabilitarElemento(btn);
   });
   
-  // 3. Añadir mensaje informativo en la sección de restauración
+  // 4. Añadir mensaje informativo en la sección de restauración
   const restoreSection = document.getElementById('restore-section');
   if (restoreSection) {
     const container = restoreSection.closest('.bg-white');
     if (container && !container.querySelector('.bg-yellow-50')) {
       const infoMsg = document.createElement('div');
+      infoMsg.id = 'mensaje-restauracion-ramon';
       infoMsg.className = 'bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4';
       infoMsg.innerHTML = `
         <div class="flex">
@@ -113,19 +224,39 @@ function handleBackupPageRestrictions() {
           </div>
           <div class="ml-3">
             <p class="text-sm text-yellow-700">
-              Esta función de restauración solo está disponible para administradores. Puedes ver y descargar los backups pero no restaurarlos.
+              Esta función de restauración solo está disponible para administradores.
             </p>
           </div>
         </div>
       `;
-      
-      // Insertar antes del div de selección de backup
-      const heading = container.querySelector('h2');
-      if (heading) {
-        container.insertBefore(infoMsg, heading.nextSibling);
+      const titleElement = container.querySelector('h2');
+      if (titleElement) {
+        container.insertBefore(infoMsg, titleElement.nextSibling);
+      } else {
+        container.prepend(infoMsg);
       }
     }
   }
+  
+  // 5. Observar cambios en el DOM para seguir aplicando restricciones a elementos nuevos
+  const observer = new MutationObserver(() => {
+    // Volver a buscar botones que necesiten ser deshabilitados
+    const newBtn = document.getElementById('select-backup-btn');
+    if (newBtn && !newBtn.disabled) {
+      deshabilitarElemento(newBtn, 'No tienes permisos para restaurar copias de seguridad');
+    }
+    
+    // Revisar nuevos elementos con data-requires-admin
+    document.querySelectorAll('[data-requires-admin="true"]:not([disabled])').forEach(element => {
+      deshabilitarElemento(element);
+    });
+  });
+  
+  // Observar todo el documento para detectar nuevos elementos
+  observer.observe(document.documentElement, { 
+    childList: true, 
+    subtree: true 
+  });
 }
 
 // Inicializar cuando el DOM esté cargado

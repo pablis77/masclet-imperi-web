@@ -69,9 +69,23 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Extraer el nombre real del campo sin el sufijo aleatorio
+    let fieldName = name;
+    if (name.includes('_')) {
+      fieldName = name.split('_')[0]; // Obtenemos la parte antes del guion bajo
+    }
+    
+    // Mapear los campos con sufijos a los campos originales
+    let realFieldName = fieldName;
+    if (fieldName.includes('username')) realFieldName = 'username';
+    if (fieldName.includes('email')) realFieldName = 'email';
+    if (fieldName.includes('password') && !fieldName.includes('confirm')) realFieldName = 'password';
+    if (fieldName.includes('confirmPassword')) realFieldName = 'confirmPassword';
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [realFieldName]: value
     }));
   };
 
@@ -155,8 +169,16 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
     }
   };
 
+  // Generamos un ID único para los campos para evitar que el navegador autocomplete
+  const randomSuffix = Math.random().toString(36).substring(2, 10);
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
+    <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off" spellCheck="false">
+      {/* Campo oculto para engañar al autocompletado del navegador */}
+      <div style={{ display: 'none' }}>
+        <input type="text" name="username_fake" autoComplete="username" />
+        <input type="password" name="password_fake" autoComplete="current-password" />
+      </div>
       <h2 className="text-lg font-medium text-gray-900">
         {isEdit ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
       </h2>
@@ -182,12 +204,15 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
           <div className="mt-1">
             <input
               type="text"
-              name="username"
+              name={`username_${randomSuffix}`}
               id="username"
               value={formData.username}
               onChange={handleChange}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               required
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
             />
           </div>
         </div>
@@ -199,12 +224,15 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
           <div className="mt-1">
             <input
               type="email"
-              name="email"
+              name={`email_${randomSuffix}`}
               id="email"
               value={formData.email}
               onChange={handleChange}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               required
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
             />
           </div>
         </div>
@@ -219,12 +247,15 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    name="password"
+                    name={`password_${randomSuffix}`}
                     id="password"
                     value={formData.password}
                     onChange={handleChange}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     required={!isEdit && !isAdmin}
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
                   />
                   {isAdmin && (
                     <button 
@@ -257,12 +288,15 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel, a
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
+                    name={`confirmPassword_${randomSuffix}`}
                     id="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     required={!isEdit && !isAdmin}
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
                   />
                   {isAdmin && (
                     <button 
