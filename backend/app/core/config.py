@@ -19,10 +19,9 @@ logger = logging.getLogger(__name__)
 class UserRole(str, Enum):
     """Roles de usuario en el sistema"""
     ADMIN = "administrador"
-    GERENTE = "gerente"  # Volvemos al valor original para recuperar la compatibilidad
+    RAMON = "Ramon"  # Rol fundamental que reemplaza a GERENTE
     EDITOR = "editor"
     USER = "usuario"
-    RAMON = "Ramon"  # Rol específico para el usuario Ramon
 
 class Action(str, Enum):
     """Acciones permitidas en el sistema"""
@@ -51,18 +50,7 @@ ROLES = {
         Action.VER_ESTADISTICAS, 
         Action.EXPORTAR_DATOS
     ],
-    "gerente": [  # Mantenemos compatibilidad con roles históricos
-        Action.CONSULTAR, 
-        Action.ACTUALIZAR, 
-        Action.CREAR,
-        Action.GESTIONAR_USUARIOS,
-        Action.BORRAR_USUARIOS,
-        Action.CAMBIAR_CONTRASEÑAS,
-        Action.GESTIONAR_EXPLOTACIONES, 
-        Action.VER_ESTADISTICAS,
-        Action.EXPORTAR_DATOS
-    ],
-    "Ramon": [  # Permisos para el usuario Ramon
+    "Ramon": [  # Rol fundamental - Acceso casi completo, sin importación
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,

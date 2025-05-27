@@ -39,7 +39,7 @@ async def get_users(
     current_user: User = Depends(get_current_user)
 ) -> PaginatedUserResponse:
     """
-    Obtener lista paginada de usuarios (solo administrador y gerente/Ramon)
+    Obtener lista paginada de usuarios (solo administrador y Ramon)
     """
     # Verificar si el usuario tiene permisos (admin o Ramon)
     if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
@@ -71,7 +71,7 @@ async def get_user(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Obtener usuario por ID (solo admin, gerente o el propio usuario)
+    Obtener usuario por ID (solo admin, Ramon o el propio usuario)
     """
     # Solo admin, Ramon o el propio usuario pueden ver detalles
     if not (verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]) or current_user.id == user_id):
@@ -95,7 +95,7 @@ async def create_user(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Crear un nuevo usuario (solo admin y gerente/Ramon)
+    Crear un nuevo usuario (solo admin y Ramon)
     """
     # Verificar permisos
     if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
@@ -121,12 +121,12 @@ async def create_user(
                 detail="Ya existe un usuario con rol de administrador"
             )
     
-    if user_data.role == "Ramon":  # Rol de gerente
-        gerente_exists = await User.filter(role="Ramon").first()
-        if gerente_exists:
+    if user_data.role == "Ramon":  # Rol de Ramon
+        ramon_exists = await User.filter(role="Ramon").first()
+        if ramon_exists:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ya existe un usuario con rol de gerente"
+                status_code=400,
+                detail="Ya existe un usuario con rol de Ramon"
             )
     
     # Verificar si se intenta crear un administrador y el usuario actual no es admin
@@ -155,7 +155,7 @@ async def update_user(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Actualizar usuario por ID (solo admin, gerente o el propio usuario)
+    Actualizar usuario por ID (solo admin, Ramon o el propio usuario)
     """
     try:
         user = await User.get(id=user_id)
@@ -171,14 +171,14 @@ async def update_user(
 
         # Comprobar permisos según casos
         if not is_self_update and not is_admin and not is_ramon:
-            # No es admin ni gerente ni el propio usuario
+            # No es admin ni Ramon ni el propio usuario
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permisos para modificar este usuario"
             )
 
         if is_ramon and target_is_admin:
-            # Gerente intentando modificar a un admin
+            # Ramon intentando modificar a un admin
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No puedes modificar a un administrador"
@@ -191,7 +191,7 @@ async def update_user(
                 detail="No puedes cambiar tu propio rol"
             )
 
-        # Validar roles únicos (solo puede haber un administrador y un gerente)
+        # Validar roles únicos (solo puede haber un administrador y un Ramon)
         if user_data.role == UserRole.ADMIN:
             admin_exists = await User.filter(role=UserRole.ADMIN).exclude(id=user_id).first()
             if admin_exists:
@@ -200,12 +200,12 @@ async def update_user(
                     detail="Ya existe un usuario con rol de administrador"
                 )
         
-        if user_data.role == "Ramon":  # Rol de gerente
-            gerente_exists = await User.filter(role="Ramon").exclude(id=user_id).first()
-            if gerente_exists:
+        if user_data.role == "Ramon":  # Rol de Ramon
+            ramon_exists = await User.filter(role="Ramon").exclude(id=user_id).first()
+            if ramon_exists:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ya existe un usuario con rol de gerente"
+                    status_code=400,
+                    detail="Ya existe un usuario con rol de Ramon"
                 )
         
         # Aplicar cambios
@@ -228,11 +228,11 @@ async def update_user(
             user.hashed_password = get_password_hash(user_data.password)
 
         if user_data.role is not None and (is_admin or (is_ramon and not target_is_admin)):
-            # Solo cambiamos rol si es admin o es gerente modificando a no-admin
+            # Solo cambiamos rol si es admin o es Ramon modificando a no-admin
             user.role = user_data.role
 
         if user_data.is_active is not None and (is_admin or is_ramon):
-            # Solo admin o gerente pueden activar/desactivar
+            # Solo admin o Ramon pueden activar/desactivar
             user.is_active = user_data.is_active
 
         # Guardar cambios
@@ -251,7 +251,7 @@ async def delete_user(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Eliminar usuario por ID (solo admin y gerente, con restricciones)
+    Eliminar usuario por ID (solo admin y Ramon, con restricciones)
     """
     # Verificar permisos básicos
     if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
@@ -286,13 +286,13 @@ async def delete_user(
                     detail="No se puede eliminar al único administrador del sistema"
                 )
         
-        # Verificar que no se está eliminando al único gerente
+        # Verificar que no se está eliminando al único Ramon
         if user.role == "Ramon":
-            gerente_count = await User.filter(role="Ramon").count()
-            if gerente_count <= 1:
+            ramon_count = await User.filter(role="Ramon").count()
+            if ramon_count <= 1:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No se puede eliminar al único gerente del sistema"
+                    status_code=400,
+                    detail="No se puede eliminar al único usuario con rol Ramon del sistema"
                 )
                 
         await User.filter(id=user_id).delete()

@@ -7,6 +7,8 @@ import logging
 from app.services.backup_service import BackupService, BackupInfo, BackupOptions
 from app.api.deps.auth import get_current_user
 from app.models.user import User
+from app.core.auth import verify_user_role
+from app.core.config import UserRole
 
 # Configuración de logging
 logging.basicConfig(
@@ -26,7 +28,9 @@ async def list_backups(
     Lista todos los backups disponibles.
     """
     try:
-        # Verificar permisos (solo administradores - ya verificado por get_current_user)
+        # Verificar permisos (solo administradores y Ramon)
+        if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
+            raise HTTPException(status_code=403, detail="No tienes permisos para ver la lista de backups")
         
         # Obtener lista de backups
         backups = await BackupService.list_backups()
@@ -45,7 +49,9 @@ async def create_backup(
     Crea un nuevo backup del sistema.
     """
     try:
-        # Verificar permisos (solo administradores - ya verificado por get_current_user)
+        # Verificar permisos (solo administradores y Ramon)
+        if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
+            raise HTTPException(status_code=403, detail="No tienes permisos para crear backups")
         
         # Si no se proporcionan opciones, usar valores predeterminados
         if options is None:
@@ -84,7 +90,9 @@ async def restore_backup(
     Restaura el sistema desde un backup existente.
     """
     try:
-        # Verificar permisos (solo administradores - ya verificado por get_current_user)
+        # Verificar permisos (solo administradores pueden restaurar)
+        if not verify_user_role(current_user, [UserRole.ADMIN]):
+            raise HTTPException(status_code=403, detail="Solo los administradores pueden restaurar backups")
         
         # Verificar que el archivo existe
         backup_path = os.path.join(BackupService.BACKUP_DIR, filename)
@@ -119,10 +127,12 @@ async def delete_backup(
     Elimina un backup existente.
     """
     try:
-        # Verificar permisos (solo administradores - ya verificado por get_current_user)
+        # Verificar permisos (solo administradores, Ramon no puede eliminar)
+        if not verify_user_role(current_user, [UserRole.ADMIN]):
+            raise HTTPException(status_code=403, detail="Solo los administradores pueden eliminar backups")
         
-        # Eliminar backup
-        await BackupService.delete_backup(filename)
+        # Comprobar si existe el archivo
+        file_path = await BackupService.get_backup_path(filename)
         return JSONResponse(
             status_code=200,
             content={"message": f"Backup {filename} eliminado correctamente"}
@@ -140,7 +150,9 @@ async def download_backup(
     Descarga un backup existente.
     """
     try:
-        # Verificar permisos (solo administradores - ya verificado por get_current_user)
+        # Verificar permisos (solo administradores pueden restaurar)
+        if not verify_user_role(current_user, [UserRole.ADMIN]):
+            raise HTTPException(status_code=403, detail="Solo los administradores pueden restaurar backups")
         
         # Verificar que el archivo existe
         backup_path = os.path.join(BackupService.BACKUP_DIR, filename)

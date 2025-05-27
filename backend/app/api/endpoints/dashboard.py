@@ -44,7 +44,7 @@ async def get_stats(
             
         # Si se especifica una explotación, verificar que el usuario tenga acceso
         if explotacio and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
-            # Para usuarios no admin o gerente, solo pueden ver sus explotaciones asignadas
+            # Para usuarios no admin o Ramon, solo pueden ver sus explotaciones asignadas
             # Verificar de forma segura si el usuario tiene atributo explotacio
             user_explotacio = getattr(current_user, 'explotacio', None)
             if user_explotacio is None or user_explotacio != explotacio:
@@ -96,7 +96,7 @@ async def list_explotacions(current_user = Depends(get_current_user) if False el
             explotaciones = await Animal.all().distinct().values_list('explotacio', flat=True)
             explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
         else:
-            # Si hay usuario pero no es admin (gerente o veterinario)
+            # Si hay usuario pero no es admin (Ramon o veterinario)
             # Asumimos que el campo explotacio_id del usuario contiene el valor de explotación
             explotaciones = await Animal.filter(explotacio=current_user.explotacio_id).distinct().values_list('explotacio', flat=True)
             explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
@@ -170,7 +170,7 @@ async def get_explotacio_stats(
                 detail="No tienes permisos para ver estadísticas de explotaciones"
             )
             
-        # El usuario es administrador o gerente (Ramon), tiene acceso completo a todas las explotaciones
+        # El usuario es administrador o Ramon, tiene acceso completo a todas las explotaciones
         # No se requieren verificaciones adicionales de explotacio_id
         
         # Verificar que la explotación existe (hay animales con ese valor de explotacio)
@@ -183,7 +183,7 @@ async def get_explotacio_stats(
                 # Nota: No existe un campo explotacio_id en el modelo de usuario
                 # En el futuro aquí irá la lógica para filtrar por explotaciones asignadas al usuario
             else:
-                # Los administradores y gerentes pueden ver todas las explotaciones
+                # Los administradores y Ramon pueden ver todas las explotaciones
                 explotaciones = await Animal.all().distinct().values_list('explotacio', flat=True)
                 
             explotaciones_list = [{'explotacio': expl} for expl in explotaciones]

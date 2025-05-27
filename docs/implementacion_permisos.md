@@ -291,10 +291,14 @@ Para realizar pruebas con diferentes roles:
 
 - [X] Se logró la autenticación correcta con el usuario Ramon
 - [X] El token JWT se valida correctamente en el backend
-- [X] El sistema de permisos funciona correctamente, restringiendo acceso según el rol , aunque da revisar el resto... y Mi eprfil noe sta confirmado que estge bien y en la barra suepriro apracedce de mometno adminsitrador en el prefil de Ramon
-- [ ] **PENDIENTE:** Corregir permisos de visualización para Ramon
-- [ ] **PENDIENTE:** Corregir visualización de información de usuario en la interfaz
-- [X] El rol "Ramon" es reconocido por el sistema y tiene los permisos esperados
+- [X] El sistema de permisos funciona correctamente, restringiendo acceso según el rol
+- [X] **COMPLETADO:** Corregir visualización de información de usuario en la interfaz
+  - Se ha corregido el componente ProfileManagement para usar datos reales del token JWT
+  - Se ha corregido la visualización del rol en la barra de navegación (ahora muestra "Ramon" correctamente)
+  - Se ha optimizado el script para evitar mensajes excesivos en consola
+  - Se ha corregido el email para que use el valor correcto de la base de datos (ramon@prueba.com)
+- [ ] **PENDIENTE:** Implementar permisos específicos para Ramon en cada sección del sistema
+- [X] El rol "Ramon" es reconocido por el sistema y tiene los permisos básicos
 
 ### 3.5 Próximos pasos
 
