@@ -1,5 +1,41 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250527_111634.sql",
+        "date": "27/05/2025 11:16",
+        "timestamp": "20250527_111634",
+        "backup_type": "animal_updated",
+        "size": "102.84 KB",
+        "size_bytes": 105311,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",
+        "reference_id": "3070"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250527_111634.sql",
+        "date": "27/05/2025 11:16",
+        "timestamp": "20250527_111634",
+        "backup_type": "animal_updated",
+        "size": "102.97 KB",
+        "size_bytes": 105446,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",
+        "reference_id": "3070"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250527_020042.sql",
+        "date": "27/05/2025 02:00",
+        "timestamp": "20250527_020042",
+        "backup_type": "daily",
+        "size": "102.71 KB",
+        "size_bytes": 105176,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup diario programado (27/05/2025)",
+        "reference_id": null
+    },
+    {
         "filename": "backup_masclet_imperi_20250526_184606.sql",
         "date": "26/05/2025 18:46",
         "timestamp": "20250526_184606",
@@ -46,41 +82,5 @@
         "retention_category": "daily",
         "description": "Backup tras creación del animal Manuel (ID: 93)",
         "reference_id": "93"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_182316.sql",
-        "date": "26/05/2025 18:23",
-        "timestamp": "20250526_182316",
-        "backup_type": "animal_created",
-        "size": "105.96 KB",
-        "size_bytes": 108500,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Carlos (ID: 92)",
-        "reference_id": "92"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_181932.sql",
-        "date": "26/05/2025 18:19",
-        "timestamp": "20250526_181932",
-        "backup_type": "animal_created",
-        "size": "105.50 KB",
-        "size_bytes": 108033,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Pablo (ID: 91)",
-        "reference_id": "91"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_181259.sql",
-        "date": "26/05/2025 18:13",
-        "timestamp": "20250526_181259",
-        "backup_type": "animal_created",
-        "size": "105.50 KB",
-        "size_bytes": 108033,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Pablo (ID: 90)",
-        "reference_id": "90"
     }
 ]

@@ -3,7 +3,10 @@
  */
 
 // Roles de usuario
-export type UserRole = 'administrador' | 'gerente' | 'editor' | 'usuario';
+export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
+
+// Compatibilidad con el backend (que sigue usando 'gerente')
+// IMPORTANTE: En el frontend usamos 'Ramon', pero el backend sigue usando 'gerente'
 
 // Estructura para ítems de menú
 export interface MenuItem {

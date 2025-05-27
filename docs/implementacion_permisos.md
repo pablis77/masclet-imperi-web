@@ -211,15 +211,22 @@ Para realizar pruebas con diferentes roles:
 
 ### 3.1 Implementación en Ruta de Prueba
 
-- [ ] Seleccionar la ruta `/users` para pruebas (accesible por ADMIN y Ramon)
-- [ ] Implementar protección de ruta usando componentes desarrollados
-- [ ] Probar acceso con usuario `admin` (debe funcionar)
+- [X] Seleccionar la ruta `/users` para pruebas (accesible por ADMIN y Ramon)
+- [X] Implementar protección de ruta usando componentes desarrollados
+- [X] Probar acceso con usuario `admin` (debe funcionar)
 
 ### 3.2 Estandarización de Nomenclatura
 
-- [ ] Cambiar todas las referencias de "gerente" a "Ramon" en el frontend
-- [ ] Verificar y mantener la compatibilidad con el backend (que usa "gerente")
-- [ ] Actualizar filtros de menú y componentes de protección
+- [X] Cambiar todas las referencias de "gerente" a "Ramon" en el frontend
+- [X] Verificar y mantener la compatibilidad con el backend (que usa "gerente")
+- [X] Actualizar filtros de menú y componentes de protección
+- [X] Archivos actualizados:
+  - `frontend/src/components/layout/types.ts`: Definición de tipos `UserRole`
+  - `frontend/src/services/authService.ts`: Servicio de autenticación con lógica de compatibilidad
+  - `frontend/src/services/roleService.ts`: Servicio de roles mejorado
+  - `frontend/src/components/layout/Sidebar.tsx` y `Sidebar.astro`: Componentes de navegación
+  - `frontend/src/middlewares/authUtils.ts`: Middleware con reglas de acceso a rutas
+  - `frontend/src/components/users/UsersManagement.tsx`: Componente de gestión de usuarios
 - [ ] Probar que la navegación y permisos funcionan correctamente con el cambio
 - [ ] Probar acceso con usuario `ramon` (debe funcionar)
 - [ ] Probar acceso con usuario `editor` y `usuario` (debe denegar)

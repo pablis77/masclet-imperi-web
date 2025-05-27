@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedImage from '../ui/OptimizedImage';
-import { SidebarProps, MenuSection, UserRole } from './types';
+import type { SidebarProps, MenuSection, UserRole } from './types';
 import { AnimalIcon } from '../icons';
 
 /**
@@ -21,13 +21,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           name: "Dashboard", 
           url: "/", 
           icon: "bull",
-          roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+          roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
         },
         { 
           name: "Explotaciones", 
           url: "/explotacions", 
           icon: "cow",
-          roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+          roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
         }
       ]
     },
@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           name: "Animales", 
           url: "/animals", 
           icon: "nursing-cow", 
-          roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+          roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
         }
       ]
     },
@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           name: "Usuarios", 
           url: "/users", 
           icon: "👥", 
-          roles: ["administrador", "gerente"] as UserRole[] 
+          roles: ["administrador", "Ramon"] as UserRole[] 
         },
         { 
           name: "Backup", 
