@@ -22,28 +22,28 @@ const Navbar: React.FC<NavbarProps> = ({
       url: "/", 
       icon: "bull", 
       iconClass: "w-6 h-6", 
-      roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+      roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
     },
     { 
       name: "Explotaciones", 
       url: "/explotacions", 
       icon: "cow", 
       iconClass: "w-6 h-6", 
-      roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+      roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
     },
     { 
       name: "Animales", 
       url: "/animals", 
       icon: "nursing-cow", 
       iconClass: "w-6 h-6", 
-      roles: ["administrador", "gerente", "editor", "usuario"] as UserRole[] 
+      roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
     },
     { 
       name: "Usuarios", 
       url: "/users", 
       icon: "users", 
       iconClass: "", 
-      roles: ["administrador", "gerente"] as UserRole[] 
+      roles: ["administrador", "Ramon"] as UserRole[] 
     },
     { 
       name: "Importación", 
@@ -58,6 +58,13 @@ const Navbar: React.FC<NavbarProps> = ({
       icon: "backup", 
       iconClass: "", 
       roles: ["administrador"] as UserRole[] 
+    },
+    { 
+      name: "Mi Perfil", 
+      url: "/profile", 
+      icon: "user", 
+      iconClass: "", 
+      roles: ["administrador", "Ramon", "editor", "usuario"] as UserRole[] 
     },
   ];
 
