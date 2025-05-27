@@ -6,10 +6,10 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 1.1 Verificación del Sistema Actual de Autenticación
 
-- [x] Crear script de prueba para verificar roles actuales
-- [x] Probar login con diferentes usuarios (admin, gerente, editor, usuario)
-- [x] Analizar la respuesta del backend y verificar si incluye información de rol
-- [x] Verificar cómo se almacena actualmente la información de usuario en localStorage
+- [X] Crear script de prueba para verificar roles actuales
+- [X] Probar login con diferentes usuarios (admin, gerente, editor, usuario)
+- [X] Analizar la respuesta del backend y verificar si incluye información de rol
+- [X] Verificar cómo se almacena actualmente la información de usuario en localStorage
 
 #### Hallazgos Importantes
 
@@ -25,29 +25,30 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 1.2 Análisis de Estructura de Código Existente
 
-- [x] Confirmar estructura de roles en backend (`app/core/config.py`)
-- [x] Verificar middleware de autenticación existente
-- [x] Analizar componentes de navegación (Sidebar, Navbar) y su integración con roles
-- [x] Revisar lógica de redirección existente tras login
+- [X] Confirmar estructura de roles en backend (`app/core/config.py`)
+- [X] Verificar middleware de autenticación existente
+- [X] Analizar componentes de navegación (Sidebar, Navbar) y su integración con roles
+- [X] Revisar lógica de redirección existente tras login
 
 #### Conclusiones del Análisis
 
 1. **Estructura de Roles en Backend**:
+
    - Definición clara mediante `UserRole` (enum): ADMIN, GERENTE, EDITOR, USER
    - Matriz de permisos `ROLES` con acciones específicas para cada rol
    - Acciones definidas mediante `Action` (enum): CONSULTAR, ACTUALIZAR, CREAR, etc.
-
 2. **Middleware de Autenticación**:
+
    - Usa OAuth2 con JWT para autenticación
    - En desarrollo hay un bypass que siempre devuelve un usuario administrador
    - Funciones para: autenticar usuario, extraer usuario del token, verificar permisos, etc.
-
 3. **Componentes de Navegación**:
+
    - `Navbar.tsx` filtra el menú según el rol del usuario
    - Filtrado mediante: `menuItems.filter(item => item.roles.includes(userRole))`
    - Controles de acceso ya implementados para opciones de menú
-
 4. **Lógica de Redirección tras Login**:
+
    - Almacena token JWT en `localStorage.setItem('token', token)`
    - Redirección al dashboard principal tras login exitoso
    - No extrae ni almacena el rol desde el token
@@ -55,14 +56,15 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 #### Áreas de Mejora Identificadas
 
 1. **Extracción y almacenamiento del rol**:
+
    - **Problema**: No se extrae ni almacena el rol del token JWT en el frontend
    - **Solución**: Implementar en la fase 2.1 (ya completada) la extracción del rol del token
-
 2. **Verificación de permisos**:
+
    - **Problema**: No hay un mecanismo consistente para verificar permisos en componentes/páginas
    - **Solución**: Implementar en la fase 2.2 (componentes de protección) - en curso
-
 3. **Estandarización de nomenclatura**:
+
    - **Problema**: Inconsistencia en nomenclatura (gerente vs Ramon)
    - **Solución**: Cambiar todos los sitios donde aparezca "gerente" por "Ramon" - incluir en fase 3.2
 
@@ -70,16 +72,33 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ### 2.1 Mejora del Servicio de Autenticación
 
-- [x] Crear `roleService.ts` para extraer correctamente el rol del token JWT
-- [x] Implementar jerarquía de roles priorizando ADMINISTRADOR y GERENTE
-- [x] Estandarizar el uso de "gerente" vs "Ramon" en todo el código nuevo
-- [x] Crear funciones para verificar permisos basándose en la matriz de permisos
+- [X] Crear `roleService.ts` para extraer correctamente el rol del token JWT
+- [X] Implementar jerarquía de roles priorizando ADMINISTRADOR y GERENTE
+- [X] Estandarizar el uso de "gerente" vs "Ramon" en todo el código nuevo
+- [X] Crear funciones para verificar permisos basándose en la matriz de permisos
 
 ### 2.2 Creación de Componentes de Protección
 
-- [x] Desarrollar componente `RoleGuard` para protección basada en roles
-- [x] Desarrollar componente `PermissionGuard` para protección basada en permisos específicos
-- [ ] Crear script de prueba para validar el funcionamiento de los componentes
+- [X] Desarrollar componente `RoleGuard` para protección basada en roles
+- [X] Desarrollar componente `PermissionGuard` para protección basada en permisos específicos
+- [X] Crear script de prueba para validar el funcionamiento de los componentes
+
+#### Credenciales de Prueba
+
+Para realizar pruebas con diferentes roles:
+
+- **Administrador**:
+  - Usuario: `admin`
+  - Contraseña: `admin123`
+- **Ramon (Gerente)**:
+  - Usuario: `ramon`
+  - Contraseña: `Ramon123`
+- **Editor**:
+  - Usuario: `editor`
+  - Contraseña: editor123
+- **Usuario**:
+  - Usuario: `usuario`
+  - Contraseña: (Por definir)
 
 ## 3. Integración Controlada
 
@@ -142,9 +161,9 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 
 ## Registro de Progreso
 
-| Fecha | Paso Completado | Resultado | Commit |
-|-------|-----------------|-----------|--------|
-| 27/05/2025 | Creación del plan de implementación | Documento detallado con fases y checklist | 286e126 |
-| 27/05/2025 | Verificación del sistema actual de autenticación | Script de prueba creado y ejecutado con éxito | 9676447 |
-| 27/05/2025 | Actualización del plan priorizando roles | Enfoque en roles ADMINISTRADOR y GERENTE | f4e6b3b |
-| 27/05/2025 | Implementación de componentes básicos | Creación de roleService, RoleGuard y PermissionGuard | f637c4b |
+| Fecha      | Paso Completado                                    | Resultado                                             | Commit  |
+| ---------- | -------------------------------------------------- | ----------------------------------------------------- | ------- |
+| 27/05/2025 | Creación del plan de implementación              | Documento detallado con fases y checklist             | 286e126 |
+| 27/05/2025 | Verificación del sistema actual de autenticación | Script de prueba creado y ejecutado con éxito        | 9676447 |
+| 27/05/2025 | Actualización del plan priorizando roles          | Enfoque en roles ADMINISTRADOR y GERENTE              | f4e6b3b |
+| 27/05/2025 | Implementación de componentes básicos            | Creación de roleService, RoleGuard y PermissionGuard | f637c4b |
