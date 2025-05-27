@@ -236,7 +236,7 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
           </div>
           
           <div className="text-xs text-center mt-1" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
-            Ratio Machos/Hembras: {(activeMales / (activeFemales || 1)).toFixed(1)}
+            Ratio Machos/Hembras: {activeMales}:{activeFemales} ({activeMales && activeFemales ? (activeMales / activeFemales).toFixed(2) : 'N/A'})
           </div>
         </div>
       </div>

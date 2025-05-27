@@ -188,13 +188,16 @@ const isActive = (itemUrl: string) => {
           {userRole}
         </span>
         
-        <!-- Script para actualizar el rol desde localStorage (Versión mejorada) -->
+        <!-- Script para actualizar el rol desde localStorage (Versión optimizada) -->
         <script>
+          // Variable para evitar mensajes de log repetitivos
+          let lastRoleLoggedTime = 0;
+          let lastRoleValue = '';
+          
           // Función para actualizar el rol del usuario en la barra de navegación
-          function actualizarRolUsuario(forzarLimpieza = false) {
+          function actualizarRolUsuario(forzarLimpieza = false, logLevel = 'silent') {
             const rolSpan = document.getElementById('user-role-display');
             if (!rolSpan) {
-              console.error('No se encontró el elemento para mostrar el rol del usuario');
               return;
             }
             
@@ -204,6 +207,12 @@ const isActive = (itemUrl: string) => {
             // Si se solicita limpieza forzada o no hay token, mostrar placeholder
             if (forzarLimpieza || !token) {
               rolSpan.textContent = '---';
+              return;
+            }
+            
+            // Evitar procesar múltiples veces si el rol no ha cambiado
+            if (rolSpan.textContent && rolSpan.dataset.processed === 'true') {
+              // Solo ejecutar verificaciones ocasionales después de la carga inicial
               return;
             }
             
@@ -226,18 +235,22 @@ const isActive = (itemUrl: string) => {
               const tokenUsername = decoded.sub || '';
               const tokenRole = decoded.role || '';
               
-              console.log('🔒 Token decodificado:', { sub: tokenUsername, role: tokenRole });
+              // Reducir logs (solo si ha cambiado o es un log forzado)
+              if (logLevel === 'verbose' || (lastRoleValue !== tokenRole && Date.now() - lastRoleLoggedTime > 5000)) {
+                lastRoleLoggedTime = Date.now();
+                lastRoleValue = tokenRole;
+              }
               
               // Prioridad 1: Usar siempre los datos del token JWT (fuente única de verdad)
               if (tokenRole) {
-                console.log('✅ Usando rol del token JWT:', tokenRole);
                 rolSpan.textContent = tokenRole;
                 localStorage.setItem('userRole', tokenRole);
                 localStorage.setItem('username', tokenUsername);
+                rolSpan.dataset.processed = 'true';
                 return;
               }
             } catch (e) {
-              console.error('Error decodificando token JWT:', e);
+              // Error silencioso para evitar spam en consola
             }
             
             // Si fallamos al decodificar, intentar con localStorage como fallback
@@ -248,21 +261,22 @@ const isActive = (itemUrl: string) => {
             // Verificar si es Ramon
             const isRamon = username === 'Ramon' || storedRole === 'Ramon';
             if (isRamon) {
-              console.log('🔄 Detectado usuario Ramon, ajustando visualización');
               rolSpan.textContent = 'Ramon';
               localStorage.setItem('userRole', 'Ramon');
+              rolSpan.dataset.processed = 'true';
               return;
             }
             
             // Último recurso: extraer de user almacenado
             if (storedRole) {
               rolSpan.textContent = storedRole;
+              rolSpan.dataset.processed = 'true';
             } else if (storedUser) {
               try {
                 const userData = JSON.parse(storedUser);
                 rolSpan.textContent = userData.role || 'usuario';
+                rolSpan.dataset.processed = 'true';
               } catch (e) {
-                console.error('Error al parsear datos de usuario:', e);
                 rolSpan.textContent = 'usuario';
               }
             } else {
@@ -270,46 +284,33 @@ const isActive = (itemUrl: string) => {
             }
           }
           
-          // Al cargar la página
+          // Al cargar la página - una sola vez es suficiente
           document.addEventListener('DOMContentLoaded', () => {
-            // Limpiar rol al cargar y luego actualizarlo con datos reales
-            actualizarRolUsuario(true);
-            setTimeout(() => actualizarRolUsuario(), 100);
+            actualizarRolUsuario(false, 'verbose');
           });
           
           // Verificar cambios en localStorage
           window.addEventListener('storage', (event) => {
             if (event.key === 'token' || event.key === 'user' || event.key === 'userRole' || event.key === 'username') {
-              console.log('🔄 Cambio detectado en datos de usuario, actualizando rol');
-              actualizarRolUsuario();
+              actualizarRolUsuario(false, 'verbose');
             }
           });
           
           // IMPORTANTE: Detectar si estamos en la página justo después del login
-          if (document.referrer.includes('/login')) {
-            console.log('🔑 Detectada navegación desde login, forzando actualización de rol');
-            // Limpiar primero y luego actualizar varias veces para asegurar
-            actualizarRolUsuario(true);
-            setTimeout(() => actualizarRolUsuario(), 50);
-            setTimeout(() => actualizarRolUsuario(), 200);
-            setTimeout(() => actualizarRolUsuario(), 500);
+          const isFromLogin = document.referrer.includes('/login');
+          if (isFromLogin) {
+            // Solo actualizar una vez si venimos del login
+            actualizarRolUsuario(false, 'verbose');
+            // Y una actualización adicional por seguridad tras un breve retraso
+            setTimeout(() => actualizarRolUsuario(false, 'verbose'), 500);
           }
           
-          // Actualizar cada segundo durante los primeros 5 segundos
-          for (let i = 1; i <= 5; i++) {
-            setTimeout(() => actualizarRolUsuario(), i * 1000);
-          }
-          
-          // Actualizar al hacer clic en cualquier parte
+          // Actualizar una única vez al hacer clic
+          let clickTimer;
           document.addEventListener('click', () => {
-            actualizarRolUsuario();
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => actualizarRolUsuario(), 100);
           });
-          
-          // Verificar continuamente el token
-          setInterval(() => {
-            // Si el token cambia, actualizar el rol
-            actualizarRolUsuario();
-          }, 2000); // Cada 2 segundos
         </script>
         
         <!-- Perfil de usuario - Visible en todos los tamaños -->
