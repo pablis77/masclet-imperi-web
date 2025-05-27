@@ -56,7 +56,7 @@ def get_dev_user() -> User:
     )
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme),
     settings: Settings = Depends(get_settings)
 ) -> User:
     """Obtener usuario actual del token JWT"""
@@ -65,12 +65,15 @@ async def get_current_user(
     
     # Inicio del proceso de autenticación
     logger.info(f"=== INICIO AUTENTICACIÓN ===")
-    logger.info(f"Token recibido: {token[:10]}...")
+    if token:
+        logger.info(f"Token recibido: {token[:10]}...")
+    else:
+        logger.info("No se recibió token")
     
     # CONFIGURACIÓN DE BYPASS: Ahora configurable para diferentes modos
     import os
-    # Cambiado el valor por defecto a 'off' para desactivar el bypass en desarrollo
-    bypass_mode = os.environ.get('BYPASS_MODE', 'off').lower()
+    # Para desarrollo, activamos bypass por defecto
+    bypass_mode = os.environ.get('BYPASS_MODE', 'admin').lower()  # Cambiado a 'admin' por defecto
     debug_mode = os.environ.get('DEBUG', 'true').lower() in ('true', '1', 't')
     
     # Si estamos en modo ADMIN o en desarrollo, usamos el bypass

@@ -83,7 +83,10 @@ async def import_csv(
     Importa datos desde un archivo CSV.
     """
     # Verificar permisos (solo admin puede importar)
-    if current_user.role != UserRole.ADMIN:
+    from app.core.auth import verify_user_role
+    
+    if not verify_user_role(current_user, [UserRole.ADMIN]):
+        logger.warning(f"Intento de importación por usuario no autorizado: {current_user.username} (Rol: {current_user.role})")
         raise HTTPException(
             status_code=403,
             detail="Solo los administradores pueden importar datos"
