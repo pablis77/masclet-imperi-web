@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getStoredUser, isAuthenticated } from '../../services/authService';
 import type { User, UserRole } from '../../services/authService';
 import { getCurrentRole } from '../../services/roleService';
+import { jwtDecode } from 'jwt-decode';
 
 export const ProfileManagement: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -27,56 +28,58 @@ export const ProfileManagement: React.FC = () => {
     // Obtenemos la información del usuario actual
     let user = getStoredUser();
     
-    // Verificamos si hay indicadores del usuario Ramon en localStorage
+    // Usamos SOLO la información del token JWT para determinar el usuario
     const tokenData = localStorage.getItem('token');
-    const isRamon = localStorage.getItem('ramonFix') === 'true';
-    const userRole = localStorage.getItem('userRole');
-    const username = localStorage.getItem('username');
     
-    // PRIORIDAD 1: Si hay indicadores de que es el usuario Ramon
-    // Verificamos por múltiples fuentes: el flag ramonFix, el userRole, o el username
-    if (tokenData && (isRamon || userRole === 'Ramon' || username === 'ramon')) {
-      console.log('Detectado usuario Ramon, asegurando que se muestra correctamente');
-      user = {
-        id: 2,
-        username: 'ramon',
-        email: 'ramon@mascletimperi.com',
-        role: 'Ramon',
-        full_name: 'Ramon',  // Requerido por la interfaz User
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      // Guardamos en todos los lugares posibles para asegurar consistencia
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('ramonFix', 'true');
-      localStorage.setItem('userRole', 'Ramon'); 
-      localStorage.setItem('username', 'ramon');
-      console.log('Datos de usuario Ramon establecidos correctamente - FORZADOS');
-    }
-    // Si no hay indicadores de Ramon pero estamos autenticados y no tenemos usuario, recreamos uno genérico
-    else if (tokenData && !user) {
-      console.log('Autenticado pero sin datos de usuario, intentando recuperar información');
-      
+    if (tokenData) {
       try {
-        // Creamos un usuario predeterminado basado en el rol almacenado o admin por defecto
-        user = {
-          id: 1,
-          username: username || 'admin',
-          email: username ? `${username}@mascletimperi.com` : 'admin@mascletimperi.com',
-          full_name: username || 'Admin',  // Requerido por la interfaz User
-          role: (userRole as UserRole) || 'administrador',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
+        // Decodificar el token JWT para obtener la información real del usuario
+        const decoded = jwtDecode<{ sub?: string; role?: string }>(tokenData);
+        console.log('Token JWT decodificado:', decoded);
         
-        // Guardamos en localStorage para futuras sesiones
-        localStorage.setItem('user', JSON.stringify(user));
-        console.log('Usuario genérico reconstruido y guardado:', user);
+        const tokenUsername = decoded.sub || '';
+        const tokenRole = decoded.role || '';
+        
+        // Si el token indica que es Ramon, usar datos de Ramon
+        if (tokenUsername === 'Ramon' || tokenRole === 'Ramon') {
+          console.log('📝 Usuario Ramon detectado en el token JWT - usando datos reales');
+          user = {
+            id: 14, // ID real de Ramon según se verificó en la base de datos
+            username: 'Ramon',
+            email: 'ramon@mascletimperi.com',
+            // Eliminamos el campo full_name que no existe realmente en la DB
+            role: 'Ramon' as UserRole,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          // Actualizamos localStorage con los datos correctos
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('userRole', 'Ramon'); 
+          localStorage.setItem('username', 'Ramon');
+        } 
+        // Si el token indica que es admin u otro usuario
+        else {
+          console.log(`📝 Usuario ${tokenUsername} detectado en el token JWT - usando datos del token`);
+          user = {
+            id: 1, // ID provisional
+            username: tokenUsername,
+            email: `${tokenUsername.toLowerCase()}@mascletimperi.com`,
+            // Eliminamos el campo full_name que no existe realmente en la DB
+            role: (tokenRole as UserRole) || 'usuario',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          // Actualizar localStorage para mantener coherencia
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('userRole', tokenRole); 
+          localStorage.setItem('username', tokenUsername);
+        }
       } catch (err) {
-        console.error('Error al reconstruir usuario:', err);
+        console.error('Error al procesar el token JWT:', err);
       }
     }
     
@@ -95,7 +98,7 @@ export const ProfileManagement: React.FC = () => {
       }
       
       // Asegurarse que Ramon siempre tiene el rol correcto
-      if (user.username === 'ramon' && user.role !== 'Ramon') {
+      if (user.username === 'Ramon' && user.role !== 'Ramon') {
         console.log('Corrigiendo rol para usuario Ramon de:', user.role, 'a: Ramon');
         user.role = 'Ramon' as UserRole;
         localStorage.setItem('user', JSON.stringify(user));
@@ -199,10 +202,7 @@ export const ProfileManagement: React.FC = () => {
                 <p className="text-sm text-gray-600">Correo electrónico</p>
                 <p className="font-medium">{currentUser?.email}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Nombre completo</p>
-                <p className="font-medium">{currentUser?.full_name}</p>
-              </div>
+              {/* Campo Nombre completo eliminado - no existe en la DB */}
               <div>
                 <p className="text-sm text-gray-600">Rol</p>
                 <p className="font-medium">{currentUser?.role}</p>
