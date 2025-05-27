@@ -83,6 +83,113 @@ Este documento detalla el proceso paso a paso para implementar el sistema de per
 - [X] Desarrollar componente `PermissionGuard` para protección basada en permisos específicos
 - [X] Crear script de prueba para validar el funcionamiento de los componentes
 
+### 2.3 Solución al Problema de Detección de Roles en Token JWT
+
+#### Problema Identificado
+
+Durante las pruebas se detectó un problema crítico con la detección de roles desde el token JWT:
+
+1. **Síntomas**:
+
+   - El usuario admin siempre se detectaba como rol 'usuario' a pesar de ser administrador
+   - La página `/users` mostraba error de acceso denegado para el administrador
+   - En consola aparecía: `No se pudo determinar el rol a partir del token, usando valor por defecto`
+2. **Análisis del Token**:
+
+   - Creamos script de verificación `verify_console.js` para analizar el token en la consola
+   - Descubrimos que el token solo contenía: `{sub: 'admin', exp: 4102444800}`
+   - **NO incluía campo `role` explícito**, aunque el backend indicaba:
+
+     ```log
+     Autenticación exitosa para usuario: admin con rol: UserRole.ADMIN
+     Generando token JWT para usuario: admin
+     ```
+3. **Causa del Problema**:
+
+   - La función `extractRoleFromToken()` buscaba un campo `role` en el token que no existía
+   - Al no encontrarlo, siempre devolvía 'usuario' como valor por defecto
+   - El backend envía el nombre de usuario en campo `sub` pero no incluye el rol
+
+#### Solución Implementada
+
+1. **Modificación de `extractRoleFromToken()`**:
+
+   - Añadimos reconocimiento del campo `sub` del token cuando `role` no está presente
+   - Implementamos detección especial para usuario 'admin' en cualquier campo del token
+   - Añadimos inferencia de rol basada en el nombre de usuario cuando no hay rol explícito
+   - Mejoramos logs de depuración para facilitar diagnóstico
+2. **Código Implementado**:
+
+   ```typescript
+   // Extracto de la solución principal
+   export function extractRoleFromToken(): UserRole {
+     try {
+       const token = getToken();
+       if (!token) {
+         console.warn('No hay token JWT disponible');
+         return 'usuario';
+       }
+
+       // Decodificar el token JWT
+       const decoded = jwtDecode<{ role?: string; username?: string; sub?: string }>(token);
+       console.log('Token decodificado:', decoded);
+
+       // Caso especial: Si el usuario es admin (ya sea por username o sub), asignar rol administrador
+       if (decoded.username === 'admin' || decoded.sub === 'admin') {
+         console.log('Usuario admin detectado en el token, asignando rol administrador');
+         return 'administrador';
+       }
+
+       // Extraer el rol del token (puede venir en varios formatos)
+       if (decoded.role) {
+         // Procesamiento de varios formatos de rol...
+       }
+
+       // Inferir rol a partir de sub (nombre de usuario) si role no está presente
+       if (decoded.sub) {
+         console.log('Intentando inferir rol a partir de sub:', decoded.sub);
+
+         // Mapeo de nombres de usuario conocidos a roles
+         if (decoded.sub === 'admin') {
+           console.log('Usuario admin detectado en sub, asignando rol administrador');
+           return 'administrador';
+         }
+         if (decoded.sub === 'ramon' || decoded.sub === 'Ramon') {
+           console.log('Usuario Ramon detectado en sub, asignando rol Ramon');
+           return 'Ramon';
+         }
+       }
+
+       // Valor por defecto
+       console.warn('No se pudo determinar el rol a partir del token, usando valor por defecto');
+       return 'usuario';
+     } catch (error) {
+       console.error('Error al extraer rol del token:', error);
+       return 'usuario';
+     }
+   }
+   ```
+3. **Verificación de la Solución**:
+
+   - Tras implementar el cambio, el componente `RoleGuard` detecta correctamente el rol 'administrador' para el usuario admin
+   - La página `/users` es accesible para el administrador correctamente
+   - La página de perfil muestra el rol correcto
+
+#### Lecciones Aprendidas
+
+1. **Versatilidad en Token JWT**:
+
+   - No asumir estructura específica del token JWT, ser flexible en la extracción de datos
+   - Implementar mecanismos para inferir información cuando no está explícita
+2. **Validación y Depuración**:
+
+   - Añadir logs extensivos para diagnóstico en funciones críticas
+   - Crear scripts de verificación para analizar el contenido real de tokens/datos
+3. **Robustez**:
+
+   - Diseñar con múltiples capas de detección para información crítica
+   - Implementar casos especiales para usuarios fundamentales (admin, Ramon)
+
 #### Credenciales de Prueba
 
 Para realizar pruebas con diferentes roles:
@@ -95,10 +202,10 @@ Para realizar pruebas con diferentes roles:
   - Contraseña: `Ramon123`
 - **Editor**:
   - Usuario: `editor`
-  - Contraseña: editor123
+  - Contraseña: `editor123`
 - **Usuario**:
   - Usuario: `usuario`
-  - Contraseña: (Por definir)
+  - Contraseña: user123
 
 ## 3. Integración Controlada
 

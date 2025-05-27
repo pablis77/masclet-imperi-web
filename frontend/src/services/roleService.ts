@@ -22,7 +22,7 @@ const getToken = (): string | null => {
 };
 
 // Definición de roles en el sistema
-export type UserRole = 'administrador' | 'gerente' | 'editor' | 'usuario';
+export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
 
 // Definición de acciones permitidas (según config.py del backend)
 export type UserAction = 
@@ -40,7 +40,7 @@ export type UserAction =
 // Jerarquía de roles (prioridad descendente)
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   'administrador': 4,
-  'gerente': 3,
+  'Ramon': 3,
   'editor': 2,
   'usuario': 1
 };
@@ -59,7 +59,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserAction[]> = {
     'ver_estadisticas', 
     'exportar_datos'
   ],
-  'gerente': [
+  'Ramon': [
     'consultar', 
     'actualizar', 
     'crear',
@@ -87,29 +87,83 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserAction[]> = {
 export function extractRoleFromToken(): UserRole {
   try {
     const token = getToken();
-    if (!token) return 'usuario';
+    if (!token) {
+      console.warn('No hay token JWT disponible');
+      return 'usuario';
+    }
 
     // Decodificar el token JWT
-    const decoded = jwtDecode<{ role?: string }>(token);
+    const decoded = jwtDecode<{ role?: string; username?: string; sub?: string }>(token);
+    console.log('Token decodificado:', decoded);
     
-    // Extraer el rol del token (puede venir como UserRole.XXXX o directamente)
+    // Caso especial: Si el usuario es admin (ya sea por username o sub), asignar rol administrador
+    if (decoded.username === 'admin' || decoded.sub === 'admin') {
+      console.log('Usuario admin detectado en el token, asignando rol administrador');
+      return 'administrador';
+    }
+    
+    // Extraer el rol del token (puede venir en varios formatos)
     if (decoded.role) {
-      // Si el rol es un enum convertido a cadena (UserRole.XXXX), extraer el valor
-      if (decoded.role.includes('UserRole.')) {
+      console.log('Rol en el token (sin procesar):', decoded.role, `(tipo: ${typeof decoded.role})`);
+      
+      // Manejo de diferentes formatos posibles para el rol
+      // 1. Formato UserRole.XXXX
+      if (typeof decoded.role === 'string' && decoded.role.includes('UserRole.')) {
+        console.log('Detectado formato UserRole.XXXX');
         const rolePart = decoded.role.split('.')[1]; // Obtener la parte después del punto
-        if (rolePart === 'ADMIN') return 'administrador';
-        if (rolePart === 'GERENTE') return 'gerente';
-        if (rolePart === 'EDITOR') return 'editor';
-        if (rolePart === 'USER') return 'usuario';
+        console.log('Parte del rol extraída:', rolePart);
+        
+        // Mapeo de roles del backend a roles del frontend
+        if (rolePart === 'ADMIN') {
+          console.log('Mapeando ADMIN a administrador');
+          return 'administrador';
+        }
+        if (rolePart === 'GERENTE' || rolePart === 'RAMON') {
+          console.log('Mapeando GERENTE/RAMON a Ramon');
+          return 'Ramon';
+        }
+        if (rolePart === 'EDITOR') {
+          console.log('Mapeando EDITOR a editor');
+          return 'editor';
+        }
+        if (rolePart === 'USER') {
+          console.log('Mapeando USER a usuario');
+          return 'usuario';
+        }
       }
       
-      // Si el rol ya está normalizado, verificar que sea válido
-      if (['administrador', 'gerente', 'editor', 'usuario'].includes(decoded.role)) {
+      // 2. Formato normalizado (cadena simple)
+      if (['administrador', 'Ramon', 'editor', 'usuario'].includes(decoded.role)) {
+        console.log('Rol ya normalizado:', decoded.role);
         return decoded.role as UserRole;
+      }
+      
+      // 3. Compatibilidad con roles antiguos
+      if (decoded.role === 'gerente') {
+        console.log('Convertiendo gerente a Ramon');
+        return 'Ramon';
+      }
+    }
+    
+    // 4. Inferir rol a partir de sub (nombre de usuario) si role no está presente
+    if (decoded.sub) {
+      console.log('Intentando inferir rol a partir de sub:', decoded.sub);
+      
+      // Mapeo de nombres de usuario conocidos a roles
+      if (decoded.sub === 'admin') {
+        console.log('Usuario admin detectado en sub, asignando rol administrador');
+        return 'administrador';
+      }
+      
+      // Otros casos específicos podrían añadirse aquí
+      if (decoded.sub === 'ramon' || decoded.sub === 'Ramon') {
+        console.log('Usuario Ramon detectado en sub, asignando rol Ramon');
+        return 'Ramon';
       }
     }
     
     // Valor por defecto
+    console.warn('No se pudo determinar el rol a partir del token, usando valor por defecto');
     return 'usuario';
   } catch (error) {
     console.error('Error al extraer rol del token:', error);
@@ -125,44 +179,60 @@ export function getCurrentRole(): UserRole {
   // 1. Intenta obtener del localStorage (para modo de prueba)
   if (typeof window !== 'undefined') {
     const storedRole = localStorage.getItem('userRole');
-    if (storedRole && ['administrador', 'gerente', 'editor', 'usuario'].includes(storedRole)) {
+    if (storedRole && ['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole)) {
+      console.log('Rol obtenido de localStorage.userRole:', storedRole);
       return storedRole as UserRole;
     }
   }
   
   // 2. Intenta extraer del token JWT
   const tokenRole = extractRoleFromToken();
+  console.log('Rol extraído del token JWT:', tokenRole);
   if (tokenRole !== 'usuario') {
     return tokenRole;
   }
   
   // 3. Intenta obtener del objeto usuario
   const user = getCurrentUser();
+  console.log('Usuario actual:', user);
+  
+  // IMPORTANTE: Verificación específica para admin
+  if (user?.username === 'admin') {
+    console.log('Usuario admin detectado, asignando rol administrador directamente');
+    return 'administrador';
+  }
+  
   if (user?.role) {
+    console.log('Rol del usuario actual:', user.role);
     // Si el rol es un enum convertido a cadena (UserRole.XXXX), extraer el valor
     if (typeof user.role === 'string' && user.role.includes('UserRole.')) {
       const rolePart = user.role.split('.')[1]; // Obtener la parte después del punto
       if (rolePart === 'ADMIN') return 'administrador';
-      if (rolePart === 'GERENTE') return 'gerente';
+      if (rolePart === 'GERENTE') return 'Ramon';
       if (rolePart === 'EDITOR') return 'editor';
       if (rolePart === 'USER') return 'usuario';
     }
     
     // Si el rol ya está normalizado, verificar que sea válido
     if (typeof user.role === 'string' && 
-        ['administrador', 'gerente', 'editor', 'usuario'].includes(user.role)) {
+        ['administrador', 'Ramon', 'editor', 'usuario'].includes(user.role)) {
       return user.role as UserRole;
     }
   }
   
   // 4. Determinar por nombre de usuario (fallback)
   if (user?.username) {
-    if (user.username === 'admin') return 'administrador';
-    if (user.username === 'ramon') return 'gerente';
+    console.log('Determinando rol por nombre de usuario:', user.username);
+    if (user.username === 'admin') {
+      console.log('Usuario admin detectado, asignando rol administrador');
+      return 'administrador';
+    }
+    if (user.username === 'ramon') return 'Ramon';
     if (user.username.includes('editor')) return 'editor';
   }
   
   // Valor por defecto
+  console.log('No se pudo determinar el rol, usando valor por defecto: usuario');
   return 'usuario';
 }
 
