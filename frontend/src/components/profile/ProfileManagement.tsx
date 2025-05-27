@@ -27,59 +27,56 @@ export const ProfileManagement: React.FC = () => {
     // Obtenemos la información del usuario actual
     let user = getStoredUser();
     
-    // Si estamos autenticados pero no tenemos usuario, lo recreamos para el usuario actual
-    if (!user) {
-      console.log('Autenticado pero sin datos de usuario, intentando recuperar información');
-      // Verificamos si existe un token en localStorage
-      const tokenData = localStorage.getItem('token');
-      // Verificar si hay indicador de usuario Ramon
-      const isRamon = localStorage.getItem('ramonFix') === 'true';
-      const userRole = localStorage.getItem('userRole');
+    // Verificamos si hay indicadores del usuario Ramon en localStorage
+    const tokenData = localStorage.getItem('token');
+    const isRamon = localStorage.getItem('ramonFix') === 'true';
+    const userRole = localStorage.getItem('userRole');
+    const username = localStorage.getItem('username');
+    
+    // PRIORIDAD 1: Si hay indicadores de que es el usuario Ramon
+    // Verificamos por múltiples fuentes: el flag ramonFix, el userRole, o el username
+    if (tokenData && (isRamon || userRole === 'Ramon' || username === 'ramon')) {
+      console.log('Detectado usuario Ramon, asegurando que se muestra correctamente');
+      user = {
+        id: 2,
+        username: 'ramon',
+        email: 'ramon@mascletimperi.com',
+        role: 'Ramon',
+        full_name: 'Ramon',  // Requerido por la interfaz User
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      if (tokenData) {
-        try {
-          // Comprobar primero si es Ramon
-          if (isRamon) {
-            console.log('Detectado usuario Ramon por indicador ramonFix, recreando usuario Ramon');
-            user = {
-              id: 2,
-              username: 'ramon',
-              email: 'ramon@mascletimperi.com',
-              full_name: 'Ramon Masclet',
-              role: 'Ramon',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-          } else {
-            // Creamos un usuario predeterminado basado en el rol almacenado
-            user = {
-              id: 1,
-              username: userRole === 'Ramon' ? 'ramon' : 'admin',
-              email: userRole === 'Ramon' ? 'ramon@mascletimperi.com' : 'admin@mascletimperi.com',
-              full_name: userRole === 'Ramon' ? 'Ramon Masclet' : 'Usuario Masclet',
-              role: (userRole as UserRole) || 'usuario',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-          }
-          
-          // Determinamos el rol actual como verificación adicional
-          const currentRoleValue = getCurrentRole();
-          if (currentRoleValue) {
-            // Solo actualizamos si no es Ramon (Ramon tiene prioridad)
-            if (!(isRamon || user.username === 'ramon')) {
-              user.role = currentRoleValue;
-            }
-          }
-          
-          // Guardamos en localStorage para futuras sesiones
-          localStorage.setItem('user', JSON.stringify(user));
-          console.log('Usuario reconstruido y guardado:', user);
-        } catch (err) {
-          console.error('Error al reconstruir usuario:', err);
-        }
+      // Guardamos en todos los lugares posibles para asegurar consistencia
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('ramonFix', 'true');
+      localStorage.setItem('userRole', 'Ramon'); 
+      localStorage.setItem('username', 'ramon');
+      console.log('Datos de usuario Ramon establecidos correctamente - FORZADOS');
+    }
+    // Si no hay indicadores de Ramon pero estamos autenticados y no tenemos usuario, recreamos uno genérico
+    else if (tokenData && !user) {
+      console.log('Autenticado pero sin datos de usuario, intentando recuperar información');
+      
+      try {
+        // Creamos un usuario predeterminado basado en el rol almacenado o admin por defecto
+        user = {
+          id: 1,
+          username: username || 'admin',
+          email: username ? `${username}@mascletimperi.com` : 'admin@mascletimperi.com',
+          full_name: username || 'Admin',  // Requerido por la interfaz User
+          role: (userRole as UserRole) || 'administrador',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Guardamos en localStorage para futuras sesiones
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('Usuario genérico reconstruido y guardado:', user);
+      } catch (err) {
+        console.error('Error al reconstruir usuario:', err);
       }
     }
     
@@ -196,19 +193,19 @@ export const ProfileManagement: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Nombre de usuario</p>
-                <p className="font-medium">{currentUser.username}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Nombre completo</p>
-                <p className="font-medium">{currentUser.full_name || 'No disponible'}</p>
+                <p className="font-medium">{currentUser?.username}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Correo electrónico</p>
-                <p className="font-medium">{currentUser.email || 'No disponible'}</p>
+                <p className="font-medium">{currentUser?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Nombre completo</p>
+                <p className="font-medium">{currentUser?.full_name}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Rol</p>
-                <p className="font-medium">{currentRole}</p>
+                <p className="font-medium">{currentUser?.role}</p>
               </div>
             </div>
           </div>

@@ -56,22 +56,32 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   // Crear token JWT para desarrollo - versión mejorada
   window.addEventListener('DOMContentLoaded', () => {
-    // Primero eliminar cualquier token antiguo para evitar problemas
-    localStorage.removeItem('token');
+    // DESACTIVADO: Ya no eliminamos tokens para permitir login real
+    // localStorage.removeItem('token');
     
-    // Crear token nuevo para asegurar funcionamiento correcto
-    console.log('Configurando token JWT para desarrollo');
-    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
-    console.log('Token JWT creado correctamente');
+    // NOTA: Código de inyección de token para desarrollo deshabilitado
+    // Este código estaba sobreescribiendo tokens válidos con uno hardcodeado inválido
+    // Para habilitar el flujo normal de autenticación, se ha comentado
+    // -----------------------------------------------------------------
+    // // Crear token nuevo para asegurar funcionamiento correcto
+    // console.log('Configurando token JWT para desarrollo');
+    // localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    // console.log('Token JWT creado correctamente');
+    // 
+    // // Comprobar que realmente se guardó
+    // const token = localStorage.getItem('token');
+    // if (token) {
+    //   console.log('✅ Token verificado en localStorage');
+    // } else {
+    //   console.error('❌ Error: No se pudo guardar el token');
+    //   // Intentar de nuevo
+    //   localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    // }
     
-    // Comprobar que realmente se guardó
+    // Verificar si hay un token existente (autenticación real)
     const token = localStorage.getItem('token');
     if (token) {
-      console.log('✅ Token verificado en localStorage');
-    } else {
-      console.error('❌ Error: No se pudo guardar el token');
-      // Intentar de nuevo
-      localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+      console.log('✅ Token JWT existente encontrado - usando autenticación real');
     }
   });
 </script>

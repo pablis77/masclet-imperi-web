@@ -37,9 +37,9 @@ class Action(str, Enum):
     VER_ESTADISTICAS = "ver_estadisticas"
     EXPORTAR_DATOS = "exportar_datos"
 
-# Matriz de permisos por rol
-ROLES: Dict[UserRole, List[Action]] = {
-    UserRole.ADMIN: [
+# Matriz de permisos por rol - USANDO CADENAS DE TEXTO como claves para compatibilidad
+ROLES = {
+    "administrador": [
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,
@@ -51,7 +51,7 @@ ROLES: Dict[UserRole, List[Action]] = {
         Action.VER_ESTADISTICAS, 
         Action.EXPORTAR_DATOS
     ],
-    UserRole.GERENTE: [  # Restaurado a GERENTE para mantener compatibilidad
+    "gerente": [  # Mantenemos compatibilidad con roles históricos
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,
@@ -62,7 +62,7 @@ ROLES: Dict[UserRole, List[Action]] = {
         Action.VER_ESTADISTICAS,
         Action.EXPORTAR_DATOS
     ],
-    UserRole.RAMON: [  # Permisos para el usuario Ramon
+    "Ramon": [  # Permisos para el usuario Ramon
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,
@@ -73,12 +73,12 @@ ROLES: Dict[UserRole, List[Action]] = {
         Action.VER_ESTADISTICAS,
         Action.EXPORTAR_DATOS
     ],
-    UserRole.EDITOR: [
+    "editor": [
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.VER_ESTADISTICAS
     ],
-    UserRole.USER: [
+    "usuario": [
         Action.CONSULTAR
     ]
 }

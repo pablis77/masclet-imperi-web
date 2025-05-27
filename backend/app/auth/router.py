@@ -18,7 +18,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token = create_access_token(data={"sub": user.username})
+    # Preparamos los datos para el token incluyendo el rol correcto
+    token_data = {
+        "sub": user.username,
+        "role": user.role  # Usar el mismo formato que devuelve /auth/me
+    }
+    access_token = create_access_token(data=token_data)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/register", response_model=UserResponse)

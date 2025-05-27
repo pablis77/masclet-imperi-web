@@ -39,7 +39,7 @@ async def init_migration():
     command = Command(
         tortoise_config={
             'connections': {
-                'default': settings.db_url
+                'default': settings.database_url
             },
             'apps': {
                 'models': {
@@ -78,7 +78,7 @@ async def create_superuser():
     try:
         # Inicializar Tortoise ORM
         await Tortoise.init(
-            db_url=settings.db_url,
+            db_url=settings.database_url,
             modules={'models': [
                 'app.models.animal',
                 'app.models.user',
