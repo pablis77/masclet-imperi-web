@@ -105,9 +105,19 @@ async def login_for_access_token(
         # Imprimir el valor de user.role para depuración
         print(f"Valor de user.role: {user.role}, tipo: {type(user.role)}")
         
-        # Convertir a string para asegurar que sea serializable
-        role_str = str(user.role)
-        print(f"Role convertido a string: {role_str}")
+        # Convertir el rol a un formato consistente
+        # Si es un objeto UserRole, extraemos solo el nombre del rol en minúsculas
+        if hasattr(user.role, "name"):
+            role_str = user.role.name.lower()
+        else:
+            # Si ya es una cadena, la dejamos como está
+            role_str = str(user.role)
+            
+        # Caso especial para Ramon
+        if user.username.lower() == "ramon":
+            role_str = "Ramon"  # Usar siempre el mismo formato para Ramon
+            
+        print(f"Role procesado: {role_str}")
         
         access_token = create_access_token(
             data={"sub": user.username, "role": role_str},
@@ -160,7 +170,7 @@ async def register_user(
     Solo usuarios con rol ADMIN o GERENTE pueden crear usuarios.
     """
     # Verificar permisos para crear usuarios (solo ADMIN y GERENTE)
-    if current_user.role not in [UserRole.ADMIN, UserRole.GERENTE]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.RAMON]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tiene permisos para crear usuarios. Se requiere rol ADMIN o GERENTE."
@@ -206,6 +216,16 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """
     Obtener información del usuario actual autenticado
     """
+    # Caso especial para Ramon - aseguramos consistencia en el rol
+    if current_user.username.lower() == "ramon":
+        import logging
+        logger = logging.getLogger(__name__)
+        # Guardamos el rol original antes de modificarlo
+        old_role = current_user.role
+        # Asignamos el valor directamente sin usar la enumeración
+        current_user.role = "Ramon"
+        logger.info(f"get_current_user_info: Asignando rol 'Ramon' para Ramon. Rol anterior: {old_role}")
+    
     return current_user
 
 @router.post("/refresh", response_model=Token)
@@ -217,8 +237,16 @@ async def refresh_access_token(
     Renovar el token de acceso
     """
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # Preparamos los datos para el token asegurando consistencia del rol
+    role_value = current_user.role
+    
+    # Caso especial para Ramon
+    if current_user.username.lower() == "ramon":
+        role_value = "Ramon"  # Usar siempre el mismo formato para Ramon
+        
     access_token = create_access_token(
-        data={"sub": current_user.username, "role": current_user.role},
+        data={"sub": current_user.username, "role": role_value},
         settings=settings,
         expires_delta=access_token_expires
     )

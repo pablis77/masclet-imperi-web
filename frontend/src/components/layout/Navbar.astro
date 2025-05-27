@@ -184,9 +184,50 @@ const isActive = (itemUrl: string) => {
         </div>
         
         <!-- Indicador de rol - Visible en tablets y escritorio -->
-        <span class="hidden sm:inline-block text-sm capitalize bg-primary-dark/30 px-3 py-1 rounded-full">
+        <span class="hidden sm:inline-block text-sm capitalize bg-primary-dark/30 px-3 py-1 rounded-full" id="user-role-display">
           {userRole}
         </span>
+        
+        <!-- Script para actualizar el rol desde localStorage -->
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const rolSpan = document.getElementById('user-role-display');
+            if (!rolSpan) {
+              console.error('No se encontró el elemento para mostrar el rol del usuario');
+              return;
+            }
+            
+            // Verificar directamente si es Ramon
+            const isRamon = localStorage.getItem('ramonFix') === 'true';
+            const username = localStorage.getItem('username');
+            
+            if (isRamon || username === 'ramon') {
+              console.log('🔄 Detectado usuario Ramon en navbar, ajustando visualización');
+              rolSpan.textContent = 'Ramon';
+              // Aseguramos que se guarde en localStorage para futura referencia
+              localStorage.setItem('userRole', 'Ramon');
+              return;
+            }
+            
+            // Intentar obtener el rol del localStorage
+            const storedRole = localStorage.getItem('userRole');
+            const storedUser = localStorage.getItem('user');
+            
+            if (storedRole) {
+              // Priorizar userRole si existe
+              rolSpan.textContent = storedRole;
+            } else if (storedUser) {
+              // Intentar extraer el rol del usuario almacenado
+              try {
+                const userData = JSON.parse(storedUser);
+                rolSpan.textContent = userData.role || 'usuario';
+              } catch (e) {
+                console.error('Error al parsear datos de usuario:', e);
+                // Mantener el valor original
+              }
+            }
+          });
+        </script>
         
         <!-- Perfil de usuario - Visible en todos los tamaños -->
         <div class="relative group">

@@ -49,13 +49,77 @@ const api = axios.create({
 // Interceptor para agregar el token JWT a las solicitudes
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
-        if (token && config.headers) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+        // Versión MEJORADA del interceptor de token
+        console.log('Usando token JWT para autenticación');
+        
+        // 1. OBTENER TOKEN: Probar todas las fuentes posibles
+        let token = null;
+        
+        // Probar localStorage (varias claves posibles)
+        const possibleKeys = ['token', 'accessToken', 'jwt', 'access_token'];
+        
+        // Búsqueda exhaustiva en localStorage
+        if (typeof window !== 'undefined' && window.localStorage) {
+            for (const key of possibleKeys) {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    token = value;
+                    console.log(`Token encontrado en localStorage['${key}']`);
+                    break;
+                }
+            }
         }
+        
+        // Si no hay token en localStorage, buscar en sessionStorage
+        if (!token && typeof window !== 'undefined' && window.sessionStorage) {
+            for (const key of possibleKeys) {
+                const value = sessionStorage.getItem(key);
+                if (value) {
+                    token = value;
+                    console.log(`Token encontrado en sessionStorage['${key}']`);
+                    break;
+                }
+            }
+        }
+        
+        // 2. USAR EL TOKEN: Añadirlo a las cabeceras si existe
+        if (token && config.headers) {
+            // IMPORTANTE: Asegurar que el token no tenga 'Bearer' duplicado
+            if (token.startsWith('Bearer ')) {
+                config.headers['Authorization'] = token;
+            } else {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            // También añadir token como X-Auth-Token por si acaso
+            config.headers['X-Auth-Token'] = token;
+            
+            console.log('🔐 Token JWT añadido correctamente a las cabeceras');
+        } else {
+            console.warn('⚠️ No se encontró token JWT para autenticar la petición');
+            
+            // Añadir información de depuración
+            console.log('URL de la petición:', config.url);
+            console.log('Método:', config.method);
+            console.log('Headers actuales:', config.headers);
+            
+            // En modo desarrollo, mostrar contenido de localStorage
+            if (typeof window !== 'undefined') {
+                console.log('Contenido de localStorage:');
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key) {
+                        const value = localStorage.getItem(key);
+                        console.log(`- ${key}: ${value ? value.substring(0, 20) + '...' : 'null'}`);  
+                    }
+                }
+            }
+        }
+        
         return config;
     },
     (error: AxiosError) => {
+        console.error('Error en interceptor de peticiones:', error);
         return Promise.reject(error);
     }
 );

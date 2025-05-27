@@ -227,10 +227,82 @@ Para realizar pruebas con diferentes roles:
   - `frontend/src/components/layout/Sidebar.tsx` y `Sidebar.astro`: Componentes de navegación
   - `frontend/src/middlewares/authUtils.ts`: Middleware con reglas de acceso a rutas
   - `frontend/src/components/users/UsersManagement.tsx`: Componente de gestión de usuarios
-- [ ] Probar que la navegación y permisos funcionan correctamente con el cambio
-- [ ] Probar acceso con usuario `ramon` (debe funcionar)
+- [X] Probar que la navegación y permisos funcionan correctamente con el cambio
+- [X] Probar acceso con usuario `ramon` (debe funcionar)
 - [ ] Probar acceso con usuario `editor` y `usuario` (debe denegar)
 - [ ] Ajustar componentes según resultados de pruebas
+
+### 3.3 Avances y Problemas con el Usuario Ramon
+
+#### Progresos Positivos
+
+1. [X] Modificación exitosa del modelo de usuario en backend:
+   - Cambiado `CharEnumField` a `CharField` para permitir valores flexibles de roles
+   - Esto permite que el rol "Ramon" sea válido en la base de datos
+   - Visualización correcta del usuario Ramon en la tabla de usuarios
+
+2. [X] Autenticación correcta del usuario Ramon:
+   - Corregida la importación del modelo User en `auth.py`
+   - Verificación exitosa de la contraseña con bcrypt
+   - Generación correcta del token JWT para el usuario Ramon
+   - Log de autenticación exitosa: `Login exitoso para usuario: Ramon`
+
+#### Problemas Identificados
+
+1. [X] **CRÍTICO - Bypass de autenticación en modo desarrollo**:
+   - Aunque la autenticación funciona, el sistema usaba un bypass que forzaba todas las peticiones a usar el usuario administrador
+   - Evidencia en logs: `BYPASS ACTIVADO: usando usuario administrador para esta petición`
+   - Consecuencia: Ramon iniciaba sesión correctamente pero recibía permisos de administrador
+   - **SOLUCIÓN:** Se modificó `auth.py` para cambiar el valor por defecto de `BYPASS_MODE` a 'off' en lugar de 'admin'
+
+2. [X] **CRÍTICO - Error en validación del token JWT**:
+   - Después de desactivar el bypass, el token JWT no se validaba correctamente
+   - Evidencia en logs: `Error en token JWT: Invalid crypto padding. Acceso denegado`
+   - Consecuencia: El usuario Ramon podía iniciar sesión pero recibía error 401 en todas las peticiones
+   - Frontend mostraba errores: `❌ Error en petición GET a /dashboard/stats: Request failed with status code 401`
+   - **CAUSA RAIZ:** Se identificó código en `index.astro` que:
+     * Primero eliminaba cualquier token existente: `localStorage.removeItem('token')`
+     * Luego sobreescribía el token con uno hardcodeado inválido
+   - **SOLUCION:** Se modificaron dos archivos:
+     * `index.astro` - Se comentó el código que eliminaba y sobreescribía tokens válidos
+     * `auth.py` - Se cambió el valor por defecto de `BYPASS_MODE` a 'off'
+
+3. [X] **Validación de permisos funcionando correctamente**:
+   - Se verificó que los permisos se validan correctamente según el rol del usuario
+   - El módulo `permissions.py` procesa correctamente los roles como strings
+   - Las peticiones a endpoints restringidos devuelven error 403 (Prohibido) cuando el usuario no tiene permisos
+   - Evidencia en logs: `Usuario Ramon intentó acceder a estadísticas generales sin permisos`
+   - Las peticiones a endpoints permitidos funcionan correctamente (ej: dashboard-detallado/animales-detallado)
+
+4. [X] **CRÍTICO - Permisos incorrectos para el usuario Ramon**:
+   - Ramon debería tener permisos de visualización de todo y edición de navegación según `permisos_usuarios.md`
+   - Sin embargo, recibía errores 403 al intentar acceder a los datos del dashboard de explotaciones
+   - Evidencia en logs: `❌ Error en petición GET a dashboard/explotacions/Gurans: Request failed with status code 403`
+   - **CAUSA RAÍZ:** En `dashboard.py` existía una verificación que comparaba `current_user.explotacio_id` con la explotación solicitada
+   - **SOLUCIÓN:** Se eliminó la restricción para que el rol GERENTE (Ramon) pueda acceder a todas las explotaciones sin importar el valor de `explotacio_id`
+
+5. [ ] **CRÍTICO - Información incorrecta del usuario en frontend**:
+   - En la barra superior se muestra "administrador" en lugar de "Ramon"
+   - En el perfil de usuario se muestra la información del administrador en lugar de la de Ramon
+   - **CAUSA RAÍZ:** El componente `ProfileManagement.tsx` no está recibiendo o actualizando correctamente la información del usuario actual
+   - Aunque el usuario está autenticado como Ramon, la interfaz sigue mostrando datos del administrador
+
+### 3.4 Resultados y Conclusiones
+
+- [X] Se logró la autenticación correcta con el usuario Ramon
+- [X] El token JWT se valida correctamente en el backend
+- [X] El sistema de permisos funciona correctamente, restringiendo acceso según el rol , aunque da revisar el resto... y Mi eprfil noe sta confirmado que estge bien y en la barra suepriro apracedce de mometno adminsitrador en el prefil de Ramon
+- [ ] **PENDIENTE:** Corregir permisos de visualización para Ramon
+- [ ] **PENDIENTE:** Corregir visualización de información de usuario en la interfaz
+- [X] El rol "Ramon" es reconocido por el sistema y tiene los permisos esperados
+
+### 3.5 Próximos pasos
+
+1. [ ] Crear una interfaz adaptativa que muestre solo las opciones permitidas para cada rol
+2. [ ] Implementar una página de "Acceso denegado" para mostrar errores 403 de forma amigable
+3. [ ] Ajustar los tests automatizados para verificar los permisos por rol
+4. [ ] Documentar el sistema de permisos para futuros desarrolladores
+5. [ ] Crear una matriz de permisos completa para todos los endpoints por rol
 
 ### 3.2 Adaptación del Sidebar y Navbar
 

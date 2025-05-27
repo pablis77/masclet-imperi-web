@@ -5,9 +5,10 @@ from typing import Optional
 
 class UserRole(str, Enum):
     ADMIN = "administrador"
-    GERENTE = "gerente"
+    RAMON = "Ramon"  # Actualizado de GERENTE a RAMON con el valor correcto
     EDITOR = "editor"
     USER = "usuario"
+    # Nota: Esta enumeración se mantiene solo como referencia, pero ya no se usa para validar roles
 
 class User(models.Model):
     """Modelo para usuarios del sistema"""
@@ -15,7 +16,7 @@ class User(models.Model):
     username = fields.CharField(max_length=50, unique=True)
     password_hash = fields.CharField(max_length=128)  # Renombrado para coherencia
     email = fields.CharField(max_length=255, unique=True)
-    role = fields.CharEnumField(UserRole, max_length=15, default=UserRole.USER)  # Este campo falta en la BD
+    role = fields.CharField(max_length=50, default="usuario")  # Cambiado a CharField para permitir cualquier valor
     is_active = fields.BooleanField(default=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -24,7 +25,7 @@ class User(models.Model):
         table = "users"
 
     @classmethod
-    async def create_user(cls, username: str, password: str, email: str, role: str = UserRole.USER):
+    async def create_user(cls, username: str, password: str, email: str, role: str = "usuario"):
         """
         Método de ayuda para crear un nuevo usuario con la contraseña hasheada
         """

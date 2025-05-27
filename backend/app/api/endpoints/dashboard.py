@@ -35,7 +35,7 @@ async def get_stats(
     try:
         # Verificar que el usuario tiene acceso a las estadísticas generales
         # Solo si current_user no es None
-        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE]):
+        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
             logger.warning(f"Usuario {current_user.username} intentó acceder a estadísticas generales sin permisos")
             raise HTTPException(
                 status_code=403, 
@@ -43,8 +43,8 @@ async def get_stats(
             )
             
         # Si se especifica una explotación, verificar que el usuario tenga acceso
-        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
-            # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
+            # Para usuarios no admin o gerente, solo pueden ver sus explotaciones asignadas
             # Verificar de forma segura si el usuario tiene atributo explotacio
             user_explotacio = getattr(current_user, 'explotacio', None)
             if user_explotacio is None or user_explotacio != explotacio:
@@ -53,6 +53,9 @@ async def get_stats(
                     status_code=403, 
                     detail="No tienes permisos para ver estadísticas de esta explotación"
                 )
+        
+        # Si el usuario es GERENTE (Ramon), tiene acceso completo a todas las explotaciones
+        # No se requieren verificaciones adicionales
         
         stats = await get_dashboard_stats(
             explotacio=explotacio,
@@ -77,7 +80,7 @@ async def list_explotacions(current_user = Depends(get_current_user) if False el
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas de explotaciones
-        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE, UserRole.VETERINARIO]):
+        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON, UserRole.VETERINARIO]):
             if current_user:
                 logger.warning(f"Usuario {current_user.username} intentó acceder a lista de explotaciones sin permisos")
             raise HTTPException(
@@ -110,14 +113,17 @@ async def get_explotacio_info(
 ):
     """Obtiene información básica de una explotación"""
     try:
-        # Verificar permisos del usuario solo si current_user no es None
-        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE]):
+        # Verificar que el usuario tiene acceso a las estadísticas de explotaciones
+        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
             raise HTTPException(status_code=403, detail="No tienes permisos para ver información de explotaciones")
             
         # Verificar que la explotación existe
         exists = await Animal.filter(explotacio=explotacio_value).exists()
         if not exists:
             raise HTTPException(status_code=404, detail=f"No existe la explotación '{explotacio_value}'")
+        
+        # Nota: Ya no verificamos restricciones adicionales para el rol GERENTE (Ramon)
+        # para permitir acceso a todas las explotaciones
         
         # Obtener conteos básicos
         total_animales = await Animal.filter(explotacio=explotacio_value).count()
@@ -156,36 +162,28 @@ async def get_explotacio_stats(
     - Comparativas y tendencias específicas de la explotación
     """
     try:
-        # Con la autenticación opcional, saltamos las comprobaciones de permisos si no hay usuario
-        if current_user:
-            # Verificar que el usuario tiene acceso a las estadísticas de explotaciones
-            if not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE]):
-                logger.warning(f"Usuario {current_user.username} intentó acceder a estadísticas de explotación sin permisos")
-                raise HTTPException(
-                    status_code=403, 
-                    detail="No tienes permisos para ver estadísticas de explotaciones"
-                )
-                
-            # Verificar que el gerente solo puede ver sus explotaciones asignadas
-            if not verify_user_role(current_user, [UserRole.ADMIN]):
-                # Los gerentes solo pueden ver sus explotaciones asignadas
-                # Asumimos que el campo explotacio_id del usuario contiene el valor de explotación
-                if hasattr(current_user, 'explotacio_id') and current_user.explotacio_id != explotacio_value:
-                    logger.warning(f"Usuario {current_user.username} intentó acceder a explotación {explotacio_value} sin permisos")
-                    raise HTTPException(
-                        status_code=403, 
-                    detail="No tienes permisos para ver estadísticas de esta explotación"
-                )
+        # Verificar que el usuario tiene acceso a las estadísticas de explotaciones
+        if current_user and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
+            logger.warning(f"Usuario {current_user.username} intentó acceder a estadísticas de explotación sin permisos")
+            raise HTTPException(
+                status_code=403, 
+                detail="No tienes permisos para ver estadísticas de explotaciones"
+            )
+            
+        # El usuario es administrador o gerente (Ramon), tiene acceso completo a todas las explotaciones
+        # No se requieren verificaciones adicionales de explotacio_id
         
         # Verificar que la explotación existe (hay animales con ese valor de explotacio)
         exists = await Animal.filter(explotacio=explotacio_value).exists()
         if not exists:
             # Obtener lista de explotaciones disponibles para el usuario
-            if not verify_user_role(current_user, [UserRole.ADMIN]):
-                # Los gerentes solo pueden ver sus explotaciones asignadas
-                explotaciones = await Animal.filter(explotacio=current_user.explotacio_id).distinct().values_list('explotacio', flat=True)
+            if not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
+                # Usuario regular: mostrar solo explotaciones asignadas (esto se implementará en el futuro)
+                explotaciones = []
+                # Nota: No existe un campo explotacio_id en el modelo de usuario
+                # En el futuro aquí irá la lógica para filtrar por explotaciones asignadas al usuario
             else:
-                # Los administradores pueden ver todas las explotaciones
+                # Los administradores y gerentes pueden ver todas las explotaciones
                 explotaciones = await Animal.all().distinct().values_list('explotacio', flat=True)
                 
             explotaciones_list = [{'explotacio': expl} for expl in explotaciones]
@@ -236,7 +234,7 @@ async def get_partos_stats(
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas
-        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
             # Verificar de forma segura si el usuario tiene atributo explotacio
             user_explotacio = getattr(current_user, 'explotacio', None)
@@ -616,7 +614,7 @@ async def get_combined_stats(
     """
     try:
         # Verificar que el usuario tiene acceso a las estadísticas
-        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN]):
+        if explotacio and not verify_user_role(current_user, [UserRole.ADMIN, UserRole.RAMON]):
             # Para usuarios no admin, solo pueden ver sus explotaciones asignadas
             # Verificar de forma segura si el usuario tiene atributo explotacio
             user_explotacio = getattr(current_user, 'explotacio', None)
