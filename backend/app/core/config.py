@@ -22,6 +22,7 @@ class UserRole(str, Enum):
     GERENTE = "gerente"  # Volvemos al valor original para recuperar la compatibilidad
     EDITOR = "editor"
     USER = "usuario"
+    RAMON = "Ramon"  # Rol específico para el usuario Ramon
 
 class Action(str, Enum):
     """Acciones permitidas en el sistema"""
@@ -51,6 +52,17 @@ ROLES: Dict[UserRole, List[Action]] = {
         Action.EXPORTAR_DATOS
     ],
     UserRole.GERENTE: [  # Restaurado a GERENTE para mantener compatibilidad
+        Action.CONSULTAR, 
+        Action.ACTUALIZAR, 
+        Action.CREAR,
+        Action.GESTIONAR_USUARIOS,
+        Action.BORRAR_USUARIOS,
+        Action.CAMBIAR_CONTRASEÑAS,
+        Action.GESTIONAR_EXPLOTACIONES, 
+        Action.VER_ESTADISTICAS,
+        Action.EXPORTAR_DATOS
+    ],
+    UserRole.RAMON: [  # Permisos para el usuario Ramon
         Action.CONSULTAR, 
         Action.ACTUALIZAR, 
         Action.CREAR,

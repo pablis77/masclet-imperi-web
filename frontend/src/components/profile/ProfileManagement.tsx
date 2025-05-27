@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getStoredUser, isAuthenticated } from '../../services/authService';
-import type { User } from '../../services/authService';
+import type { User, UserRole } from '../../services/authService';
 import { getCurrentRole } from '../../services/roleService';
 
 export const ProfileManagement: React.FC = () => {
@@ -29,28 +29,49 @@ export const ProfileManagement: React.FC = () => {
     
     // Si estamos autenticados pero no tenemos usuario, lo recreamos para el usuario actual
     if (!user) {
-      console.log('Autenticado pero sin datos de usuario, recreando usuario predeterminado');
+      console.log('Autenticado pero sin datos de usuario, intentando recuperar información');
       // Verificamos si existe un token en localStorage
       const tokenData = localStorage.getItem('token');
+      // Verificar si hay indicador de usuario Ramon
+      const isRamon = localStorage.getItem('ramonFix') === 'true';
+      const userRole = localStorage.getItem('userRole');
+      
       if (tokenData) {
-        // Intentamos obtener información del token
         try {
-          // Creamos un usuario predeterminado
-          user = {
-            id: 1,
-            username: 'admin', // Por defecto asumimos admin, luego verificaremos
-            email: 'admin@mascletimperi.com',
-            full_name: 'Usuario Masclet',
-            role: 'administrador',
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
+          // Comprobar primero si es Ramon
+          if (isRamon) {
+            console.log('Detectado usuario Ramon por indicador ramonFix, recreando usuario Ramon');
+            user = {
+              id: 2,
+              username: 'ramon',
+              email: 'ramon@mascletimperi.com',
+              full_name: 'Ramon Masclet',
+              role: 'Ramon',
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          } else {
+            // Creamos un usuario predeterminado basado en el rol almacenado
+            user = {
+              id: 1,
+              username: userRole === 'Ramon' ? 'ramon' : 'admin',
+              email: userRole === 'Ramon' ? 'ramon@mascletimperi.com' : 'admin@mascletimperi.com',
+              full_name: userRole === 'Ramon' ? 'Ramon Masclet' : 'Usuario Masclet',
+              role: (userRole as UserRole) || 'usuario',
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          }
           
-          // Determinamos el rol actual
+          // Determinamos el rol actual como verificación adicional
           const currentRoleValue = getCurrentRole();
           if (currentRoleValue) {
-            user.role = currentRoleValue;
+            // Solo actualizamos si no es Ramon (Ramon tiene prioridad)
+            if (!(isRamon || user.username === 'ramon')) {
+              user.role = currentRoleValue;
+            }
           }
           
           // Guardamos en localStorage para futuras sesiones
@@ -68,11 +89,22 @@ export const ProfileManagement: React.FC = () => {
       return;
     }
 
-    // Aseguramos que el rol sea correcto para el usuario admin
-    if (user.username === 'admin' && user.role !== 'administrador') {
-      console.log('Corrigiendo rol para usuario admin de:', user.role, 'a: administrador');
-      user.role = 'administrador';
-      localStorage.setItem('user', JSON.stringify(user));
+    // Aseguramos que el rol sea correcto para los usuarios específicos
+    if (user) {
+      if (user.username === 'admin' && user.role !== 'administrador') {
+        console.log('Corrigiendo rol para usuario admin de:', user.role, 'a: administrador');
+        user.role = 'administrador';
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
+      // Asegurarse que Ramon siempre tiene el rol correcto
+      if (user.username === 'ramon' && user.role !== 'Ramon') {
+        console.log('Corrigiendo rol para usuario Ramon de:', user.role, 'a: Ramon');
+        user.role = 'Ramon' as UserRole;
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('ramonFix', 'true'); // Marcar indicador
+        localStorage.setItem('userRole', 'Ramon');
+      }
     }
 
     // Obtener el rol actualizado

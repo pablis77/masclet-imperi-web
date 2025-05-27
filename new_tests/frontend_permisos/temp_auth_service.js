@@ -1,10 +1,11 @@
-import axios from 'axios'; 
-import api from './api';
-import { post, get } from './apiService';
-import authApi from '../api/authApi';
-import apiConfig from '../config/apiConfig';
-import { jwtDecode } from 'jwt-decode';
-import type { LoginResponse as ApiLoginResponse } from '../api/authApi';
+
+ 
+
+
+
+
+
+
 
 // Verificar si estamos en un entorno de navegador
 const isBrowser = typeof window !== 'undefined';
@@ -20,29 +21,19 @@ if (isBrowser) {
 }
 
 // Definición de tipos común para toda la aplicación
-export type UserRole = 'administrador' | 'Ramon' | 'editor' | 'usuario';
+const UserRole = { admin: "administrador", gerente: "gerente", editor: "editor", usuario: "usuario", Ramon: "Ramon" };
 
 // Definición de usuario base con campos obligatorios
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  full_name: string;
-  is_active: boolean;
-  role: UserRole;
-  created_at: string;
-  updated_at: string;
-  is_superuser?: boolean;
-}
+class User { constructor(data) { Object.assign(this, data); } }
 
 // Interfaces para peticiones
-export interface LoginRequest {
+interface LoginRequest {
   username: string;
   password: string;
 }
 
 // Respuesta de login del backend
-export interface LoginResponse {
+interface LoginResponse {
   access_token: string;
   token_type: string;
   user: {
@@ -55,14 +46,14 @@ export interface LoginResponse {
   };
 }
 
-export interface RegisterRequest {
+interface RegisterRequest {
   username: string;
   email: string;
   password: string;
   full_name: string;
 }
 
-export interface UserCreate {
+interface UserCreate {
   username: string;
   email: string;
   password: string;
@@ -71,7 +62,7 @@ export interface UserCreate {
   is_active: boolean;
 }
 
-export interface UserUpdate {
+interface UserUpdate {
   email?: string;
   password?: string;
   full_name?: string;
@@ -79,7 +70,7 @@ export interface UserUpdate {
   is_active?: boolean;
 }
 
-export interface UserFilter {
+interface UserFilter {
   role?: UserRole;
   is_active?: boolean;
   search?: string;
@@ -87,7 +78,7 @@ export interface UserFilter {
   limit?: number;
 }
 
-export interface PaginatedUsers {
+interface PaginatedUsers {
   items: User[];
   total: number;
   page: number;
@@ -98,7 +89,7 @@ export interface PaginatedUsers {
  * Obtiene los datos del usuario actual
  * @returns Datos del usuario o null si no está autenticado
  */
-export function getCurrentUser(): LoginResponse['user'] | null {
+function getCurrentUser(): LoginResponse['user'] | null {
   if (typeof window === 'undefined') {
     return null; // No hay usuario en el servidor
   }
@@ -121,7 +112,7 @@ export function getCurrentUser(): LoginResponse['user'] | null {
  * Obtiene el token de autenticación
  * @returns Token de autenticación o null si no está autenticado
  */
-export const getToken = (): string | null => {
+const getToken = (): string | null => {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -167,7 +158,7 @@ export const getToken = (): string | null => {
  * Verifica si el usuario está autenticado
  * @returns true si el usuario está autenticado
  */
-export const isAuthenticated = (): boolean => {
+const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') {
     return false; // No autenticado en el servidor
   }
@@ -180,7 +171,7 @@ export const isAuthenticated = (): boolean => {
  * Obtiene el objeto de usuario completo
  * @returns El objeto de usuario completo o null si no existe
  */
-export function getStoredUser(): User | null {
+function getStoredUser(): User | null {
   if (typeof window === 'undefined') {
     return null; // No hay usuario en el servidor
   }
@@ -233,7 +224,7 @@ export function getStoredUser(): User | null {
  * Obtiene el rol del usuario actual
  * @returns Rol del usuario actual
  */
-export const getCurrentUserRole = (): UserRole => {
+const getCurrentUserRole = (): UserRole => {
   // PRIORIDAD MÁXIMA: Verificar si es Ramon (comprobación directa)
   if (typeof window !== 'undefined') {
     // Verificar indicador específico para Ramon
@@ -322,7 +313,7 @@ export const getCurrentUserRole = (): UserRole => {
 /**
  * Cierra la sesión del usuario
  */
-export const logout = (): void => {
+const logout = (): void => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('token');
@@ -341,7 +332,7 @@ export const logout = (): void => {
  * Obtiene la ruta de redirección para el usuario según su rol
  * @returns Ruta de redirección
  */
-export const getRedirectPathForUser = (): string => {
+const getRedirectPathForUser = (): string => {
   const userRole = getCurrentUserRole();
   
   switch (userRole) {
@@ -361,7 +352,7 @@ export const getRedirectPathForUser = (): string => {
  * @param credentials Credenciales del usuario
  * @returns Respuesta con token y datos de usuario
  */
-export const login = async ({ username, password }: LoginRequest): Promise<LoginResponse> => {
+const login = async ({ username, password }: LoginRequest): Promise<LoginResponse> => {
   try {
     if (!username || !password) {
       throw new Error('Usuario y contraseña son obligatorios');
@@ -466,7 +457,7 @@ export const login = async ({ username, password }: LoginRequest): Promise<Login
  * @param userData Datos del nuevo usuario
  * @returns Datos del usuario creado
  */
-export const register = async (userData: RegisterRequest): Promise<User> => {
+const register = async (userData: RegisterRequest): Promise<User> => {
   return await post<User>('/users', userData);
 };
 
@@ -476,7 +467,7 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
  * @param newPassword Nueva contraseña
  * @returns true si la operación fue exitosa
  */
-export const updatePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
+const updatePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
   try {
     await post('/users/me/change-password', { old_password: oldPassword, new_password: newPassword });
     return true;
@@ -489,7 +480,7 @@ export const updatePassword = async (oldPassword: string, newPassword: string): 
 /**
  * Obtiene el perfil del usuario actual
  */
-export const getCurrentUserProfile = async (): Promise<User> => {
+const getCurrentUserProfile = async (): Promise<User> => {
   try {
     return await get<User>('/users/me');
   } catch (error) {
@@ -501,7 +492,7 @@ export const getCurrentUserProfile = async (): Promise<User> => {
 /**
  * Obtiene una lista paginada de usuarios (solo para administradores)
  */
-export const getUsers = async (filters: UserFilter = {}): Promise<PaginatedUsers> => {
+const getUsers = async (filters: UserFilter = {}): Promise<PaginatedUsers> => {
   try {
     // Construir parámetros de consulta
     const params = new URLSearchParams();
@@ -522,14 +513,14 @@ export const getUsers = async (filters: UserFilter = {}): Promise<PaginatedUsers
 /**
  * Obtiene un usuario por su ID (solo para administradores)
  */
-export const getUserById = async (id: number): Promise<User> => {
+const getUserById = async (id: number): Promise<User> => {
   return await get<User>(`/users/${id}`);
 };
 
 /**
  * Actualiza un usuario (solo para administradores)
  */
-export const updateUser = async (id: number, userData: Partial<User>): Promise<User> => {
+const updateUser = async (id: number, userData: Partial<User>): Promise<User> => {
   console.log('Actualizando usuario:', id, userData);
   // Usar PUT en lugar de POST para actualizar recursos
   try {
@@ -551,14 +542,14 @@ export const updateUser = async (id: number, userData: Partial<User>): Promise<U
 /**
  * Elimina un usuario por su ID (solo para administradores)
  */
-export const deleteUser = async (id: number): Promise<void> => {
+const deleteUser = async (id: number): Promise<void> => {
   return await post<void>(`/users/${id}/delete`, {});
 };
 
 /**
  * Cambia la contraseña del usuario actual
  */
-export const changePassword = async (oldPassword: string, newPassword: string): Promise<{ message: string }> => {
+const changePassword = async (oldPassword: string, newPassword: string): Promise<{ message: string }> => {
   return await post<{ message: string }>('/users/me/change-password', {
     old_password: oldPassword,
     new_password: newPassword
@@ -591,7 +582,7 @@ export default authService;
  * Extrae el rol del token JWT para compatibilidad con tests
  * @returns Rol del usuario o 'usuario' si no se puede extraer
  */
-export function extractRoleFromToken(): UserRole {
+function extractRoleFromToken(): UserRole {
   console.log('extractRoleFromToken llamada desde authService');
   
   // PRIORIDAD MÁXIMA: Verificación directa de Ramon
@@ -663,3 +654,14 @@ export function extractRoleFromToken(): UserRole {
   const role = getCurrentUserRole();
   return role;
 }
+
+
+// Exportar las funciones para poder usarlas
+module.exports = {
+  login,
+  logout,
+  getStoredUser,
+  getCurrentUserRole,
+  extractRoleFromToken,
+  isAuthenticated
+};

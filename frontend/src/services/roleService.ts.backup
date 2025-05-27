@@ -96,24 +96,17 @@ export function extractRoleFromToken(): UserRole {
     const decoded = jwtDecode<{ role?: string; username?: string; sub?: string }>(token);
     console.log('Token decodificado:', decoded);
     
-    // IMPORTANTE: Verificación de usuario Ramon tiene prioridad máxima
-    // Primero verificamos por username y sub (identificadores principales)
-    
-    // Verificación específica para Ramon - MÁXIMA PRIORIDAD
-    if (decoded.username && decoded.username.toLowerCase() === 'ramon') {
-      console.log('⭐ USUARIO RAMON DETECTADO por username, asignando rol Ramon');
-      return 'Ramon';
-    }
-    
-    if (decoded.sub && decoded.sub.toLowerCase() === 'ramon') {
-      console.log('⭐ USUARIO RAMON DETECTADO por sub, asignando rol Ramon');
-      return 'Ramon';
-    }
-    
-    // Verificación para admin - Prioridad secundaria
-    if (decoded.sub && decoded.sub.toLowerCase() === 'admin') {
-      console.log('Usuario admin detectado en sub, asignando rol administrador');
-      return 'administrador';
+    // Primero verificamos por sub porque es más específico
+    if (decoded.sub) {
+      console.log('Verificando rol por sub:', decoded.sub);
+      if (decoded.sub.toLowerCase() === 'admin') {
+        console.log('Usuario admin detectado en sub, asignando rol administrador');
+        return 'administrador';
+      }
+      if (decoded.sub.toLowerCase() === 'ramon') {
+        console.log('Usuario ramon detectado en sub, asignando rol Ramon');
+        return 'Ramon';
+      }
     }
     
     // Caso especial: Si el usuario es admin por username, asignar rol administrador
@@ -308,104 +301,3 @@ export default {
   ROLE_HIERARCHY,
   ROLE_PERMISSIONS
 };
-
-/**
- * Re-exportación de getCurrentUserRole desde authService para compatibilidad con tests
- * @returns Rol del usuario actual
- */
-export function getCurrentUserRole(): UserRole {
-  console.log('getCurrentUserRole llamada desde roleService (proxy)');
-  
-  // Verificar si es Ramon primero (máxima prioridad)
-  try {
-    if (typeof window !== 'undefined') {
-      // Verificar el indicador especial de Ramon
-      const ramonFix = localStorage.getItem('ramonFix');
-      if (ramonFix === 'true') {
-        console.log('Indicador ramonFix encontrado, retornando rol Ramon');
-        return 'Ramon';
-      }
-      
-      // Verificar objeto usuario
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        if (user.username && user.username.toLowerCase() === 'ramon') {
-          console.log('Usuario Ramon detectado en getCurrentUserRole de roleService');
-          return 'Ramon';
-        }
-      }
-      
-      // Verificar rol explícito
-      const explicitRole = localStorage.getItem('userRole');
-      if (explicitRole === 'Ramon') {
-        return 'Ramon';
-      }
-    }
-  } catch (e) {
-    console.error('Error al verificar si es Ramon:', e);
-  }
-  
-  // Intentar extraer del token JWT como fallback
-  return extractRoleFromToken();
-}
-
-/**
- * Re-exportación de login desde authService para compatibilidad con tests
- * @param credentials Credenciales del usuario
- * @returns Promesa que resuelve a la respuesta de login
- */
-export function login(credentials: any): Promise<any> {
-  console.log('login llamada desde roleService (proxy)');
-  
-  // Verificar si es Ramon
-  if (credentials?.username?.toLowerCase() === 'ramon') {
-    console.log('Usuario Ramon detectado en login de roleService');
-    // Guardar indicador de Ramon para futuras verificaciones
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ramonFix', 'true');
-    }
-  }
-  
-  // Esta es solo una implementación de proxy para que el test detecte la función
-  return Promise.resolve({
-    success: true,
-    user: credentials?.username ? {
-      username: credentials.username,
-      role: credentials.username.toLowerCase() === 'ramon' ? 'Ramon' : 'usuario'
-    } : null
-  });
-}
-
-/**
- * Re-exportación de getStoredUser desde authService para compatibilidad con tests
- * @returns El usuario almacenado o null si no existe
- */
-export function getStoredUser(): any {
-  console.log('getStoredUser llamada desde roleService (proxy)');
-  
-  try {
-    if (typeof window !== 'undefined') {
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        
-        // Verificación especial para Ramon
-        if (user.username && user.username.toLowerCase() === 'ramon') {
-          if (user.role !== 'Ramon') {
-            console.log('Corrigiendo rol de Ramon en getStoredUser de roleService');
-            user.role = 'Ramon';
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('userRole', 'Ramon');
-          }
-        }
-        
-        return user;
-      }
-    }
-  } catch (e) {
-    console.error('Error al obtener usuario desde roleService:', e);
-  }
-  
-  return null;
-}
