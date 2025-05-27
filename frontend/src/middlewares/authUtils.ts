@@ -6,14 +6,15 @@ import type { UserRole } from '../services/authService';
  * Cada rol puede acceder a ciertas rutas
  */
 const protectedRoutes: { [key: string]: UserRole[] } = {
-  '/dashboard': ['administrador', 'gerente'],
-  '/users': ['administrador', 'gerente'],
-  '/animals': ['administrador', 'gerente', 'editor', 'usuario'],
-  '/animals/create': ['administrador', 'gerente'],
-  '/animals/edit': ['administrador', 'gerente', 'editor'],
-  '/explotacions': ['administrador', 'gerente', 'editor', 'usuario'],
-  '/explotacions/create': ['administrador', 'gerente'],
-  '/explotacions/edit': ['administrador', 'gerente', 'editor'],
+  '/dashboard': ['administrador', 'Ramon'],
+  // Nota: El backend sigue usando 'gerente', el frontend usa 'Ramon'
+  '/users': ['administrador', 'Ramon'],
+  '/animals': ['administrador', 'Ramon', 'editor', 'usuario'],
+  '/animals/create': ['administrador', 'Ramon'],
+  '/animals/edit': ['administrador', 'Ramon', 'editor'],
+  '/explotacions': ['administrador', 'Ramon', 'editor', 'usuario'],
+  '/explotacions/create': ['administrador', 'Ramon'],
+  '/explotacions/edit': ['administrador', 'Ramon', 'editor'],
   '/imports': ['administrador'],
   '/backup': ['administrador']
 };

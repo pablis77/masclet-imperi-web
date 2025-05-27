@@ -69,9 +69,11 @@ export const UsersManagement: React.FC = () => {
       } else {
         // Para otros usuarios, verificamos el rol normalmente
         // Usamos 'as string' para evitar el error de tipo ya que sabemos que estos valores son válidos
+        // Verificamos si el rol es administrador o Ramon
+        // Por compatibilidad también aceptamos 'gerente' (backend)
         hasAdminRole = user.role === 'administrador' || 
-                      (user.role as string) === 'gerente' || 
-                      user.role === 'Ramon';
+                      user.role === 'Ramon' ||
+                      (user.role as string) === 'gerente'; // Para compatibilidad con backend
       }
       
       setIsAdmin(hasAdminRole);
@@ -144,7 +146,7 @@ export const UsersManagement: React.FC = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                No tienes permisos para gestionar usuarios. Solo los administradores y gerentes pueden acceder a esta sección.
+                No tienes permisos para gestionar usuarios. Solo los administradores y usuarios con rol Ramon pueden acceder a esta sección.
               </p>
             </div>
           </div>

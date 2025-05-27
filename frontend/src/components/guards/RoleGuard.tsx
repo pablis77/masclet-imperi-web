@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { currentUserHasRole, UserRole } from '../../services/roleService';
+import { getCurrentRole } from '../../services/roleService';
+import type { UserRole } from '../../services/roleService';
 import { isAuthenticated } from '../../services/authService';
 
 interface RoleGuardProps {
-  requiredRole: UserRole;
+  allowedRoles: string[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
   redirectToLogin?: boolean;
@@ -11,50 +12,44 @@ interface RoleGuardProps {
 
 /**
  * Componente para proteger rutas basado en roles de usuario
- * Verifica si el usuario tiene el rol requerido para acceder al contenido
+ * Verifica si el usuario tiene alguno de los roles permitidos para acceder al contenido
  */
 export const RoleGuard: React.FC<RoleGuardProps> = ({
-  requiredRole,
+  allowedRoles,
   children,
   fallback = null,
   redirectToLogin = true
 }) => {
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [canAccess, setCanAccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Verificar acceso solo del lado del cliente
-    if (typeof window !== 'undefined') {
-      // Verificar si el usuario está autenticado
-      const auth = isAuthenticated();
-      if (!auth) {
-        // Si no está autenticado y se requiere redirección
-        if (redirectToLogin) {
-          console.log('Usuario no autenticado, redirigiendo a login...');
-          window.location.href = '/login';
-          return;
-        }
-        
-        setHasAccess(false);
-        setLoading(false);
-        return;
-      }
-
-      // Verificar si el usuario tiene el rol requerido
-      const access = currentUserHasRole(requiredRole);
-      console.log(`Verificando acceso: Rol requerido [${requiredRole}], Tiene acceso: ${access}`);
-      
-      setHasAccess(access);
-      
-      // Si no tiene acceso y se requiere redirección a login
-      if (!access && redirectToLogin) {
-        console.log('Usuario sin permisos suficientes, redirigiendo a home...');
-        window.location.href = '/';
-      }
-      
-      setLoading(false);
+    // Solo intentamos redirigir en el navegador
+    if (typeof window === 'undefined') return;
+    
+    // Si el usuario no está autenticado y se solicita redirección
+    if (!isAuthenticated() && redirectToLogin) {
+      console.log('Usuario no autenticado, redirigiendo a login');
+      window.location.href = '/login';
+      return;
     }
-  }, [requiredRole, redirectToLogin]);
+    
+    // Verificar rol del usuario
+    const currentRole = getCurrentRole();
+    console.log('Rol actual:', currentRole);
+    console.log('Roles permitidos:', allowedRoles);
+    
+    const hasAccess = allowedRoles.includes(currentRole);
+    console.log('¿Tiene acceso?', hasAccess);
+    
+    setCanAccess(hasAccess);
+    setLoading(false);
+    
+    if (!hasAccess && redirectToLogin) {
+      console.log(`Acceso denegado: se requiere uno de estos roles [${allowedRoles.join(', ')}]`);
+      // No redirigimos automáticamente, solo mostramos mensaje de acceso denegado
+    }
+  }, [allowedRoles, redirectToLogin]);
 
   // Mostrar indicador de carga mientras se verifica el acceso
   if (loading) {
@@ -66,7 +61,27 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   }
 
   // Mostrar el contenido si tiene acceso, o el fallback si no
-  return hasAccess ? <>{children}</> : <>{fallback}</>;
+  return canAccess ? (
+    <>{children}</>
+  ) : (
+    <>
+      {fallback || (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 rounded shadow-md" role="alert">
+          <div className="flex items-center">
+            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+              <p className="font-bold">Acceso denegado</p>
+              <p>No tienes los permisos necesarios para acceder a esta página.</p>
+              <p className="mt-2 text-sm">Se requiere uno de estos roles: {allowedRoles.join(', ')}</p>
+              <p className="mt-2 text-sm">Tu rol actual: {getCurrentRole()}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default RoleGuard;

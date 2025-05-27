@@ -3,13 +3,12 @@
 import DefaultLayout from '../../layouts/DefaultLayout.astro';
 import { UsersManagement } from '../../components/users/UsersManagement';
 import { RoleGuard } from '../../components/guards/RoleGuard';
-import { UserRole } from '../../services/roleService';
 
 // Definir título
 const title = "Gestión de Usuarios | Masclet Imperi";
 
 // Roles que tienen acceso a esta página
-const allowedRoles = [UserRole.ADMINISTRADOR, UserRole.RAMON];
+const allowedRoles = ['administrador', 'Ramon'];
 ---
 
 <DefaultLayout title={title}>

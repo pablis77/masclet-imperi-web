@@ -200,7 +200,7 @@ export function getStoredUser(): User | null {
       user.role = 'usuario';
     }
     
-    // Verificar si el usuario es admin o gerente para compatibilidad
+    // Verificar si el usuario es admin o Ramon (antes 'gerente') para compatibilidad
     if (user.username === 'admin') {
       console.log('Usuario admin detectado, asegurando rol de administrador');
       user.role = 'administrador';
@@ -224,15 +224,27 @@ export const getCurrentUserRole = (): UserRole => {
   // Para el modo de prueba, intentar obtener el rol seleccionado en login
   if (typeof window !== 'undefined') {
     // Primero verificar si hay un rol explícito guardado en localStorage
-    const userRole = localStorage.getItem('userRole');
-    if (userRole && ['administrador', 'gerente', 'editor', 'usuario'].includes(userRole)) {
-      console.log(`Usando rol guardado: ${userRole}`);
-      return userRole as UserRole;
+    let storedRole = localStorage.getItem('userRole');
+    if (storedRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(storedRole) || storedRole === 'gerente')) {
+      // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+      if (storedRole === 'gerente') {
+        console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+        localStorage.setItem('userRole', 'Ramon');
+        storedRole = 'Ramon';
+      }
+      console.log(`Usando rol guardado: ${storedRole}`);
+      return storedRole as UserRole;
     }
     
     // Compatibilidad con implementación anterior
-    const testRole = localStorage.getItem('user_role');
-    if (testRole && ['administrador', 'gerente', 'editor', 'usuario'].includes(testRole)) {
+    let testRole = localStorage.getItem('user_role');
+    if (testRole && (['administrador', 'Ramon', 'editor', 'usuario'].includes(testRole) || testRole === 'gerente')) {
+      // Convertir 'gerente' a 'Ramon' para compatibilidad con código antiguo
+      if (testRole === 'gerente') {
+        console.log('Convertiendo rol gerente a Ramon para compatibilidad');
+        localStorage.setItem('user_role', 'Ramon');
+        testRole = 'Ramon';
+      }
       console.log(`Usando rol de prueba: ${testRole}`);
       return testRole as UserRole;
     }

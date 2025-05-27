@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import { getCurrentUserRole } from '../../services/authService';
-import type { UserRole } from '../../services/authService';
+import { getCurrentRole } from '../../services/roleService';
+import type { UserRole } from '../../services/roleService';
 
 // Definición de las propiedades del componente
 interface PermissionGuardProps {
@@ -29,7 +29,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   hideCompletely = false
 }) => {
   // Obtener el rol del usuario actual
-  const userRole = getCurrentUserRole();
+  const userRole = getCurrentRole();
   
   // Comprobar si el usuario tiene alguno de los roles permitidos
   const hasPermission = allowedRoles.includes(userRole);
