@@ -46,7 +46,7 @@ export const ProfileManagement: React.FC = () => {
           user = {
             id: 14, // ID real de Ramon según se verificó en la base de datos
             username: 'Ramon',
-            email: 'ramon@mascletimperi.com',
+            email: 'ramon@prueba.com', // Email correcto según la base de datos
             // Eliminamos el campo full_name que no existe realmente en la DB
             role: 'Ramon' as UserRole,
             is_active: true,

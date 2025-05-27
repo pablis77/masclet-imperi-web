@@ -188,45 +188,128 @@ const isActive = (itemUrl: string) => {
           {userRole}
         </span>
         
-        <!-- Script para actualizar el rol desde localStorage -->
+        <!-- Script para actualizar el rol desde localStorage (Versión mejorada) -->
         <script>
-          document.addEventListener('DOMContentLoaded', () => {
+          // Función para actualizar el rol del usuario en la barra de navegación
+          function actualizarRolUsuario(forzarLimpieza = false) {
             const rolSpan = document.getElementById('user-role-display');
             if (!rolSpan) {
               console.error('No se encontró el elemento para mostrar el rol del usuario');
               return;
             }
             
-            // Verificar directamente si es Ramon
-            const isRamon = localStorage.getItem('ramonFix') === 'true';
-            const username = localStorage.getItem('username');
+            // Obtener token JWT actual
+            const token = localStorage.getItem('token');
             
-            if (isRamon || username === 'ramon') {
-              console.log('🔄 Detectado usuario Ramon en navbar, ajustando visualización');
+            // Si se solicita limpieza forzada o no hay token, mostrar placeholder
+            if (forzarLimpieza || !token) {
+              rolSpan.textContent = '---';
+              return;
+            }
+            
+            // Intentar decodificar el token JWT para obtener información real y actualizada
+            try {
+              // Función para decodificar JWT sin librerías externas
+              function parseJwt(token) {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                  atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                  }).join('')
+                );
+                return JSON.parse(jsonPayload);
+              }
+              
+              // Obtener datos reales del token
+              const decoded = parseJwt(token);
+              const tokenUsername = decoded.sub || '';
+              const tokenRole = decoded.role || '';
+              
+              console.log('🔒 Token decodificado:', { sub: tokenUsername, role: tokenRole });
+              
+              // Prioridad 1: Usar siempre los datos del token JWT (fuente única de verdad)
+              if (tokenRole) {
+                console.log('✅ Usando rol del token JWT:', tokenRole);
+                rolSpan.textContent = tokenRole;
+                localStorage.setItem('userRole', tokenRole);
+                localStorage.setItem('username', tokenUsername);
+                return;
+              }
+            } catch (e) {
+              console.error('Error decodificando token JWT:', e);
+            }
+            
+            // Si fallamos al decodificar, intentar con localStorage como fallback
+            const username = localStorage.getItem('username');
+            const storedRole = localStorage.getItem('userRole');
+            const storedUser = localStorage.getItem('user');
+            
+            // Verificar si es Ramon
+            const isRamon = username === 'Ramon' || storedRole === 'Ramon';
+            if (isRamon) {
+              console.log('🔄 Detectado usuario Ramon, ajustando visualización');
               rolSpan.textContent = 'Ramon';
-              // Aseguramos que se guarde en localStorage para futura referencia
               localStorage.setItem('userRole', 'Ramon');
               return;
             }
             
-            // Intentar obtener el rol del localStorage
-            const storedRole = localStorage.getItem('userRole');
-            const storedUser = localStorage.getItem('user');
-            
+            // Último recurso: extraer de user almacenado
             if (storedRole) {
-              // Priorizar userRole si existe
               rolSpan.textContent = storedRole;
             } else if (storedUser) {
-              // Intentar extraer el rol del usuario almacenado
               try {
                 const userData = JSON.parse(storedUser);
                 rolSpan.textContent = userData.role || 'usuario';
               } catch (e) {
                 console.error('Error al parsear datos de usuario:', e);
-                // Mantener el valor original
+                rolSpan.textContent = 'usuario';
               }
+            } else {
+              rolSpan.textContent = 'usuario';
+            }
+          }
+          
+          // Al cargar la página
+          document.addEventListener('DOMContentLoaded', () => {
+            // Limpiar rol al cargar y luego actualizarlo con datos reales
+            actualizarRolUsuario(true);
+            setTimeout(() => actualizarRolUsuario(), 100);
+          });
+          
+          // Verificar cambios en localStorage
+          window.addEventListener('storage', (event) => {
+            if (event.key === 'token' || event.key === 'user' || event.key === 'userRole' || event.key === 'username') {
+              console.log('🔄 Cambio detectado en datos de usuario, actualizando rol');
+              actualizarRolUsuario();
             }
           });
+          
+          // IMPORTANTE: Detectar si estamos en la página justo después del login
+          if (document.referrer.includes('/login')) {
+            console.log('🔑 Detectada navegación desde login, forzando actualización de rol');
+            // Limpiar primero y luego actualizar varias veces para asegurar
+            actualizarRolUsuario(true);
+            setTimeout(() => actualizarRolUsuario(), 50);
+            setTimeout(() => actualizarRolUsuario(), 200);
+            setTimeout(() => actualizarRolUsuario(), 500);
+          }
+          
+          // Actualizar cada segundo durante los primeros 5 segundos
+          for (let i = 1; i <= 5; i++) {
+            setTimeout(() => actualizarRolUsuario(), i * 1000);
+          }
+          
+          // Actualizar al hacer clic en cualquier parte
+          document.addEventListener('click', () => {
+            actualizarRolUsuario();
+          });
+          
+          // Verificar continuamente el token
+          setInterval(() => {
+            // Si el token cambia, actualizar el rol
+            actualizarRolUsuario();
+          }, 2000); // Cada 2 segundos
         </script>
         
         <!-- Perfil de usuario - Visible en todos los tamaños -->
