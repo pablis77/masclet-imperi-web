@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse, FileResponse
 from typing import List, Optional
 import os
 import re
-import json
 import logging
 from datetime import datetime
 
@@ -23,20 +22,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Función auxiliar para formatear tamaños de archivo
-def format_size(size_bytes):
-    """Convierte tamaño en bytes a formato legible (KB, MB, GB)"""
-    if size_bytes == 0:
-        return "0 B"
-    
-    units = ['B', 'KB', 'MB', 'GB', 'TB']
-    i = 0
-    while size_bytes >= 1024 and i < len(units) - 1:
-        size_bytes /= 1024
-        i += 1
-    
-    return f"{size_bytes:.2f} {units[i]}"
-
 @router.get("/list", response_model=List[BackupInfo])
 async def list_backups(
     current_user: Optional[User] = Depends(get_current_user)
@@ -44,20 +29,8 @@ async def list_backups(
     """
     Lista todos los backups disponibles.
     """
-    # Depuración de usuario y rol
-    if current_user:
-        logger.info(f"Usuario autenticado: {current_user.username}, Rol: {current_user.role}")
-    else:
-        logger.info("No hay usuario autenticado en la solicitud")
-        
-    # Verificar si hay usuario autenticado
-    if not current_user:
-        logger.warning("Acceso denegado: No hay usuario autenticado")
-        raise HTTPException(status_code=401, detail="Autenticación requerida")
-    
     # Verificar permisos (solo administradores y Ramon)
     if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
-        logger.warning(f"Acceso denegado: {current_user.username} con rol {current_user.role} no tiene permisos suficientes")
         raise HTTPException(status_code=403, detail="No tienes permisos para ver la lista de backups")
     
     # Crear una lista vacía para devolver por ahora
@@ -74,68 +47,50 @@ async def list_backups(
     # Expresión regular para extraer la fecha
     pattern = re.compile(r'backup_masclet_imperi_(\d{8}_\d{6})\.sql')
     
-    # Cargar el historial de backups para obtener la información adicional
-    history_path = os.path.join(backup_dir, "backup_log.json")
-    history = []
-    
-    if os.path.exists(history_path):
-        try:
-            with open(history_path, "r", encoding="utf-8") as f:
-                history = json.load(f)
-            logger.info(f"Historial de backups cargado: {len(history)} entradas")
-        except Exception as e:
-            logger.error(f"Error al cargar historial de backups: {str(e)}")
-            # Continuar sin historial
-    else:
-        logger.info(f"No existe archivo de historial: {history_path}")
-    
-    # Crear un diccionario con la información del historial para búsqueda rápida
-    history_dict = {entry.get("filename"): entry for entry in history} if history else {}
-    
     # Listar los archivos en el directorio
     try:
-        all_files = os.listdir(backup_dir)
-        logger.info(f"Total de archivos encontrados: {len(all_files)}")
-        
-        for filename in all_files:
-            if filename.startswith("backup_masclet_imperi_") and filename.endswith(".sql"):
+        for filename in os.listdir(backup_dir):
+            if filename.endswith(".sql") and filename.startswith("backup_masclet_imperi_"):
                 file_path = os.path.join(backup_dir, filename)
-                logger.info(f"Procesando archivo de backup: {filename}")
                 
                 # Extraer fecha del nombre
                 match = pattern.match(filename)
+                formatted_date = "Fecha desconocida"
+                
                 if match:
                     date_str = match.group(1)
                     try:
                         date_obj = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
                         formatted_date = date_obj.strftime("%d/%m/%Y %H:%M")
                     except ValueError:
-                        formatted_date = "Fecha desconocida"
-                else:
-                    formatted_date = "Fecha desconocida"
+                        pass
                 
-                # Obtener tamaño
+                # Obtener tamaño del archivo
                 size_bytes = os.path.getsize(file_path)
-                size = format_size(size_bytes)
                 
-                # Obtener información adicional del historial si existe
-                history_entry = history_dict.get(filename, {})
+                # Crear formato legible de tamaño
+                size = "0 B"
+                for unit in ['B', 'KB', 'MB', 'GB']:
+                    if size_bytes < 1024.0 or unit == 'GB':
+                        break
+                    size_bytes /= 1024.0
+                size = f"{size_bytes:.2f} {unit}"
                 
-                # Crear objeto de información de backup
-                backup_info = BackupInfo(
+                # Crear objeto de backup
+                backup = BackupInfo(
                     filename=filename,
                     date=formatted_date,
                     size=size,
-                    size_bytes=size_bytes,
-                    created_by=history_entry.get("created_by", "sistema"),
+                    size_bytes=int(os.path.getsize(file_path)),
+                    created_by="sistema",
                     is_complete=True,
                     content_type="SQL",
                     can_restore=True,
-                    backup_type=history_entry.get("backup_type", "manual"),
-                    description=history_entry.get("description", "")
+                    backup_type="manual",
+                    description=""
                 )
                 
-                backups.append(backup_info)
+                backups.append(backup)
     except Exception as e:
         logger.error(f"Error al listar archivos de backup: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al listar backups: {str(e)}")

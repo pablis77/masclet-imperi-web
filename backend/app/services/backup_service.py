@@ -158,71 +158,95 @@ class BackupService:
     @classmethod
     async def list_backups(cls) -> List[BackupInfo]:
         """Obtiene la lista de backups disponibles"""
-        # Asegurar que existe el directorio de backups
-        if not os.path.exists(cls.BACKUP_DIR):
-            os.makedirs(cls.BACKUP_DIR, exist_ok=True)
-            return []
-        
-        backup_files = []
-        
-        # Patrón para extraer la fecha del nombre del archivo
-        pattern = re.compile(r'backup_masclet_imperi_(\d{8}_\d{6})\.sql')
-        
-        # Cargar el historial de backups para obtener la información adicional
-        history_path = os.path.join(cls.BACKUP_DIR, "backup_log.json")
-        history = []
-        
-        if os.path.exists(history_path):
-            try:
-                with open(history_path, "r", encoding="utf-8") as f:
-                    history = json.load(f)
-            except Exception as e:
-                logger.error(f"Error al cargar historial de backups: {str(e)}")
-        
-        # Crear un diccionario con la información del historial para búsqueda rápida
-        history_dict = {entry.get("filename"): entry for entry in history}
-        
-        for filename in os.listdir(cls.BACKUP_DIR):
-            if filename.startswith("backup_masclet_imperi_") and filename.endswith(".sql"):
-                file_path = os.path.join(cls.BACKUP_DIR, filename)
-                
-                # Extraer fecha del nombre
-                match = pattern.match(filename)
-                if match:
-                    date_str = match.group(1)
-                    try:
-                        # Convertir YYYYMMDD_HHMMSS a dd/mm/yyyy HH:MM
-                        date_obj = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
-                        formatted_date = date_obj.strftime("%d/%m/%Y %H:%M")
-                    except ValueError:
-                        formatted_date = "Fecha desconocida"
-                else:
-                    formatted_date = "Fecha desconocida"
-                
-                # Obtener tamaño del archivo
-                size_bytes = os.path.getsize(file_path)
-                size = cls._format_size(size_bytes)
-                
-                # Obtener información adicional del historial si existe
-                history_entry = history_dict.get(filename, {})
-                
-                backup_info = BackupInfo(
-                    filename=filename,
-                    date=formatted_date,
-                    size=size,
-                    size_bytes=size_bytes,
-                    created_by=history_entry.get("created_by", "sistema"),
-                    is_complete=True,
-                    content_type="SQL",
-                    can_restore=True,
-                    backup_type=history_entry.get("backup_type", "manual"),
-                    description=history_entry.get("description", "")
-                )
-                
-                backup_files.append(backup_info)
-        
-        # Ordenar por fecha (más reciente primero)
-        return sorted(backup_files, key=lambda x: x.filename, reverse=True)
+        try:
+            logger.info(f"Intentando listar backups desde directorio: {cls.BACKUP_DIR}")
+            
+            # Asegurar que existe el directorio de backups
+            if not os.path.exists(cls.BACKUP_DIR):
+                logger.info(f"El directorio de backups no existe, creándolo: {cls.BACKUP_DIR}")
+                os.makedirs(cls.BACKUP_DIR, exist_ok=True)
+                return []
+            
+            backup_files = []
+            
+            # Patrón para extraer la fecha del nombre del archivo
+            pattern = re.compile(r'backup_masclet_imperi_(\d{8}_\d{6})\.sql')
+            
+            # Cargar el historial de backups para obtener la información adicional
+            history_path = os.path.join(cls.BACKUP_DIR, "backup_log.json")
+            history = []
+            
+            if os.path.exists(history_path):
+                try:
+                    with open(history_path, "r", encoding="utf-8") as f:
+                        history = json.load(f)
+                except Exception as e:
+                    logger.error(f"Error al cargar historial de backups: {str(e)}")
+                    # Continuar sin historial
+            else:
+                logger.info(f"No existe archivo de historial: {history_path}")
+            
+            # Crear un diccionario con la información del historial para búsqueda rápida
+            history_dict = {entry.get("filename"): entry for entry in history} if history else {}
+            
+            # Listar archivos en el directorio
+            logger.info(f"Listando archivos en: {cls.BACKUP_DIR}")
+            all_files = os.listdir(cls.BACKUP_DIR)
+            logger.info(f"Total de archivos encontrados: {len(all_files)}")
+            
+            for filename in all_files:
+                try:
+                    if filename.startswith("backup_masclet_imperi_") and filename.endswith(".sql"):
+                        file_path = os.path.join(cls.BACKUP_DIR, filename)
+                        logger.info(f"Procesando archivo de backup: {filename}")
+                        
+                        # Extraer fecha del nombre
+                        match = pattern.match(filename)
+                        if match:
+                            date_str = match.group(1)
+                            try:
+                                # Convertir YYYYMMDD_HHMMSS a dd/mm/yyyy HH:MM
+                                date_obj = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
+                                formatted_date = date_obj.strftime("%d/%m/%Y %H:%M")
+                            except ValueError as e:
+                                logger.error(f"Error al formatear fecha de {filename}: {str(e)}")
+                                formatted_date = "Fecha desconocida"
+                        else:
+                            formatted_date = "Fecha desconocida"
+                        
+                        # Obtener tamaño del archivo
+                        size_bytes = os.path.getsize(file_path)
+                        size = cls._format_size(size_bytes)
+                        
+                        # Obtener información adicional del historial si existe
+                        history_entry = history_dict.get(filename, {})
+                        
+                        backup_info = BackupInfo(
+                            filename=filename,
+                            date=formatted_date,
+                            size=size,
+                            size_bytes=size_bytes,
+                            created_by=history_entry.get("created_by", "sistema"),
+                            is_complete=True,
+                            content_type="SQL",
+                            can_restore=True,
+                            backup_type=history_entry.get("backup_type", "manual"),
+                            description=history_entry.get("description", "")
+                        )
+                        
+                        backup_files.append(backup_info)
+                except Exception as e:
+                    logger.error(f"Error al procesar archivo {filename}: {str(e)}")
+                    # Continuar con el siguiente archivo
+            
+            logger.info(f"Total de backups encontrados: {len(backup_files)}")
+            
+            # Ordenar por fecha (más reciente primero)
+            return sorted(backup_files, key=lambda x: x.filename, reverse=True)
+        except Exception as e:
+            logger.error(f"Error inesperado al listar backups: {str(e)}")
+            # Re-lanzar la excepción para que pueda ser manejada por el endpoint
+            raise e
 
     @classmethod
     async def restore_backup(cls, filename: str) -> bool:
@@ -281,6 +305,17 @@ class BackupService:
             logger.error(f"Error durante el proceso de restauración: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
+    @classmethod
+    async def get_backup_path(cls, filename: str) -> str:
+        """Obtiene la ruta completa de un archivo de backup"""
+        backup_path = os.path.join(cls.BACKUP_DIR, filename)
+        
+        # Verificar que el archivo existe
+        if not os.path.exists(backup_path):
+            raise HTTPException(status_code=404, detail=f"El archivo de backup {filename} no existe")
+            
+        return backup_path
+    
     @classmethod
     async def delete_backup(cls, filename: str) -> bool:
         """Elimina un archivo de backup"""
