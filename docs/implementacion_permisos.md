@@ -255,23 +255,21 @@ Para realizar pruebas con diferentes roles:
    - Consecuencia: Ramon iniciaba sesión correctamente pero recibía permisos de administrador
    - **SOLUCIÓN:** Se modificó `auth.py` para cambiar el valor por defecto de `BYPASS_MODE` a 'off' en lugar de 'admin'
 
-2. [X] **CRÍTICO - Error en validación del token JWT**:
    - Después de desactivar el bypass, el token JWT no se validaba correctamente
    - Evidencia en logs: `Error en token JWT: Invalid crypto padding. Acceso denegado`
    - Consecuencia: El usuario Ramon podía iniciar sesión pero recibía error 401 en todas las peticiones
-   - Frontend mostraba errores: `❌ Error en petición GET a /dashboard/stats: Request failed with status code 401`
-   - **CAUSA RAIZ:** Se identificó código en `index.astro` que:
-     * Primero eliminaba cualquier token existente: `localStorage.removeItem('token')`
-     * Luego sobreescribía el token con uno hardcodeado inválido
-   - **SOLUCION:** Se modificaron dos archivos:
-     * `index.astro` - Se comentó el código que eliminaba y sobreescribía tokens válidos
-     * `auth.py` - Se cambió el valor por defecto de `BYPASS_MODE` a 'off'
+   - Frontend mostraba errores: ❌ Error en petición GET a [/dashboard/stats](/dashboard/stats): Request failed with status code 401
+    - **CAUSA RAIZ:** Se identificó código en `index.astro` que:
+      - Primero eliminaba cualquier token existente: `localStorage.removeItem('token')`
+      - Luego sobreescribía el token con uno hardcodeado inválido
+    - **SOLUCION:** Se modificaron dos archivos:
+      - `index.astro` - Se comentó el código que eliminaba y sobreescribía tokens válidos
+      - `auth.py` - Se cambió el valor por defecto de `BYPASS_MODE` a 'off'
 
-3. [X] **Validación de permisos funcionando correctamente**:
+3. [X] - Validación de permisos funcionando correctamente:
    - Se verificó que los permisos se validan correctamente según el rol del usuario
    - El módulo `permissions.py` procesa correctamente los roles como strings
    - Las peticiones a endpoints restringidos devuelven error 403 (Prohibido) cuando el usuario no tiene permisos
-   - Evidencia en logs: `Usuario Ramon intentó acceder a estadísticas generales sin permisos`
    - Las peticiones a endpoints permitidos funcionan correctamente (ej: dashboard-detallado/animales-detallado)
 
 4. [X] **CRÍTICO - Permisos incorrectos para el usuario Ramon**:
@@ -297,7 +295,7 @@ Para realizar pruebas con diferentes roles:
   - Se ha corregido la visualización del rol en la barra de navegación (ahora muestra "Ramon" correctamente)
   - Se ha optimizado el script para evitar mensajes excesivos en consola
   - Se ha corregido el email para que use el valor correcto de la base de datos (ramon@prueba.com)
-- [ ] **PENDIENTE:** Implementar permisos específicos para Ramon en cada sección del sistema
+- [ ] **PENDIENTE:** Implementar permisos específicos para Ramon en cada sección del sistema (ver [`permisos_usuarios.md`](../permisos_usuarios.md))
 - [X] El rol "Ramon" es reconocido por el sistema y tiene los permisos básicos
 
 ### 3.5 Próximos pasos

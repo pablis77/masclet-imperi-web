@@ -6,6 +6,25 @@ import PermissionsManager from '../../components/permissions/PermissionsManager.
 // Obtener el idioma del usuario desde cookies o localStorage
 const userLanguage = Astro.cookies.get('userLanguage')?.value || 'es';
 
+// Detectar el rol del usuario desde el token (ejecución en servidor)
+let userRole = 'guest';
+const token = Astro.cookies.get('token')?.value;
+if (token) {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length > 1) {
+      const payload = JSON.parse(atob(tokenParts[1]));
+      userRole = payload.role || 'guest';
+    }
+  } catch (e) {
+    console.error('Error al decodificar token:', e);
+  }
+}
+
+// Verificar acceso - Solo admin y Ramon pueden acceder a esta página
+const isEditor = userRole.toLowerCase() === 'editor';
+const hasAccess = !isEditor;
+
 // Traducciones
 const translations = {
   es: {
@@ -91,13 +110,35 @@ const translations = {
 // Obtener las traducciones según el idioma seleccionado
 const t = translations[userLanguage as keyof typeof translations] || translations.es;
 
-// Definir título y rol de usuario
+// Definir título para la página
 const title = t.title;
-const userRole = "administrador"; // Simulación de rol
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/backup">
+  <!-- Bloqueo total para usuarios no autorizados -->
+  <script is:inline>
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+            console.log('ACCESO DENEGADO: Redirigiendo...');
+            window.location.href = '/';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  
   <PermissionsManager />
+  
   <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
     <p class="text-gray-600 dark:text-gray-300">{t.subtitle}</p>
@@ -242,6 +283,8 @@ const userRole = "administrador"; // Simulación de rol
     </div>
   </div>
 
+
+  
   <script>
     // Importar servicios para manejar backups
     import { getBackupsList, createBackup, restoreBackup, deleteBackup, getBackupDownloadUrl } from '../../services/backupService.js';
@@ -670,5 +713,84 @@ const userRole = "administrador"; // Simulación de rol
     }
     
     // La inicialización de permisos ahora se maneja a través del componente PermissionsManager
+  </script>
+  
+  <!-- Script específico para bloquear el botón de selección de backup para el rol Ramon -->
+  <script is:inline>
+    // Ejecutar inmediatamente cuando carga la página
+    (function() {
+      // Verificar si el usuario es Ramon
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userRole = payload.role;
+        
+        if (userRole === 'Ramon') {
+          console.log('⚠️ Usuario Ramon detectado - Aplicando restricciones específicas...');
+          
+          // Función para bloquear completamente el botón
+          function bloquearBotonSelectBackup() {
+            const btn = document.getElementById('select-backup-btn');
+            if (!btn) {
+              console.log('Botón no encontrado, reintentando en 500ms...');
+              setTimeout(bloquearBotonSelectBackup, 500);
+              return;
+            }
+            
+            // Aplicar múltiples capas de bloqueo
+            btn.disabled = true;
+            btn.setAttribute('disabled', 'disabled');
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'No tienes permisos para restaurar copias de seguridad';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('hover:bg-gray-300', 'dark:hover:bg-gray-600');
+            
+            // Agregar icono de candado
+            const lockIcon = document.createElement('span');
+            lockIcon.innerHTML = ' 🔒';
+            lockIcon.className = 'ml-2';
+            btn.appendChild(lockIcon);
+            
+            // Sobrescribir handlers
+            btn.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Intento de acceso bloqueado');
+              return false;
+            };
+            
+            // También bloquear el botón change-backup-btn si existe
+            const changeBtn = document.getElementById('change-backup-btn');
+            if (changeBtn) {
+              changeBtn.disabled = true;
+              changeBtn.style.opacity = '0.5';
+              changeBtn.style.pointerEvents = 'none';
+              changeBtn.style.cursor = 'not-allowed';
+            }
+            
+            console.log('✅ Botón de selección de backup bloqueado exitosamente para Ramon');
+          }
+          
+          // Ejecutar la función inmediatamente
+          bloquearBotonSelectBackup();
+          
+          // Y también después de un retraso para asegurarnos
+          setTimeout(bloquearBotonSelectBackup, 500);
+          setTimeout(bloquearBotonSelectBackup, 1000);
+          setTimeout(bloquearBotonSelectBackup, 2000);
+          
+          // Ejecutar una última vez cuando la ventana esté completamente cargada
+          window.addEventListener('load', function() {
+            setTimeout(bloquearBotonSelectBackup, 100);
+          });
+        }
+      } catch (e) {
+        console.error('Error al verificar permisos:', e);
+      }
+    })();
   </script>
 </MainLayout>

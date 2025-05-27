@@ -41,6 +41,9 @@ def format_size(size_bytes):
 async def list_backups(
     current_user: Optional[User] = Depends(get_current_user)
 ):
+    # Verificar que el usuario tenga el rol adecuado
+    if not current_user or not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
+        raise HTTPException(status_code=403, detail="No tienes permisos para ver copias de seguridad")
     """
     Lista todos los backups disponibles.
     """

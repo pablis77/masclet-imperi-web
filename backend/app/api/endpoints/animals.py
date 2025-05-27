@@ -67,8 +67,16 @@ async def create_animal(
     current_user: User = Depends(get_current_user)
 ) -> AnimalResponse:
     """Crear un nuevo animal"""
-    # Verificar que el usuario tiene permisos para crear animales
-    await check_permissions(current_user, Action.CREAR)
+    # Verificar permisos: Solo administrador y Ramon pueden crear animales
+    from app.core.auth import verify_user_role
+    from app.core.config import UserRole
+    
+    if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
+        logger.warning(f"Usuario {current_user.username} (rol: {current_user.role}) intentó crear animal sin permisos")
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permisos para crear animales. Esta acción requiere rol de Administrador."
+        )
     
     try:
         # Validar los datos usando el schema antes de procesar
@@ -602,8 +610,24 @@ async def update_animal(
     }
 
 @router.delete("/{animal_id}", status_code=204)
-async def delete_animal(animal_id: int) -> None:
+async def delete_animal(
+    animal_id: int,
+    background_tasks: BackgroundTasks = None,
+    current_user: User = Depends(get_current_user)
+) -> None:
     """Eliminar un animal"""
+    
+    # Verificar permisos: Solo administrador y Ramon pueden eliminar animales
+    from app.core.auth import verify_user_role
+    from app.core.config import UserRole
+    
+    if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
+        logger.warning(f"Usuario {current_user.username} (rol: {current_user.role}) intentó eliminar animal {animal_id} sin permisos")
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permisos para eliminar animales. Esta acción requiere rol de Administrador."
+        )
+    
     try:
         animal = await Animal.get_or_none(id=animal_id)
         if not animal:
@@ -611,8 +635,13 @@ async def delete_animal(animal_id: int) -> None:
                 status_code=404,
                 detail=f"Animal {animal_id} no encontrado"
             )
+        
+        # Registrar antes de eliminar para el backup
+        if background_tasks:
+            await trigger_backup_after_change(background_tasks, "eliminación", animal.nom, str(animal.id))
             
         await animal.delete()
+        logger.info(f"Animal {animal_id} eliminado por {current_user.username}")
         return None
     
     except HTTPException:

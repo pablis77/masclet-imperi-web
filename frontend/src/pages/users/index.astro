@@ -9,6 +9,28 @@ const allowedRoles = ['administrador', 'Ramon'];
 ---
 
 <MainLayout title="Usuarios">
+  <!-- Bloqueo total para usuarios no autorizados -->
+  <script is:inline>
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+            console.log('ACCESO DENEGADO: Redirigiendo...');
+            window.location.href = '/';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  
   <RoleGuard client:load allowedRoles={allowedRoles}>
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>

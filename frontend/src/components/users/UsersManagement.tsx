@@ -97,7 +97,9 @@ export const UsersManagement: React.FC = () => {
   }, []);
 
   const handleAddUser = () => {
+    // Al crear un nuevo usuario aseguramos que no haya usuario preseleccionado
     setSelectedUser(undefined);
+    // Reiniciamos completamente el formulario
     setShowForm(true);
   };
 

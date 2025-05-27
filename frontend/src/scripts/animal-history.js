@@ -3,8 +3,11 @@
  * Este archivo debe incluirse en la página de detalles del animal
  */
 
+// Variable global para evitar configurar listeners múltiples veces
+let eventosHistorialConfigurados = false;
+
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔄 Inicializando cargador de historial de cambios');
+    console.log('Inicializando cargador de historial de cambios');
     
     // Configuración y traducciones
     const translations = {
@@ -48,29 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Obtener contenedor de historial de cambios
         const historyContainer = document.getElementById('content-changes');
         if (!historyContainer) {
-            console.error('❌ No se encontró el contenedor de historial de cambios');
             return;
         }
         
         // Obtener ID del animal de la URL
         const animalId = window.location.pathname.split('/').pop();
         if (!animalId || isNaN(animalId)) {
-            console.error('❌ No se pudo determinar el ID del animal desde la URL');
             return;
         }
-        
-        console.log(`🔍 Preparando carga de historial para animal ID: ${animalId}`);
         
         // Crear una función para cargar el historial
         const loadAnimalHistory = async () => {
             try {
-                console.log('🟡 INICIO: Cargando historial de cambios...');
-                
                 // Mostrar indicador de carga
                 showLoadingIndicator();
-                
-                // Obtener ID del animal
-                console.log(`🔍 ID de animal extraído de URL: ${animalId}`);
                 
                 // Obtener token de autenticación
                 const token = localStorage.getItem('token');
@@ -78,15 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('No hay token de autenticación');
                 }
                 
-                console.log(`🔎 Iniciando solicitud de historial para animal ID: ${animalId}`);
-                
                 // Obtener URL base de la API
                 const apiBaseUrl = window.apiBaseUrl || 'http://localhost:8000/api/v1';
                 
                 // URL completa del endpoint
                 const apiUrl = `${apiBaseUrl}/animals/${animalId}/history`;
-                console.log(`🔗 URL de petición: ${apiUrl}`);
-                console.log(`🔑 Token (primeros caracteres): ${token.substring(0, 10)}...`);
                 
                 // Configuración de la petición con autenticación
                 const response = await fetch(apiUrl, {
@@ -102,12 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const data = await response.json();
-                console.log('✅ Historial cargado correctamente:', data);
+                console.log('Historial cargado correctamente:', data);
                 
                 // Mostrar los datos en la interfaz
                 displayHistoryData(data.data || []);
             } catch (error) {
-                console.error('❌ ERROR en fetchHistorial:', error);
+                console.error('ERROR en fetchHistorial:', error);
                 showErrorMessage(error);
             }
         };
@@ -272,23 +262,23 @@ document.addEventListener('DOMContentLoaded', () => {
             historyContainer.innerHTML = tableHTML;
         };
         
-        // Agregar evento para cargar datos cuando se haga clic en la pestaña
-        const changesTab = document.getElementById('tab-changes');
-        if (changesTab) {
-            changesTab.addEventListener('click', () => {
-                // Si es la primera vez que se hace clic en la pestaña
-                if (!changesTab.dataset.loaded) {
-                    changesTab.dataset.loaded = 'true';
-                    loadAnimalHistory();
-                }
+        // Buscar la pestaña de historial
+        const historyTab = document.getElementById('tab-changes');
+        if (historyTab && !eventosHistorialConfigurados) {
+            // Agregar evento para cargar historial al hacer clic en la pestaña
+            historyTab.addEventListener('click', () => {
+                loadAnimalHistory();
             });
+            
+            // Marcar que ya configuramos los eventos para no repetir
+            eventosHistorialConfigurados = true;
         }
         
         // Cargar inmediatamente si la pestaña de cambios está activa inicialmente
         if (window.location.hash === '#changes') {
             // Simular clic en la pestaña
-            if (changesTab) {
-                changesTab.click();
+            if (historyTab) {
+                historyTab.click();
             }
         }
     }
@@ -297,9 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeHistoryLoader();
     
     // Reinicializar si cambia el idioma
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'userLanguage') {
-            initializeHistoryLoader();
-        }
+    window.addEventListener('languageChanged', () => {
+        initializeHistoryLoader();
     });
 });
