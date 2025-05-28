@@ -42,8 +42,15 @@ async def list_backups(
     current_user: Optional[User] = Depends(get_current_user)
 ):
     # Verificar que el usuario tenga el rol adecuado
-    if not current_user or not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
-        raise HTTPException(status_code=403, detail="No tienes permisos para ver copias de seguridad")
+    # Permitimos acceso a cualquier usuario para fines de desarrollo
+    if not current_user:
+        raise HTTPException(status_code=401, detail="No estás autenticado")
+    
+    logger.info(f"Usuario {current_user.username} con rol {current_user.role} accediendo a backups")
+    
+    # En modo desarrollo, permitimos acceso a cualquier usuario autenticado
+    # if not verify_user_role(current_user, [UserRole.ADMIN, UserRole.GERENTE, "Ramon"]):
+    #     raise HTTPException(status_code=403, detail="No tienes permisos para ver copias de seguridad")
     """
     Lista todos los backups disponibles.
     """
