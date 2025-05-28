@@ -53,107 +53,71 @@ const userRole = 'pending'; // Este valor será reemplazado por JS del cliente
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
-  <!-- SCRIPT DE BLOQUEO DE MÁXIMA PRIORIDAD - SE EJECUTA INMEDIATAMENTE -->
-  <script is:inline>
-    (function() {
-      try {
-        // Detectar rol inmediatamente
-        const token = localStorage.getItem('token');
-        if (token) {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          const userRole = (payload.role || '').toLowerCase();
-          
-          // Código que se ejecuta inmediatamente - antes que nada
-          if (userRole === 'editor' || userRole === 'usuario') {
-            // Prevenir que se cargue el botón normal en primer lugar
-            console.log('INTERCEPTOR TEMPRANO ACTIVADO - ROL:', userRole);
-            
-            // Agregar estilos globales inmediatos para anular cualquier otro estilo
-            const style = document.createElement('style');
-            style.textContent = `
-              a[href="/animals/new"] {
-                opacity: 0.5 !important; 
-                cursor: not-allowed !important; 
-                pointer-events: none !important;
-              }
-            `;
-            document.head.appendChild(style);
-            
-            // Configurar un observer que se active tan pronto como sea posible
-            const checkAndBlockButton = function() {
-              const btn = document.querySelector('a[href="/animals/new"]');
-              if (btn) {
-                btn.href = 'javascript:void(0);';
-                btn.disabled = true;
-                btn.setAttribute('disabled', 'disabled');
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-                btn.style.pointerEvents = 'none';
-                btn.title = 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES';
-                
-                // Añadir icono de candado
-                if (!btn.querySelector('.lock-icon')) {
-                  const lockIcon = document.createElement('span');
-                  lockIcon.textContent = ' 🔒';
-                  lockIcon.className = 'ml-1 lock-icon';
-                  btn.appendChild(lockIcon);
-                }
-                
-                // Sustituir cualquier onclick existente
-                btn.onclick = function(e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
-                  return false;
-                };
-                
-                console.log('BOTÓN BLOQUEADO POR INTERCEPTOR TEMPRANO');
-              }
-            };
-            
-            // Ejecutar inmediatamente
-            checkAndBlockButton();
-            
-            // Ejecutar en eventos clave
-            document.addEventListener('DOMContentLoaded', checkAndBlockButton);
-            window.addEventListener('load', checkAndBlockButton);
-            
-            // Ejecutar con retrasos escalonados
-            setTimeout(checkAndBlockButton, 0);
-            setTimeout(checkAndBlockButton, 100);
-            setTimeout(checkAndBlockButton, 500);
-            
-            // Observar cambios en el DOM
-            const observer = new MutationObserver(checkAndBlockButton);
-            setTimeout(function() {
-              if (document.body) {
-                observer.observe(document.body, {
-                  childList: true,
-                  subtree: true
-                });
-              }
-            }, 0);
-          }
-        }
-      } catch (e) {
-        console.error('Error en interceptor temprano:', e);
-      }
-    })();
-  </script>
   <div class="w-full max-w-full px-2 sm:px-4 py-4 sm:py-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
       <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
         {title}
       </h1>
       <div class="flex flex-wrap gap-2">
-        {/* Botón con ID idéntico al usado en botones de eliminar */}
-        <a href="/animals/new" 
+        <script is:inline>
+          // Comprobar rol de usuario directamente aquí
+          (function() {
+            try {
+              const token = localStorage.getItem('token');
+              if (token) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const role = payload.role.toLowerCase();
+                
+                // Variable global para que otros scripts sepan que ya está bloqueado
+                window.newAnimalButtonBlocked = (role === 'editor' || role === 'usuario');
+                
+                document.addEventListener('DOMContentLoaded', function() {
+                  // Si se ejecuta muy rápido, esperar un tick para asegurar que el DOM esté listo
+                  setTimeout(() => {
+                    if (window.newAnimalButtonBlocked) {
+                      console.log('BLOQUEANDO BOTÓN NUEVO ANIMAL INMEDIATAMENTE PARA ROL:', role);
+                      const btn = document.getElementById('new-animal-btn');
+                      if (btn) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        btn.style.pointerEvents = 'none';
+                        btn.title = 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES';
+                        
+                        // Añadir icono de candado
+                        if (!btn.querySelector('.lock-icon')) {
+                          const lockIcon = document.createElement('span');
+                          lockIcon.textContent = ' 🔒';
+                          lockIcon.className = 'ml-1 lock-icon';
+                          btn.appendChild(lockIcon);
+                        }
+                        
+                        // Prevenir navegación
+                        btn.onclick = function(e) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+                          return false;
+                        };
+                      }
+                    }
+                  }, 0);
+                });
+              }
+            } catch (e) {
+              console.error('Error al verificar permisos para botón Nuevo Animal:', e);
+            }
+          })();
+        </script>
+        
+        {/* Botón sencillo - se bloqueará por el script anterior si el rol es restringido */}
+        <button 
            class="btn btn-primary flex items-center" 
-           id="new-animal-btn">
+           id="new-animal-btn"
+           onclick="window.location.href='/animals/new';">
           <span class="mr-1">+</span>
           {newAnimalText}
-        </a>
+        </button>
         <!-- Ya no usamos scripts en línea aquí - todo se maneja desde block-delete-button.js -->
         <button id="refreshBtn" class="btn btn-secondary flex items-center">
           <span class="mr-1">↻</span>

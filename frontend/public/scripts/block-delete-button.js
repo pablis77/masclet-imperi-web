@@ -84,46 +84,50 @@
     }
   }
   
-  // Función para bloquear botón de nuevo animal
+  // Función para bloquear el botón Nuevo Animal según el rol
   function bloquearBotonNuevoAnimal() {
-    if (bloqueoNuevoAnimalAplicado) return;
-    
-    // Usar ID idéntico al usado en el archivo HTML
-    const newAnimalBtn = document.getElementById('new-animal-btn');
-    if (newAnimalBtn) {
-      deshabilitarBoton(newAnimalBtn, 'No tienes permisos para crear nuevos animales');
-      bloqueoNuevoAnimalAplicado = true;
-      console.log('Botón Nuevo Animal bloqueado correctamente');
+    // Si ya aplicamos el bloqueo o si ya intentamos varias veces, no repetir
+    if (bloqueoNuevoAnimalAplicado || intentos > 5) {
+      bloqueoNuevoAnimalAplicado = true; // Marcar como completado para evitar más intentos
+      return true;
     }
     
-    /* Código original comentado:
-    // Si ya aplicamos el bloqueo, no repetir
-    if (bloqueoNuevoAnimalAplicado) return true;
-    
-    console.log('[block-new-animal] Buscando botón Nuevo Animal para bloquear');
-    // Buscar por href, clase y texto
-    let botonNuevoAnimal = document.querySelector('a[href="/animals/new"]');
-    
-    // Si no lo encontramos por href, probar por texto
-    if (!botonNuevoAnimal) {
-      document.querySelectorAll('a').forEach(a => {
-        if ((a.textContent.includes('Nuevo Animal') || a.textContent.includes('Nou Animal')) && !a.disabled) {
-          botonNuevoAnimal = a;
-        }
-      });
-    }
+    // Buscar botón directamente por ID (forma más directa)
+    const botonNuevoAnimal = document.getElementById('new-animal-btn');
     
     if (botonNuevoAnimal) {
-      console.log('¡Botón Nuevo Animal encontrado!', botonNuevoAnimal);
-      deshabilitarBoton(botonNuevoAnimal, 'No tienes permisos para crear nuevos animales');
+      console.log('Botón Nuevo Animal encontrado', botonNuevoAnimal);
+      
+      // Deshabilitar visualmente
+      deshabilitarBoton(botonNuevoAnimal, 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+      
+      // Añadir icono de candado
+      if (!botonNuevoAnimal.querySelector('.lock-icon')) {
+        const lockIcon = document.createElement('span');
+        lockIcon.textContent = ' 🔒';
+        lockIcon.className = 'ml-1 lock-icon';
+        botonNuevoAnimal.appendChild(lockIcon);
+      }
+      
+      // Sobreescribir el onclick
+      botonNuevoAnimal.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+        return false;
+      };
+      
       bloqueoNuevoAnimalAplicado = true;
-      console.log('Botón Nuevo Animal bloqueado exitosamente');
+      console.log('Botón Nuevo Animal bloqueado correctamente');
       return true;
     } else {
-      console.log('Botón Nuevo Animal no encontrado en intento', intentos);
+      // Si no existe el botón en la página actual, dejamos de buscarlo
+      // después de unos pocos intentos
+      if (intentos >= 3) {
+        bloqueoNuevoAnimalAplicado = true; // Para no seguir buscando indefinidamente
+      }
       return false;
     }
-    */
   }
   
   // Función principal para aplicar todas las restricciones
@@ -144,7 +148,8 @@
     console.log(`Verificando restricciones para rol: ${userRole} (intento ${intentos})`);
     
     // Solo bloquear para roles editor y usuario
-    if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+    const rolLower = userRole.toLowerCase();
+    if (rolLower === 'editor' || rolLower === 'usuario') {
       console.log('Aplicando bloqueos para rol restringido:', userRole);
       
       // Aplicar los tres bloqueos en orden
