@@ -190,6 +190,181 @@ Durante las pruebas se detectó un problema crítico con la detección de roles 
    - Diseñar con múltiples capas de detección para información crítica
    - Implementar casos especiales para usuarios fundamentales (admin, Ramon)
 
+### 2.4 Solución Robusta para Bloqueo de Botones según Rol
+
+#### Problema: Bloqueo del Botón "Nuevo Animal" para Roles Restringidos
+
+Se identificó la necesidad de bloquear el botón "Nuevo Animal" para usuarios con roles `editor` y `usuario`, permitiendo su uso solo a `administrador` y `Ramon`. Se probaron múltiples enfoques hasta encontrar la solución óptima.
+
+#### Intentos y Dificultades Encontradas
+
+1. **Solución inicial con script externo**:
+   - Se creó `block-delete-button.js` para bloquear botones según rol
+   - Problema: El script se ejecutaba demasiado tarde, permitiendo acceso al botón brevemente
+   - La función `bloquearBotonNuevoAnimal()` no siempre encontraba el botón correctamente
+
+2. **Conversión de `<a>` a `<button>`**:
+   - Se modificó el elemento de enlace `<a href="/animals/new">` a `<button>`
+   - Problema: El script seguía ejecutándose demasiado tarde
+   - Los selectores CSS no siempre encontraban el botón correctamente
+
+3. **Solución con CSS global**:
+   - Se intentó bloquear mediante CSS con selectores como `a[href="/animals/new"]`
+   - Problema: Las reglas CSS no siempre se aplicaban a tiempo
+
+4. **Problema de verificación innecesaria**:
+   - El script buscaba el botón en todas las páginas, no solo en la lista de animales
+   - Generaba errores en consola y uso innecesario de recursos
+
+#### Solución Final Implementada
+
+La solución definitiva utiliza un **script inline directamente en la página** donde existe el botón:
+
+```astro
+<div class="flex flex-wrap gap-2">
+  <script is:inline>
+    // Comprobar rol de usuario directamente aquí
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const role = payload.role.toLowerCase();
+          
+          // Variable global para que otros scripts sepan que ya está bloqueado
+          window.newAnimalButtonBlocked = (role === 'editor' || role === 'usuario');
+          
+          document.addEventListener('DOMContentLoaded', function() {
+            // Si se ejecuta muy rápido, esperar un tick para asegurar que el DOM esté listo
+            setTimeout(() => {
+              if (window.newAnimalButtonBlocked) {
+                console.log('BLOQUEANDO BOTÓN NUEVO ANIMAL INMEDIATAMENTE PARA ROL:', role);
+                const btn = document.getElementById('new-animal-btn');
+                if (btn) {
+                  btn.disabled = true;
+                  btn.style.opacity = '0.5';
+                  btn.style.cursor = 'not-allowed';
+                  btn.style.pointerEvents = 'none';
+                  btn.title = 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES';
+                  
+                  // Añadir icono de candado
+                  if (!btn.querySelector('.lock-icon')) {
+                    const lockIcon = document.createElement('span');
+                    lockIcon.textContent = ' 🔒';
+                    lockIcon.className = 'ml-1 lock-icon';
+                    btn.appendChild(lockIcon);
+                  }
+                  
+                  // Prevenir navegación
+                  btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+                    return false;
+                  };
+                }
+              }
+            }, 0);
+          });
+        }
+      } catch (e) {
+        console.error('Error al verificar permisos para botón Nuevo Animal:', e);
+      }
+    })();
+  </script>
+  
+  <!-- El botón que será bloqueado si es necesario -->
+  <button 
+     class="btn btn-primary flex items-center" 
+     id="new-animal-btn"
+     onclick="window.location.href='/animals/new';">
+    <span class="mr-1">+</span>
+    {newAnimalText}
+  </button>
+</div>
+```
+
+#### Ventajas de la Solución Final
+
+1. **Ejecución inmediata**: El script se ejecuta en cuanto se carga la página, antes que cualquier otro script
+2. **Independencia**: No depende de scripts externos que podrían cargarse tarde
+3. **Simplicidad**: El código está directamente en la página donde se encuentra el botón
+4. **Robustez**: Múltiples capas de protección (visual, funcional e interactiva)
+5. **Informativo**: Proporciona feedback visual (candado) y mensaje de error explicativo
+
+#### Patrón Recomendado para Futuros Bloqueos
+
+Para bloquear otros botones o elementos según rol, se recomienda:
+
+1. **Ubicar el script inline lo más cerca posible** del elemento a bloquear
+2. **Usar ID único** para el elemento a bloquear
+3. **Verificar el rol directamente** desde el token JWT
+4. **Aplicar múltiples técnicas de bloqueo**:
+   - Visual: `opacity`, `cursor: not-allowed`
+   - Funcional: `disabled`, reemplazar `onclick`
+   - Interactivo: `pointerEvents: none`
+   - Explicativo: `title` con mensaje, icono de candado 🔒
+5. **Manejar errores** adecuadamente para evitar fallos en la interfaz
+
+#### Código Reutilizable para Bloqueo de Botones
+
+Plantilla para futuros bloqueos:
+
+```javascript
+function bloquearElemento(id, roles, mensaje) {
+  try {
+    // Obtener rol del usuario
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userRole = (payload.role || '').toLowerCase();
+    
+    // Verificar si el rol actual está en la lista de roles a bloquear
+    if (roles.includes(userRole)) {
+      // Encontrar el elemento por ID
+      const elemento = document.getElementById(id);
+      if (!elemento) return;
+      
+      // Aplicar bloqueo visual
+      elemento.disabled = true;
+      elemento.style.opacity = '0.5';
+      elemento.style.cursor = 'not-allowed';
+      elemento.style.pointerEvents = 'none';
+      elemento.title = mensaje;
+      
+      // Añadir icono de candado
+      if (!elemento.querySelector('.lock-icon')) {
+        const lockIcon = document.createElement('span');
+        lockIcon.textContent = ' 🔒';
+        lockIcon.className = 'ml-1 lock-icon';
+        elemento.appendChild(lockIcon);
+      }
+      
+      // Reemplazar eventos
+      const originalClick = elemento.onclick;
+      elemento.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert(mensaje);
+        return false;
+      };
+      
+      console.log(`Elemento ${id} bloqueado para rol ${userRole}`);
+    }
+  } catch (e) {
+    console.error(`Error al bloquear elemento ${id}:`, e);
+  }
+}
+
+// Ejemplo de uso:
+// document.addEventListener('DOMContentLoaded', function() {
+//   setTimeout(() => {
+//     bloquearElemento('nuevo-usuario-btn', ['editor', 'usuario'], 'NO TIENES PERMISOS PARA CREAR NUEVOS USUARIOS');
+//   }, 0);
+// });
+```
+
 #### Credenciales de Prueba
 
 Para realizar pruebas con diferentes roles:

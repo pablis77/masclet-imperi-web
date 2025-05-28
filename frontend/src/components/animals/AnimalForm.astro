@@ -225,6 +225,58 @@ function formatDateForInput(dob) {
       </button>
     </div>
     
+    <!-- Script para bloquear el botón de eliminar animal para roles restringidos -->
+    <script is:inline>
+      // Comprobar rol de usuario directamente aquí
+      (function() {
+        try {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const role = payload.role.toLowerCase();
+            
+            // Variable global para que otros scripts sepan que ya está bloqueado
+            window.deleteAnimalButtonBlocked = (role === 'editor' || role === 'usuario');
+            
+            document.addEventListener('DOMContentLoaded', function() {
+              // Si se ejecuta muy rápido, esperar un tick para asegurar que el DOM esté listo
+              setTimeout(() => {
+                if (window.deleteAnimalButtonBlocked) {
+                  console.log('BLOQUEANDO BOTÓN ELIMINAR ANIMAL INMEDIATAMENTE PARA ROL:', role);
+                  const btn = document.getElementById('delete-animal-btn');
+                  if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.pointerEvents = 'none';
+                    btn.title = 'NO TIENES PERMISOS PARA ELIMINAR ANIMALES';
+                    
+                    // Añadir icono de candado
+                    if (!btn.querySelector('.lock-icon')) {
+                      const lockIcon = document.createElement('span');
+                      lockIcon.textContent = ' 🔒';
+                      lockIcon.className = 'ml-1 lock-icon';
+                      btn.appendChild(lockIcon);
+                    }
+                    
+                    // Prevenir navegación
+                    btn.onclick = function(e) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      alert('NO TIENES PERMISOS PARA ELIMINAR ANIMALES');
+                      return false;
+                    };
+                  }
+                }
+              }, 0);
+            });
+          }
+        } catch (e) {
+          console.error('Error al verificar permisos para botón Eliminar Animal:', e);
+        }
+      })();
+    </script>
+    
     <!-- Botón para eliminar animal (rojo, a la derecha) -->
     <button type="button" id="delete-animal-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center shadow-md">
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
