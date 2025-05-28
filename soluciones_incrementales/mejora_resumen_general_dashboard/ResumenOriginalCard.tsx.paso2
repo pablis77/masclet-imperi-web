@@ -22,49 +22,33 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar datos al montar el componente usando el nuevo endpoint optimizado
+  // Cargar datos al montar el componente con peticiones en paralelo
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        console.log('Obteniendo datos para ResumenOriginalCard desde endpoint optimizado...');
+        console.log('Obteniendo datos para ResumenOriginalCard...');
         
-        // IMPORTANTE: Usar el nuevo endpoint optimizado que combina las tres llamadas en una sola
-        // Esto mejora significativamente el rendimiento manteniendo datos dinámicos y reales
-        const optimizedResponse = await apiService.get('/dashboard/resumen-card');
+        // IMPORTANTE: Hacer todas las peticiones en paralelo para mayor velocidad
+        // pero siempre usando datos dinámicos y reales
+        const [statsResponse, animalesResponse, periodoResponse] = await Promise.all([
+          apiService.get('/dashboard/stats'),
+          apiService.get('/dashboard-detallado/animales-detallado'),
+          apiService.get('/dashboard-periodo/periodo-dinamico')
+        ]);
         
-        // Guardar resultados desde la respuesta combinada
-        setStats(optimizedResponse.stats);
-        setAnimalesDetallados(optimizedResponse.animales_detallados);
-        setPeriodoData(optimizedResponse.periodo);
+        // Guardar resultados
+        setStats(statsResponse);
+        setAnimalesDetallados(animalesResponse);
+        setPeriodoData(periodoResponse);
         
-        console.log('Datos obtenidos correctamente desde endpoint optimizado');
         setLoading(false);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
-        console.error(`Error cargando datos desde endpoint optimizado: ${errorMsg}`);
-        console.error('Intentando fallback a peticiones individuales...');
-        
-        // Si el nuevo endpoint falla, volvemos al método anterior como fallback
-        try {
-          const [statsResponse, animalesResponse, periodoResponse] = await Promise.all([
-            apiService.get('/dashboard/stats'),
-            apiService.get('/dashboard-detallado/animales-detallado'),
-            apiService.get('/dashboard-periodo/periodo-dinamico')
-          ]);
-          
-          setStats(statsResponse);
-          setAnimalesDetallados(animalesResponse);
-          setPeriodoData(periodoResponse);
-          setLoading(false);
-          setError(null);
-        } catch (fallbackErr) {
-          const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : 'Error desconocido';
-          console.error(`Fallback también ha fallado: ${fallbackMsg}`);
-          setError('Error cargando datos del dashboard. Por favor, intenta de nuevo.');
-          setLoading(false);
-        }
+        console.error(`Error cargando datos: ${errorMsg}`);
+        setError(errorMsg);
+        setLoading(false);
       }
     };
     
@@ -147,8 +131,8 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
         {/* Título eliminado para evitar duplicación */}
         {periodoData && (
           <div className="text-sm bg-blue-100 text-blue-800 rounded-full px-3 py-1">
-            Período: {periodoData.formato_fecha_inicio || 'N/A'} a {periodoData.formato_fecha_fin || 'N/A'}
-            {periodoData.dias && <span className="ml-2 font-semibold">• {periodoData.dias} días</span>}
+            Período: {formatDate(periodoData.inicio)} a {formatDate(periodoData.fin)}
+            {periodoData.dinamico && <span className="ml-2 font-semibold">• Dinámico</span>}
           </div>
         )}
       </div>

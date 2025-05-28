@@ -25,7 +25,8 @@ Este documento describe la metodología que hemos desarrollado para implementar 
 Para cada iteración del proceso:
 
 1. **Crear copia de seguridad del estado actual**:
-   ```
+
+   ```bash
    copy "ruta\al\archivo_original.ext" "ruta\al\archivo_original.ext.backup"
    ```
 
@@ -38,7 +39,8 @@ Para cada iteración del proceso:
    - Verificar que no se han introducido efectos secundarios.
 
 4. **Guardar punto de control**:
-   ```
+
+   ```bash
    copy "ruta\al\archivo_modificado.ext" "ruta\al\archivo_modificado.ext.paso1"
    ```
 
@@ -122,6 +124,100 @@ Se identificó que para una optimización más profunda sería necesario:
 2. Crear un nuevo endpoint específico para dashboard que combine datos
 3. Optimizar consultas a nivel de base de datos
 
+## Estructura de Documentación de Soluciones
+
+Para mantener un registro organizado y accesible de todas las mejoras implementadas, se ha establecido la siguiente estructura de documentación:
+
+### 1. Carpeta Principal de Soluciones
+
+En el directorio raíz del proyecto se encuentra la carpeta `soluciones_incrementales`, que sirve como repositorio central de todas las mejoras implementadas:
+
+
+```text
+ruta/al/proyecto/
+└── soluciones_incrementales/
+```
+
+
+### 2. Subcarpetas por Solución
+
+Dentro de la carpeta principal, cada solución o mejora implementada tiene su propia subcarpeta con un nombre descriptivo:
+
+
+```text
+soluciones_incrementales/
+├── mejora_resumen_general_dashboard/
+├── optimizacion_lazy_loading/
+├── implementacion_multiidioma/
+└── ... otras soluciones ...
+```
+
+
+### 3. Documentación Estándar por Solución
+
+Cada subcarpeta debe contener como mínimo los siguientes archivos de documentación:
+
+#### 3.1 Archivo README.md
+
+Describe en detalle la solución implementada, incluyendo:
+
+- **Problema**: Descripción clara del problema que se intenta resolver
+- **Solución Implementada**: Explicación detallada de la solución
+- **Archivos Modificados**: Lista de archivos que fueron modificados
+- **Mejoras Obtenidas**: Beneficios y mejoras logradas
+- **Notas Adicionales**: Información complementaria relevante
+- **Fecha de Implementación**: Cuándo se implementó la solución
+
+
+#### 3.2 Archivo codigo_implementado.md
+
+Contiene el código exacto que se implementó, con bloques de código marcados según el lenguaje:
+
+
+```markdown
+# Código Implementado para [Nombre de la Solución]
+
+## [Nombre del Archivo 1]
+
+```[lenguaje]
+// Código implementado
+```
+
+## [Nombre del Archivo 2]
+
+```[lenguaje]
+// Código implementado
+```
+```
+
+
+#### 3.3 Archivos Adicionales (opcionales)
+
+- **capturas/**: Directorio con capturas de pantalla antes/después
+- **datos_prueba.md**: Datos de prueba utilizados para validar la solución
+- **alternativas_consideradas.md**: Otras soluciones que se evaluaron
+
+
+### 4. Proceso para Documentar una Nueva Solución
+
+1. **Crear la estructura de carpetas**:
+
+   ```bash
+   mkdir soluciones_incrementales/nombre_descriptivo_solucion
+   ```
+
+2. **Crear los archivos de documentación**:
+
+   ```bash
+   touch soluciones_incrementales/nombre_descriptivo_solucion/README.md
+   touch soluciones_incrementales/nombre_descriptivo_solucion/codigo_implementado.md
+   ```
+
+3. **Documentar la solución** siguiendo las plantillas establecidas
+
+4. **Actualizar registro central** (opcional) añadiendo la nueva solución a un índice general
+
+
 ## Ventajas de la metodología MDIS
 
 1. **Seguridad en el desarrollo**: Siempre podemos volver a un estado conocido funcional.
@@ -129,6 +225,9 @@ Se identificó que para una optimización más profunda sería necesario:
 3. **Aprendizaje iterativo**: Cada paso nos enseña sobre el comportamiento del sistema.
 4. **Documentación automática**: El proceso genera su propia documentación.
 5. **Reducción de riesgos**: Minimizamos el impacto de cambios problemáticos.
+6. **Conocimiento compartido**: La documentación estructurada facilita que otros miembros del equipo entiendan los cambios.
+7. **Reutilización de soluciones**: Soluciones documentadas pueden adaptarse a otros problemas similares.
+
 
 ## Implementación en su organización
 
@@ -138,6 +237,9 @@ Para implementar esta metodología en su equipo:
 2. Adoptar una convención de nomenclatura para los puntos de control
 3. Documentar cada iteración, incluyendo las decisiones no implementadas
 4. Realizar sesiones de revisión después de cada ciclo completo
+5. Mantener actualizada la carpeta de soluciones incrementales
+6. Fomentar la consulta de soluciones previas antes de abordar nuevos problemas
+
 
 ---
 
