@@ -38,6 +38,12 @@ import ResumenOriginalCard from './cards/ResumenOriginalCard';
 // Importar componente de diagnóstico para visualizar datos crudos
 import DiagnosticoDataCard from './cards/DiagnosticoDataCard';
 
+// Importar componentes de Skeleton Loader
+import { 
+  StatsSectionSkeleton, 
+  PartosSectionSkeleton 
+} from './components/SkeletonLoader';
+
 // Importar tipos
 import type { 
   DashboardStats, 
@@ -278,10 +284,14 @@ const DashboardV2: React.FC = () => {
       {/* SECCIÓN 1: Resumen General (Con estilo original) */}
       <SectionTitle number="1" title="Resumen General" darkMode={darkMode} translationKey="dashboard.summary" />
       <div className="stats-grid-lg">
-        {/* ResumenOriginalCard obtiene sus propios datos */}
-        <ResumenOriginalCard
-          darkMode={darkMode}
-        />
+        {/* Mostrar skeleton loader mientras carga o componente normal si ya hay datos */}
+        {loading.stats ? (
+          <StatsSectionSkeleton darkMode={darkMode} />
+        ) : (
+          <ResumenOriginalCard
+            darkMode={darkMode}
+          />
+        )}
       </div>
       
       {/* SECCIÓN 2: Análisis de Partos */}
@@ -289,13 +299,17 @@ const DashboardV2: React.FC = () => {
       <div className="combined-stats-grid">
         {/* Wrapper para que el PartosSection ocupe la mitad del ancho */}
         <div style={{ display: 'contents' }}>
-          <PartosSection 
-            statsData={statsData} 
-            partosData={partosData}
-            darkMode={darkMode} 
-            loading={loading.stats || loading.partos} 
-            error={error.stats || error.partos} 
-          />
+          {loading.partos ? (
+            <PartosSectionSkeleton darkMode={darkMode} />
+          ) : (
+            <PartosSection 
+              statsData={statsData} 
+              partosData={partosData}
+              darkMode={darkMode} 
+              loading={loading.stats || loading.partos} 
+              error={error.stats || error.partos} 
+            />
+          )}
         </div>
         {/* Espacio vacío para equilibrar la cuadrícula */}
         <div></div>
