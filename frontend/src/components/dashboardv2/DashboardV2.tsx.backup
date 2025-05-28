@@ -93,115 +93,54 @@ const DashboardV2: React.FC = () => {
     }
   };
 
-  // Función para mostrar skeleton loader mientras se cargan los datos
-  const showSkeletonLoader = () => {
-    setLoading({
-      stats: true,
-      partos: true
-    });
-  };
-
-  // Función para cargar datos desde sessionStorage si existen
-  const loadFromCache = () => {
-    try {
-      const cachedData = sessionStorage.getItem('dashboardData');
-      if (cachedData) {
-        const parsedData = JSON.parse(cachedData);
-        const cacheTime = parsedData.timestamp || 0;
-        const now = new Date().getTime();
-        
-        // Comprobar si la caché es reciente (menos de 5 minutos)
-        if (now - cacheTime < 5 * 60 * 1000) {
-          addLog('✅ Usando datos en caché (< 5min)');
-          if (parsedData.stats) setStatsData(parsedData.stats);
-          if (parsedData.partos) setPartosData(parsedData.partos);
-          return true;
-        }
-      }
-    } catch (err) {
-      // Si hay error al leer la caché, simplemente ignoramos y cargamos nuevos datos
-      console.warn('Error leyendo caché:', err);
-    }
-    return false;
-  };
-
-  // Función para guardar datos en sessionStorage
-  const saveToCache = (data: any) => {
-    try {
-      const cacheData = {
-        stats: data.stats,
-        partos: data.partos,
-        timestamp: new Date().getTime()
-      };
-      sessionStorage.setItem('dashboardData', JSON.stringify(cacheData));
-    } catch (err) {
-      // Si hay error al guardar la caché, simplemente lo ignoramos
-      console.warn('Error guardando caché:', err);
-    }
-  };
-
   // Efecto para cargar datos al montar el componente
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // 1. Mostrar skeleton loaders inmediatamente
-        showSkeletonLoader();
+        addLog('Iniciando carga de datos del dashboard v2');
         
-        // 2. Intentar cargar datos cacheados si existen
-        const usedCache = loadFromCache();
-        if (usedCache) {
-          // Actualizar estado de carga para reflejar datos de caché
-          setLoading({
-            stats: false,
-            partos: false
-          });
-        }
-        
-        // 3. Cargar datos frescos en paralelo (incluso si usamos caché)
+        // Cargar estadísticas
+        setLoading(prev => ({ ...prev, stats: true }));
         try {
-          addLog('Obteniendo datos del dashboard...');
+          addLog('Obteniendo datos de estadísticas...');
+          const statsResponse = await apiService.get('/dashboard/stats');
           
-          // Hacer peticiones en paralelo
-          const [statsResponse, partosResponse] = await Promise.all([
-            apiService.get('/dashboard/stats'),
-            apiService.get('/dashboard/partos')
-          ]);
+          // Diagnóstico detallado
+          console.log('DATOS RECIBIDOS STATS:', statsResponse);
+          if (statsResponse?.animales) {
+            console.log('DATOS DE ANIMALES:', statsResponse.animales);
+            console.log('- toros_activos:', statsResponse.animales.toros_activos);
+            console.log('- toros_fallecidos:', statsResponse.animales.toros_fallecidos);
+            console.log('- vacas_activas:', statsResponse.animales.vacas_activas);
+            console.log('- vacas_fallecidas:', statsResponse.animales.vacas_fallecidas);
+            console.log('- por_alletar:', statsResponse.animales.por_alletar);
+          }
           
-          // Guardar resultados
           setStatsData(statsResponse);
-          setPartosData(partosResponse);
-          
-          // Actualizar estados
-          setLoading({
-            stats: false,
-            partos: false
-          });
-          
-          setError({
-            stats: null,
-            partos: null
-          });
-          
-          // Guardar en caché
-          saveToCache({
-            stats: statsResponse,
-            partos: partosResponse
-          });
-          
-          addLog('✅ Datos del dashboard cargados correctamente');
+          setLoading(prev => ({ ...prev, stats: false }));
+          setError(prev => ({ ...prev, stats: null }));
+          addLog('✅ Datos de estadísticas cargados correctamente');
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
-          addLog(`Error cargando datos: ${errorMsg}`, true);
-          
-          setError({
-            stats: errorMsg,
-            partos: errorMsg
-          });
-          
-          setLoading({
-            stats: false,
-            partos: false
-          });
+          addLog(`Error obteniendo estadísticas: ${errorMsg}`, true);
+          setError(prev => ({ ...prev, stats: errorMsg }));
+          setLoading(prev => ({ ...prev, stats: false }));
+        }
+        
+        // Cargar datos de partos
+        setLoading(prev => ({ ...prev, partos: true }));
+        try {
+          addLog('Obteniendo datos de partos...');
+          const partosResponse = await apiService.get('/dashboard/partos');
+          setPartosData(partosResponse);
+          setLoading(prev => ({ ...prev, partos: false }));
+          setError(prev => ({ ...prev, partos: null }));
+          addLog('✅ Datos de partos cargados correctamente');
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
+          addLog(`Error obteniendo partos: ${errorMsg}`, true);
+          setError(prev => ({ ...prev, partos: errorMsg }));
+          setLoading(prev => ({ ...prev, partos: false }));
         }
         
       } catch (error) {
@@ -278,7 +217,7 @@ const DashboardV2: React.FC = () => {
       {/* SECCIÓN 1: Resumen General (Con estilo original) */}
       <SectionTitle number="1" title="Resumen General" darkMode={darkMode} translationKey="dashboard.summary" />
       <div className="stats-grid-lg">
-        {/* ResumenOriginalCard obtiene sus propios datos */}
+        {/* Componente visual con el estilo original que funcionaba correctamente */}
         <ResumenOriginalCard
           darkMode={darkMode}
         />

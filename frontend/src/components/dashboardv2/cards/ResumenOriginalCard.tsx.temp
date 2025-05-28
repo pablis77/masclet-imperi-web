@@ -22,24 +22,26 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar datos al montar el componente con peticiones en paralelo
+  // Cargar datos al montar el componente
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         console.log('Obteniendo datos para ResumenOriginalCard...');
         
-        // IMPORTANTE: Hacer todas las peticiones en paralelo para mayor velocidad
-        // pero siempre usando datos dinámicos y reales
-        const [statsResponse, animalesResponse, periodoResponse] = await Promise.all([
-          apiService.get('/dashboard/stats'),
-          apiService.get('/dashboard-detallado/animales-detallado'),
-          apiService.get('/dashboard-periodo/periodo-dinamico')
-        ]);
-        
-        // Guardar resultados
+        // Cargar datos de estadísticas
+        const statsResponse = await apiService.get('/dashboard/stats');
+        console.log('DATOS DE ESTADÍSTICAS:', statsResponse);
         setStats(statsResponse);
+        
+        // Cargar datos detallados de animales
+        const animalesResponse = await apiService.get('/dashboard-detallado/animales-detallado');
+        console.log('DATOS DETALLADOS DE ANIMALES:', animalesResponse);
         setAnimalesDetallados(animalesResponse);
+        
+        // Cargar periodo dinámico
+        const periodoResponse = await apiService.get('/dashboard-periodo/periodo-dinamico');
+        console.log('PERÍODO DINÁMICO:', periodoResponse);
         setPeriodoData(periodoResponse);
         
         setLoading(false);
@@ -100,22 +102,16 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
   const nursing1 = animalesDetallados?.por_alletar?.['1'] || 0;
   const nursing2 = animalesDetallados?.por_alletar?.['2'] || 0;
   
-  // Imprimir datos para debugging
-  console.log('DATOS DETALLADOS USADOS:', {
-    totalAnimals,
-    activeMales,
-    inactiveMales,
-    activeFemales,
-    inactiveFemales,
-    activeAnimals,
-    inactiveAnimals,
-    nursing0,
-    nursing1,
-    nursing2
-  });
-  
-  // También imprimir la respuesta original para verificar la estructura
-  console.log('RESPUESTA ORIGINAL:', animalesDetallados);
+  // Calcular ratio de machos a hembras
+  let ratioText = '0:0 (N/A)';
+  if (activeFemales > 0 && activeMales > 0) {
+    const ratio = (activeMales / activeFemales).toFixed(2);
+    ratioText = `${activeMales}:${activeFemales} (${ratio})`;
+  } else if (activeMales > 0) {
+    ratioText = `${activeMales}:0 (∞)`;
+  } else if (activeFemales > 0) {
+    ratioText = `0:${activeFemales} (0.00)`;
+  }
 
   // Formato para fechas
   const formatDate = (dateStr: string) => {
@@ -234,7 +230,7 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
           </div>
           
           <div className="text-xs text-center mt-1" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
-            Ratio Machos/Hembras: {activeMales}:{activeFemales} ({activeMales && activeFemales ? (activeMales / activeFemales).toFixed(2) : 'N/A'})
+            Ratio Machos/Hembras: {ratioText}
           </div>
         </div>
       </div>

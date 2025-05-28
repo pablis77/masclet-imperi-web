@@ -1,5 +1,77 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250528_215725.sql",
+        "date": "28/05/2025 21:57",
+        "timestamp": "20250528_215725",
+        "backup_type": "animal_updated",
+        "size": "104.45 KB",
+        "size_bytes": 106960,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+        "reference_id": "3065"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_215724.sql",
+        "date": "28/05/2025 21:57",
+        "timestamp": "20250528_215724",
+        "backup_type": "animal_updated",
+        "size": "104.29 KB",
+        "size_bytes": 106788,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+        "reference_id": "3065"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_215421.sql",
+        "date": "28/05/2025 21:54",
+        "timestamp": "20250528_215421",
+        "backup_type": "animal_updated",
+        "size": "104.11 KB",
+        "size_bytes": 106612,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+        "reference_id": "3065"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_215420.sql",
+        "date": "28/05/2025 21:54",
+        "timestamp": "20250528_215420",
+        "backup_type": "animal_updated",
+        "size": "103.94 KB",
+        "size_bytes": 106437,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+        "reference_id": "3065"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_165535.sql",
+        "date": "28/05/2025 16:55",
+        "timestamp": "20250528_165535",
+        "backup_type": "animal_updated",
+        "size": "103.77 KB",
+        "size_bytes": 106265,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal angel (ID: 19)",
+        "reference_id": "19"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_165516.sql",
+        "date": "28/05/2025 16:55",
+        "timestamp": "20250528_165516",
+        "backup_type": "animal_updated",
+        "size": "103.91 KB",
+        "size_bytes": 106402,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal elsa (ID: 20)",
+        "reference_id": "20"
+    },
+    {
         "filename": "backup_masclet_imperi_20250528_152050.sql",
         "date": "28/05/2025 15:20",
         "timestamp": "20250528_152050",
@@ -10,77 +82,5 @@
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal 1 (ID: 3083)",
         "reference_id": "3083"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250528_152050.sql",
-        "date": "28/05/2025 15:20",
-        "timestamp": "20250528_152050",
-        "backup_type": "animal_updated",
-        "size": "104.13 KB",
-        "size_bytes": 106630,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal 1 (ID: 3083)",
-        "reference_id": "3083"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250527_111634.sql",
-        "date": "27/05/2025 11:16",
-        "timestamp": "20250527_111634",
-        "backup_type": "animal_updated",
-        "size": "102.84 KB",
-        "size_bytes": 105311,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",
-        "reference_id": "3070"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250527_111634.sql",
-        "date": "27/05/2025 11:16",
-        "timestamp": "20250527_111634",
-        "backup_type": "animal_updated",
-        "size": "102.97 KB",
-        "size_bytes": 105446,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",
-        "reference_id": "3070"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250527_020042.sql",
-        "date": "27/05/2025 02:00",
-        "timestamp": "20250527_020042",
-        "backup_type": "daily",
-        "size": "102.71 KB",
-        "size_bytes": 105176,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup diario programado (27/05/2025)",
-        "reference_id": null
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_184606.sql",
-        "date": "26/05/2025 18:46",
-        "timestamp": "20250526_184606",
-        "backup_type": "animal_created",
-        "size": "107.41 KB",
-        "size_bytes": 109986,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Lucía_184605 (ID: 96)",
-        "reference_id": "96"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_183420.sql",
-        "date": "26/05/2025 18:34",
-        "timestamp": "20250526_183420",
-        "backup_type": "animal_created",
-        "size": "106.91 KB",
-        "size_bytes": 109480,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Francisco_183420 (ID: 95)",
-        "reference_id": "95"
     }
 ]

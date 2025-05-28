@@ -22,24 +22,26 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar datos al montar el componente con peticiones en paralelo
+  // Cargar datos al montar el componente
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         console.log('Obteniendo datos para ResumenOriginalCard...');
         
-        // IMPORTANTE: Hacer todas las peticiones en paralelo para mayor velocidad
-        // pero siempre usando datos dinámicos y reales
-        const [statsResponse, animalesResponse, periodoResponse] = await Promise.all([
-          apiService.get('/dashboard/stats'),
-          apiService.get('/dashboard-detallado/animales-detallado'),
-          apiService.get('/dashboard-periodo/periodo-dinamico')
-        ]);
-        
-        // Guardar resultados
+        // Cargar datos de estadísticas
+        const statsResponse = await apiService.get('/dashboard/stats');
+        console.log('DATOS DE ESTADÍSTICAS:', statsResponse);
         setStats(statsResponse);
+        
+        // Cargar datos detallados de animales
+        const animalesResponse = await apiService.get('/dashboard-detallado/animales-detallado');
+        console.log('DATOS DETALLADOS DE ANIMALES:', animalesResponse);
         setAnimalesDetallados(animalesResponse);
+        
+        // Cargar periodo dinámico
+        const periodoResponse = await apiService.get('/dashboard-periodo/periodo-dinamico');
+        console.log('PERÍODO DINÁMICO:', periodoResponse);
         setPeriodoData(periodoResponse);
         
         setLoading(false);

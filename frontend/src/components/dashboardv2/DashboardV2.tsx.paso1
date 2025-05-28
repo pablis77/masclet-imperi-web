@@ -278,7 +278,7 @@ const DashboardV2: React.FC = () => {
       {/* SECCIÓN 1: Resumen General (Con estilo original) */}
       <SectionTitle number="1" title="Resumen General" darkMode={darkMode} translationKey="dashboard.summary" />
       <div className="stats-grid-lg">
-        {/* ResumenOriginalCard obtiene sus propios datos */}
+        {/* Componente visual con el estilo original que funcionaba correctamente */}
         <ResumenOriginalCard
           darkMode={darkMode}
         />
