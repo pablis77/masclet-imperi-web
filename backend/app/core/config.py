@@ -99,7 +99,7 @@ class Settings(BaseModel):
     api_key: str = os.getenv("API_KEY", "api_key_placeholder")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key_placeholder")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 horas para desarrollo
 
     # Modelos para ORM
     MODELS: List[str] = [
