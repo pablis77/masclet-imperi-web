@@ -1,5 +1,29 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250528_152050.sql",
+        "date": "28/05/2025 15:20",
+        "timestamp": "20250528_152050",
+        "backup_type": "animal_updated",
+        "size": "104.03 KB",
+        "size_bytes": 106525,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal 1 (ID: 3083)",
+        "reference_id": "3083"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250528_152050.sql",
+        "date": "28/05/2025 15:20",
+        "timestamp": "20250528_152050",
+        "backup_type": "animal_updated",
+        "size": "104.13 KB",
+        "size_bytes": 106630,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras modificación (PATCH) del animal 1 (ID: 3083)",
+        "reference_id": "3083"
+    },
+    {
         "filename": "backup_masclet_imperi_20250527_111634.sql",
         "date": "27/05/2025 11:16",
         "timestamp": "20250527_111634",
@@ -58,29 +82,5 @@
         "retention_category": "daily",
         "description": "Backup tras creación del animal Francisco_183420 (ID: 95)",
         "reference_id": "95"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_183217.sql",
-        "date": "26/05/2025 18:32",
-        "timestamp": "20250526_183217",
-        "backup_type": "animal_created",
-        "size": "106.43 KB",
-        "size_bytes": 108983,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Miguel_183216 (ID: 94)",
-        "reference_id": "94"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250526_182408.sql",
-        "date": "26/05/2025 18:24",
-        "timestamp": "20250526_182408",
-        "backup_type": "animal_created",
-        "size": "106.41 KB",
-        "size_bytes": 108961,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras creación del animal Manuel (ID: 93)",
-        "reference_id": "93"
     }
 ]
