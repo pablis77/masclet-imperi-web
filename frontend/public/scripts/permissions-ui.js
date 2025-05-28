@@ -31,6 +31,31 @@ function setupPermissionsUI() {
       handleBackupPageRestrictions();
     }
     
+    // Restricciones para rol Usuario
+    if (userRole.toLowerCase() === 'usuario') {
+      console.log('Aplicando restricciones para Usuario');
+      // El rol usuario no tiene acceso a estas páginas administrativas
+      const rutasRestringidas = ['/imports', '/backup', '/users'];
+      
+      // Redirigir si está en una página restringida
+      if (rutasRestringidas.some(r => currentPath.includes(r))) {
+        window.location.href = '/';
+        return;
+      }
+      
+      // Deshabilitar enlaces a páginas restringidas
+      document.querySelectorAll('a[href*="/imports"], a[href*="/backup"], a[href*="/users"]').forEach(link => {
+        link.style.opacity = '0.5';
+        link.style.pointerEvents = 'none';
+        link.style.cursor = 'not-allowed';
+        link.title = 'No tienes permisos para acceder a esta sección';
+        link.onclick = function(e) {
+          e.preventDefault();
+          return false;
+        };
+      });
+    }
+    
   } catch (e) {
     console.error('Error al procesar permisos de UI:', e);
   }

@@ -3,8 +3,9 @@
   // Variables para controlar estados de bloqueo
   let bloqueoAnimalAplicado = false;
   let bloqueoPartosAplicado = false;
+  let bloqueoNuevoAnimalAplicado = false;
   let intentos = 0;
-  const MAX_INTENTOS = 50;
+  const MAX_INTENTOS = 100;  // Aumentar el máximo de intentos
   
   // Función para obtener el rol del usuario desde el token JWT
   function obtenerRolUsuario() {
@@ -83,6 +84,48 @@
     }
   }
   
+  // Función para bloquear botón de nuevo animal
+  function bloquearBotonNuevoAnimal() {
+    if (bloqueoNuevoAnimalAplicado) return;
+    
+    // Usar ID idéntico al usado en el archivo HTML
+    const newAnimalBtn = document.getElementById('new-animal-btn');
+    if (newAnimalBtn) {
+      deshabilitarBoton(newAnimalBtn, 'No tienes permisos para crear nuevos animales');
+      bloqueoNuevoAnimalAplicado = true;
+      console.log('Botón Nuevo Animal bloqueado correctamente');
+    }
+    
+    /* Código original comentado:
+    // Si ya aplicamos el bloqueo, no repetir
+    if (bloqueoNuevoAnimalAplicado) return true;
+    
+    console.log('[block-new-animal] Buscando botón Nuevo Animal para bloquear');
+    // Buscar por href, clase y texto
+    let botonNuevoAnimal = document.querySelector('a[href="/animals/new"]');
+    
+    // Si no lo encontramos por href, probar por texto
+    if (!botonNuevoAnimal) {
+      document.querySelectorAll('a').forEach(a => {
+        if ((a.textContent.includes('Nuevo Animal') || a.textContent.includes('Nou Animal')) && !a.disabled) {
+          botonNuevoAnimal = a;
+        }
+      });
+    }
+    
+    if (botonNuevoAnimal) {
+      console.log('¡Botón Nuevo Animal encontrado!', botonNuevoAnimal);
+      deshabilitarBoton(botonNuevoAnimal, 'No tienes permisos para crear nuevos animales');
+      bloqueoNuevoAnimalAplicado = true;
+      console.log('Botón Nuevo Animal bloqueado exitosamente');
+      return true;
+    } else {
+      console.log('Botón Nuevo Animal no encontrado en intento', intentos);
+      return false;
+    }
+    */
+  }
+  
   // Función principal para aplicar todas las restricciones
   function aplicarRestricciones() {
     // Incrementar contador de intentos
@@ -90,6 +133,7 @@
     
     // Si superamos el máximo de intentos, detener
     if (intentos > MAX_INTENTOS) {
+      console.log('Se alcanzó el máximo de intentos:', MAX_INTENTOS);
       if (window.blockButtonsInterval) {
         clearInterval(window.blockButtonsInterval);
       }
@@ -97,15 +141,20 @@
     }
     
     const userRole = obtenerRolUsuario();
+    console.log(`Verificando restricciones para rol: ${userRole} (intento ${intentos})`);
     
     // Solo bloquear para roles editor y usuario
     if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
-      // Aplicar bloqueos
+      console.log('Aplicando bloqueos para rol restringido:', userRole);
+      
+      // Aplicar los tres bloqueos en orden
       bloquearBotonEliminarAnimal();
       bloquearBotonesEliminarPartos();
+      bloquearBotonNuevoAnimal();
       
       // Si todos los bloqueos están aplicados, detener intervalo
-      if (bloqueoAnimalAplicado && bloqueoPartosAplicado) {
+      if (bloqueoAnimalAplicado && bloqueoPartosAplicado && bloqueoNuevoAnimalAplicado) {
+        console.log('¡Todos los bloqueos aplicados! Deteniendo interval.');
         if (window.blockButtonsInterval) {
           clearInterval(window.blockButtonsInterval);
         }
@@ -116,15 +165,21 @@
   // Ejecutar inmediatamente
   aplicarRestricciones();
   
-  // Seguir intentando periódicamente
-  window.blockButtonsInterval = setInterval(aplicarRestricciones, 300);
+  // Seguir intentando periódicamente con más frecuencia al inicio
+  window.blockButtonsInterval = setInterval(aplicarRestricciones, 200);
   
-  // Limpiar el intervalo después de 5 segundos
+  // Limpiar el intervalo después de 10 segundos (más tiempo para asegurar)
   setTimeout(() => {
     if (window.blockButtonsInterval) {
       clearInterval(window.blockButtonsInterval);
+      console.log('Interval de bloqueos detenido por tiempo máximo');
     }
-  }, 5000);
+  }, 10000);
+  
+  // Ejecutar con retrasos adicionales (para cargas dinámicas tardías)
+  [500, 1000, 2000, 3000, 5000].forEach(ms => {
+    setTimeout(aplicarRestricciones, ms);
+  });
   
   // Ejecutar cuando cambia la pestañA
   function onTabClick() {

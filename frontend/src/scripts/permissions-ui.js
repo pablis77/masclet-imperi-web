@@ -40,6 +40,34 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
+    // NOTA: El bloqueo del botón "Nuevo Animal" ahora se gestiona desde block-new-animal-button.js
+    // Para evitar conflictos entre scripts, se comenta este código
+    /*
+    // Bloquear específicamente el botón "Nuevo Animal" para el rol Editor
+    if (userRole.toLowerCase() === 'editor') {
+      // Seleccionamos específicamente el botón de nuevo animal
+      document.querySelectorAll('a[href="/animals/new"]').forEach(boton => {
+        // Aplicar clases de estilo visual de deshabilitado
+        boton.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        // Aplicar estilos inline (igual que el botón de eliminar)
+        boton.setAttribute('style', 'opacity: 0.5; cursor: not-allowed; pointer-events: none;');
+        
+        // Añadir atributo disabled (aunque no es estándar para enlaces, ayuda visualmente)
+        boton.setAttribute('disabled', 'disabled');
+        
+        // Añadir mensaje explicativo al hacer hover
+        boton.setAttribute('title', 'No tienes permisos para crear nuevos animales');
+        
+        // Prevenir el clic
+        boton.onclick = function(e) {
+          e.preventDefault();
+          return false;
+        };
+      });
+    }
+    */
+
     // Restricciones para Ramon
     if (userRole === 'Ramon') {
       // Deshabilitar botón de selección de backup
