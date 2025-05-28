@@ -1,6 +1,6 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
+from typing import List, Optional, Union, Any
+from pydantic import BaseModel, Field, validator
+from datetime import datetime, date
 
 
 class ListadoAnimalBase(BaseModel):
@@ -46,7 +46,17 @@ class AnimalBasico(BaseModel):
     observaciones: Optional[str] = None  # Observaciones del animal en el listado
     cod: Optional[str] = None
     num_serie: Optional[str] = None
-    dob: Optional[datetime] = None
+    dob: Optional[Any] = None  # Acepta cualquier tipo para validación flexible
+    
+    # Validador para convertir objetos date a datetime si es necesario
+    @validator('dob', pre=True)
+    def validate_date(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, date) and not isinstance(v, datetime):
+            # Convertir date a datetime
+            return datetime.combine(v, datetime.min.time())
+        return v
     
     class Config:
         from_attributes = True
