@@ -43,8 +43,8 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
 <MainLayout title={titulo}>
   <div class="px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
-      <p class="mt-2 text-sm text-gray-700">{t('description')}</p>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{titulo}</h1>
+      <p class="mt-2 text-sm text-gray-700">{descripcion}</p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
@@ -53,7 +53,7 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
         <div id="loading-message" class="py-8 flex justify-center">
           <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-            <p class="mt-2 text-sm text-gray-500">{t('loading')}</p>
+            <p class="mt-2 text-sm text-gray-500">{cargando}</p>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
             <!-- Nombre del listado -->
             <div>
               <label for="listado-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('name')} <span class="text-red-500">*</span>
+                {nombreLabel} <span class="text-red-500">*</span>
               </label>
               <div class="mt-1">
                 <input
@@ -72,17 +72,17 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                   name="name"
                   id="listado-name"
                   class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder={t('namePlaceholder')}
+                  placeholder={nombrePlaceholder}
                   required
                 />
               </div>
-              <p id="name-error" class="mt-1 text-sm text-red-600 hidden">{t('required')}</p>
+              <p id="name-error" class="mt-1 text-sm text-red-600 hidden">{requerido}</p>
             </div>
             
             <!-- Categoría -->
             <div>
               <label for="listado-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('category')}
+                {categoriaLabel}
               </label>
               <div class="mt-1">
                 <select
@@ -90,22 +90,22 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                   name="category"
                   class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
-                  <option value="">{t('categoryPlaceholder')}</option>
-                  <option value="vaccination">{t('categoryVaccination')}</option>
-                  <option value="treatment">{t('categoryTreatment')}</option>
-                  <option value="transport">{t('categoryTransport')}</option>
-                  <option value="sale">{t('categorySale')}</option>
-                  <option value="other">{t('categoryOther')}</option>
+                  <option value="">{categoriaPlaceholder}</option>
+                  <option value="vaccination">{categoriaVacunacion}</option>
+                  <option value="treatment">{categoriaTratamiento}</option>
+                  <option value="transport">{categoriaTransporte}</option>
+                  <option value="sale">{categoriaVenta}</option>
+                  <option value="other">{categoriaOtro}</option>
                 </select>
               </div>
-              <p id="category-error" class="mt-1 text-sm text-red-600 hidden">{t('required')}</p>
+              <p id="category-error" class="mt-1 text-sm text-red-600 hidden">{requerido}</p>
             </div>
           </div>
           
           <!-- Descripción -->
           <div>
             <label for="listado-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('descriptionLabel')}
+              {descripcionLabel}
             </label>
             <div class="mt-1">
               <textarea
@@ -113,26 +113,26 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                 name="description"
                 rows="3"
                 class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder={t('descriptionPlaceholder')}
+                placeholder={descripcionPlaceholder}
               ></textarea>
             </div>
           </div>
           
           <!-- Selección de animales -->
           <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-3">{t('animals')}</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-3">{animalesLabel}</h3>
             
             <!-- Estado de carga de animales -->
             <div id="loading-animals" class="py-8 flex justify-center">
               <div class="flex flex-col items-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                <p class="mt-2 text-sm text-gray-500">{t('loading')}</p>
+                <p class="mt-2 text-sm text-gray-500">{cargando}</p>
               </div>
             </div>
             
             <!-- Mensaje si no hay animales -->
             <div id="no-animals" class="py-8 text-center hidden">
-              <p class="text-gray-500">{t('noAnimals')}</p>
+              <p class="text-gray-500">{noAnimales}</p>
             </div>
             
             <!-- Contenedor de animales -->
@@ -143,7 +143,7 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                   <input
                     type="text"
                     id="animal-filter"
-                    placeholder={t('searchAnimals')}
+                    placeholder={buscarAnimales}
                     class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
@@ -154,17 +154,17 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                     id="select-all"
                     class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
                   >
-                    {t('selectAll')}
+                    {seleccionarTodos}
                   </button>
                   <button
                     type="button"
                     id="unselect-all"
                     class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
                   >
-                    {t('unselectAll')}
+                    {deseleccionarTodos}
                   </button>
                   <span class="text-sm text-gray-500">
-                    {t('selectedCount')} <span id="selected-count">0</span>
+                    {seleccionados} <span id="selected-count">0</span>
                   </span>
                 </div>
               </div>
@@ -187,14 +187,14 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                 </svg>
               </div>
               <div class="ml-3">
-                <h3 class="text-sm font-medium text-green-800">{t('success')}</h3>
+                <h3 class="text-sm font-medium text-green-800">{exito}</h3>
                 <div class="mt-2 text-sm text-green-700">
-                  <p>{t('successMessage')}</p>
+                  <p>{mensajeExito}</p>
                 </div>
                 <div class="mt-4">
                   <div class="-mx-2 -my-1.5 flex">
                     <a href="/listados" class="px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                      {t('back')}
+                      {volver}
                     </a>
                   </div>
                 </div>
@@ -211,7 +211,7 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                 </svg>
               </div>
               <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">{t('error')}</h3>
+                <h3 class="text-sm font-medium text-red-800">{error}</h3>
                 <div class="mt-2 text-sm text-red-700" id="error-details">
                   <!-- Detalles del error se mostrarán aquí -->
                 </div>
@@ -222,14 +222,14 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
           <!-- Botones de acción -->
           <div class="flex justify-end space-x-3">
             <a href="/listados" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-              {t('cancel')}
+              {cancelar}
             </a>
             <button
               type="submit"
               id="save-button"
               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              {t('save')}
+              {guardar}
             </button>
             <button
               type="button"
@@ -241,7 +241,7 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {t('saving')}
+              {guardando}
             </button>
           </div>
         </form>
