@@ -295,6 +295,28 @@ Para realizar pruebas con diferentes roles:
   - Se ha corregido la visualización del rol en la barra de navegación (ahora muestra "Ramon" correctamente)
   - Se ha optimizado el script para evitar mensajes excesivos en consola
   - Se ha corregido el email para que use el valor correcto de la base de datos (ramon@prueba.com)
+
+### 5.3 Implementación de Restricciones para Roles Editor y Usuario
+
+- [X] **COMPLETADO:** Bloquear creación de nuevos animales para roles restringidos
+  - Se ha creado script específico `block-new-animal-button.js` siguiendo el patrón de `block-delete-button.js`
+  - Se ha implementado bloqueo visual completo (opacidad reducida, cursor no permitido)
+  - Se ha añadido icono de candado 🔒 para indicar visualmente el bloqueo
+  - Se ha configurado alerta con mensaje explicativo al intentar usar el botón
+  - Implementado para roles Editor y Usuario
+
+- [X] **COMPLETADO:** Implementar restricciones para el rol Usuario
+  - Se ha actualizado `permissions-ui.js` con restricciones específicas
+  - Bloqueo de acceso a páginas administrativas: importaciones, backups y usuarios
+  - Redirección automática si intenta acceder directamente a estas rutas
+  - Deshabilitado visual de enlaces a secciones restringidas
+  - Mensajes explicativos al pasar el cursor sobre elementos bloqueados
+  
+- [X] **COMPLETADO:** Reorganización de scripts de permisos
+  - Se ha corregido referencia a scripts en `PermissionsManager.astro`
+  - Se ha eliminado duplicidad de implementaciones entre scripts
+  - Se ha mejorado la organización con scripts específicos para cada restricción
+  - Se ha implementado detección de rol más robusta
 - [ ] **PENDIENTE:** Implementar permisos específicos para Ramon en cada sección del sistema (ver [`permisos_usuarios.md`](../permisos_usuarios.md))
 - [X] El rol "Ramon" es reconocido por el sistema y tiene los permisos básicos
 

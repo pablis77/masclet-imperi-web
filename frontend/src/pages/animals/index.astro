@@ -45,22 +45,116 @@ const canCreateAnimals = true;
 
 // Definir título y rol de usuario
 const title = pageTitle;
-// En modo desarrollo, usamos un rol fijo
-const userRole = 'admin';
+
+// No definimos el rol aquí para componentes server-side
+// El rol se detectará en el cliente con JavaScript
+const userRole = 'pending'; // Este valor será reemplazado por JS del cliente
 
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
+  <!-- SCRIPT DE BLOQUEO DE MÁXIMA PRIORIDAD - SE EJECUTA INMEDIATAMENTE -->
+  <script is:inline>
+    (function() {
+      try {
+        // Detectar rol inmediatamente
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = (payload.role || '').toLowerCase();
+          
+          // Código que se ejecuta inmediatamente - antes que nada
+          if (userRole === 'editor' || userRole === 'usuario') {
+            // Prevenir que se cargue el botón normal en primer lugar
+            console.log('INTERCEPTOR TEMPRANO ACTIVADO - ROL:', userRole);
+            
+            // Agregar estilos globales inmediatos para anular cualquier otro estilo
+            const style = document.createElement('style');
+            style.textContent = `
+              a[href="/animals/new"] {
+                opacity: 0.5 !important; 
+                cursor: not-allowed !important; 
+                pointer-events: none !important;
+              }
+            `;
+            document.head.appendChild(style);
+            
+            // Configurar un observer que se active tan pronto como sea posible
+            const checkAndBlockButton = function() {
+              const btn = document.querySelector('a[href="/animals/new"]');
+              if (btn) {
+                btn.href = 'javascript:void(0);';
+                btn.disabled = true;
+                btn.setAttribute('disabled', 'disabled');
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.style.pointerEvents = 'none';
+                btn.title = 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES';
+                
+                // Añadir icono de candado
+                if (!btn.querySelector('.lock-icon')) {
+                  const lockIcon = document.createElement('span');
+                  lockIcon.textContent = ' 🔒';
+                  lockIcon.className = 'ml-1 lock-icon';
+                  btn.appendChild(lockIcon);
+                }
+                
+                // Sustituir cualquier onclick existente
+                btn.onclick = function(e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+                  return false;
+                };
+                
+                console.log('BOTÓN BLOQUEADO POR INTERCEPTOR TEMPRANO');
+              }
+            };
+            
+            // Ejecutar inmediatamente
+            checkAndBlockButton();
+            
+            // Ejecutar en eventos clave
+            document.addEventListener('DOMContentLoaded', checkAndBlockButton);
+            window.addEventListener('load', checkAndBlockButton);
+            
+            // Ejecutar con retrasos escalonados
+            setTimeout(checkAndBlockButton, 0);
+            setTimeout(checkAndBlockButton, 100);
+            setTimeout(checkAndBlockButton, 500);
+            
+            // Observar cambios en el DOM
+            const observer = new MutationObserver(checkAndBlockButton);
+            setTimeout(function() {
+              if (document.body) {
+                observer.observe(document.body, {
+                  childList: true,
+                  subtree: true
+                });
+              }
+            }, 0);
+          }
+        }
+      } catch (e) {
+        console.error('Error en interceptor temprano:', e);
+      }
+    })();
+  </script>
   <div class="w-full max-w-full px-2 sm:px-4 py-4 sm:py-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
       <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
         {title}
       </h1>
       <div class="flex flex-wrap gap-2">
-        <a href="/animals/new" class="btn btn-primary flex items-center">
+        {/* Botón con ID idéntico al usado en botones de eliminar */}
+        <a href="/animals/new" 
+           class="btn btn-primary flex items-center" 
+           id="new-animal-btn">
           <span class="mr-1">+</span>
           {newAnimalText}
         </a>
+        <!-- Ya no usamos scripts en línea aquí - todo se maneja desde block-delete-button.js -->
         <button id="refreshBtn" class="btn btn-secondary flex items-center">
           <span class="mr-1">↻</span>
           {refreshText}
@@ -102,6 +196,79 @@ const userRole = 'admin';
       </div>
     </div>
   </div>
+  <!-- SOLUCIÓN RADICAL: Interceptor global de clics -->
+  <script is:inline>
+    // Esta función se ejecuta INMEDIATAMENTE al cargar el script
+    (function() {
+      console.log('INTERCEPTOR GLOBAL INICIADO');
+      
+      // Obtener el rol del usuario (una sola vez al inicio)
+      let userRoleGlobal = 'pending';
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userRoleGlobal = (payload.role || 'guest').toLowerCase();
+          console.log('ROL GLOBAL DETECTADO:', userRoleGlobal);
+        }
+      } catch (e) {
+        console.error('Error obteniendo rol global:', e);
+      }
+      
+      // Interceptar TODOS los clics en el documento
+      document.addEventListener('click', function(event) {
+        // Solo procesar para roles restringidos
+        if (userRoleGlobal !== 'editor' && userRoleGlobal !== 'usuario') {
+          return; // Permitir clics para administradores y Ramon
+        }
+        
+        // Verificar si el clic es en un enlace a /animals/new
+        let target = event.target;
+        
+        // Si el clic es en un span dentro del enlace, buscar el enlace padre
+        while (target && target.tagName !== 'A') {
+          target = target.parentElement;
+        }
+        
+        // Si encontramos un enlace y va a /animals/new, bloquearlo
+        if (target && target.tagName === 'A' && 
+            (target.getAttribute('href') === '/animals/new' || 
+             target.textContent.includes('Nuevo Animal') || 
+             target.textContent.includes('Nou Animal'))) {
+          
+          console.log('¡INTERCEPTADO CLIC EN BOTÓN NUEVO ANIMAL!');
+          event.preventDefault();
+          event.stopPropagation();
+          
+          // Mostrar alerta
+          alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+          
+          // También intentar bloquear visualmente el botón
+          try {
+            target.href = 'javascript:void(0);';
+            target.style.opacity = '0.5';
+            target.style.cursor = 'not-allowed';
+            target.style.pointerEvents = 'none';
+            
+            // Añadir candado si no existe
+            if (!target.querySelector('.lock-icon')) {
+              const lockIcon = document.createElement('span');
+              lockIcon.textContent = ' 🔒';
+              lockIcon.className = 'ml-1 lock-icon';
+              target.appendChild(lockIcon);
+            }
+          } catch (e) {
+            console.error('Error modificando botón:', e);
+          }
+          
+          return false;
+        }
+      }, true); // Usar fase de captura para interceptar antes de otros handlers
+      
+      console.log('INTERCEPTOR GLOBAL ACTIVADO EXITOSAMENTE');
+    })();
+  </script>
 </MainLayout>
 
 <style>
@@ -166,10 +333,55 @@ const userRole = 'admin';
         const mainTitle = document.querySelector('[data-astro-source-loc="56:79"]');
         if (mainTitle) mainTitle.textContent = 'Gestió d\'Animals';
         
-        // Traducir botón nuevo animal
+        // Traducir botón nuevo animal y aplicar restricciones según rol
         const newAnimalBtn = document.querySelector('a[href="/animals/new"]');
         if (newAnimalBtn) {
-          // Mantener el signo + pero cambiar el texto
+          // Obtener rol del usuario
+          try {
+            const token = localStorage.getItem('token');
+            let userRole = 'guest';
+            
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              userRole = (payload.role || 'guest').toLowerCase();
+              console.log('Rol detectado en script traducción:', userRole);
+            }
+            
+            // Si es rol restringido, deshabilitar el botón
+            if (userRole === 'editor' || userRole === 'usuario') {
+              console.log('BLOQUEANDO BOTÓN EN SCRIPT DE TRADUCCIÓN');
+              
+              // Aplicar estrictamente bloqueo
+              newAnimalBtn.href = 'javascript:void(0);';
+              newAnimalBtn.disabled = true;
+              newAnimalBtn.setAttribute('disabled', 'disabled');
+              newAnimalBtn.style.opacity = '0.5';
+              newAnimalBtn.style.pointerEvents = 'none';
+              newAnimalBtn.style.cursor = 'not-allowed';
+              newAnimalBtn.title = 'NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES';
+              newAnimalBtn.classList.add('opacity-50', 'cursor-not-allowed');
+              
+              // Icono candado
+              if (!newAnimalBtn.querySelector('.lock-icon')) {
+                const lockIcon = document.createElement('span');
+                lockIcon.textContent = ' 🔒';
+                lockIcon.className = 'ml-1 lock-icon';
+                newAnimalBtn.appendChild(lockIcon);
+              }
+              
+              // Manejador click
+              newAnimalBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('NO TIENES PERMISOS PARA CREAR NUEVOS ANIMALES');
+                return false;
+              });
+            }
+          } catch (e) {
+            console.error('Error aplicando restricciones en traducción:', e);
+          }
+          
+          // Traducir el texto (independientemente del rol)
           const spanPlus = newAnimalBtn.querySelector('span');
           if (spanPlus && spanPlus.nextSibling) {
             spanPlus.nextSibling.textContent = ' Nou Animal';
