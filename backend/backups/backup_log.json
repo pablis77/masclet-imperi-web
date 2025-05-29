@@ -1,5 +1,29 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250529_221212.sql",
+        "date": "29/05/2025 22:12",
+        "timestamp": "20250529_221212",
+        "backup_type": "animal_updated",
+        "size": "105.88 KB",
+        "size_bytes": 108418,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal angel (ID: 21)",
+        "reference_id": "21"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250529_221201.sql",
+        "date": "29/05/2025 22:12",
+        "timestamp": "20250529_221201",
+        "backup_type": "animal_updated",
+        "size": "106.01 KB",
+        "size_bytes": 108555,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal elsa (ID: 22)",
+        "reference_id": "22"
+    },
+    {
         "filename": "backup_masclet_imperi_20250528_225129.sql",
         "date": "28/05/2025 22:51",
         "timestamp": "20250528_225129",
@@ -54,30 +78,6 @@
         "backup_type": "animal_updated",
         "size": "104.45 KB",
         "size_bytes": 106960,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
-        "reference_id": "3065"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250528_215724.sql",
-        "date": "28/05/2025 21:57",
-        "timestamp": "20250528_215724",
-        "backup_type": "animal_updated",
-        "size": "104.29 KB",
-        "size_bytes": 106788,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
-        "reference_id": "3065"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250528_215421.sql",
-        "date": "28/05/2025 21:54",
-        "timestamp": "20250528_215421",
-        "backup_type": "animal_updated",
-        "size": "104.11 KB",
-        "size_bytes": 106612,
         "created_by": "sistema",
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",

@@ -14,10 +14,16 @@ import { t, getCurrentLanguage } from '../i18n/config';
 // Obtener el idioma actual para el servidor
 const currentLang = getCurrentLanguage();
 
-// El texto de bienvenida según idioma utilizando el sistema i18n
-const welcomeText = t('common.welcome', currentLang);
+// El texto de bienvenida según idioma utilizando el sistema i18n y valores predeterminados como respaldo
+// Usamos valores fijos como respaldo para garantizar que siempre se muestre correctamente
+let welcomeText = t('common.welcome', currentLang);
+// Si el texto es igual a la clave, significa que la traducción no se encontró
+if (welcomeText === 'common.welcome') {
+  // Usamos valores predeterminados según el idioma
+  welcomeText = currentLang === 'ca' ? 'Benvingut a Masclet Imperi' : 'Bienvenido a Masclet Imperi';
+}
 
-// Crear script para actualizar el título cuando cambie el idioma usando el sistema i18n
+// Crear script para actualizar el título cuando cambie el idioma con valores predeterminados garantizados
 const updateWelcomeScript = `
 document.addEventListener('DOMContentLoaded', () => {
   const welcomeElement = document.querySelector('h1.welcome-title');
@@ -25,9 +31,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Actualizar título cuando cambie el idioma
     const updateTitle = () => {
       const lang = localStorage.getItem('userLanguage') || 'es';
-      // Obtener traducciones desde la API i18n
-      const i18n = window.i18next || { t: (key) => key };
-      welcomeElement.textContent = i18n.t('common.welcome');
+      
+      // Usar valores predeterminados garantizados según el idioma
+      // Esto asegura que siempre se muestre correctamente incluso si falla la traducción
+      let welcomeText = 'Bienvenido a Masclet Imperi';
+      if (lang === 'ca') {
+        welcomeText = 'Benvingut a Masclet Imperi';
+      }
+      
+      // Intentar obtener traducciones desde la API i18n como respaldo
+      try {
+        const i18n = window.i18next || { t: (key) => key };
+        const translatedText = i18n.t('common.welcome');
+        // Solo usar la traducción si no es igual a la clave (indica que la traducción funcionó)
+        if (translatedText && translatedText !== 'common.welcome') {
+          welcomeText = translatedText;
+        }
+      } catch (error) {
+        console.warn('Error al traducir texto de bienvenida:', error);
+      }
+      
+      // Aplicar el texto
+      welcomeElement.textContent = welcomeText;
     };
     
     // Actualizar inmediatamente
@@ -80,6 +105,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Script para actualizar el título cuando cambia el idioma -->
 <script set:html={updateWelcomeScript}></script>
+
+<!-- Script adicional para forzar la traducción directa como respaldo total -->
+<script>
+  // Este script garantiza que el título se muestre correctamente incluso si falla todo lo demás
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const welcomeElement = document.querySelector('h1.welcome-title');
+      if (welcomeElement) {
+        const content = welcomeElement.textContent;
+        // Si el contenido es la clave o está vacío, aplicar texto predeterminado
+        if (!content || content === 'common.welcome') {
+          const lang = localStorage.getItem('userLanguage') || 'es';
+          welcomeElement.textContent = lang === 'ca' ? 'Benvingut a Masclet Imperi' : 'Bienvenido a Masclet Imperi';
+        }
+      }
+    }, 500); // Dar tiempo a que otros scripts se ejecuten primero
+  });
+</script>
 
 <MainLayout title={`${t('dashboard.title', currentLang)} - Masclet Imperi`} userRole={userRole} currentPath="/">
   <div class="mx-auto px-4 py-6 bg-white dark:bg-gray-900">
