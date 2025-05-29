@@ -37,7 +37,7 @@ BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", DEFAULT_BACKUP_DIR))
 RETENTION_DAYS = int(os.environ.get("BACKUP_RETENTION_DAYS", "30"))  # Días de retención
 
 # Nombre del contenedor Docker de PostgreSQL
-POSTGRES_CONTAINER = "masclet-db"
+POSTGRES_CONTAINER = "masclet-db-new"
 
 def ensure_backup_dir():
     """Asegura que el directorio de backups exista"""

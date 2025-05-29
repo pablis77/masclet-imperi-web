@@ -10,7 +10,7 @@ from datetime import datetime
 from app.services.backup_service import BackupService, BackupInfo, BackupOptions
 from app.api.deps.auth import get_current_user
 from app.models.user import User
-from app.core.auth import verify_user_role
+from app.core.auth import verify_user_role, verify_token
 from app.core.config import UserRole
 
 # Configuración de logging
@@ -271,15 +271,42 @@ async def delete_backup(
 @router.get("/download/{filename}")
 async def download_backup(
     filename: str,
+    token: Optional[str] = None,
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """
     Descarga un backup existente.
     """
     try:
+        # Si no hay usuario autenticado pero hay token como parámetro URL, intentamos verificar manualmente
+        authenticated_user = current_user
+        if not authenticated_user and token:
+            logger.info(f"No hay usuario autenticado pero se proporcionó token URL: {token[:10]}...")
+            try:
+                # Verificamos el token y obtenemos el usuario
+                payload = verify_token(token)
+                if payload and "sub" in payload:
+                    username = payload["sub"]
+                    authenticated_user = await User.filter(username=username).first()
+                    if authenticated_user:
+                        logger.info(f"Usuario autenticado mediante token URL: {authenticated_user.username}, Rol: {authenticated_user.role}")
+                    else:
+                        logger.error(f"Usuario {username} no encontrado en la base de datos")
+            except Exception as e:
+                logger.error(f"Error al verificar token URL: {str(e)}")
+        
         # Verificar permisos (administradores y Ramon pueden descargar)
-        if not verify_user_role(current_user, [UserRole.ADMIN, "Ramon"]):
-            raise HTTPException(status_code=403, detail="No tienes permisos para descargar backups")
+        logger.info(f"Usuario intentando descargar backup: {authenticated_user.username if authenticated_user else 'No autenticado'}, Rol: {authenticated_user.role if authenticated_user else 'N/A'}")
+        allowed_roles = [UserRole.ADMIN, "Ramon"]
+        logger.info(f"Roles permitidos: {allowed_roles}")
+        
+        if not authenticated_user:
+            logger.error("Usuario no autenticado intentando descargar backup")
+            raise HTTPException(status_code=403, detail="Debes iniciar sesión para descargar backups")
+            
+        if authenticated_user.role not in allowed_roles:
+            logger.error(f"Usuario sin permisos: {authenticated_user.username}, Rol: {authenticated_user.role}")
+            raise HTTPException(status_code=403, detail=f"No tienes permisos para descargar backups. Tu rol: {authenticated_user.role}, Roles permitidos: {allowed_roles}")
         
         # Verificar que el archivo existe
         backup_path = os.path.join(BackupService.BACKUP_DIR, filename)
