@@ -1,0 +1,88 @@
+---
+/**
+ * Componente de pestañas reutilizable con soporte para traducciones
+ */
+import { t, getCurrentLanguage } from '../../i18n/config';
+
+interface Tab {
+  id: string;
+  label: string;
+  active?: boolean;
+}
+
+interface Props {
+  tabs: Tab[];
+  contentId?: string;
+}
+
+const { tabs, contentId = 'undefined' } = Astro.props;
+
+// Obtener el idioma actual para traducciones
+const lang = getCurrentLanguage();
+---
+
+<div class="border-b border-gray-200 dark:border-gray-700">
+  <div class="flex" id={`tabs-${contentId}`}>
+    {tabs.map((tab) => (
+      <button
+        id={`tab-${tab.id}`}
+        data-content={`content-${tab.id}`}
+        class={`tab px-6 py-3 ${tab.active 
+          ? 'bg-lime-500 text-white' 
+          : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} font-medium`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+</div>
+
+<script>
+  // Script para asegurarnos de que las traducciones se apliquen correctamente
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Tabs] Inicializando tabs con soporte para traducciones');
+  });
+</script>
+
+<script define:vars={{ contentId, tabs }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsContainer = document.getElementById(`tabs-${contentId}`);
+    if (!tabsContainer) return;
+    
+    const tabButtons = tabsContainer.querySelectorAll('.tab');
+    
+    function activateTab(tabId) {
+      // Actualizar clases de botones
+      tabButtons.forEach(btn => {
+        const isActive = btn.id === `tab-${tabId}`;
+        btn.classList.toggle('bg-lime-500', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('bg-gray-200', !isActive);
+        btn.classList.toggle('text-gray-700', !isActive);
+      });
+      
+      // Mostrar/ocultar contenido
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        content.classList.toggle('hidden', content.id !== `content-${tabId}`);
+      });
+    }
+    
+    // Manejar clics en pestañas
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.id.replace('tab-', '');
+        activateTab(tabId);
+      });
+    });
+    
+    // Activar la primera pestaña por defecto si ninguna está activa
+    const activeTabId = Array.from(tabButtons).find(btn => 
+      btn.classList.contains('bg-lime-500')
+    )?.id?.replace('tab-', '') || tabs[0]?.id;
+    
+    if (activeTabId) {
+      activateTab(activeTabId);
+    }
+  });
+</script>

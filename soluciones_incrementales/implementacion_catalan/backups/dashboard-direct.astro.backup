@@ -3,22 +3,17 @@
 import MainLayout from '../components/layout/MainLayout.astro';
 // Importar Dashboard2 directamente sin usar el index.ts
 import Dashboard2 from '../components/dashboard/Dashboard2';
-// Importar sistema de traducciones
-import { t, getCurrentLanguage } from '../i18n/config';
 
 // No verificamos autenticación en desarrollo - siempre permitir acceso
 const userRole = 'administrador';
 
-// Obtener el idioma actual
-const lang = getCurrentLanguage();
-
-// Título para la página usando i18n
-const title = t('dashboard_direct.title', lang);
+// Título para la página
+const title = 'Dashboard (Versión Directa)';
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/dashboard-direct">
   <div class="bg-blue-100 p-4 mb-6 rounded-lg border border-blue-300">
-    <h2 class="text-xl font-bold text-blue-800 mb-2">⚠️ {title}</h2>
+    <h2 class="text-xl font-bold text-blue-800 mb-2">⚠️ Versión Directa del Dashboard</h2>
     <p class="text-blue-700">
       Esta es una implementación directa del dashboard que importa el componente sin usar el archivo index.ts.
       Esto debería resolver los problemas de hidratación.

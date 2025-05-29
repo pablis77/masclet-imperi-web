@@ -1,12 +1,15 @@
 ---
 import MainLayout from '../../components/layout/MainLayout.astro';
-import { getCurrentLanguage } from '../../i18n/config';
+import { getCurrentLanguage, t } from '../../i18n/config';
 
 // Obtener el idioma actual
 const currentLang = getCurrentLanguage();
 
 // Obtener el ID del listado de los parámetros de la URL
 const { id } = Astro.params;
+
+// Actualizar la URL actual para el sistema de navegación
+Astro.props.currentPath = `/listados/[id]`;
 
 // Traducciones simples sin objetos anidados
 const titulo = currentLang === 'es' ? "Detalles del Listado" : "Detalls del Llistat";
@@ -156,8 +159,156 @@ const exportarPdf = currentLang === 'es' ? "Exportar a PDF" : "Exportar a PDF";
 </script>
 
 <script>
-  // Importar el servicio de listados
+  // Importar el servicio de listados y sistema de traducciones
   import * as listadosService from '../../services/listados-service';
+  import { getCurrentLanguage, t } from '../../i18n/config';
+  
+  // Forzar el idioma catalán en toda la página
+  function forceLanguage() {
+    try {
+      // Forzar catalán en localStorage
+      localStorage.setItem('userLanguage', 'ca');
+      console.log('Listado Detail: Forzando idioma catalán en toda la página');
+    } catch (error) {
+      console.error('Error al forzar idioma:', error);
+    }
+  }
+  
+  // Función para actualizar todas las traducciones en la página
+  function updateAllTranslations() {
+    try {
+      // Forzar catalán siempre
+      forceLanguage();
+      const currentLang = 'ca'; // Forzar catalán directamente
+      console.log('Listado Detail: Actualizando traducciones al idioma:', currentLang);
+      
+      // Traducir el título de la página
+      const pageTitle = document.getElementById('page-title');
+      if (pageTitle) {
+        pageTitle.textContent = currentLang === 'ca' ? "Detalls del Llistat" : "Detalles del Listado";
+      }
+      
+      // Traducir otros elementos estáticos
+      const elementosTraducibles = [
+        { id: 'btn-back', es: 'Volver a Listados', ca: 'Tornar a Llistats' },
+        { id: 'btn-edit', es: 'Editar Listado', ca: 'Editar Llistat' },
+        { id: 'export-btn-text', es: 'Exportar a PDF', ca: 'Exportar a PDF' },
+        { selector: '.campo-categoria', es: 'Categoría', ca: 'Categoria' },
+        { selector: '.campo-animales', es: 'Animales', ca: 'Animals' },
+        { selector: '.campo-creado', es: 'Creado el', ca: 'Creat el' },
+        { selector: '.empty-message', es: 'No hay animales en este listado.', ca: 'No hi ha animals en aquest llistat.' },
+        { selector: '.col-nombre', es: 'Nombre', ca: 'Nom' },
+        { selector: '.col-codigo', es: 'Código', ca: 'Codi' },
+        { selector: '.col-explotacion', es: 'Explotación', ca: 'Explotació' },
+        { selector: '.col-genero', es: 'Género', ca: 'Gènere' },
+        { selector: '.col-estado', es: 'Confirmación', ca: 'Confirmació' },
+        { selector: '.col-observaciones', es: 'Observaciones', ca: 'Observacions' }
+      ];
+      
+      elementosTraducibles.forEach(elem => {
+        if (elem.id) {
+          const el = document.getElementById(elem.id);
+          if (el) el.textContent = currentLang === 'ca' ? elem.ca : elem.es;
+        } else if (elem.selector) {
+          document.querySelectorAll(elem.selector).forEach(el => {
+            el.textContent = currentLang === 'ca' ? elem.ca : elem.es;
+          });
+        }
+      });
+      
+      console.log('Traducciones actualizadas correctamente');
+    } catch (error) {
+      console.error('Error al actualizar traducciones:', error);
+    }
+  }
+
+  // Traducción directa para asegurar que todo esté en catalán
+  function translateAllStaticTexts() {
+    try {
+      console.log('Aplicando traducción directa a todos los textos estáticos');
+      
+      // Diccionario de traducciones específicas para listados
+      const traducciones = {
+        // Títulos y elementos principales
+        'Detalles del Listado': 'Detalls del Llistat',
+        'Volver a Listados': 'Tornar a Llistats',
+        'Editar Listado': 'Editar Llistat',
+        'Exportar a PDF': 'Exportar a PDF',
+        
+        // Campos y etiquetas
+        'Categoría': 'Categoria',
+        'Animales': 'Animals',
+        'Creado el': 'Creat el',
+        'No hay animales en este listado': 'No hi ha animals en aquest llistat',
+        
+        // Tabla de animales
+        'Nombre': 'Nom',
+        'Código': 'Codi',
+        'Explotación': 'Explotació',
+        'Género': 'Gènere',
+        'Confirmación': 'Confirmació',
+        'Observaciones': 'Observacions',
+        
+        // Mensajes
+        'Cargando detalles del listado...': 'Carregant detalls del llistat...',
+        'Error al cargar los detalles del listado': 'Error al carregar els detalls del llistat',
+        'Por favor, intenta nuevamente': 'Si us plau, torna-ho a intentar'
+      };
+      
+      // Función para traducir todo el contenido de texto del documento
+      function translateTextNodes(node) {
+        if (node.nodeType === 3) { // Nodo de texto
+          let content = node.nodeValue.trim();
+          if (content) {
+            // Buscar en el diccionario de traducciones
+            for (const [es, ca] of Object.entries(traducciones)) {
+              if (content.includes(es)) {
+                node.nodeValue = node.nodeValue.replace(es, ca);
+                console.log(`Traducido: '${es}' -> '${ca}'`);
+              }
+            }
+          }
+        } else {
+          // Recorrer hijos recursivamente
+          for (let i = 0; i < node.childNodes.length; i++) {
+            translateTextNodes(node.childNodes[i]);
+          }
+        }
+      }
+      
+      // Iniciar la traducción desde el cuerpo del documento
+      translateTextNodes(document.body);
+      
+      // También traducir título de la página
+      document.title = document.title.replace('Detalles del Listado', 'Detalls del Llistat');
+      
+      console.log('Traducción directa completada');
+    } catch (error) {
+      console.error('Error en traducción directa:', error);
+    }
+  }
+
+  // Ejecutar traducción inicial y escuchar cambios de idioma
+  document.addEventListener('DOMContentLoaded', () => {
+    // Forzar catalán
+    forceLanguage();
+    
+    // Traducción inicial
+    updateAllTranslations();
+    
+    // Traducción directa (más agresiva)
+    setTimeout(() => {
+      translateAllStaticTexts();
+    }, 500); // Dar tiempo a que se cargue el contenido dinámico
+    
+    // Detectar cambios de idioma (escuchar cambios en localStorage)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        updateAllTranslations();
+        setTimeout(translateAllStaticTexts, 200);
+      }
+    });
+  });
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Obtener el ID del listado de la URL

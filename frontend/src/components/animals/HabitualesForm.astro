@@ -2,20 +2,26 @@
 /**
  * Formulario para cambios habituales en animales
  */
+import { t, getCurrentLanguage } from '../../i18n/config';
+
 interface Props {
   animal: any;
 }
 
 const { animal } = Astro.props;
+
+// Obtener el idioma actual
+const lang = getCurrentLanguage();
+console.log('[HabitualesForm] Idioma detectado:', lang);
 ---
 
 <form id="form-habituales" class="space-y-6">
-  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Estado y Amamantamiento</h3>
+  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('animals.habitual.title', lang)}</h3>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- Columna 1 -->
     <div class="space-y-4">
       <div>
-        <label for="estado_hab" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
+        <label for="estado_hab" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.status', lang)}</label>
         <select 
           id="estado_hab" 
           name="estado_hab" 
@@ -24,8 +30,8 @@ const { animal } = Astro.props;
           onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
           
         >
-          <option value="OK" selected={animal.estado === 'OK'}>Activo</option>
-          <option value="DEF" selected={animal.estado === 'DEF'}>Fallecido</option>
+          <option value="OK" selected={animal.estado === 'OK'}>{t('animals.habitual.active', lang)}</option>
+          <option value="DEF" selected={animal.estado === 'DEF'}>{t('animals.habitual.deceased', lang)}</option>
         </select>
         {/* Se ha eliminado el mensaje de alerta que indicaba que no se puede cambiar el estado */}
       </div>
@@ -35,7 +41,7 @@ const { animal } = Astro.props;
     <div class="space-y-4">
       {animal.genere === 'F' && (
         <div>
-          <label for="alletar" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado de amamantamiento</label>
+          <label for="alletar" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.nursing_status', lang)}</label>
           <select 
             id="alletar" 
             name="alletar" 
@@ -43,9 +49,9 @@ const { animal } = Astro.props;
             data-original-value={animal.alletar !== null ? animal.alletar.toString() : ''}
             onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
           >
-            <option value="0" selected={animal.alletar === 0 || animal.alletar === '0'}>No amamanta</option>
-            <option value="1" selected={animal.alletar === 1 || animal.alletar === '1'}>Un ternero</option>
-            <option value="2" selected={animal.alletar === 2 || animal.alletar === '2'}>Dos terneros</option>
+            <option value="0" selected={animal.alletar === 0 || animal.alletar === '0'}>{t('animals.habitual.not_nursing', lang)}</option>
+            <option value="1" selected={animal.alletar === 1 || animal.alletar === '1'}>{t('animals.habitual.nursing_one', lang)}</option>
+            <option value="2" selected={animal.alletar === 2 || animal.alletar === '2'}>{t('animals.habitual.nursing_two', lang)}</option>
           </select>
         </div>
       )}
@@ -53,7 +59,7 @@ const { animal } = Astro.props;
       <!-- Botón de guardar (alineado a la derecha) -->
       <div class="mt-4 flex justify-end">
         <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-          Guardar Cambios
+          {t('animals.habitual.save_changes', lang)}
         </button>
       </div>
     </div>
@@ -61,11 +67,11 @@ const { animal } = Astro.props;
 
   {animal.genere === 'F' && (
     <div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Registrar Nuevo Parto</h3>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{t('animals.habitual.new_birth_title', lang)}</h3>
       
       <div class="space-y-4">
         <div>
-          <label for="part" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Parto</label>
+          <label for="part" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.birth_date', lang)}</label>
           <input 
             type="date" 
             id="part" 
@@ -76,35 +82,35 @@ const { animal } = Astro.props;
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="GenereT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género Cría</label>
+            <label for="GenereT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.offspring_gender', lang)}</label>
             <select 
               id="GenereT" 
               name="GenereT" 
               class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">Seleccionar...</option>
-              <option value="M">Macho</option>
-              <option value="F">Hembra</option>
-              <option value="esforrada">Esforrada</option>
+              <option value="">{t('animals.habitual.select', lang)}</option>
+              <option value="M">{t('animals.form.male', lang)}</option>
+              <option value="F">{t('animals.form.female', lang)}</option>
+              <option value="esforrada">{t('animals.habitual.miscarriage', lang)}</option>
             </select>
           </div>
           
           <div>
-            <label for="EstadoT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado Cría</label>
+            <label for="EstadoT" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.offspring_status', lang)}</label>
             <select 
               id="EstadoT" 
               name="EstadoT" 
               class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">Seleccionar...</option>
-              <option value="OK">Activo</option>
-              <option value="DEF">Fallecido</option>
+              <option value="">{t('animals.habitual.select', lang)}</option>
+              <option value="OK">{t('animals.habitual.active', lang)}</option>
+              <option value="DEF">{t('animals.habitual.deceased', lang)}</option>
             </select>
           </div>
         </div>
         
         <div>
-          <label for="observacions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones (máx. 200 caracteres)</label>
+          <label for="observacions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.habitual.observations', lang)}</label>
           <textarea 
             id="observacions" 
             name="observacions" 
@@ -112,7 +118,7 @@ const { animal } = Astro.props;
             maxlength="200"
             class="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           ></textarea>
-          <div class="text-xs text-gray-500 mt-1">Notas breves sobre el cambio realizado</div>
+          <div class="text-xs text-gray-500 mt-1">{t('animals.habitual.observations_hint', lang)}</div>
         </div>
         
         <div class="flex justify-end">
@@ -121,7 +127,7 @@ const { animal } = Astro.props;
             id="registrar-parto-btn"
             class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
           >
-            Registrar Parto
+            {t('animals.habitual.register_birth', lang)}
           </button>
         </div>
       </div>

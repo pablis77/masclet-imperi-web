@@ -1,7 +1,9 @@
 ---
 /**
- * Componente de pestañas reutilizable
+ * Componente de pestañas reutilizable con soporte para traducciones
  */
+import { t, getCurrentLanguage } from '../../i18n/config';
+
 interface Tab {
   id: string;
   label: string;
@@ -10,10 +12,13 @@ interface Tab {
 
 interface Props {
   tabs: Tab[];
-  contentId: string;
+  contentId?: string;
 }
 
-const { tabs, contentId } = Astro.props;
+const { tabs, contentId = 'undefined' } = Astro.props;
+
+// Obtener el idioma actual para traducciones
+const lang = getCurrentLanguage();
 ---
 
 <div class="border-b border-gray-200 dark:border-gray-700">
@@ -31,6 +36,13 @@ const { tabs, contentId } = Astro.props;
     ))}
   </div>
 </div>
+
+<script>
+  // Script para asegurarnos de que las traducciones se apliquen correctamente
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Tabs] Inicializando tabs con soporte para traducciones');
+  });
+</script>
 
 <script define:vars={{ contentId, tabs }}>
   document.addEventListener('DOMContentLoaded', () => {

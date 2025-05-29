@@ -2,19 +2,15 @@
 import MainLayout from '../components/layout/MainLayout.astro';
 import DashboardEnhanced from '../components/dashboard/DashboardEnhanced';
 import DashboardEnhancedV2 from '../components/dashboard/DashboardEnhancedV2';
-import { t, getCurrentLanguage } from '../i18n/config';
-
-// Obtener el idioma actual
-const lang = getCurrentLanguage();
 ---
 
-<MainLayout title={`${t('dashboard_compare.title', lang)} - Masclet Imperi`}>
+<MainLayout title="Comparación de Dashboards - Masclet Imperi">
   <main class="comparison-container px-4 py-6">
-    <h1 class="text-3xl font-bold mb-6 text-center text-primary">{t('dashboard_compare.title', lang)}</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-primary">Comparación de Dashboards</h1>
     
     <div class="comparison-controls mb-4 flex justify-center gap-4">
-      <button id="view-side" class="bg-primary text-white px-4 py-2 rounded-md">{t('dashboard_compare.side_by_side', lang)}</button>
-      <button id="view-toggle" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md">{t('dashboard_compare.toggle_view', lang)}</button>
+      <button id="view-side" class="bg-primary text-white px-4 py-2 rounded-md">Vista Lado a Lado</button>
+      <button id="view-toggle" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md">Vista Alternar</button>
     </div>
     
     <div id="comparison-wrapper" class="grid grid-cols-1 md:grid-cols-2 gap-8">

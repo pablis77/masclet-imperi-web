@@ -9,25 +9,15 @@ import DashboardV2 from '../components/dashboardv2/DashboardV2';
 const userRole = "administrador";
 
 // Importar funciones de i18n
-import { getCurrentLanguage } from '../i18n/config';
+import { t, getCurrentLanguage } from '../i18n/config';
 
 // Obtener el idioma actual para el servidor
 const currentLang = getCurrentLanguage();
 
-// Traducciones integradas
-const translations = {
-  es: {
-    welcome: "Bienvenido a Masclet Imperi"
-  },
-  ca: {
-    welcome: "Benvingut a Masclet Imperi"
-  }
-};
+// El texto de bienvenida según idioma utilizando el sistema i18n
+const welcomeText = t('common.welcome', currentLang);
 
-// El texto de bienvenida según idioma
-const welcomeText = translations[currentLang]?.welcome || translations.es.welcome;
-
-// Crear script para actualizar el título cuando cambie el idioma
+// Crear script para actualizar el título cuando cambie el idioma usando el sistema i18n
 const updateWelcomeScript = `
 document.addEventListener('DOMContentLoaded', () => {
   const welcomeElement = document.querySelector('h1.welcome-title');
@@ -35,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Actualizar título cuando cambie el idioma
     const updateTitle = () => {
       const lang = localStorage.getItem('userLanguage') || 'es';
-      welcomeElement.textContent = lang === 'ca' ? "${translations.ca.welcome}" : "${translations.es.welcome}";
+      // Obtener traducciones desde la API i18n
+      const i18n = window.i18next || { t: (key) => key };
+      welcomeElement.textContent = i18n.t('common.welcome');
     };
     
     // Actualizar inmediatamente
@@ -89,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Script para actualizar el título cuando cambia el idioma -->
 <script set:html={updateWelcomeScript}></script>
 
-<MainLayout title="Dashboard Masclet Imperi" userRole={userRole} currentPath="/">
+<MainLayout title={`${t('dashboard.title', currentLang)} - Masclet Imperi`} userRole={userRole} currentPath="/">
   <div class="mx-auto px-4 py-6 bg-white dark:bg-gray-900">
     <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8 welcome-title">{welcomeText}</h1>
     

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../../../services/apiService';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { t, getCurrentLanguage } from '../../../i18n/config';
 
 // Registrar componentes de Chart.js necesarios para el gráfico circular
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -15,6 +16,8 @@ interface ResumenOriginalCardProps {
 const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
   darkMode = false
 }) => {
+  // Obtener el idioma actual
+  const currentLang = getCurrentLanguage();
   // Estados para datos
   const [stats, setStats] = useState<any>(null);
   const [animalesDetallados, setAnimalesDetallados] = useState<any>(null);
@@ -147,8 +150,8 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
         {/* Título eliminado para evitar duplicación */}
         {periodoData && (
           <div className="text-sm bg-blue-100 text-blue-800 rounded-full px-3 py-1">
-            Período: {periodoData.formato_fecha_inicio || 'N/A'} a {periodoData.formato_fecha_fin || 'N/A'}
-            {periodoData.dias && <span className="ml-2 font-semibold">• {periodoData.dias} días</span>}
+            {t('dashboard.summary_card.period', currentLang)}: {periodoData.formato_fecha_inicio || 'N/A'} a {periodoData.formato_fecha_fin || 'N/A'}
+            {periodoData.dias && <span className="ml-2 font-semibold">• {periodoData.dias} {t('dashboard.summary_card.days', currentLang)}</span>}
           </div>
         )}
       </div>
@@ -157,57 +160,57 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
         {/* Tarjeta 1 - Resumen de Animales */}
         <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
-          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Resumen de Animales</h3>
+          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>{t('dashboard.summary_card.animals_summary', currentLang)}</h3>
           
           <div className="bg-purple-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Total de animales</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.total_animals', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{totalAnimals}</p>
           </div>
           
           <div className="bg-green-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Animales activos</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.active_animals', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeAnimals}</p>
           </div>
           
           <div className="bg-blue-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Machos activos</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.active_males', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeMales}</p>
           </div>
           
           <div className="bg-fuchsia-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Hembras activas</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.active_females', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{activeFemales}</p>
           </div>
         </div>
         
         {/* Tarjeta 2 - Amamantamiento */}
         <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
-          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Estado de Amamantamiento</h3>
+          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>{t('dashboard.summary_card.nursing_status', currentLang)}</h3>
           
           <div className="bg-orange-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Vacas no amamantando</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.cows_not_nursing', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing0}</p>
           </div>
           
           <div className="bg-cyan-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 1 ternero</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.nursing_one_calf', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing1}</p>
           </div>
           
           <div className="bg-red-500" style={{ width: '100%', padding: '0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>Amamantando 2 terneros</h3>
+            <h3 style={{color: 'white', fontWeight: 'bold', marginBottom: '0.25rem'}}>{t('dashboard.summary_card.nursing_two_calves', currentLang)}</h3>
             <p style={{color: 'white', fontSize: '1.75rem', fontWeight: 'bold', margin: 0}}>{nursing2}</p>
           </div>
         </div>
         
         {/* Tarjeta 3 - Distribución por Género con gráfico circular */}
         <div style={{ border: '1px solid rgba(0, 0, 0, 0.1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'white' }}>
-          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>Análisis Poblacional (Total)</h3>
+          <h3 className={`text-md font-semibold p-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>{t('dashboard.summary_card.population_analysis', currentLang)}</h3>
           
           <div style={{ padding: '0.75rem', height: '260px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <Pie 
               data={{
-                labels: ['Toros', 'Vacas', 'Fallecidos'],
+                labels: [t('dashboard.summary_card.bulls', currentLang), t('dashboard.summary_card.cows', currentLang), t('dashboard.summary_card.deceased', currentLang)],
                 datasets: [
                   {
                     data: [activeMales, activeFemales, inactiveAnimals],
@@ -250,14 +253,14 @@ const ResumenOriginalCard: React.FC<ResumenOriginalCardProps> = ({
           </div>
           
           <div className="text-xs text-center mt-1" style={{ color: darkMode ? '#d1d5db' : '#6b7280' }}>
-            Ratio Machos/Hembras: {activeMales}:{activeFemales} ({activeMales && activeFemales ? (activeMales / activeFemales).toFixed(2) : 'N/A'})
+            {t('dashboard.summary_card.male_female_ratio', currentLang)}: {activeMales}:{activeFemales} ({activeMales && activeFemales ? (activeMales / activeFemales).toFixed(2) : 'N/A'})
           </div>
         </div>
       </div>
       
       {/* Datos adicionales */}
       <div className="mt-4 text-xs text-gray-500">
-        Última actualización: {new Date().toLocaleString()}
+        {t('dashboard.summary_card.last_update', currentLang)}: {new Date().toLocaleString()}
       </div>
     </div>
   );

@@ -1,0 +1,63 @@
+{
+  "users": {
+    "table": {
+      "loading": "Carregant usuaris...",
+      "error": "Error en carregar la llista d'usuaris. Si us plau, torneu-ho a intentar.",
+      "showing": "Mostrant",
+      "of": "de",
+      "users": "usuaris",
+      "show": "Mostrar:",
+      "user": "Usuari",
+      "email": "Correu electrònic",
+      "role": "Rol",
+      "status": "Estat",
+      "actions": "Accions",
+      "no_users": "No hi ha usuaris per mostrar",
+      "active": "Actiu",
+      "inactive": "Inactiu",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "confirm_delete_title": "Confirmar eliminació",
+      "confirm_delete_message": "Esteu segur que voleu eliminar l'usuari {username}?",
+      "confirm": "Eliminar",
+      "cancel": "Cancel·lar",
+      "delete_error": "Error en eliminar l'usuari. Si us plau, torneu-ho a intentar."
+    },
+    "form": {
+      "title_new": "Nou usuari",
+      "title_edit": "Editar usuari",
+      "username": "Nom d'usuari",
+      "username_placeholder": "Introduïu el nom d'usuari",
+      "email": "Correu electrònic",
+      "email_placeholder": "Introduïu el correu electrònic",
+      "password": "Contrasenya",
+      "password_placeholder": "Introduïu la contrasenya",
+      "confirm_password": "Confirmar contrasenya",
+      "confirm_password_placeholder": "Confirmeu la contrasenya",
+      "full_name": "Nom complet",
+      "full_name_placeholder": "Introduïu el nom complet",
+      "role": "Rol",
+      "select_role": "Seleccioneu un rol",
+      "administrator": "Administrador",
+      "manager": "Gerent",
+      "editor": "Editor",
+      "user": "Usuari",
+      "active": "Actiu",
+      "save": "Guardar",
+      "cancel": "Cancel·lar",
+      "validation": {
+        "username_required": "El nom d'usuari és obligatori",
+        "email_required": "El correu electrònic és obligatori",
+        "email_invalid": "El correu electrònic no és vàlid",
+        "password_required": "La contrasenya és obligatòria",
+        "password_min_length": "La contrasenya ha de tenir almenys 6 caràcters",
+        "passwords_not_match": "Les contrasenyes no coincideixen",
+        "role_required": "El rol és obligatori"
+      },
+      "success_create": "Usuari creat correctament",
+      "success_update": "Usuari actualitzat correctament",
+      "error_create": "Error en crear l'usuari",
+      "error_update": "Error en actualitzar l'usuari"
+    }
+  }
+}
