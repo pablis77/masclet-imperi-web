@@ -10,8 +10,8 @@ Antes de comenzar el despliegue en AWS, es fundamental preparar adecuadamente nu
 
 #### 1.1. Configuración de Versiones
 
-- [ ] Crear rama de producción
-- [ ] Etiquetar versión
+- [X] Crear rama de producción
+- [X] Etiquetar versión
 
 ```bash
 # Crear una rama específica para producción
@@ -23,8 +23,8 @@ git tag -a v1.0.0 -m "Primera versión de producción"
 
 #### 1.2. Verificar Optimizaciones
 
-- [ ] Revisar configuración de producción del frontend
-- [ ] Verificar y actualizar dependencias
+- [X] Revisar configuración de producción del frontend
+- [X] Verificar y actualizar dependencias
 
 ```bash
 # Revisar archivos del frontend
@@ -42,8 +42,8 @@ npm update
 
 #### 1.3. Ejecutar Tests
 
-- [ ] Ejecutar y verificar tests del backend
-- [ ] Ejecutar y verificar tests de integración
+- [X] Ejecutar y verificar tests del backend
+- [X] Ejecutar y verificar tests de integración
 
 ```bash
 # Ejecutar tests del backend
@@ -60,8 +60,8 @@ python new_tests/complementos/integration_tests.py
 
 #### 2.1. Crear Archivos de Entorno Separados
 
-- [ ] Crear archivo .env.production
-- [ ] Crear archivo .env.development
+- [X] Crear archivo .env.production
+- [X] Crear archivo .env.development
 
 ```bash
 # Crear archivo para variables de producción
@@ -73,8 +73,8 @@ cp backend/.env backend/.env.development
 
 #### 2.2. Configurar Variables de Producción
 
-- [ ] Configurar variables de entorno para producción
-- [ ] Verificar que no se suben al repositorio
+- [X] Configurar variables de entorno para producción
+- [X] Verificar que no se suben al repositorio
 
 Editar `backend/.env.production` para incluir:
 
@@ -100,7 +100,7 @@ LOG_LEVEL=WARNING
 
 #### 2.3. Actualizar Configuración de Frontend
 
-- [ ] Crear y configurar .env.production para el frontend
+- [X] Crear y configurar .env.production para el frontend
 
 Crear `frontend/.env.production` con:
 
@@ -113,7 +113,7 @@ VITE_ENVIRONMENT=production
 
 #### 3.1. Ejecutar Script de Backup
 
-- [ ] Generar backup completo de la base de datos
+- [X] Generar backup completo de la base de datos
 
 ```bash
 # Ejecutar el script de backup completo
@@ -122,8 +122,8 @@ python backend/scripts/backup_database.py --complete
 
 #### 3.2. Verificar el Backup
 
-- [ ] Comprobar que el backup se ha creado correctamente
-- [ ] Revisar contenido del backup
+- [X] Comprobar que el backup se ha creado correctamente
+- [X] Revisar contenido del backup
 
 ```bash
 # Verificar que el backup se creó correctamente
@@ -135,7 +135,7 @@ python backend/scripts/analyze_backup.py --summary --latest
 
 #### 3.3. Hacer Copia de Seguridad Externa
 
-- [ ] Guardar copia del backup en ubicación externa segura
+- [X] Guardar copia del backup en ubicación externa segura
 
 ```bash
 # Copiar el backup a una ubicación segura
@@ -148,8 +148,8 @@ cp backend/backups/backup_masclet_imperi_$(date +%Y%m%d)*.sql /ruta/externa/segu
 
 #### 4.1. Eliminar Archivos Temporales y Cachés
 
-- [ ] Limpiar archivos compilados de Python
-- [ ] Limpiar caché de npm
+- [X] Limpiar archivos compilados de Python
+- [X] Limpiar caché de npm
 
 ```bash
 # Limpiar archivos temporales
@@ -163,7 +163,7 @@ npm cache clean --force
 
 #### 4.2. Comprobar Espacio en Disco
 
-- [ ] Verificar espacio disponible en disco
+- [X] Verificar espacio disponible en disco
 
 ```bash
 # Verificar espacio disponible
@@ -220,6 +220,7 @@ cp backend/.env.example backend/.env.production
 ```
 
 Variables críticas a configurar:
+
 - `DATABASE_URL`: Se generará después de crear RDS
 - `SECRET_KEY`: Generar clave segura
 - `CORS_ORIGINS`: Incluir dominio de producción
@@ -280,6 +281,7 @@ aws rds describe-db-instances \
 ```
 
 Actualizar `.env.production`:
+
 ```
 DATABASE_URL=postgresql://masclet_admin:[CONTRASEÑA]@[ENDPOINT]:5432/masclet_imperi
 ```
@@ -309,6 +311,7 @@ mkdir -p .ebextensions
 ```
 
 Crear archivo `.ebextensions/01_packages.config`:
+
 ```yaml
 packages:
   yum:
@@ -318,6 +321,7 @@ packages:
 ```
 
 Crear archivo `.ebextensions/02_python.config`:
+
 ```yaml
 option_settings:
   aws:elasticbeanstalk:container:python:
@@ -361,6 +365,7 @@ aws elasticbeanstalk create-environment \
 ```
 
 Contenido de `eb-options.json`:
+
 ```json
 [
   {
@@ -593,6 +598,7 @@ Sigue las instrucciones en la consola AWS para añadir los registros CNAME de va
 ### 3. Asociar Certificado a CloudFront y Elastic Beanstalk
 
 Configurar manualmente en la consola AWS:
+
 - Para CloudFront: En la sección SSL Certificate
 - Para Elastic Beanstalk: En la configuración del load balancer
 
