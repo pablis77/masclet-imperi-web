@@ -244,11 +244,35 @@ def get_password_hash(password: str) -> str:
     """Generar hash de contraseña"""
     try:
         # Asegurarse de que la contraseña esté en bytes
-        password_bytes = password.encode('utf-8') if isinstance(password, str) else password
+        password_bytes = password.encode('utf-8')
         
-        # Generar el hash y devolverlo como string
-        hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+        # Generar salt y hash
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        
+        # Convertir a string para almacenamiento
         return hashed.decode('utf-8')
     except Exception as e:
-        print(f"Error al generar hash de contraseña: {e}")
+        logger.error(f"Error al generar hash de contraseña: {str(e)}")
         raise
+
+def verify_token(token: str) -> dict:
+    """Verificar token JWT y devolver payload si es válido"""
+    from app.core.config import get_settings
+    settings = get_settings()
+    
+    try:
+        # Intentamos decodificar el token
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM]
+        )
+        
+        return payload
+    except JWTError as e:
+        logger.error(f"Error al verificar token JWT: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Error inesperado al verificar token: {str(e)}")
+        return None
