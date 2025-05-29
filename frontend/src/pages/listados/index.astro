@@ -1,6 +1,6 @@
 ---
 import MainLayout from '../../components/layout/MainLayout.astro';
-import { getCurrentLanguage } from '../../i18n/config';
+import { getCurrentLanguage, t } from '../../i18n/config';
 
 // Obtener el idioma actual
 const currentLang = getCurrentLanguage();
@@ -69,21 +69,22 @@ function tNested(parent, key) {
 }
 ---
 
-<MainLayout title={t('title')}>
+<MainLayout title={t('listings.title', currentLang)}>
   <div class="px-4 py-2 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center mb-2">
       <div class="sm:flex-auto">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
-        <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
-          {t('description')}
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white" data-i18n-key="listings.title">{t('listings.title', currentLang)}</h1>
+        <p class="mt-1 text-sm text-gray-700 dark:text-gray-300" data-i18n-key="listings.description">
+          {t('listings.description', currentLang)}
         </p>
       </div>
       <div class="sm:flex-none">
         <a 
           href="/listados/nuevo" 
           class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+          data-i18n-key="listings.create"
         >
-          Crear Nuevo Listado
+          {t('listings.create', currentLang)}
         </a>
       </div>
     </div>
@@ -91,8 +92,8 @@ function tNested(parent, key) {
     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
       <div class="overflow-x-auto">
         <div id="listados-container" class="min-h-[50px] flex items-center justify-center">
-          <p id="loading-message" class="text-gray-500">
-            {t('loading')}
+          <p id="loading-message" class="text-gray-500" data-i18n-key="listings.loading">
+            {t('listings.loading', currentLang)}
           </p>
         </div>
 
@@ -100,20 +101,20 @@ function tNested(parent, key) {
         <table id="listados-table" class="min-w-full divide-y divide-gray-300 hidden">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">
-                {tNested('table', 'name')}
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100" data-i18n-key="listings.table.name">
+                {t('listings.table.name', currentLang)}
               </th>
-              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {tNested('table', 'category')}
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100" data-i18n-key="listings.table.category">
+                {t('listings.table.category', currentLang)}
               </th>
-              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {tNested('table', 'animals')}
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100" data-i18n-key="listings.table.animals">
+                {t('listings.table.animals', currentLang)}
               </th>
-              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {tNested('table', 'createdAt')}
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100" data-i18n-key="listings.table.createdAt">
+                {t('listings.table.createdAt', currentLang)}
               </th>
-              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {tNested('table', 'actions')}
+              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                <span class="sr-only" data-i18n-key="listings.table.actions">{t('listings.table.actions', currentLang)}</span>
               </th>
             </tr>
           </thead>
@@ -151,8 +152,50 @@ function tNested(parent, key) {
 </MainLayout>
 
 <script>
-  // Importar el servicio de listados (usando nuestro servicio seguro y separado)
+  // Importar el servicio de listados y sistema de traducciones
   import * as listadosService from '../../services/listados-service';
+  import { getCurrentLanguage, t } from '../../i18n/config';
+  
+  // Función para actualizar todas las traducciones en la página
+  function updateAllTranslations() {
+    try {
+      const currentLang = getCurrentLanguage();
+      console.log('Listados: Actualizando traducciones al idioma:', currentLang);
+      
+      // Actualizar todos los elementos con atributo data-i18n-key
+      document.querySelectorAll('[data-i18n-key]').forEach(el => {
+        const key = el.getAttribute('data-i18n-key');
+        if (key) {
+          const translation = t(key, currentLang);
+          if (translation !== key) {
+            el.textContent = translation;
+            console.log(`Traducido '${key}' a '${translation}'`);
+          }
+        }
+      });
+
+      // Actualizar también el título de la página
+      const pageTitle = document.getElementById('page-title');
+      if (pageTitle) {
+        pageTitle.textContent = t('listings.title', currentLang);
+      }
+    } catch (error) {
+      console.error('Error al actualizar traducciones:', error);
+    }
+  }
+
+  // Ejecutar traducción inicial y escuchar cambios de idioma
+  document.addEventListener('DOMContentLoaded', () => {
+    // Traducción inicial
+    updateAllTranslations();
+    
+    // Detectar cambios de idioma (escuchar cambios en localStorage)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        updateAllTranslations();
+      }
+    });
+  });
   
   // Script para cargar los listados desde la API
   document.addEventListener('DOMContentLoaded', async () => {

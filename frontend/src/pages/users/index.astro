@@ -3,12 +3,16 @@
 import MainLayout from '../../components/layout/MainLayout.astro';
 import { UsersManagement } from '../../components/users/UsersManagement';
 import { RoleGuard } from '../../components/guards/RoleGuard';
+import { t, getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma actual
+const lang = getCurrentLanguage();
 
 // Roles que tienen acceso a esta página
 const allowedRoles = ['administrador', 'Ramon'];
 ---
 
-<MainLayout title="Usuarios">
+<MainLayout title={t('common.users', lang)}>
   <!-- Bloqueo total para usuarios no autorizados -->
   <script is:inline>
     (function() {

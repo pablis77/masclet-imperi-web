@@ -5,6 +5,9 @@ import HabitualesForm from '../../../components/animals/HabitualesForm.astro';
 import Tabs from '../../../components/ui/Tabs.astro';
 import MessageContainer from '../../../components/ui/MessageContainer.astro';
 import animalService from '../../../services/animalService';
+import { t, getCurrentLanguage } from '../../../i18n/config';
+
+// Importar script corrector de traducciones - solución del lado del cliente
 
 // Obtener el ID del animal de los parámetros de la URL
 const { id } = Astro.params;
@@ -12,11 +15,15 @@ const { id } = Astro.params;
 // Obtener el rol del usuario de la sesión
 const userRole = Astro.cookies.get('userRole')?.value || 'user';
 
+// Obtener el idioma actual
+const lang = getCurrentLanguage();
+console.log('[AnimalUpdatePage] Idioma detectado:', lang);
+
 // Estado inicial
 let animal = null;
 let loading = true;
 let error = null;
-let title = 'Cargando animal...';
+let title = t('animals.update.loading', lang);
 
 try {
   // Obtener los datos del animal directamente del servicio
@@ -27,20 +34,16 @@ try {
     animal = animal.data;
   }
 
-  title = `Editar ${animal.nom}`;
+  title = `${t('animals.update.edit', lang)} ${animal.nom}`;
   loading = false;
 } catch (err) {
   console.error('Error al cargar el animal:', err);
-  error = err.message || 'Error al cargar los datos del animal';
+  error = err.message || t('animals.update.error_loading', lang);
   loading = false;
-  title = 'Error al cargar animal';
+  title = t('animals.update.error', lang);
 }
 
-// Configurar las pestañas con color verde lima como color principal
-const tabs = [
-  { id: 'general', label: 'Datos Generales', active: true, activeClass: 'text-lime-500 border-lime-500' },
-  { id: 'habitual', label: 'Cambios Habituales', activeClass: 'text-lime-500 border-lime-500' }
-];
+// Configuración de pestañas - no usamos el componente Tabs para tener más control
 ---
 
 <MainLayout title={title} userRole={userRole} currentPath="/animals">
@@ -48,7 +51,7 @@ const tabs = [
   <div class="mb-6">
     <div class="flex items-center gap-2 mb-2">
       <a href={`/animals/${id}`} class="flex items-center text-primary hover:text-primary/80 dark:text-primary-light dark:hover:text-primary transition-colors">
-        <span class="mr-1">←</span> Volver al detalle
+        <span class="mr-1">←</span> {t('animals.update.return_to_detail', lang)}
       </a>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{animal?.nom}</h1>
@@ -59,26 +62,46 @@ const tabs = [
   {loading && (
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6">
       <div class="flex justify-center items-center py-10">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-        <span class="ml-3 text-gray-700 dark:text-gray-300">Cargando...</span>
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lime-500 mb-3"></div>
+          <p class="text-gray-600 dark:text-gray-300">{t('animals.update.loading_message', lang)}</p>
+        </div>
       </div>
     </div>
   )}
 
   <!-- Mensaje de error -->
   {error && (
-    <MessageContainer 
-      type="error"
-      title="Error"
-      message={error}
-    />
+    <div class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded mb-6">
+      <p>{t('animals.update.error_message', lang)}</p>
+      <button class="mt-2 bg-red-200 dark:bg-red-800 px-4 py-2 rounded hover:bg-red-300 dark:hover:bg-red-700 transition" onclick="history.back()">
+        {t('common.back', lang)}
+      </button>
+    </div>
   )}
 
   {!loading && !error && animal && (
     <div class="grid grid-cols-1 gap-6">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700">
         <div class="border-b border-gray-200 dark:border-gray-700">
-          <Tabs tabs={tabs} />
+          <!-- Implementación directa de pestañas con traducciones -->
+          <div class="flex" id="tabs-animal-update">
+            <button 
+              id="tab-general" 
+              data-content="content-general" 
+              class="tab-button px-6 py-3 font-medium bg-lime-500 text-white"
+            >
+              {t('animals.update.general_data', lang)}
+            </button>
+            <button 
+              id="tab-habitual" 
+              data-content="content-habitual" 
+              class="tab-button px-6 py-3 font-medium bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+            >
+              {t('animals.update.common_changes', lang)}
+            </button>
+          </div>
+        </div>
         </div>
         <div class="p-6">
           <!-- Pestaña 1: Datos Generales -->
@@ -97,7 +120,7 @@ const tabs = [
       <div id="delete-animal-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 mx-4">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Confirmar eliminación</h3>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">{t('animals.update.confirm_delete_title', lang)}</h3>
             <button id="close-delete-modal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -105,15 +128,14 @@ const tabs = [
             </button>
           </div>
           <div class="mb-6">
-            <p class="text-gray-700 dark:text-gray-300 mb-4">¿Estás seguro de que quieres eliminar <span class="font-bold" id="animal-name-confirm"></span>?</p>
-            <p class="text-red-600 dark:text-red-400 font-medium">Esta acción no se puede deshacer.</p>
+            <p class="text-gray-700 dark:text-gray-300 mb-4">{t('animals.update.confirm_delete_text', lang)}</p>
           </div>
           <div class="flex justify-end space-x-4">
             <button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
-              Cancelar
+              {t('common.cancel', lang)}
             </button>
             <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-              Eliminar definitivamente
+              {t('animals.update.delete_permanently', lang)}
             </button>
           </div>
         </div>
@@ -123,6 +145,8 @@ const tabs = [
 
   <!-- Script para bloquear el botón de eliminar animales para editores -->
   <script is:inline src="/scripts/block-delete-button.js"></script>
+  <!-- Script corrector de traducciones del lado del cliente -->
+  <script is:inline src="/scripts/translation-fixer.js"></script>
 </MainLayout>
 
 <script is:inline define:vars={{id}}>
@@ -175,7 +199,87 @@ const tabs = [
   };
 </script>
 
+<!-- Script para forzar recarga completa al cambiar de idioma -->
 <script>
+  // Comprobar si hay un cambio de idioma
+  document.addEventListener('DOMContentLoaded', function() {
+    // Si detectamos que se cambió el idioma recientemente (a través de localStorage)
+    const currentLang = localStorage.getItem('userLanguage');
+    const lastPageLang = localStorage.getItem('lastPageLang');
+    
+    console.log('[Language] Página cargada - Idioma actual:', currentLang, 'Idioma anterior:', lastPageLang);
+    
+    // Si detectamos un cambio de idioma y no hay parámetro de URL (para evitar bucles)
+    if (lastPageLang && currentLang !== lastPageLang && !window.location.search.includes('lang=')) {
+      console.log('[Language] Detectado cambio de idioma, forzando recarga completa');
+      
+      // Añadir parámetro para forzar recarga y limpiar caché
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', currentLang);
+      url.searchParams.set('_t', Date.now());
+      
+      // Recargar la página con los parámetros
+      window.location.href = url.toString();
+      return;
+    }
+    
+    // Guardar el idioma actual para futuras comparaciones
+    localStorage.setItem('lastPageLang', currentLang);
+  });
+</script>
+
+<!-- Script para manejar formularios -->
+<script>
+  // Script para manejar las pestañas traducidas
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Tabs] Inicializando pestañas de animal con traducciones');
+    
+    // Obtener elementos de las pestañas
+    const tabsContainer = document.getElementById('tabs-animal-update');
+    if (!tabsContainer) {
+      console.error('[Tabs] No se encontró el contenedor de pestañas');
+      return;
+    }
+    
+    const tabButtons = tabsContainer.querySelectorAll('.tab-button');
+    console.log(`[Tabs] Encontradas ${tabButtons.length} pestañas`);
+    
+    // Función para activar una pestaña
+    function activateTab(tabId) {
+      console.log(`[Tabs] Activando pestaña: ${tabId}`);
+      
+      // Actualizar clases de botones
+      tabButtons.forEach(btn => {
+        const isActive = btn.id === `tab-${tabId}`;
+        btn.classList.toggle('bg-lime-500', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('bg-gray-200', !isActive);
+        btn.classList.toggle('text-gray-700', !isActive);
+        btn.classList.toggle('dark:bg-gray-700', !isActive);
+        btn.classList.toggle('dark:text-gray-300', !isActive);
+      });
+      
+      // Mostrar/ocultar contenido
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        const isVisible = content.id === `content-${tabId}`;
+        content.classList.toggle('hidden', !isVisible);
+        console.log(`[Tabs] Contenido ${content.id}: ${isVisible ? 'visible' : 'oculto'}`);
+      });
+    }
+    
+    // Manejar clics en pestañas
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.id.replace('tab-', '');
+        activateTab(tabId);
+      });
+    });
+    
+    // Activar la primera pestaña por defecto
+    activateTab('general');
+  });
+  
   // Configurar formularios cuando la página esté cargada
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM completamente cargado y analizado');

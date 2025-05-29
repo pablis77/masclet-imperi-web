@@ -1,0 +1,44 @@
+{
+  "dashboard_compare": {
+    "title": "Comparació de Taulers",
+    "side_by_side": "Vista Costat a Costat",
+    "toggle_view": "Vista Alternar"
+  },
+  "dashboard_direct": {
+    "title": "Tauler de Control (Versió Directa)"
+  },
+  "backup": {
+    "title": "Còpia de Seguretat del Sistema",
+    "subtitle": "Gestiona i restaura còpies de seguretat del sistema",
+    "create_button": "Crear còpia de seguretat ara",
+    "select_button": "Seleccionar arxiu",
+    "restore_button": "Restaurar sistema",
+    "history_title": "Historial de còpies de seguretat",
+    "download": "Descarregar",
+    "restore": "Restaurar",
+    "delete": "Eliminar",
+    "loading": "Carregant...",
+    "confirm_delete": "Està segur que vol eliminar aquesta còpia de seguretat?",
+    "confirm_restore": "Està segur que vol restaurar el sistema amb aquesta còpia de seguretat? Aquesta acció substituirà totes les dades actuals.",
+    "no_backups": "No hi ha còpies de seguretat disponibles",
+    "backup_created": "Còpia de seguretat creada amb èxit",
+    "backup_error": "Error en crear la còpia de seguretat",
+    "restore_success": "Sistema restaurat correctament",
+    "restore_error": "Error en restaurar el sistema"
+  },
+  "ui": {
+    "edit_profile": "Editar Perfil",
+    "change_password": "Canviar Contrasenya",
+    "logout": "Tancar Sessió",
+    "operation_success": "Operació completada amb èxit",
+    "operation_error": "S'ha produït un error",
+    "processing": "Processant sol·licitud...",
+    "required_field": "Camp obligatori",
+    "invalid_format": "Format incorrecte",
+    "min_length": "Ha de tenir almenys {0} caràcters",
+    "confirm_continue": "Està segur que vol continuar?",
+    "action_irreversible": "Aquesta acció no es pot desfer",
+    "cancel": "Cancel·lar",
+    "confirm": "Confirmar"
+  }
+}

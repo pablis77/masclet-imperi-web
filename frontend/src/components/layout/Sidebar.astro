@@ -158,7 +158,7 @@ const isActive = (itemUrl: string) => {
               ]}
             >
               <span class="text-xl mr-3" style="width: 2rem; display: inline-block; text-align: center;">{item.icon}</span>
-              {item.name}
+              <span data-i18n-key={`menu.${item.key}`}>{item.name}</span>
             </a>
           ))}
         </div>
@@ -167,6 +167,46 @@ const isActive = (itemUrl: string) => {
   </nav>
 
   <!-- Eliminado banner de versión -->
+
+  <!-- Script para actualizar las traducciones del menú cuando se cambia el idioma -->
+  <script>
+    // Función para actualizar las traducciones del menú lateral
+    function updateSidebarTranslations() {
+      try {
+        // Cargar el sistema de traducciones
+        import('../../i18n/config.js').then(({ getCurrentLanguage, t }) => {
+          const clientLang = getCurrentLanguage();
+          console.log('Sidebar: Actualizando traducciones al idioma:', clientLang);
+          
+          // Actualizar todos los elementos con atributo data-i18n-key
+          document.querySelectorAll('[data-i18n-key]').forEach(el => {
+            const key = el.getAttribute('data-i18n-key');
+            if (key && key.startsWith('menu.')) {
+              const translation = t(key, clientLang);
+              if (translation !== key) {
+                el.textContent = translation;
+              }
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Error al actualizar traducciones del menú:', error);
+      }
+    }
+
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', updateSidebarTranslations);
+    
+    // Detectar cambios de idioma (escuchar cambios en localStorage)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        updateSidebarTranslations();
+      }
+    });
+    
+    // También actualizar cuando cambia la URL (por si incluye parámetro lang)
+    window.addEventListener('popstate', updateSidebarTranslations);
+  </script>
 </aside>
 
 <script>

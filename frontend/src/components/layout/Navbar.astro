@@ -34,7 +34,11 @@ const translations = {
     admin: "ADMINISTRACIÓN",
     management_system: "Sistema de Gestión Ganadera",
     profile: "Perfil",
-    logout: "Cerrar sesión"
+    logout: "Cerrar sesión",
+    listings: "Listados Personalizados",
+    listings_detail: "Detalles del Listado",
+    listings_edit: "Editar Listado",
+    listings_new: "Nuevo Listado"
   },
   ca: {
     dashboard: "Tauler de control Masclet Imperi",
@@ -47,7 +51,11 @@ const translations = {
     admin: "ADMINISTRACIÓ",
     management_system: "Sistema de Gestió Ramadera",
     profile: "Perfil",
-    logout: "Tancar sessió"
+    logout: "Tancar sessió",
+    listings: "Llistats Personalitzats",
+    listings_detail: "Detalls del Llistat",
+    listings_edit: "Editar Llistat",
+    listings_new: "Nou Llistat"
   }
 };
 
@@ -75,12 +83,20 @@ const isActive = (itemUrl: string) => {
 <header class="bg-primary text-white shadow-md relative z-30">
   <div class="container mx-auto px-3 py-3 flex justify-between items-center">
     <!-- Título de la página actual -->
-    <div class="font-bold text-xl" id="page-title">
+    <div class="font-bold text-xl" id="page-title" data-current-path={currentPath}>
       {(() => {
         if (currentPath === '/animals/[id]') {
           return t('animal_file');
         } else if (currentPath === '/' || currentPath === '/dashboard') {
           return serverLang === 'ca' ? translations.ca.dashboard : translations.es.dashboard;
+        } else if (currentPath === '/listados') {
+          return serverLang === 'ca' ? translations.ca.listings : translations.es.listings;
+        } else if (currentPath === '/listados/[id]') {
+          return serverLang === 'ca' ? translations.ca.listings_detail : translations.es.listings_detail;
+        } else if (currentPath === '/listados/edit/[id]') {
+          return serverLang === 'ca' ? translations.ca.listings_edit : translations.es.listings_edit;
+        } else if (currentPath === '/listados/new') {
+          return serverLang === 'ca' ? translations.ca.listings_new : translations.es.listings_new;
         } else {
           return title || 'Masclet Imperi';
         }

@@ -1,12 +1,15 @@
 ---
 import MainLayout from '../../../components/layout/MainLayout.astro';
-import { getCurrentLanguage } from '../../../i18n/config';
+import { getCurrentLanguage, t } from '../../../i18n/config';
 
 // Obtener el idioma actual
 const currentLang = getCurrentLanguage();
 
 // Obtener el ID del listado de los parámetros de la URL
 const { id } = Astro.params;
+
+// Actualizar la URL actual para el sistema de navegación
+Astro.props.currentPath = `/listados/edit/[id]`;
 
 // Traducciones simples sin objetos anidados
 const titulo = currentLang === 'es' ? "Editar Listado" : "Editar Llistat";
@@ -251,8 +254,275 @@ const cargando = currentLang === 'es' ? "Cargando datos del listado..." : "Carre
 </MainLayout>
 
 <script>
-  // Importar el servicio específico para listados (usando nuestro servicio seguro)
+  // Importar el servicio específico para listados y sistema de traducciones
   import * as listadosService from '../../../services/listados-service';
+  import { getCurrentLanguage, t } from '../../../i18n/config';
+  
+  // Forzar el idioma catalán en toda la página
+  function forceLanguage() {
+    try {
+      // Forzar catalán en localStorage
+      localStorage.setItem('userLanguage', 'ca');
+      console.log('Listado Edit: Forzando idioma catalán en toda la página');
+    } catch (error) {
+      console.error('Error al forzar idioma:', error);
+    }
+  }
+  
+  // Traducción directa para asegurar que todo esté en catalán
+  function translateAllStaticTexts() {
+    try {
+      console.log('Aplicando traducción directa a todos los textos estáticos en la página de edición');
+      
+      // Diccionario de traducciones específicas para elementos de la página de edición
+      const traducciones = {
+        // Botones principales
+        'Guardar Cambios': 'Guardar Canvis',
+        'Cancelar': 'Cancel·lar',
+        'Deseleccionar todos': 'Deseleccionar tots',
+        'Seleccionar todos': 'Seleccionar tots',
+        
+        // Formulario
+        'Nombre del listado': 'Nom del llistat',
+        'Categoría': 'Categoria',
+        'Descripción': 'Descripció',
+        
+        // Opciones de categoría
+        'Seleccionar categoría': 'Seleccionar categoria',
+        'Vacunación': 'Vacunació',
+        'Tratamiento': 'Tractament',
+        'Transporte': 'Transport',
+        'Venta': 'Venda',
+        'Otro': 'Altre',
+        
+        // Selección de animales
+        'Selección de Animales': 'Selecció d\'Animals',
+        'Buscar animales...': 'Cercar animals...',
+        'Seleccionados:': 'Seleccionats:',
+        'No hay animales disponibles': 'No hi ha animals disponibles',
+        
+        // Validación y mensajes
+        'Este campo es obligatorio': 'Aquest camp és obligatori',
+        'Guardando...': 'Guardant...',
+        'Listado Actualizado': 'Llistat Actualitzat',
+        'El listado ha sido actualizado correctamente': 'El llistat ha estat actualitzat correctament',
+        'Error al actualizar el listado': 'Error al actualitzar el llistat',
+        'Por favor, intenta nuevamente': 'Si us plau, torna-ho a intentar',
+        'Cargando datos del listado...': 'Carregant dades del llistat...'
+      };
+      
+      // Traducción de atributos específicos
+      const atributosParaTraducir = [
+        {selector: '#animal-filter', atributo: 'placeholder', es: 'Buscar animales...', ca: 'Cercar animals...'},
+        {selector: '#listado-name', atributo: 'placeholder', es: 'Ej: Vacunación octubre 2025', ca: 'Ex: Vacunació octubre 2025'},
+        {selector: '#listado-description', atributo: 'placeholder', es: 'Ej: Animales para vacunación del 15 de octubre', ca: 'Ex: Animals per a vacunació del 15 d\'octubre'}
+      ];
+      
+      // Traducir atributos
+      atributosParaTraducir.forEach(item => {
+        const element = document.querySelector(item.selector);
+        if (element && element.getAttribute(item.atributo) === item.es) {
+          element.setAttribute(item.atributo, item.ca);
+          console.log(`Traducido atributo ${item.atributo} de '${item.es}' a '${item.ca}'`);
+        }
+      });
+      
+      // Función para traducir todo el contenido de texto del documento
+      function translateTextNodes(node) {
+        if (node.nodeType === 3) { // Nodo de texto
+          let content = node.nodeValue.trim();
+          if (content) {
+            // Buscar en el diccionario de traducciones
+            for (const [es, ca] of Object.entries(traducciones)) {
+              if (content.includes(es)) {
+                node.nodeValue = node.nodeValue.replace(es, ca);
+                console.log(`Traducido: '${es}' -> '${ca}'`);
+              }
+            }
+          }
+        } else {
+          // Recorrer hijos recursivamente
+          for (let i = 0; i < node.childNodes.length; i++) {
+            translateTextNodes(node.childNodes[i]);
+          }
+        }
+      }
+      
+      // Iniciar la traducción desde el cuerpo del documento
+      translateTextNodes(document.body);
+      
+      // También traducir título de la página
+      document.title = document.title.replace('Editar Listado', 'Editar Llistat');
+      
+      console.log('Traducción directa completada');
+    } catch (error) {
+      console.error('Error en traducción directa:', error);
+    }
+  }
+
+  // Función para actualizar todas las traducciones en la página
+  function updateAllTranslations() {
+    try {
+      // Forzar catalán siempre
+      forceLanguage();
+      const currentLang = 'ca'; // Forzar catalán directamente
+      console.log('Listado Edit: Actualizando traducciones al idioma:', currentLang);
+      
+      // Traducir el título de la página
+      const pageTitle = document.getElementById('page-title');
+      if (pageTitle) {
+        pageTitle.textContent = currentLang === 'ca' ? "Editar Llistat" : "Editar Listado";
+      }
+      
+      // Diccionario de traducciones
+      const traducciones = {
+        ca: {
+          titulo: "Editar Llistat",
+          descripcion: "Modifica els detalls del llistat i els animals inclosos.",
+          nombreLabel: "Nom del llistat",
+          nombrePlaceholder: "Ex: Vacunació octubre 2025",
+          descripcionLabel: "Descripció",
+          descripcionPlaceholder: "Ex: Animals per a vacunació del 15 d'octubre",
+          categoriaLabel: "Categoria",
+          categoriaPlaceholder: "Seleccionar categoria",
+          categoriaVacunacion: "Vacunació",
+          categoriaTratamiento: "Tractament",
+          categoriaTransporte: "Transport",
+          categoriaVenta: "Venda",
+          categoriaOtro: "Altre",
+          animalesLabel: "Selecció d'Animals",
+          buscarAnimales: "Cercar animals...",
+          noAnimales: "No hi ha animals disponibles.",
+          seleccionados: "Seleccionats:",
+          seleccionarTodos: "Seleccionar tots",
+          deseleccionarTodos: "Deseleccionar tots",
+          guardar: "Guardar Canvis",
+          guardando: "Guardant...",
+          cancelar: "Cancel·lar",
+          exito: "Llistat Actualitzat",
+          mensajeExito: "El llistat ha estat actualitzat correctament.",
+          error: "Error al actualitzar el llistat.",
+          requerido: "Aquest camp és obligatori.",
+          volver: "Tornar a Llistats",
+          cargando: "Carregant dades del llistat..."
+        },
+        es: {
+          titulo: "Editar Listado",
+          descripcion: "Modifica los detalles del listado y los animales incluidos.",
+          nombreLabel: "Nombre del listado",
+          nombrePlaceholder: "Ej: Vacunación octubre 2025",
+          descripcionLabel: "Descripción",
+          descripcionPlaceholder: "Ej: Animales para vacunación del 15 de octubre",
+          categoriaLabel: "Categoría",
+          categoriaPlaceholder: "Seleccionar categoría",
+          categoriaVacunacion: "Vacunación",
+          categoriaTratamiento: "Tratamiento",
+          categoriaTransporte: "Transporte",
+          categoriaVenta: "Venta",
+          categoriaOtro: "Otro",
+          animalesLabel: "Selección de Animales",
+          buscarAnimales: "Buscar animales...",
+          noAnimales: "No hay animales disponibles.",
+          seleccionados: "Seleccionados:",
+          seleccionarTodos: "Seleccionar todos",
+          deseleccionarTodos: "Deseleccionar todos",
+          guardar: "Guardar Cambios",
+          guardando: "Guardando...",
+          cancelar: "Cancelar",
+          exito: "Listado Actualizado",
+          mensajeExito: "El listado ha sido actualizado correctamente.",
+          error: "Error al actualizar el listado.",
+          requerido: "Este campo es obligatorio.",
+          volver: "Volver a Listados",
+          cargando: "Cargando datos del listado..."
+        }
+      };
+      
+      // Asignar traducciones basadas en selectores
+      const elementosTraducibles = [
+        { selector: 'h1', key: 'titulo' },
+        { selector: 'h1 + p', key: 'descripcion' },
+        { selector: 'label[for="nombre"]', key: 'nombreLabel' },
+        { selector: 'input#nombre', key: 'nombrePlaceholder', attr: 'placeholder' },
+        { selector: 'label[for="descripcion"]', key: 'descripcionLabel' },
+        { selector: 'textarea#descripcion', key: 'descripcionPlaceholder', attr: 'placeholder' },
+        { selector: 'label[for="categoria"]', key: 'categoriaLabel' },
+        { selector: 'select#categoria option[value=""]', key: 'categoriaPlaceholder' },
+        { selector: 'select#categoria option[value="vacunacion"]', key: 'categoriaVacunacion' },
+        { selector: 'select#categoria option[value="tratamiento"]', key: 'categoriaTratamiento' },
+        { selector: 'select#categoria option[value="transporte"]', key: 'categoriaTransporte' },
+        { selector: 'select#categoria option[value="venta"]', key: 'categoriaVenta' },
+        { selector: 'select#categoria option[value="otro"]', key: 'categoriaOtro' },
+        { selector: 'h3', key: 'animalesLabel' },
+        { selector: 'input#search-animals', key: 'buscarAnimales', attr: 'placeholder' },
+        { selector: '#no-animals', key: 'noAnimales' },
+        { selector: '#selected-count', key: 'seleccionados', prefix: true },
+        { selector: '#select-all', key: 'seleccionarTodos' },
+        { selector: '#deselect-all', key: 'deseleccionarTodos' },
+        { selector: 'button[type="submit"] span', key: 'guardar' },
+        { selector: '#cancel-btn', key: 'cancelar' },
+        { selector: '#success-message .font-medium', key: 'exito' },
+        { selector: '#success-message p', key: 'mensajeExito' },
+        { selector: '#error-message p', key: 'error' },
+        { selector: '.validation-error', key: 'requerido' },
+        { selector: '#back-btn', key: 'volver' },
+        { selector: '#loading-message p', key: 'cargando' }
+      ];
+      
+      const dict = currentLang === 'ca' ? traducciones.ca : traducciones.es;
+      
+      elementosTraducibles.forEach(elem => {
+        const elements = document.querySelectorAll(elem.selector);
+        elements.forEach(el => {
+          if (elem.attr) {
+            el.setAttribute(elem.attr, dict[elem.key]);
+          } else if (elem.prefix) {
+            // Para elementos que necesitan un prefijo (como "Seleccionados: 5")
+            const numero = el.textContent.replace(/[^0-9]/g, '');
+            el.textContent = dict[elem.key] + ' ' + numero;
+          } else {
+            el.textContent = dict[elem.key];
+          }
+        });
+      });
+      
+      console.log('Traducciones actualizadas correctamente');
+    } catch (error) {
+      console.error('Error al actualizar traducciones:', error);
+    }
+  }
+
+  // Ejecutar traducción inicial y escuchar cambios de idioma
+  document.addEventListener('DOMContentLoaded', () => {
+    // Forzar catalán
+    forceLanguage();
+    
+    // Traducción inicial
+    updateAllTranslations();
+    
+    // Traducción directa (más agresiva)
+    setTimeout(() => {
+      translateAllStaticTexts();
+    }, 500); // Dar tiempo a que se cargue el contenido dinámico
+    
+    // Volver a aplicar la traducción cuando el DOM cambie
+    setTimeout(() => {
+      translateAllStaticTexts();
+    }, 1000);
+    
+    // También traducir cuando el usuario interactúe con la página
+    document.body.addEventListener('click', () => {
+      setTimeout(translateAllStaticTexts, 100);
+    });
+    
+    // Detectar cambios de idioma (escuchar cambios en localStorage)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'userLanguage') {
+        updateAllTranslations();
+        setTimeout(translateAllStaticTexts, 200);
+      }
+    });
+  });
   
   document.addEventListener('DOMContentLoaded', async () => {
     // Obtener el ID del listado de la URL

@@ -2,11 +2,17 @@
 /**
  * Formulario general para actualización de datos de animales
  */
+import { t, getCurrentLanguage } from '../../i18n/config';
+
 interface Props {
   animal: any;
 }
 
 const { animal } = Astro.props;
+
+// Obtener el idioma actual
+const lang = getCurrentLanguage();
+console.log('[AnimalForm] Idioma detectado:', lang);
 
 // Función para convertir fecha de cualquier formato a YYYY-MM-DD para inputs HTML
 function formatDateForInput(dob) {
@@ -43,13 +49,13 @@ function formatDateForInput(dob) {
 
 <form id="form-general" class="space-y-6" data-id={animal.id}>
   <div class="flex justify-end mb-4">
-    <button id="show-debug" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded" type="button" style="display: none;">Mostrar debug</button>
+    <button id="show-debug" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded" type="button" style="display: none;">{t('animals.form.show_debug', lang)}</button>
   </div>
   <!-- Panel de depuración oculto -->
   <div id="debug-info" class="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-lg text-xs sticky top-0 z-50 overflow-auto" style="display: none;">
     <div class="flex justify-between items-center mb-2">
-      <p class="font-bold text-red-700">MODO DEPURACIÓN</p>
-      <button id="clear-debug" class="text-xs bg-red-200 hover:bg-red-300 text-red-800 px-2 py-1 rounded" type="button">Limpiar</button>
+      <p class="font-bold text-red-700">{t('animals.form.debug_mode', lang)}</p>
+      <button id="clear-debug" class="text-xs bg-red-200 hover:bg-red-300 text-red-800 px-2 py-1 rounded" type="button">{t('animals.form.clear', lang)}</button>
     </div>
     <div id="debug-content" class="whitespace-pre-wrap overflow-auto h-60 border border-yellow-300 p-2 bg-white"></div>
   </div>
@@ -57,7 +63,7 @@ function formatDateForInput(dob) {
     <!-- Columna 1 -->
     <div class="space-y-4">
       <div>
-        <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+        <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.name', lang)}</label>
         <input 
           type="text" 
           id="nombre" 
@@ -70,7 +76,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="genere" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género</label>
+        <label for="genere" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.gender', lang)}</label>
         <select 
           id="genere" 
           name="genere" 
@@ -78,13 +84,13 @@ function formatDateForInput(dob) {
           data-original-value={animal.genere || ''}
           onchange="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
         >
-          <option value="M" selected={animal.genere === 'M'}>Macho</option>
-          <option value="F" selected={animal.genere === 'F'}>Hembra</option>
+          <option value="M" selected={animal.genere === 'M'}>{t('animals.form.male', lang)}</option>
+          <option value="F" selected={animal.genere === 'F'}>{t('animals.form.female', lang)}</option>
         </select>
       </div>
       
       <div>
-        <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de nacimiento</label>
+        <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.birth_date', lang)}</label>
         <input 
           type="date" 
           id="dob" 
@@ -97,7 +103,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="codigo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código</label>
+        <label for="codigo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.code', lang)}</label>
         <input 
           type="text" 
           id="codigo" 
@@ -110,7 +116,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="num_serie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de serie</label>
+        <label for="num_serie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.serial_number', lang)}</label>
         <input 
           type="text" 
           id="num_serie" 
@@ -126,7 +132,7 @@ function formatDateForInput(dob) {
     <!-- Columna 2 -->
     <div class="space-y-4">
       <div>
-        <label for="explotacio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Explotación</label>
+        <label for="explotacio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.exploitation', lang)}</label>
         <input 
           type="text" 
           id="explotacio" 
@@ -139,7 +145,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="origen" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origen</label>
+        <label for="origen" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.origin', lang)}</label>
         <input 
           type="text" 
           id="origen" 
@@ -152,7 +158,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="pare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padre</label>
+        <label for="pare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.father', lang)}</label>
         <input 
           type="text" 
           id="pare" 
@@ -165,7 +171,7 @@ function formatDateForInput(dob) {
       </div>
       
       <div>
-        <label for="mare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Madre</label>
+        <label for="mare" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.mother', lang)}</label>
         <input 
           type="text" 
           id="mare" 
@@ -175,7 +181,7 @@ function formatDateForInput(dob) {
           data-original-value={animal.mare || ''}
           oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
         >
-        <div class="text-xs text-gray-500 mt-1">(Usa el botón "Guardar Cambios" al final del formulario para actualizar este campo)</div>
+        <div class="text-xs text-gray-500 mt-1">{t('animals.form.mother_hint', lang)}</div>
       </div>
       
 
@@ -184,7 +190,7 @@ function formatDateForInput(dob) {
   
   <!-- Campo de Observaciones (ancho completo) -->
   <div class="space-y-2">
-    <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones (máx. 2000 caracteres)</label>
+    <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('animals.form.observations', lang)}</label>
     <textarea
       id="observaciones"
       name="observaciones"
@@ -194,21 +200,21 @@ function formatDateForInput(dob) {
       data-original-value={animal.observaciones || ''}
       oninput="this.style.borderColor = this.value !== this.getAttribute('data-original-value') ? '#3b82f6' : '#d1d5db';"
     >{animal.observaciones || ''}</textarea>
-    <div class="text-xs text-gray-500 mt-1">Añade notas o información adicional sobre el animal</div>
+    <div class="text-xs text-gray-500 mt-1">{t('animals.form.observations_hint', lang)}</div>
   </div>
   
   <!-- Leyenda para campos obligatorios -->
   <div class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-4">
-    Los campos marcados con borde azul indican cambios pendientes de guardar.
+    {t('animals.form.pending_changes', lang)}
   </div>
   
   <!-- Navegación y botones secundarios -->
   <div class="flex space-x-2 mt-6">
     <a href="/animals" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center">
-      <span class="mr-1">←</span> Volver
+      <span class="mr-1">←</span> {t('animals.form.back', lang)}
     </a>
     <a href={`/animals/${animal.id}`} class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
-      Ver Detalle
+      {t('animals.form.view_detail', lang)}
     </a>
   </div>
   
@@ -221,7 +227,7 @@ function formatDateForInput(dob) {
     <div class="flex justify-center">
       <!-- Botón para guardar cambios (verde lima, centrado) -->
       <button type="submit" id="submit-button" class="px-4 py-2 bg-lime-500 text-white rounded-md hover:bg-lime-600 transition-colors shadow-md">
-        Guardar Cambios
+        {t('animals.form.save_changes', lang)}
       </button>
     </div>
     

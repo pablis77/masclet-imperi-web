@@ -11,26 +11,71 @@ import { getCurrentLanguage, setLanguage, supportedLanguages } from '../i18n/con
     <option value="es" selected={getCurrentLanguage() === 'es'}>Español</option>
     <option value="ca" selected={getCurrentLanguage() === 'ca'}>Català</option>
   </select>
+  <div id="current-lang-indicator" class="hidden text-xs mt-1 text-white p-1 rounded bg-green-600">
+    Idioma: {getCurrentLanguage()}
+  </div>
 </div>
 
 <script>
-  // Script para manejar el cambio de idioma
+  // Script mejorado para manejar el cambio de idioma
   document.addEventListener('DOMContentLoaded', () => {
     const selector = document.getElementById('language-selector');
+    const indicator = document.getElementById('current-lang-indicator');
     
     if (selector) {
       // Establecer el valor inicial desde localStorage
       const currentLang = localStorage.getItem('userLanguage') || 'es';
       selector.value = currentLang;
       
+      console.log('[LanguageSwitcher] Idioma detectado:', currentLang);
+      
+      // Mostrar el indicador en modo desarrollo
+      if (indicator) {
+        indicator.textContent = `Idioma actual: ${currentLang}`;
+        // Descomentar para debugging
+        // indicator.classList.remove('hidden');
+      }
+      
+      // Añadir un parámetro URL para forzar el idioma (para debugging)
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', currentLang);
+      
       // Escuchar cambios en el selector
       selector.addEventListener('change', () => {
         const newLang = selector.value;
+        console.log('[LanguageSwitcher] Cambiando idioma a:', newLang);
+        
+        // Guardar en localStorage
         localStorage.setItem('userLanguage', newLang);
         
-        // Recargar la página para aplicar el nuevo idioma
-        window.location.reload();
+        // Indicar que estamos cambiando de idioma para que otras partes de la aplicación lo detecten
+        localStorage.setItem('languageChanging', 'true');
+        
+        // Añadir parámetros a la URL para forzar la recarga completa
+        const redirectUrl = new URL(window.location.href);
+        redirectUrl.searchParams.set('lang', newLang);
+        redirectUrl.searchParams.set('t', Date.now()); // Añadir timestamp para evitar caché
+        
+        // Recargar para aplicar el nuevo idioma
+        console.log('[LanguageSwitcher] Forzando recarga completa con idioma:', newLang);
+        window.location.href = redirectUrl.toString();
       });
+      
+      // Verificar si hay un parámetro de idioma en la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get('lang');
+      
+      if (urlLang && urlLang !== currentLang && (urlLang === 'es' || urlLang === 'ca')) {
+        console.log('[LanguageSwitcher] Detectado idioma en URL:', urlLang);
+        localStorage.setItem('userLanguage', urlLang);
+        
+        // Recargar sin el parámetro lang para no entrar en bucle
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('lang');
+        window.location.href = cleanUrl.toString();
+      }
+    } else {
+      console.error('[LanguageSwitcher] No se encontró el selector de idioma');
     }
   });
 </script>

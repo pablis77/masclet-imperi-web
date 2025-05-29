@@ -2,15 +2,19 @@
 // Importar el layout
 import DefaultLayout from '../../layouts/DefaultLayout.astro';
 import { ProfileManagement } from '../../components/profile/ProfileManagement';
+import { t, getCurrentLanguage } from '../../i18n/config';
 
-// Definir título
-const title = "Mi Perfil | Masclet Imperi";
+// Obtener el idioma actual
+const lang = getCurrentLanguage();
+
+// Definir título usando i18n
+const title = `${t('ui.edit_profile', lang)} | Masclet Imperi`;
 ---
 
 <DefaultLayout title={title}>
   <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-    <p class="text-gray-600">Gestiona tu información personal y contraseña</p>
+    <h1 class="text-3xl font-bold text-gray-900">{t('ui.edit_profile', lang)}</h1>
+    <p class="text-gray-600">{lang === 'ca' ? 'Gestiona la teva informació personal i contrasenya' : 'Gestiona tu información personal y contraseña'}</p>
   </div>
 
   <ProfileManagement client:load />

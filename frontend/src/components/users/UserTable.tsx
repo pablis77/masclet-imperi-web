@@ -4,13 +4,22 @@ import userServiceProxy from '../../services/userServiceProxy';
 import type { User } from '../../services/userServiceProxy';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Pagination } from '../common/Pagination';
+import { t, getCurrentLanguage } from '../../i18n/config';
+
+// Variable para saber si es el primer renderizado (SSR) o no (cliente)
+let isFirstRender = typeof window === 'undefined';
 
 interface UserTableProps {
   onEdit: (user: User) => void;
   onRefresh: () => void;
+  forceLang?: string; // Prop opcional para forzar un idioma específico
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
+export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh, forceLang }) => {
+  // En el primer renderizado (SSR), usar español por defecto para evitar errores de hidratación
+  // En renderizados posteriores en el cliente, usar el idioma seleccionado o el forzado
+  const initialLang = isFirstRender ? 'es' : (forceLang || getCurrentLanguage());
+  const [currentLang, setCurrentLang] = useState(initialLang);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +39,15 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
     const user = getStoredUser();
     if (user) {
       setCurrentUser(user);
+    }
+    
+    // Después del primer renderizado (cliente), actualizar el idioma
+    if (isFirstRender) {
+      isFirstRender = false;
+      // Pequeño retraso para permitir la hidratación antes de cambiar el idioma
+      setTimeout(() => {
+        setCurrentLang(getCurrentLanguage());
+      }, 50);
     }
   }, [currentPage, pageSize, onRefresh]);
 
@@ -83,7 +101,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
       setError(null);
     } catch (err: any) {
       console.error('Error al cargar usuarios:', err);
-      setError('Error al cargar la lista de usuarios. Por favor, inténtalo de nuevo.');
+      setError(t('users.table.error', currentLang));
     } finally {
       setLoading(false);
     }
@@ -116,7 +134,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
       onRefresh();
     } catch (err: any) {
       console.error('Error al eliminar usuario:', err);
-      setError('Error al eliminar el usuario. Por favor, inténtalo de nuevo.');
+      setError(t('users.table.delete_error', currentLang));
       setShowConfirmDialog(false);
     }
   };
@@ -150,7 +168,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
   };
 
   if (loading && users.length === 0) {
-    return <div className="text-center py-4">Cargando usuarios...</div>;
+    return <div className="text-center py-4">{t('users.table.loading', currentLang)}</div>;
   }
 
   if (error && users.length === 0) {
@@ -175,11 +193,11 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
       <div className="overflow-x-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm text-gray-700">
-            Mostrando {users.length} de {totalItems} usuarios
+            {t('users.table.showing', currentLang)} {users.length} {t('users.table.of', currentLang)} {totalItems} {t('users.table.users', currentLang)}
           </div>
           <div className="flex items-center">
             <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">
-              Mostrar:
+              {t('users.table.show', currentLang)}
             </label>
             <select
               id="pageSize"
@@ -199,19 +217,19 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Usuario
+                {t('users.table.user', currentLang)}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
+                {t('users.table.email', currentLang)}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Rol
+                {t('users.table.role', currentLang)}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Estado
+                {t('users.table.status', currentLang)}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
+                {t('users.table.actions', currentLang)}
               </th>
             </tr>
           </thead>
@@ -219,7 +237,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
             {users.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                  No hay usuarios para mostrar
+                  {t('users.table.no_users', currentLang)}
                 </td>
               </tr>
             ) : (
@@ -241,7 +259,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {user.is_active ? 'Activo' : 'Inactivo'}
+                      {user.is_active ? t('users.table.active', currentLang) : t('users.table.inactive', currentLang)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -249,7 +267,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
                       onClick={() => onEdit(user)}
                       className="text-indigo-600 hover:text-indigo-900 focus:outline-none"
                     >
-                      Editar
+                      {t('users.table.edit', currentLang)}
                     </button>
                     {/* No permitir eliminar:
                         1. Al usuario actual
@@ -262,7 +280,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
                         onClick={() => handleDeleteClick(user)}
                         className="text-red-600 hover:text-red-900 focus:outline-none"
                       >
-                        Eliminar
+                        {t('users.table.delete', currentLang)}
                       </button>
                     )}
                   </td>
@@ -285,10 +303,10 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh }) => {
       
       <ConfirmDialog
         isOpen={showConfirmDialog}
-        title="Confirmar eliminación"
-        message={`¿Estás seguro de que deseas eliminar al usuario ${userToDelete?.username}?`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('users.table.confirm_delete_title', currentLang)}
+        message={t('users.table.confirm_delete_message', currentLang).replace('{username}', userToDelete?.username || '')}
+        confirmText={t('users.table.confirm', currentLang)}
+        cancelText={t('users.table.cancel', currentLang)}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />

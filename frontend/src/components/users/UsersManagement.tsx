@@ -3,6 +3,10 @@ import { UserForm } from './UserForm';
 import { UserTable } from './UserTable';
 import { isAuthenticated, getStoredUser } from '../../services/authService';
 import type { User } from '../../services/authService';
+import { t, getCurrentLanguage } from '../../i18n/config';
+
+// Variable para saber si es el primer renderizado (SSR) o no (cliente)
+let isFirstRender = typeof window === 'undefined';
 
 export const UsersManagement: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
@@ -11,8 +15,27 @@ export const UsersManagement: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // En el primer renderizado (SSR) usar siempre español para evitar errores de hidratación
+  // después del primer renderizado en el cliente, actualizar al idioma seleccionado
+  const initialLang = isFirstRender ? 'es' : getCurrentLanguage();
+  const [currentLang, setCurrentLang] = useState<string>(initialLang);
+  
+  // Usamos un texto fijo en español para la primera carga (SSR) para prevenir errores de hidratación
   const [authStatus, setAuthStatus] = useState<string>('Cargando...');
   const [authDebug, setAuthDebug] = useState<Record<string, any>>({});
+
+  // Efecto para gestionar el cambio de idioma después de la hidratación
+  useEffect(() => {
+    // Si estamos en el cliente y era el primer renderizado, actualizar el idioma
+    if (isFirstRender && typeof window !== 'undefined') {
+      isFirstRender = false;
+      // Pequeño retraso para asegurar que React complete la hidratación
+      setTimeout(() => {
+        const newLang = getCurrentLanguage();
+        setCurrentLang(newLang);
+      }, 100);
+    }
+  }, []);
 
   useEffect(() => {
     // Verificar autenticación y permisos
@@ -119,6 +142,25 @@ export const UsersManagement: React.FC = () => {
     setSelectedUser(undefined);
   };
 
+  const handleCancelForm = () => {
+    setShowForm(false);
+  };
+
+  // Función para traducir textos según el idioma actual
+  const translateText = (key: string, fallback: string): string => {
+    if (currentLang === 'ca') {
+      // Traducciones en catalán para textos específicos
+      const translations: Record<string, string> = {
+        'Gestión de Usuarios': 'Gestió d\'Usuaris',
+        'Añadir Usuario': 'Afegir Usuari',
+        'Nuevo Usuario': 'Nou Usuari',
+        'Cargando': 'Carregant'
+      };
+      return translations[key] || fallback;
+    }
+    return fallback;
+  };
+
   // Panel de diagnóstico para depuración
   const renderDebugPanel = () => (
     <div className="bg-white border border-gray-300 p-4 mb-4 rounded-lg">
@@ -163,17 +205,21 @@ export const UsersManagement: React.FC = () => {
       {!showForm ? (
         <>
           <div className="mb-6 flex justify-between items-center">
-            <button
-              onClick={handleAddUser}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Nuevo Usuario
-            </button>
+            <h2 className="text-2xl font-semibold text-gray-800">{translateText('Gestión de Usuarios', 'Gestión de Usuarios')}</h2>
+            {isAdmin && (
+              <button
+                onClick={handleAddUser}
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded shadow focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
+              >
+                {translateText('Añadir Usuario', 'Añadir Usuario')}
+              </button>
+            )}
           </div>
           <UserTable 
             onEdit={handleEditUser} 
             onRefresh={() => setRefreshTrigger(prev => prev + 1)} 
             key={refreshTrigger} 
+            forceLang={currentLang} // Pasamos el idioma como prop
           />
         </>
       ) : (
