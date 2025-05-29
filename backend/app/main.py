@@ -320,6 +320,18 @@ async def root_health_check():
         "timestamp": time.time()
     }
 
+# Endpoint para compatibilidad con el frontend - redirecciona /auth/login a /api/v1/auth/login
+@app.post("/auth/login", include_in_schema=False)
+async def auth_login_redirect(request: Request):
+    """Endpoint de redirección para compatibilidad con el frontend."""
+    from app.api.endpoints.auth import login_for_access_token
+    
+    logger.info("Redirección de /auth/login a /api/v1/auth/login detectada")
+    # Obtener el formulario de la solicitud original
+    form_data = await request.form()
+    # Reenviar la solicitud al endpoint correcto directamente
+    return await login_for_access_token(form_data)
+
 # Conectar a la base de datos
 TORTOISE_ORM = {
     "connections": {"default": settings.database_url},
