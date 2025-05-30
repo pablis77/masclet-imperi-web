@@ -1,0 +1,16 @@
+---
+import DefaultLayout from '../layouts/DefaultLayout.astro';
+import PageTitle from '../components/common/PageTitle.astro';
+import SettingsForm from '../components/settings/SettingsForm.astro';
+import { t } from '../i18n';
+---
+
+<DefaultLayout title={t('settings.title')}>
+  <PageTitle title={t('settings.title')} description={t('settings.description')} />
+  
+  <div class="container mx-auto px-4 py-6">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+      <SettingsForm />
+    </div>
+  </div>
+</DefaultLayout>
