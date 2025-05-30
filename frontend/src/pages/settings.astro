@@ -1,16 +1,22 @@
 ---
-import DefaultLayout from '../layouts/DefaultLayout.astro';
-import PageTitle from '../components/common/PageTitle.astro';
+// Importar el layout
+import MainLayout from '../components/layout/MainLayout.astro';
 import SettingsForm from '../components/settings/SettingsForm.astro';
-import { t } from '../i18n';
+
+// Importar funciones de i18n
+import { getCurrentLanguage, t } from '../i18n';
+
+// Definir rol de usuario (esto eventualmente vendrá de la autenticación)
+const userRole = "administrador"; // Simulación de rol
+
+// Obtener el idioma actual para el servidor
+const currentLang = getCurrentLanguage();
 ---
 
-<DefaultLayout title={t('settings.title')}>
-  <PageTitle title={t('settings.title')} description={t('settings.description')} />
-  
-  <div class="container mx-auto px-4 py-6">
+<MainLayout title={t('settings.title')} userRole={userRole} currentPath="/settings">
+  <div class="mx-auto px-4 py-6">
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
       <SettingsForm />
     </div>
   </div>
-</DefaultLayout>
+</MainLayout>

@@ -464,7 +464,8 @@
     "listings": "Listados",
     "imports": "Importaciones",
     "users": "Usuarios",
-    "backup": "Copias de Seguridad"
+    "backup": "Copias de Seguridad",
+    "settings": "Configuración"
   },
   "listings": {
     "title": "Listados",
@@ -478,5 +479,29 @@
       "createdAt": "Fecha de creación",
       "actions": "Acciones"
     }
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Personaliza tu experiencia en Masclet Imperi",
+    "user_preferences": "Preferencias de usuario",
+    "language": "Idioma",
+    "languages": {
+      "spanish": "Español",
+      "catalan": "Catalán"
+    },
+    "theme": "Tema visual",
+    "themes": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Usar preferencia del sistema"
+    },
+    "notifications": "Notificaciones",
+    "notify_backups": "Avisos de copias de seguridad",
+    "notify_backups_desc": "Recibir notificación cuando se realicen copias de seguridad automáticas",
+    "notify_imports": "Avisos de importaciones",
+    "notify_imports_desc": "Recibir notificación cuando se completen importaciones",
+    "notify_animals": "Avisos sobre animales",
+    "notify_animals_desc": "Recibir notificación sobre cambios importantes en los animales",
+    "save_success": "Configuración guardada correctamente"
   }
 }

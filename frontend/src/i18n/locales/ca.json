@@ -498,5 +498,29 @@
     "invalid_format": "Format invàlid",
     "try_again": "Intentar de nou",
     "go_home": "Anar a l'inici"
+  },
+  "settings": {
+    "title": "Configuració",
+    "description": "Personalitza la teva experiència a Masclet Imperi",
+    "user_preferences": "Preferències d'usuari",
+    "language": "Idioma",
+    "languages": {
+      "spanish": "Espanyol",
+      "catalan": "Català"
+    },
+    "theme": "Tema visual",
+    "themes": {
+      "light": "Clar",
+      "dark": "Fosc",
+      "system": "Utilitzar preferència del sistema"
+    },
+    "notifications": "Notificacions",
+    "notify_backups": "Avisos de còpies de seguretat",
+    "notify_backups_desc": "Rebre notificació quan es facin còpies de seguretat automàtiques",
+    "notify_imports": "Avisos d'importacions",
+    "notify_imports_desc": "Rebre notificació quan es completin importacions",
+    "notify_animals": "Avisos sobre animals",
+    "notify_animals_desc": "Rebre notificació sobre canvis importants en els animals",
+    "save_success": "Configuració desada correctament"
   }
 }
