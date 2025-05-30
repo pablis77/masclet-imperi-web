@@ -26,6 +26,7 @@
     "warning": "Advertencia",
     "info": "Información",
     "confirm": "Confirmar",
+    "accept": "Aceptar",
     "yes": "Sí",
     "no": "No",
     "male": "Macho",
@@ -503,5 +504,31 @@
     "notify_animals": "Avisos sobre animales",
     "notify_animals_desc": "Recibir notificación sobre cambios importantes en los animales",
     "save_success": "Configuración guardada correctamente"
+  },
+  "notification": {
+    "title": "Notificaciones",
+    "system_alerts": "Alertas del sistema",
+    "mark_all_read": "Marcar todo como leído",
+    "view_all": "Ver todas las alertas",
+    "view_all_description": "Gestiona todas tus notificaciones del sistema",
+    "no_notifications": "No hay notificaciones",
+    "test_create": "Crear notificaciones de prueba",
+    "filter_by": "Filtrar por",
+    "all_types": "Todos los tipos",
+    "clear_all": "Eliminar todas",
+    "loading": "Cargando notificaciones...",
+    "total_count": "notificaciones en total",
+    "load_more": "Cargar más",
+    "types": {
+      "system": "Sistema",
+      "backup": "Copia de seguridad",
+      "animal": "Animal",
+      "import": "Importación"
+    },
+    "priorities": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta"
+    }
   }
 }

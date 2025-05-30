@@ -1,5 +1,5 @@
 ---
-import { t } from '../../i18n';
+import { t } from '../../i18n/config';
 ---
 
 <div class="max-w-4xl mx-auto">
@@ -108,6 +108,31 @@ import { t } from '../../i18n';
     if (themeSelect) {
       themeSelect.value = currentTheme;
     }
+    
+    // Cargar configuraciones de notificaciones guardadas
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+      
+      // Inicializar las casillas de notificaciones
+      if (savedSettings.notifications) {
+        const notifyBackupsCheckbox = document.getElementById('notify_backups');
+        if (notifyBackupsCheckbox && savedSettings.notifications.backups !== undefined) {
+          notifyBackupsCheckbox.checked = savedSettings.notifications.backups;
+        }
+        
+        const notifyImportsCheckbox = document.getElementById('notify_imports');
+        if (notifyImportsCheckbox && savedSettings.notifications.imports !== undefined) {
+          notifyImportsCheckbox.checked = savedSettings.notifications.imports;
+        }
+        
+        const notifyAnimalsCheckbox = document.getElementById('notify_animals');
+        if (notifyAnimalsCheckbox && savedSettings.notifications.animals !== undefined) {
+          notifyAnimalsCheckbox.checked = savedSettings.notifications.animals;
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar la configuración guardada:', error);
+    }
 
     // Listeners para guardar cambios
     const saveButton = document.querySelector('button[type="button"]:last-child');
@@ -163,108 +188,136 @@ import { t } from '../../i18n';
     // Mostrar mensaje de éxito en modal personalizado
     showNotification('success', 'Configuración guardada correctamente');
   }
+  // Función para obtener traducciones desde el cliente
+  function getTranslation(key) {
+    // Obtener el idioma actual
+    const lang = document.documentElement.lang || 'es';
+    
+    // Traducciones en español
+    const es = {
+      'settings.user_preferences': 'Preferencias de usuario',
+      'settings.notifications': 'Notificaciones',
+      'settings.language': 'Idioma',
+      'settings.theme': 'Tema visual'
+    };
+    
+    // Traducciones en catalán
+    const ca = {
+      'settings.user_preferences': 'Preferències d\'usuari',
+      'settings.notifications': 'Notificacions',
+      'settings.language': 'Idioma',
+      'settings.theme': 'Tema visual'
+    };
+    
+    // Seleccionar diccionario según idioma
+    const dict = lang === 'ca' ? ca : es;
+    
+    // Devolver traducción o la clave si no se encuentra
+    return dict[key] || key;
+  }
+  
   // Actualizar todos los textos traducibles en la interfaz
   document.addEventListener('DOMContentLoaded', () => {
     // Actualizar el título en la barra de navegación
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
-      pageTitle.textContent = "Configuración";
+      pageTitle.textContent = getTranslation('settings.title');
     }
     
     // Actualizar títulos de secciones
     const titleUserPrefs = document.getElementById('title-user-preferences');
     if (titleUserPrefs) {
-      titleUserPrefs.textContent = t('settings.user_preferences');
+      titleUserPrefs.textContent = getTranslation('settings.user_preferences');
     }
     
     const titleNotifications = document.getElementById('title-notifications');
     if (titleNotifications) {
-      titleNotifications.textContent = t('settings.notifications');
+      titleNotifications.textContent = getTranslation('settings.notifications');
     }
     
     // Actualizar etiquetas de idioma
     const labelLanguage = document.getElementById('label-language');
     if (labelLanguage) {
-      labelLanguage.textContent = t('settings.language') + ':';
+      labelLanguage.textContent = getTranslation('settings.language') + ':';
     }
     
     const optionEs = document.getElementById('option-es');
     if (optionEs) {
-      optionEs.textContent = t('settings.languages.spanish');
+      optionEs.textContent = getTranslation('settings.languages.spanish');
     }
     
     const optionCa = document.getElementById('option-ca');
     if (optionCa) {
-      optionCa.textContent = t('settings.languages.catalan');
+      optionCa.textContent = getTranslation('settings.languages.catalan');
     }
     
     // Actualizar etiquetas de tema
     const labelTheme = document.getElementById('label-theme');
     if (labelTheme) {
-      labelTheme.textContent = t('settings.theme') + ':';
+      labelTheme.textContent = getTranslation('settings.theme') + ':';
     }
     
     const optionLight = document.getElementById('option-light');
     if (optionLight) {
-      optionLight.textContent = t('settings.themes.light');
+      optionLight.textContent = getTranslation('settings.themes.light');
     }
     
     const optionDark = document.getElementById('option-dark');
     if (optionDark) {
-      optionDark.textContent = t('settings.themes.dark');
+      optionDark.textContent = getTranslation('settings.themes.dark');
     }
     
     const optionSystem = document.getElementById('option-system');
     if (optionSystem) {
-      optionSystem.textContent = t('settings.themes.system');
+      optionSystem.textContent = getTranslation('settings.themes.system');
     }
     
     // Actualizar etiquetas de notificaciones
     const labelBackups = document.getElementById('label-backups');
     if (labelBackups) {
-      labelBackups.textContent = t('settings.notify_backups');
+      labelBackups.textContent = getTranslation('settings.notify_backups');
     }
     
     const descBackups = document.getElementById('desc-backups');
     if (descBackups) {
-      descBackups.textContent = t('settings.notify_backups_desc');
+      descBackups.textContent = getTranslation('settings.notify_backups_desc');
     }
     
     const labelImports = document.getElementById('label-imports');
     if (labelImports) {
-      labelImports.textContent = t('settings.notify_imports');
+      labelImports.textContent = getTranslation('settings.notify_imports');
     }
     
     const descImports = document.getElementById('desc-imports');
     if (descImports) {
-      descImports.textContent = t('settings.notify_imports_desc');
+      descImports.textContent = getTranslation('settings.notify_imports_desc');
     }
     
     const labelAnimals = document.getElementById('label-animals');
     if (labelAnimals) {
-      labelAnimals.textContent = t('settings.notify_animals');
+      labelAnimals.textContent = getTranslation('settings.notify_animals');
     }
     
     const descAnimals = document.getElementById('desc-animals');
     if (descAnimals) {
-      descAnimals.textContent = t('settings.notify_animals_desc');
+      descAnimals.textContent = getTranslation('settings.notify_animals_desc');
     }
     
     // Actualizar botón del modal
     const closeBtn = document.getElementById('close-notification');
     if (closeBtn) {
-      closeBtn.textContent = t('common.accept') || 'Aceptar';
+      closeBtn.textContent = getTranslation('common.accept') || 'Aceptar';
     }
     
     // Actualizar botones de acción
     const btnCancel = document.getElementById('btn-cancel');
     if (btnCancel) {
-      btnCancel.textContent = t('common.cancel');
+      btnCancel.textContent = getTranslation('common.cancel');
     }
     
     const btnSave = document.getElementById('btn-save');
     if (btnSave) {
-      btnSave.textContent = t('common.save');
+      btnSave.textContent = getTranslation('common.save');
     }
     
     // Configurar el modal de notificación

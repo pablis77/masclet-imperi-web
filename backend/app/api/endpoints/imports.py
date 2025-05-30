@@ -13,6 +13,8 @@ import io
 import logging
 import os
 import uuid
+from app.services.notification_service import NotificationService
+from app.models.notification import NotificationType, NotificationPriority
 from datetime import datetime, date
 from fastapi.responses import StreamingResponse
 from app.models.import_model import Import
@@ -311,6 +313,30 @@ async def import_csv(
         import_record.completed_at = datetime.now()
         await import_record.save()
         
+        # Crear notificación de importación completada
+        try:
+            # Notificar al usuario que inició la importación
+            await NotificationService.create_import_notification(
+                user_id=current_user.id,
+                success=True if imported_rows > 0 else False,
+                total_records=total_rows,
+                errors=len(errors),
+                details={"import_id": import_record.id, "file_name": file.filename}
+            )
+            
+            # Si es una importación grande (más de 100 registros), notificar a todos los administradores
+            if total_rows > 100:
+                success_text = "completamente" if len(errors) == 0 else "con algunos errores"
+                await NotificationService.create_system_notification(
+                    title=f"Importación masiva de {total_rows} registros",
+                    message=f"Se ha completado {success_text} una importación de {total_rows} registros. {imported_rows} importados correctamente, {len(errors)} errores.",
+                    priority=NotificationPriority.MEDIUM if len(errors) == 0 else NotificationPriority.HIGH,
+                    send_to_all_admins=True
+                )
+        except Exception as notification_error:
+            logger.error(f"Error al crear notificación de importación: {notification_error}")
+            # Continuamos el proceso aunque falle la notificación
+        
         # Devolver una respuesta completa con todos los campos requeridos
         return {
             "id": import_record.id,
@@ -332,9 +358,42 @@ async def import_csv(
         
     except Exception as e:
         logger.error(f"Error general en importación: {str(e)}")
+        
+        # Actualizar el registro para indicar error
+        import_record.status = "failed"
+        import_record.errors = [str(e)]
+        import_record.completed_at = datetime.now()
+        await import_record.save()
+        
+        # Crear notificación de error en la importación
+        try:
+            await NotificationService.create_import_notification(
+                user_id=current_user.id,
+                success=False,
+                total_records=total_rows,
+                errors=1,
+                details={
+                    "import_id": import_record.id, 
+                    "file_name": file.filename,
+                    "error": str(e)
+                }
+            )
+            
+            # Notificar a administradores si es un error grave
+            await NotificationService.create_system_notification(
+                title="Error en importación de datos",
+                message=f"Ha ocurrido un error al importar el archivo {file.filename}: {str(e)}",
+                priority=NotificationPriority.HIGH,
+                send_to_all_admins=True
+            )
+            
+        except Exception as notification_error:
+            logger.error(f"Error al crear notificación de error de importación: {notification_error}")
+            # Continuamos el proceso aunque falle la notificación
+            
         raise HTTPException(
             status_code=500,
-            detail=f"Error durante la importación: {str(e)}"
+            detail=f"Error en la importación: {str(e)}"
         )
 
 @router.get("/template", response_class=StreamingResponse)
