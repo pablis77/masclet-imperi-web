@@ -107,6 +107,7 @@ class Settings(BaseModel):
         "app.models.user", 
         "app.models.import_model",  # Modelo para historial de importaciones
         "app.models.listado",  # Modelo para listados personalizados
+        "app.models.notification",  # Modelo para las notificaciones del sistema
         "aerich.models"  # Este es necesario para las migraciones
     ]
 

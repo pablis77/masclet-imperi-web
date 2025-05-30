@@ -4,6 +4,8 @@ import Navbar from './Navbar.astro';
 import Sidebar from './Sidebar.astro';
 import Footer from './Footer.astro';
 
+// No importamos el componente aquí, lo haremos en el script client:load
+
 // Props que pueden ser pasados al componente
 interface Props {
   title?: string;
@@ -146,6 +148,22 @@ const showSidebar = true;
           }
         });
       });
+    </script>
+    
+    <!-- Script para inicializar las notificaciones -->
+    <script>
+      // Cargar e inicializar el sistema de notificaciones
+      import('../notifications/NotificationsMenu.js')
+        .then(module => {
+          const initializeNotifications = module.default;
+          document.addEventListener('DOMContentLoaded', () => {
+            console.log('Inicializando sistema de notificaciones...');
+            initializeNotifications();
+          });
+        })
+        .catch(error => {
+          console.error('Error al cargar el sistema de notificaciones:', error);
+        });
     </script>
   </body>
 </html>

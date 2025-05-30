@@ -26,6 +26,7 @@
     "warning": "Advertència",
     "info": "Informació",
     "confirm": "Confirmar",
+    "accept": "Acceptar",
     "yes": "Sí",
     "no": "No",
     "male": "Mascle",
@@ -522,5 +523,31 @@
     "notify_animals": "Avisos sobre animals",
     "notify_animals_desc": "Rebre notificació sobre canvis importants en els animals",
     "save_success": "Configuració desada correctament"
+  },
+  "notification": {
+    "title": "Notificacions",
+    "system_alerts": "Alertes del sistema",
+    "mark_all_read": "Marcar tot com llegit",
+    "view_all": "Veure totes les alertes",
+    "view_all_description": "Gestiona totes les teves notificacions del sistema",
+    "no_notifications": "No hi ha notificacions",
+    "test_create": "Crear notificacions de prova",
+    "filter_by": "Filtrar per",
+    "all_types": "Tots els tipus",
+    "clear_all": "Eliminar totes",
+    "loading": "Carregant notificacions...",
+    "total_count": "notificacions en total",
+    "load_more": "Carregar més",
+    "types": {
+      "system": "Sistema",
+      "backup": "Còpia de seguretat",
+      "animal": "Animal",
+      "import": "Importació"
+    },
+    "priorities": {
+      "low": "Baixa",
+      "medium": "Mitjana",
+      "high": "Alta"
+    }
   }
 }

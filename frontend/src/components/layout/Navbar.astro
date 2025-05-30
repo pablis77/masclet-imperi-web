@@ -1,4 +1,7 @@
 ---
+// Importar función de traducción
+import { t } from '../../i18n/config';
+
 // Props que pueden ser pasados al componente
 interface Props {
   userRole?: string;
@@ -141,60 +144,25 @@ const isActive = (itemUrl: string) => {
         </button>
         
         <!-- Notificaciones - Visible en todos los tamaños -->
-        <button id="notifications-button" class="relative text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20" title="Alertas del sistema">
+        <button id="notifications-button" class="relative text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20" title={t('notification.system_alerts')}>
           <span class="text-xl">🔔</span>
-          <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+          <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
         </button>
         
         <!-- Menú de notificaciones (oculto por defecto) -->
         <div id="notifications-menu" class="absolute right-24 mt-12 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 hidden">
           <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-            <span class="font-bold text-gray-800 dark:text-white">Alertas del sistema</span>
+            <span class="font-bold text-gray-800 dark:text-white">{t('notification.system_alerts')}</span>
             <button id="mark-all-read" class="text-xs text-primary dark:text-primary-light hover:underline">
-              Marcar todo como leído
+              {t('notification.mark_all_read')}
             </button>
           </div>
           <div class="max-h-80 overflow-y-auto">
-            <div class="p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                  <span class="text-blue-600 dark:text-blue-400 text-sm">🐄</span>
-                </div>
-                <div class="ml-3">
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Actualización de estado pendiente</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">3 animales requieren actualización de estado</p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 2 horas</p>
-                </div>
-              </div>
-            </div>
-            <div class="p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
-                  <span class="text-green-600 dark:text-green-400 text-sm">📊</span>
-                </div>
-                <div class="ml-3">
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Backup recomendado</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">Han pasado 7 días desde el último backup</p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 1 día</p>
-                </div>
-              </div>
-            </div>
-            <div class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-full">
-                  <span class="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
-                </div>
-                <div class="ml-3">
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Actualización disponible</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">Nueva versión 1.2.3 disponible</p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hace 3 días</p>
-                </div>
-              </div>
-            </div>
+            <!-- Las notificaciones se cargarán dinámicamente desde el backend -->
           </div>
           <div class="p-2 border-t border-gray-100 dark:border-gray-700 text-center">
-            <a href="/alerts" class="text-sm text-primary dark:text-primary-light hover:underline">
-              Ver todas las alertas
+            <a href="/notifications" class="text-sm text-primary dark:text-primary-light hover:underline">
+              {t('notification.view_all')}
             </a>
           </div>
         </div>

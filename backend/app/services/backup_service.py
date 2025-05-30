@@ -15,6 +15,9 @@ from app.models.explotacio import Explotacio
 from app.models.animal import Animal
 from app.models.user import User
 from app.core.config import settings
+# Importar servicio de notificaciones
+from app.services.notification_service import NotificationService
+from app.models.notification import NotificationType, NotificationPriority
 
 # Configuración de logging
 logging.basicConfig(
@@ -122,38 +125,108 @@ class BackupService:
                 logger.error("El archivo de backup está vacío o no se creó correctamente")
                 raise HTTPException(status_code=500, detail="El archivo de backup está vacío")
             
-            # Obtener información del backup
-            file_size_bytes = os.path.getsize(backup_path)
-            file_size = cls._format_size(file_size_bytes)
+            # Tamaño del archivo en bytes
+            size_bytes = os.path.getsize(backup_path)
+            # Tamaño en formato legible (KB, MB, etc)
+            size_str = cls.get_readable_file_size(size_bytes)
             
-            logger.info(f"Backup completado exitosamente: {filename}")
-            logger.info(f"Tamaño del backup: {file_size}")
+            # Limpieza de backups antiguos
+            await cls.cleanup_old_backups()
             
-            # Rotar backups antiguos
-            await cls.rotate_backups()
-            
-            # Crear y devolver información del backup
-            backup_info = BackupInfo(
-                filename=filename,
-                date=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                size=file_size,
-                size_bytes=file_size_bytes,
+            # Registro el backup en el historial
+            await cls.register_backup_history(
+                filename=filename, 
+                backup_type=options.backup_type,
                 created_by=options.created_by,
-                is_complete=True,
-                content_type="SQL",
-                can_restore=True,
-                backup_type=options.backup_type if hasattr(options, 'backup_type') else "manual",
-                description=options.description if options.description else "Backup manual"
+                description=options.description or f"Backup {options.backup_type}",
+                size_bytes=size_bytes
             )
             
-            return backup_info
+            # Crear notificación de backup exitoso
+            try:
+                # Si el backup fue creado por un usuario específico, notificar a ese usuario
+                user_id = 1  # Por defecto para admin
+                
+                # Intentamos encontrar el ID del usuario si es posible
+                if options.created_by != "sistema":
+                    user = await User.filter(username=options.created_by).first()
+                    if user:
+                        user_id = user.id
+                
+                # Crear la notificación
+                details = {
+                    "filename": filename,
+                    "size": size_str,
+                    "backup_type": options.backup_type
+                }
+                await NotificationService.create_backup_notification(
+                    user_id=user_id,
+                    backup_type=options.backup_type,
+                    success=True,
+                    details=details
+                )
+                
+                # Si es un backup programado o automático, notificar a todos los administradores
+                if options.backup_type in ["daily", "weekly", "automatic"]:
+                    await NotificationService.create_system_notification(
+                        title=f"Backup {options.backup_type} completado",
+                        message=f"Se ha realizado un backup {options.backup_type} automático. Tamaño: {size_str}",
+                        priority=NotificationPriority.LOW,
+                        send_to_all_admins=True
+                    )
+            except Exception as e:
+                logger.error(f"Error al crear notificación de backup: {e}")
+                # Continuamos aunque falle la notificación
+            
+            return BackupInfo(
+                filename=filename,
+                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                size=size_str,
+                size_bytes=size_bytes,
+                created_by=options.created_by,
+                backup_type=options.backup_type,
+                description=options.description or ""
+            )
             
         except Exception as e:
             logger.error(f"Error durante el proceso de backup: {str(e)}")
             # Si se creó un archivo parcial, eliminarlo
             if os.path.exists(backup_path):
                 os.unlink(backup_path)
-            raise HTTPException(status_code=500, detail=str(e))
+            
+            # Crear notificación de error en el backup
+            try:
+                # Intentamos notificar al usuario que inició el backup
+                user_id = 1  # Por defecto para admin
+                if options.created_by != "sistema":
+                    user = await User.filter(username=options.created_by).first()
+                    if user:
+                        user_id = user.id
+                
+                # Notificar el error
+                details = {"error": str(e), "backup_type": options.backup_type}
+                await NotificationService.create_backup_notification(
+                    user_id=user_id,
+                    backup_type=options.backup_type,
+                    success=False,
+                    details=details
+                )
+                
+                # Si era un backup importante, notificar a todos los administradores
+                if options.backup_type in ["daily", "weekly", "automatic"]:
+                    await NotificationService.create_system_notification(
+                        title=f"Error en backup {options.backup_type}",
+                        message=f"Ha ocurrido un error en el backup {options.backup_type}: {str(e)}",
+                        priority=NotificationPriority.HIGH,
+                        send_to_all_admins=True
+                    )
+            except Exception as notification_error:
+                logger.error(f"Error al crear notificación de error de backup: {notification_error}")
+                
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al crear backup: {str(e)}"
+            )
 
     @classmethod
     async def list_backups(cls) -> List[BackupInfo]:
@@ -216,7 +289,7 @@ class BackupService:
                         
                         # Obtener tamaño del archivo
                         size_bytes = os.path.getsize(file_path)
-                        size = cls._format_size(size_bytes)
+                        size = cls.get_readable_file_size(size_bytes)
                         
                         # Obtener información adicional del historial si existe
                         history_entry = history_dict.get(filename, {})
