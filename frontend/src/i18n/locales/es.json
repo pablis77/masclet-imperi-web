@@ -456,5 +456,27 @@
     "invalid_format": "Formato inválido",
     "try_again": "Intentar de nuevo",
     "go_home": "Ir al inicio"
+  },
+  "menu": {
+    "dashboard": "Panel de Control",
+    "exploitations": "Explotaciones",
+    "animals": "Animales",
+    "listings": "Listados",
+    "imports": "Importaciones",
+    "users": "Usuarios",
+    "backup": "Copias de Seguridad"
+  },
+  "listings": {
+    "title": "Listados",
+    "description": "Gestiona los listados de animales",
+    "create": "Crear Listado",
+    "loading": "Cargando listados...",
+    "table": {
+      "name": "Nombre",
+      "category": "Categoría",
+      "animals": "Animales",
+      "createdAt": "Fecha de creación",
+      "actions": "Acciones"
+    }
   }
 }
