@@ -1,0 +1,20 @@
+[Unit]
+Description=Masclet Imperi Backend
+After=network.target postgresql.service
+
+[Service]
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/masclet-imperi/backend
+ExecStart=/home/ec2-user/masclet-imperi/venv/bin/gunicorn app.main:app --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker --timeout 300
+Restart=always
+# Reintentar reinicio después de 10 segundos si falla
+RestartSec=10
+# Variables de entorno
+Environment="PATH=/home/ec2-user/masclet-imperi/venv/bin"
+# Logs estándar
+StandardOutput=append:/home/ec2-user/masclet-imperi/logs/masclet-service-out.log
+StandardError=append:/home/ec2-user/masclet-imperi/logs/masclet-service-err.log
+
+[Install]
+WantedBy=multi-user.target
