@@ -25,8 +25,8 @@ ssh -i "$PEM_PATH" ec2-user@$EC2_IP "mkdir -p /home/ec2-user/masclet-imperi/fron
 
 # 3. Copiar archivos de configuración
 Write-Host "📦 Copiando archivos de configuración..." -ForegroundColor Yellow
-scp -i "$PEM_PATH" "$(Get-Location)\docker-compose.prod.yml" ec2-user@$EC2_IP:/home/ec2-user/masclet-imperi/docker-compose.frontend.yml
-scp -i "$PEM_PATH" "$(Get-Location)\Dockerfile.prod" ec2-user@$EC2_IP:/home/ec2-user/masclet-imperi/frontend/Dockerfile
+scp -i "$PEM_PATH" "$(Get-Location)\docker-compose.prod.yml" "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/docker-compose.frontend.yml"
+scp -i "$PEM_PATH" "$(Get-Location)\Dockerfile.prod" "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/frontend/Dockerfile"
 
 # 4. Identificar la red Docker existente
 Write-Host "🔍 Identificando red Docker..." -ForegroundColor Yellow
@@ -43,11 +43,11 @@ $tempZip = "$(Get-Location)\frontend-temp.zip"
 if (Test-Path $tempZip) {
     Remove-Item $tempZip -Force
 }
-Compress-Archive -Path "..\..\frontend\*" -DestinationPath $tempZip -Force
+Compress-Archive -Path "$((Get-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\frontend")).FullName)\*" -DestinationPath $tempZip -Force
 
 # 7. Transferir código fuente a EC2
 Write-Host "📤 Transfiriendo código fuente a EC2..." -ForegroundColor Yellow
-scp -i "$PEM_PATH" $tempZip ec2-user@$EC2_IP:/home/ec2-user/masclet-imperi/frontend-temp.zip
+scp -i "$PEM_PATH" $tempZip "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/frontend-temp.zip"
 ssh -i "$PEM_PATH" ec2-user@$EC2_IP "cd /home/ec2-user/masclet-imperi && unzip -o frontend-temp.zip -d frontend-source && rm frontend-temp.zip"
 
 # 8. Construir y ejecutar el contenedor Frontend
