@@ -1,0 +1,62 @@
+# Etapa de construcción
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Instalamos dependencias
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copiamos todo el código fuente
+COPY frontend/ ./
+
+# Creamos archivo .env.production personalizado para el despliegue
+RUN echo "# URL de la API para conexión con el backend" > .env.production && \
+    echo "VITE_API_URL=http://localhost:8000/api/v1" >> .env.production && \
+    echo "" >> .env.production && \
+    echo "# Entorno de la aplicación" >> .env.production && \
+    echo "VITE_ENVIRONMENT=production" >> .env.production && \
+    echo "" >> .env.production && \
+    echo "# Opciones de depuración" >> .env.production && \
+    echo "VITE_ENABLE_LOGGING=false" >> .env.production && \
+    echo "" >> .env.production && \
+    echo "# Tiempo de expiración del token en minutos (para recordar renovación)" >> .env.production && \
+    echo "VITE_TOKEN_EXPIRE_MINUTES=30" >> .env.production && \
+    echo "" >> .env.production && \
+    echo "# Versión de la aplicación" >> .env.production && \
+    echo "VITE_APP_VERSION=1.0.0" >> .env.production
+
+# Construimos la aplicación
+RUN npm run build
+
+# Etapa de producción
+FROM node:20-alpine
+WORKDIR /app
+
+# Copiamos los archivos de construcción y lo necesario para ejecutar
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/server.js ./
+COPY --from=builder /app/fix-server.js ./
+COPY --from=builder /app/entry.mjs ./
+COPY --from=builder /app/health-entry.mjs ./
+COPY --from=builder /app/render.js ./
+COPY --from=builder /app/start.js ./
+
+# Instalamos solo dependencias de producción
+RUN npm ci --omit=dev
+
+# Exponemos el puerto
+EXPOSE 3000
+
+# Configuramos variables de entorno para producción
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV API_URL=http://masclet-api:8000/api/v1
+
+# Configuramos healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD wget -q --spider http://localhost:3000/ || exit 1
+
+# Iniciamos el servidor
+CMD ["node", "fix-server.js"]
