@@ -2,16 +2,163 @@
 
 *Pasos detallados de implementación - Versión 1.0 - Mayo 2025*
 
-## Preparación del Entorno Local
+## Índice
+1. [Diagnóstico de Problemas](#diagnóstico-de-problemas)
+2. [Corrección de Contenedores Docker](#corrección-de-contenedores-docker)
+3. [Verificación de Funcionamiento](#verificación-de-funcionamiento)
+4. [Lecciones Aprendidas](#lecciones-aprendidas)
+5. [Plan de Contingencia](#plan-de-contingencia)
 
-Antes de comenzar el despliegue en AWS, es fundamental preparar adecuadamente nuestro entorno local y el código para producción.
+## Diagnóstico de Problemas
+
+### Problemas Identificados ✅
+
+1. **Contenedor API en reinicio constante**
+   - El contenedor `masclet-api` se reiniciaba continuamente debido a errores internos
+   - Logs mostraban error de permisos al intentar escribir en `/app/logs/masclet_imperi.log`
+   - No se encontraba el archivo `.env` dentro del contenedor
+
+2. **Problemas de configuración Docker**
+   - Volúmenes montados sobrescribiendo directorios con permisos adecuados
+   - Comando `docker-compose` no disponible o mal configurado en EC2
+   - Redes de Docker mal configuradas, impidiendo comunicación entre contenedores
+
+3. **Conectividad de red**
+   - IP pública incorrecta en intentos iniciales de acceso
+   - Grupo de seguridad mal configurado (puertos no abiertos)
+   - Regla SSH con IP incorrecta
+
+4. **Espacio en disco**
+   - Servidor EC2 con espacio limitado (10GB) casi completamente ocupado
+
+## Corrección de Contenedores Docker
+
+### Verificación del Estado Inicial ✅
+
+```bash
+ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps -a"
+```
+
+- Contenedor `masclet-db` corriendo y saludable
+- Contenedor `masclet-api` en estado de reinicio constante
+
+### Inspección de Redes Docker ✅
+
+```bash
+ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker network ls && sudo docker inspect masclet-db -f '{{.NetworkSettings.Networks}}'"
+```
+
+- Base de datos en red `masclet-imperi_default`
+- API intentando conectarse a la red por defecto
+
+### Reconstrucción del Contenedor API ✅
+
+```bash
+ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "cd /home/ec2-user/masclet-imperi && sudo docker stop masclet-api && sudo docker rm masclet-api && sudo docker build -t masclet-imperi-api ./backend && sudo docker run -d --name masclet-api --restart unless-stopped -p 8000:8000 -v /home/ec2-user/masclet-imperi/backend:/app -v /home/ec2-user/masclet-imperi/logs:/app/logs --env-file /home/ec2-user/masclet-imperi/.env --network masclet-imperi_default masclet-imperi-api"
+```
+
+## Verificación de Funcionamiento
+
+### Comprobación de Estado de Contenedores ✅
+
+```bash
+ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps"
+```
+
+- Ambos contenedores `masclet-db` y `masclet-api` corriendo correctamente
+
+### Prueba de Endpoints API ✅
+
+```bash
+curl -v http://108.129.139.119:8000/api/v1/animals/
+```
+
+- Respuesta exitosa del endpoint, confirmando funcionamiento correcto
+- Conexión a base de datos verificada (datos recuperados correctamente)
+
+### Respaldo de Imagen Funcional ✅
+
+```bash
+ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker commit masclet-api masclet-imperi-api:production && sudo docker images"
+```
+
+- Imagen de producción guardada como `masclet-imperi-api:production`
+
+## Lecciones Aprendidas
+
+1. **Importancia de seguir una metodología estricta**
+   - Documentar cada paso antes de ejecutarlo
+   - Realizar commits frecuentes en puntos estables
+   - Distinguir claramente entre entornos (local vs EC2)
+
+2. **Gestión de permisos en Docker**
+   - Los volúmenes montados sobrescriben los permisos establecidos en el Dockerfile
+   - Necesidad de crear directorios con permisos adecuados en el host
+
+3. **Configuración de redes en Docker**
+   - Asegurar que los contenedores estén en la misma red para comunicarse
+   - Usar `--network` en lugar de `--link` para mayor flexibilidad
+
+4. **Manejo de archivos de configuración**
+   - Asegurar que el archivo `.env` esté en la ubicación correcta
+   - Verificar que los volúmenes montados no sobrescriban archivos esenciales
+
+## Plan de Contingencia
+
+### Para problemas de permisos de archivos
+
+1. Crear directorios con permisos adecuados en el host
+   
+```bash
+mkdir -p /home/ec2-user/masclet-imperi/logs /home/ec2-user/masclet-imperi/uploads
+chmod -R 777 /home/ec2-user/masclet-imperi/logs /home/ec2-user/masclet-imperi/uploads
+```
+
+### Para problemas de conectividad
+
+1. Verificar reglas de grupo de seguridad
+   
+```bash
+aws ec2 describe-security-groups --group-ids sg-xxxxxxxx
+```
+
+2. Actualizar reglas según sea necesario
+   
+```bash
+aws ec2 authorize-security-group-ingress --group-id sg-xxxxxxxx --protocol tcp --port 8000 --cidr 0.0.0.0/0
+```
+
+### Para problemas de espacio en disco
+
+1. Limpiar imágenes y contenedores no utilizados
+   
+```bash
+docker system prune -a
+```
+
+2. Considerar ampliar el volumen EBS si es necesario
+
+## Próximos Pasos
+
+1. ✅ Solucionar el error en el endpoint de salud (`/api/v1/health`)
+2. ✅ Implementar monitoreo de la API y base de datos
+3. ✅ Configurar respaldos automáticos
+4. ✅ Documentar proceso completo para futuras referencias
+
+
+
+
+### 5. Logs y Monitorización
+
+- Mantener logs detallados de cada operación
+- Configurar monitorización básica para alertas tempranas
+
+
+## Preparación del Entorno Local (COMPLETADO)
 
 ### 1. Preparación del Código para Producción
 
-#### 1.1. Configuración de Versiones
-
-- [X] Crear rama de producción
-- [X] Etiquetar versión
+#### 1.1. Configuración de Versiones ✅
 
 ```bash
 # Crear una rama específica para producción
@@ -21,10 +168,7 @@ git checkout -b production
 git tag -a v1.0.0 -m "Primera versión de producción"
 ```
 
-#### 1.2. Verificar Optimizaciones
-
-- [X] Revisar configuración de producción del frontend
-- [X] Verificar y actualizar dependencias
+#### 1.2. Verificar Optimizaciones ✅
 
 ```bash
 # Revisar archivos del frontend
@@ -40,10 +184,7 @@ npm outdated
 npm update
 ```
 
-#### 1.3. Ejecutar Tests
-
-- [X] Ejecutar y verificar tests del backend
-- [X] Ejecutar y verificar tests de integración
+#### 1.3. Ejecutar Tests ✅
 
 ```bash
 # Ejecutar tests del backend
@@ -54,29 +195,290 @@ python -m pytest
 python new_tests/complementos/integration_tests.py
 ```
 
-> ✅ **Verificación**: Comprobar que todos los tests pasan correctamente.
+### 2. Preparación de Archivos de Despliegue ✅
 
-### 2. Separación de Variables de Entorno
+#### 2.1. Archivos de Configuración para EC2
 
-#### 2.1. Crear Archivos de Entorno Separados
+Creamos los siguientes archivos en la carpeta `docs/aws_deployment/`:
 
-- [X] Crear archivo .env.production
-- [X] Crear archivo .env.development
+- `env.production`: Variables de entorno para producción
+- `nginx.conf`: Configuración del servidor web
+- `start-backend.sh`: Script de inicio del backend
+- `deploy.sh`: Script de despliegue automatizado
+- `masclet-imperi.service`: Configuración de systemd
+
+## Despliegue en EC2 (Amazon Linux 2)
+
+### 1. Verificación del Entorno EC2 ✅
 
 ```bash
-# Crear archivo para variables de producción
-cp backend/.env backend/.env.production
+# Verificar versión de Python
+python3 --version
+# Python 3.7.16
 
-# Crear archivo para variables de desarrollo
-cp backend/.env backend/.env.development
+# Verificar pip
+pip3 --version
+# pip 20.2.2
+
+# Verificar instalación de PostgreSQL (no instalado inicialmente)
+postgres --version || echo 'Postgres no instalado'
+# Postgres no instalado
+
+# Verificar instalación de Nginx (no instalado inicialmente)
+nginx -v || echo 'Nginx no instalado'
+# Nginx no instalado
 ```
 
-#### 2.2. Configurar Variables de Producción
+### 2. Instalación de Dependencias
 
-- [X] Configurar variables de entorno para producción
-- [X] Verificar que no se suben al repositorio
+```bash
+# Actualizar el sistema
+sudo yum update -y
 
-Editar `backend/.env.production` para incluir:
+# Instalar dependencias necesarias
+sudo yum install -y git nginx postgresql-devel gcc python3-devel
+
+# Instalar pip si no está instalado
+if ! command -v pip3 &> /dev/null; then
+    curl -O https://bootstrap.pypa.io/get-pip.py
+    python3 get-pip.py --user
+    echo 'export PATH=~/.local/bin:$PATH' >> ~/.bashrc
+    source ~/.bashrc
+fi
+
+# Instalar virtualenv
+pip3 install --user virtualenv
+```
+
+### 3. Configuración de PostgreSQL
+
+```bash
+# Instalar PostgreSQL
+sudo amazon-linux-extras install postgresql13 -y
+
+# Inicializar PostgreSQL
+sudo postgresql-setup --initdb
+
+# Iniciar y habilitar PostgreSQL
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Configurar usuario y base de datos
+sudo -u postgres psql -c "CREATE USER masclet_admin WITH PASSWORD 'tu_contraseña_segura';"
+sudo -u postgres psql -c "CREATE DATABASE masclet_imperi OWNER masclet_admin;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE masclet_imperi TO masclet_admin;"
+```
+
+### 4. Clonar Repositorio
+
+```bash
+# Crear directorio para la aplicación
+sudo mkdir -p /home/ec2-user/masclet-imperi
+sudo chown ec2-user:ec2-user /home/ec2-user/masclet-imperi
+
+# Clonar repositorio
+cd /home/ec2-user/masclet-imperi
+git clone https://github.com/usuario/masclet-imperi-web.git .
+git checkout production
+
+# Crear directorios necesarios
+mkdir -p logs backups
+```
+
+## Despliegue con Docker en EC2 (Estrategia recomendada)
+
+### 5. Instalación de Docker en EC2
+
+```bash
+# Instalar Docker en Amazon Linux 2
+sudo yum update -y
+sudo amazon-linux-extras install docker -y
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker ec2-user
+
+# Cerrar sesión y volver a conectar para aplicar los cambios de grupo
+exit
+# Reconectar por SSH
+```
+
+> ✅ **Verificación**: Ejecutar `docker --version` para confirmar que Docker está instalado correctamente.
+
+### 6. Instalación de Docker Compose
+
+```bash
+# Instalar Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verificar instalación
+docker-compose --version
+```
+
+### 7. Clonar Repositorio
+
+```bash
+# Crear directorio para la aplicación
+sudo mkdir -p /home/ec2-user/masclet-imperi
+sudo chown ec2-user:ec2-user /home/ec2-user/masclet-imperi
+
+# Clonar repositorio
+cd /home/ec2-user/masclet-imperi
+git clone https://github.com/usuario/masclet-imperi-web.git .
+git checkout production
+
+# Crear directorios necesarios
+mkdir -p logs backups
+```
+
+> ✅ **Punto de control**: Ejecutar `git log -1 --oneline` para verificar que estamos en la última versión de la rama production.
+
+### 8. Configuración del Entorno Docker
+
+```bash
+# Crear archivo docker-compose.yml para producción
+cat > docker-compose.yml << EOL
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: masclet-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=tu_contraseña_segura
+      - POSTGRES_USER=masclet_admin
+      - POSTGRES_DB=masclet_imperi
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U masclet_admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: masclet-backend
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    environment:
+      - DATABASE_URL=postgresql://masclet_admin:tu_contraseña_segura@db:5432/masclet_imperi
+      - SECRET_KEY=tu_clave_secreta_para_jwt
+      - ENVIRONMENT=production
+      - CORS_ORIGINS=*
+    depends_on:
+      - db
+    restart: always
+    command: sh -c "cd /app && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build: ./frontend
+    container_name: masclet-frontend
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "80:3000"
+    environment:
+      - PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    restart: always
+    command: sh -c "cd /app && npm run dev -- --host 0.0.0.0 --port 3000"
+
+volumes:
+  postgres_data:
+EOL
+
+# Crear archivo .dockerignore
+cat > .dockerignore << EOL
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.git
+**/.DS_Store
+backups/*
+logs/*
+EOL
+```
+
+### 9. Crear Dockerfiles
+
+```bash
+# Dockerfile para el backend
+cat > backend/Dockerfile << EOL
+FROM python:3.9
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn uvicorn
+
+COPY . .
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EOL
+
+# Dockerfile para el frontend
+cat > frontend/Dockerfile << EOL
+FROM node:16
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+EOL
+```
+
+> ✅ **Punto de control**: Guardar este progreso con `git add .` y `git commit -m "Añadir configuración Docker para producción"`
+
+### 10. Iniciar Aplicación con Docker
+
+```bash
+# Construir e iniciar los contenedores
+docker-compose up -d --build
+
+# Verificar que los contenedores están funcionando
+docker-compose ps
+```
+
+> ✅ **Verificación**: Comprobar que los tres contenedores (db, backend, frontend) están en estado "Up".
+
+### 11. Configuración de Reinicio Automático
+
+```bash
+# Crear script para inicio automático
+cat > start-masclet.sh << EOL
+#!/bin/bash
+cd /home/ec2-user/masclet-imperi
+docker-compose up -d
+EOL
+
+# Dar permisos de ejecución
+chmod +x start-masclet.sh
+
+# Configurar crontab para ejecutar al reinicio
+(crontab -l 2>/dev/null; echo "@reboot /home/ec2-user/masclet-imperi/start-masclet.sh") | crontab -
+```
+
+### 12. Verificar Despliegue
+
+```bash
+# Verificar que la aplicación está funcionando
+curl http://localhost/api/v1/health
+
+# Comprobar logs
+docker-compose logs -f
+```
 
 ```ini
 # Configuración para entorno de producción
