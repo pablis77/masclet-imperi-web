@@ -1,0 +1,6 @@
+Status: 200
+URL final: http://108.129.139.119/dashboard
+Headers: {'Server': 'nginx/1.27.5', 'Date': 'Sun, 01 Jun 2025 16:24:46 GMT', 'Content-Type': 'text/html', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'X-Powered-By': 'Express'}
+
+<!DOCTYPE html><html lang="es"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><script src="/scripts/bloquear-eliminar-parto.js"></script><script src="/scripts/bloquear-editar-parto.js"></script><script src="/scripts/bloquear-actualizar-animal.js"></script><script src="/scripts/bloquear-acciones-listados.js"></script><meta name="generator" content="Astro v4.16.18"><title>Dashboard</title><link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
+<style>:root{--color-primary: #2c3e50;--color-primary-dark: #1a252f;--color-primary-light: #34495e;--color-secondary: #e67e22;--color-secondary-dark: #d35400;--color-secondary-light: #f39c12}:root{--text-color: #333;--bg-color: #f8f9fa;--card-bg: #ffffff}.dark{--text-color: #e2e8f0;--bg-color: #1a202c;--card-bg: #2d3748}.card{overflow:hidden;border-radius:1rem;--tw-bg-opacity: 1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))...

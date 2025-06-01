@@ -27,8 +27,8 @@ async def health_check() -> Dict[str, Any]:
         # Información básica sobre el servicio
         result = {
             "status": "ok",
-            "environment": settings.environment,
-            "version": settings.version,
+            "environment": getattr(settings, 'environment', 'production'),
+            "version": getattr(settings, 'version', '1.0.0'),
             "timestamp": time.time()
         }
         return result

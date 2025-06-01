@@ -84,7 +84,20 @@ const userServiceProxy = {
       // IMPLEMENTACIÓN DIRECTA: Usamos fetch en lugar de axios para tener más control
       try {
         console.log('Intentando obtener usuarios con fetch...');
-        const fetchResponse = await fetch(`${api.defaults.baseURL}/users?${params.toString()}`, {
+        // En desarrollo local, siempre usar URL absoluta para usuarios
+        let fullUrl;
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
+          // Forzar uso de URL absoluta en desarrollo local
+          fullUrl = `http://localhost:8000/api/v1/users?${params.toString()}`;
+        } else {
+          // En otros entornos, usar la configuración de api.ts
+          let apiUrl = api.defaults.baseURL || '';
+          const endpoint = apiUrl.endsWith('/') ? 'users' : '/users';
+          fullUrl = `${apiUrl}${endpoint}?${params.toString()}`;
+        }
+        console.log('URL completa:', fullUrl);
+        
+        const fetchResponse = await fetch(fullUrl, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -114,7 +127,18 @@ const userServiceProxy = {
       
       // Si fetch falla, seguimos con el método axios como respaldo
       console.log('Usando axios como método alternativo...');
-      const response = await api.get(`/users?${params.toString()}`, config);
+      // En desarrollo local, siempre usar URL absoluta para usuarios
+      let url;
+      let response;
+      if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
+        // Para desarrollo local, usamos una URL absoluta y pasamos todo el objeto
+        url = `http://localhost:8000/api/v1/users?${params.toString()}`;
+        response = await api.get(url, { ...config, baseURL: '' });
+      } else {
+        // En otros entornos, usar rutas relativas
+        url = `users?${params.toString()}`;
+        response = await api.get(url, config);
+      }
       
       // Inspeccionar el objeto de respuesta completo para encontrar los datos
       console.log('Respuesta completa de axios:', response);
@@ -158,7 +182,15 @@ const userServiceProxy = {
         
         return new Promise((resolve) => {
           const xhr = new XMLHttpRequest();
-          xhr.open('GET', `${api.defaults.baseURL}/users`);
+          // Determinar la URL correcta según el entorno
+          let xhrUrl;
+          if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
+            xhrUrl = 'http://localhost:8000/api/v1/users';
+          } else {
+            xhrUrl = `${api.defaults.baseURL}/users`;
+          }
+          console.log('URL para XMLHttpRequest:', xhrUrl);
+          xhr.open('GET', xhrUrl);
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
           xhr.setRequestHeader('Content-Type', 'application/json');
           xhr.responseType = 'json';

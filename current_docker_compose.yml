@@ -1,0 +1,81 @@
+# Docker Compose optimizado para el frontend de Masclet Imperi
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: ./deployment/frontend/Dockerfile.prod
+    container_name: masclet-frontend
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://masclet-api:8000/api/v1
+    depends_on:
+      - api
+    networks:
+      - masclet-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api:
+    image: masclet-imperi-api:latest
+    container_name: masclet-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@masclet-db:5432/${POSTGRES_DB}
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - masclet-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/api/v1/animals/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:17
+    platform: linux/amd64
+    container_name: masclet-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=md5
+      # Optimizaciones PostgreSQL
+      - POSTGRES_SHARED_BUFFERS=256MB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=768MB
+      - POSTGRES_WORK_MEM=4MB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - masclet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+networks:
+  masclet-network:
+    name: masclet-imperi_default
+
+volumes:
+  postgres_data:
+    name: masclet-db-data

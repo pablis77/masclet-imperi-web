@@ -1,0 +1,4 @@
+Status: 200
+Headers: {'Server': 'nginx/1.27.5', 'Date': 'Sun, 01 Jun 2025 16:24:45 GMT', 'Content-Type': 'application/json', 'Content-Length': '196', 'Connection': 'keep-alive', 'X-Powered-By': 'Express', 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD', 'access-control-allow-headers': '*', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'x-xss-protection': '1; mode=block', 'referrer-policy': 'strict-origin-when-cross-origin', 'permissions-policy': 'geolocation=(), microphone=(), camera=()'}
+
+Response: {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbmlzdHJhZG9yIiwiZXhwIjoxNzQ4ODAyMjg1fQ.Is5kejhdgELTevQ1-NqILCiHXaYUQoBF-WmPqVLLU0M","token_type":"bearer"}
