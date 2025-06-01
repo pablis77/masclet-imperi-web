@@ -6,9 +6,11 @@
 1. [Diagnóstico de Problemas](#diagnóstico-de-problemas)
 2. [Corrección de Contenedores Docker](#corrección-de-contenedores-docker)
 3. [Verificación de Funcionamiento](#verificación-de-funcionamiento)
-4. [Lecciones Aprendidas](#lecciones-aprendidas)
-5. [Plan de Contingencia](#plan-de-contingencia)
-6. [Despliegue del Frontend](#despliegue-del-frontend)
+4. [Solución de Problemas Post-Despliegue](#solución-de-problemas-post-despliegue)
+5. [Lecciones Aprendidas](#lecciones-aprendidas)
+6. [Plan de Contingencia](#plan-de-contingencia)
+7. [Despliegue del Frontend](#despliegue-del-frontend)
+8. [Scripts de Mantenimiento](#scripts-de-mantenimiento)
 
 ## Diagnóstico de Problemas
 
@@ -60,6 +62,7 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "cd /home/ec2-user/masclet-im
 
 ## Verificación de Funcionamiento
 
+
 ### Comprobación de Estado de Contenedores 
 
 ```bash
@@ -84,6 +87,66 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker commit masclet-a
 ```
 
 - Imagen de producción guardada como `masclet-imperi-api:production`
+
+## Scripts de Mantenimiento
+
+### Script de Respaldo de Contenedores Docker
+
+Para mantener copias de seguridad de los contenedores Docker en producción, utilizamos un script personalizado que:
+
+1. Crea snapshots de los contenedores en ejecución
+2. Guarda las imágenes como archivos tar
+3. Descarga los respaldos localmente
+4. Opcionalmente los sube a un bucket S3
+
+#### Ubicación
+
+```
+deployment/backup/backup_contenedores_aws.py
+```
+
+#### Uso
+
+```bash
+# Respaldar solo contenedores masclet-*
+python deployment/backup/backup_contenedores_aws.py
+
+# Respaldar todos los contenedores
+python deployment/backup/backup_contenedores_aws.py --all
+
+# Subir respaldos a S3
+python deployment/backup/backup_contenedores_aws.py --upload
+
+# Mostrar información detallada
+python deployment/backup/backup_contenedores_aws.py -v
+```
+
+#### Configuración
+
+El script tiene las siguientes configuraciones que pueden modificarse según sea necesario:
+
+```python
+# Configuración
+BACKUP_DIR = Path("backups/docker")    # Directorio local para guardar respaldos
+AWS_HOSTNAME = "108.129.139.119"      # IP del servidor EC2
+SSH_KEY_PATH = "ruta/a/clave.pem"     # Ruta a la clave SSH
+SSH_USER = "ec2-user"                 # Usuario SSH
+S3_BUCKET = "masclet-imperi-backups"  # Bucket S3 para subir respaldos
+```
+
+### Script de Diagnóstico de Despliegue
+
+Para verificar el estado del despliegue y detectar problemas:
+
+```bash
+python new_tests/complementos/comprobar_despliegue.py
+```
+
+Este script realiza pruebas completas del sistema, incluyendo:
+1. Autenticación y estado del backend
+2. Disponibilidad de archivos estáticos
+3. Respuesta de endpoints API críticos
+4. Accesibilidad de páginas principales
 
 ## Despliegue del Frontend
 
@@ -158,7 +221,173 @@ El script realiza las siguientes acciones:
 4. Crea un contenedor Docker con la configuración adecuada
 5. Verifica la correcta ejecución del contenedor
 
+## Solución de Problemas Post-Despliegue
+
+### Diagnóstico Automático
+
+Para detectar problemas en el despliegue, usar el script de diagnóstico:
+
+```bash
+python new_tests/complementos/comprobar_despliegue.py
+```
+
+Este script verifica:
+1. Autenticación y estado del backend
+2. Disponibilidad de archivos estáticos
+3. Respuesta de endpoints API críticos
+4. Accesibilidad de páginas principales
+5. Configuración de entorno
+
+### Problema 1: Endpoint de Salud (Health Check) del Backend
+
+**Síntomas:**
+- Contenedor `masclet-api` en estado `unhealthy` o reinicio continuo
+- Error en logs: `'Settings' object has no attribute 'version'`
+- Conexiones rechazadas con `LocalProtocolError: Can't send data when our state is ERROR`
+
+**Solución:**
+
+1. Modificar el endpoint de health check para usar `getattr()` con valores predeterminados:
+
+```python
+# Archivo: backend/app/api/endpoints/health.py
+@router.get("", status_code=status.HTTP_200_OK)
+async def health_check() -> Dict[str, Any]:
+    try:
+        # Información básica sobre el servicio
+        result = {
+            "status": "ok",
+            "environment": getattr(settings, 'environment', 'production'),
+            "version": getattr(settings, 'version', '1.0.0'),
+            "timestamp": time.time()
+        }
+        return result
+    except Exception as e:
+        logger.error(f"Error en health check: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al verificar estado del servicio"
+        )
+```
+
+2. Aplicar cambios al contenedor:
+
+```bash
+# Copiar archivo al servidor
+scp ruta/local/health.py ec2-user@[EC2-IP]:/home/ec2-user/health.py
+
+# Copiar dentro del contenedor y reiniciar
+ssh ec2-user@[EC2-IP] "docker cp /home/ec2-user/health.py masclet-api:/app/app/api/endpoints/health.py && docker restart masclet-api"
+```
+
+> ⚠️ **Importante**: Evitar caracteres especiales (tildes, ñ, etc.) en archivos Python que se copian a contenedores Docker para evitar errores de codificación UTF-8.
+
+### Problema 2: Configuración NGINX para Proxy Inverso
+
+**Síntomas:**
+- Frontend puede cargar pero sin datos del backend
+- Errores CORS o conexión rechazada al acceder a rutas `/api/`
+- Página muestra errores de hidratación SSR
+
+**Solución:**
+
+1. Crear archivo de configuración NGINX adecuado:
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+
+    # Proxy inverso a la aplicación Node.js (Astro SSR)
+    location / {
+        proxy_pass http://masclet-frontend-node:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Alias para los archivos estáticos en _astro (para compatibilidad)
+    location /assets/ {
+        alias /usr/share/nginx/html/_astro/;
+        try_files $uri $uri/ =404;
+    }
+
+    # Acceso directo a archivos en _astro
+    location /_astro/ {
+        proxy_pass http://masclet-frontend-node:10000/_astro/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
+    # Configuración para favicon
+    location = /favicon.ico {
+        alias /usr/share/nginx/html/favico.ico;
+        access_log off;
+        log_not_found off;
+        expires 30d;
+    }
+
+    # Proxy inverso a la API FastAPI
+    location /api/ {
+        proxy_pass http://masclet-api:8000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    access_log /var/log/nginx/masclet_access.log;
+    error_log /var/log/nginx/masclet_error.log;
+}
+```
+
+2. Aplicar la configuración al contenedor NGINX:
+
+```bash
+# Copiar archivo al servidor
+scp ruta/local/nginx_config.conf ec2-user@[EC2-IP]:/home/ec2-user/nginx_config.conf
+
+# Aplicar al contenedor y recargar NGINX sin reiniciar
+ssh ec2-user@[EC2-IP] "docker cp /home/ec2-user/nginx_config.conf masclet-frontend:/tmp/ && docker exec masclet-frontend sh -c 'cat /tmp/nginx_config.conf > /etc/nginx/conf.d/default.conf && nginx -s reload'"
+```
+
+### Problema 3: Rutas estáticas vs SSR
+
+**Síntomas:**
+- Páginas de rutas dinámicas devuelven 404 (ej: /explotaciones)
+- Frontend no reconoce rutas correctamente
+
+**Solución:**
+
+1. Revisar las rutas definidas en Astro y asegurarse de que están configuradas correctamente como SSR:
+
+```javascript
+// Archivo astro.config.mjs
+export default defineConfig({
+  output: 'server',  // Usar modo servidor
+  adapter: node({
+    mode: 'standalone' // Modo standalone para Docker
+  }),
+  // Resto de configuración
+});
+```
+
+2. Verificar que la estructura de carpetas en `src/pages/` refleja correctamente las rutas que queremos soportar.
+
 ## Lecciones Aprendidas
+
 
 1. **Importancia de seguir una metodología estricta**
    - Documentar cada paso antes de ejecutarlo

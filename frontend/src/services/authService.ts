@@ -383,7 +383,11 @@ export const login = async ({ username, password }: LoginRequest): Promise<Login
     };
     
     // Realizar la petición de login al endpoint OAuth2 correcto
-    const response = await axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, formData, config);
+    // Usar la URL base configurada en apiConfig y añadir el endpoint de auth
+    // apiConfig.baseURL ya contiene el prefijo correcto (/api/v1 en desarrollo o /api/api/v1 en producción)
+    const loginUrl = API_URL ? `${API_URL}${apiConfig.baseURL.replace('/api/v1', '')}/auth/login` : `${apiConfig.baseURL}/auth/login`;
+    console.log('URL de login utilizada:', loginUrl);
+    const response = await axios.post<LoginResponse>(loginUrl, formData, config);
     const data = response.data;
     
     // Si llegamos aquí, la autenticación fue exitosa

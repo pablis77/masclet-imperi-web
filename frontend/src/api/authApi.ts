@@ -37,9 +37,18 @@ class AuthApi {
 
   // Constructor privado (patrón Singleton)
   private constructor() {
+    // Detectar la URL base según el entorno
+    const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('192.168.');
+    const baseURL = isProduction 
+      ? '' // URL relativa para el mismo dominio
+      : 'http://localhost:8000';
+    
+    console.log('[AuthApi] Modo:', isProduction ? 'PRODUCCIÓN' : 'DESARROLLO');
+    console.log('[AuthApi] URL base:', baseURL || 'URL relativa (mismo dominio)');
+    
     // Crear instancia de axios configurada
     this.api = axios.create({
-      baseURL: 'http://localhost:8000',
+      baseURL: baseURL,
       timeout: 15000,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -114,8 +123,16 @@ class AuthApi {
       formData.append('username', credentials.username);
       formData.append('password', credentials.password);
       
+      // Determinar URL de autenticación según el entorno
+      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('192.168.');
+      const authURL = isProduction 
+        ? '/api/auth/login' // URL encontrada en diagnóstico
+        : 'http://localhost:8000/api/v1/auth/login';
+      
+      console.log('[AuthApi] Intentando autenticación en:', authURL);
+      
       // Crear solicitud directa usando fetch para evitar problemas con axios
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch(authURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'

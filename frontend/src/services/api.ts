@@ -13,15 +13,52 @@ declare module 'axios' {
   }
 }
 
-// Detectar si estamos en LocalTunnel o entorno local
-const isLocalTunnel = typeof window !== 'undefined' && window.location.hostname.includes('loca.lt');
+// Tipos para el entorno de ejecución
+type Environment = 'server' | 'localtunnel' | 'local' | 'production';
+
+// Detectar el entorno actual
+const getEnvironment = (): Environment => {
+    if (typeof window === 'undefined') return 'server';
+    
+    const hostname = window.location.hostname;
+    if (hostname.includes('loca.lt')) return 'localtunnel';
+    if (hostname === 'localhost' || hostname.includes('192.168.')) return 'local';
+    return 'production';
+};
+
+const environment = getEnvironment();
+const isLocalTunnel = environment === 'localtunnel'; // Para compatibilidad con código existente
 
 // Configuración base según el entorno
-const baseURL = isLocalTunnel 
-    ? 'https://api-masclet-imperi.loca.lt/api/v1' 
-    : 'http://localhost:8000/api/v1';
-    
-const API_BASE_URL = '/api'; // Para el proxy local
+let baseURL: string;
+let useRelativeUrls = false;
+
+switch(environment) {
+    case 'localtunnel':
+        baseURL = 'https://api-masclet-imperi.loca.lt/api/v1';
+        break;
+    case 'local':
+        // En local, siempre usar la URL absoluta del backend
+        baseURL = 'http://localhost:8000/api/v1';
+        break;
+    case 'production':
+        // En producción, usar rutas relativas para evitar problemas de CORS
+        // PERO siempre asegurarse de que incluyan el prefijo /api/v1
+        baseURL = '/api/v1';
+        useRelativeUrls = true;
+        break;
+    default:
+        // En caso de duda, usar la URL absoluta local para desarrollo
+        baseURL = 'http://localhost:8000/api/v1';
+}
+
+// URL base para el proxy local (usado en desarrollo)
+const API_BASE_URL = baseURL;
+
+// Imprimir información importante de depuración
+console.log('🌎 Modo de conexión:', environment);
+console.log('🔌 API Base URL:', baseURL);
+console.log('🔗 URLs Relativas:', useRelativeUrls ? 'SÍ' : 'NO');
 
 // Funciones de utilidad
 function normalizePath(path: string): string {
@@ -32,8 +69,8 @@ function normalizePath(path: string): string {
 }
 
 // Logs para depuración
-console.log('🌐 Modo de conexión:', isLocalTunnel ? 'Local Tunnel' : 'Local');
-console.log('🔌 API Base URL:', baseURL);
+console.log('🌎 Modo de conexión:', environment);
+console.log('🔌 API Base URL:', baseURL || 'URL relativa');
 
 // Crear instancia de axios con configuración base
 const api = axios.create({
@@ -41,7 +78,7 @@ const api = axios.create({
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json',
-        'X-Environment': isLocalTunnel ? 'tunnel' : 'local'
+        'X-Environment': environment
     },
     withCredentials: false // Evita problemas con CORS
 });

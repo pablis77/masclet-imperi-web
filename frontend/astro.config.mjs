@@ -7,15 +7,11 @@ import node from '@astrojs/node';
 export default defineConfig({
     // Permitir todas las conexiones
     output: 'server',
-    server: {
-        host: '0.0.0.0',
-        port: 3000,
-    },
     
     // Directorio base donde se servirá la aplicación (si es en subpath)
     base: '/',
 
-    // Configuración del servidor de desarrollo
+    // Configuración unificada del servidor de desarrollo
     server: {
         port: 3000,
         host: '0.0.0.0',

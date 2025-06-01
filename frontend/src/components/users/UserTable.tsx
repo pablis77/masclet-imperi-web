@@ -55,13 +55,43 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh, forceLa
     setLoading(true);
     try {
       console.log('Solicitando usuarios: página', currentPage, 'tamaño', pageSize);
-      const response = await userServiceProxy.getUsers(currentPage, pageSize);
-      console.log('Respuesta del servidor (tipo):', typeof response);
-      console.log('Respuesta del servidor (valor):', response);
       
+      // Forzamos una URL absoluta directa en lugar de confiar en el proxy
+      console.log('DEBUG: Usando URL absoluta para evitar errores de proxy');
+      
+      let response;
       let usersData: User[] = [];
       let totalPagesCount = 1;
       let totalItemsCount = 0;
+      
+      // Primero intentamos con fetch directo a http://localhost:8000/api/v1/users
+      try {
+        console.log('DEBUG: Intentando fetch directo a backend URL absoluta');
+        const token = localStorage.getItem('token');
+        const directUrl = `http://localhost:8000/api/v1/users?page=${currentPage}&size=${pageSize}`;
+        console.log('DEBUG: URL completa:', directUrl);
+        
+        const directResponse = await fetch(directUrl, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (directResponse.ok) {
+          response = await directResponse.json();
+          console.log('DEBUG: Éxito con fetch directo:', response);
+        } else {
+          throw new Error(`Error en respuesta directa: ${directResponse.status}`);
+        }
+      } catch (directError) {
+        console.log('DEBUG: Error con fetch directo, usando userServiceProxy como fallback', directError);
+        // Si falla el fetch directo, usamos el método original como fallback
+        response = await userServiceProxy.getUsers(currentPage, pageSize);
+      }
+      
+      console.log('Respuesta del servidor (tipo):', typeof response);
+      console.log('Respuesta del servidor (valor):', response);
       
       // Determinar el formato de la respuesta y extraer usuarios
       if (Array.isArray(response)) {
