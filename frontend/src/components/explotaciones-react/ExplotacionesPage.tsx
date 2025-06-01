@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 // Mantenemos solo la importación necesaria sin CSS adicional
 import apiService from '../../services/apiService';
 import { t } from '../../i18n/config';
-import jsPDF from 'jspdf';
-// @ts-ignore - jspdf-autotable no proporciona tipos TS correctos
-import autoTable from 'jspdf-autotable';
 
 // Tipos para los datos
 interface ExplotacionInfo {
@@ -534,11 +531,19 @@ const ExplotacionesPage: React.FC = () => {
     );
   };
   // Función para exportar a PDF con formato atractivo
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (!filteredAnimals || !filteredAnimals.length) return;
     
-    // Crear un documento PDF nuevo
-    const doc = new jsPDF();
+    try {
+      // Importaciones dinámicas para evitar errores SSR
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default;
+      
+      const autoTableModule = await import('jspdf-autotable');
+      const autoTable = autoTableModule.default;
+      
+      // Crear un documento PDF nuevo
+      const doc = new jsPDF();
     
     // Configurar títulos y encabezados
     const title = currentLang === 'ca' 
@@ -811,6 +816,10 @@ const ExplotacionesPage: React.FC = () => {
     // Guardar el PDF
     const fileName = `animales_${currentExplotacion || 'todas'}_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert(currentLang === 'ca' ? 'Error en generar el PDF' : 'Error al generar el PDF');
+    }
   };
 
   // Renderizar el componente principal
