@@ -20,12 +20,20 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   fallback = null,
   redirectToLogin = true
 }) => {
+  const [isClient, setIsClient] = useState<boolean>(false);
   const [canAccess, setCanAccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentRole, setCurrentRole] = useState<string>('');
 
+  // Efecto para detectar el entorno cliente
   useEffect(() => {
-    // Solo intentamos redirigir en el navegador
-    if (typeof window === 'undefined') return;
+    setIsClient(true);
+  }, []);
+
+  // Efecto para gestionar el acceso, solo se ejecuta en el cliente
+  useEffect(() => {
+    // Solo ejecutar en el cliente
+    if (!isClient) return;
     
     // Si el usuario no está autenticado y se solicita redirección
     if (!isAuthenticated() && redirectToLogin) {
@@ -35,11 +43,12 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     }
     
     // Verificar rol del usuario
-    const currentRole = getCurrentRole();
-    console.log('Rol actual:', currentRole);
+    const role = getCurrentRole();
+    console.log('Rol actual:', role);
     console.log('Roles permitidos:', allowedRoles);
     
-    const hasAccess = allowedRoles.includes(currentRole);
+    setCurrentRole(role);
+    const hasAccess = allowedRoles.includes(role);
     console.log('¿Tiene acceso?', hasAccess);
     
     setCanAccess(hasAccess);
@@ -49,10 +58,11 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
       console.log(`Acceso denegado: se requiere uno de estos roles [${allowedRoles.join(', ')}]`);
       // No redirigimos automáticamente, solo mostramos mensaje de acceso denegado
     }
-  }, [allowedRoles, redirectToLogin]);
+  }, [isClient, allowedRoles, redirectToLogin]);
 
   // Mostrar indicador de carga mientras se verifica el acceso
-  if (loading) {
+  // o si aún no estamos en el cliente
+  if (loading || !isClient) {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -75,7 +85,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
               <p className="font-bold">Acceso denegado</p>
               <p>No tienes los permisos necesarios para acceder a esta página.</p>
               <p className="mt-2 text-sm">Se requiere uno de estos roles: {allowedRoles.join(', ')}</p>
-              <p className="mt-2 text-sm">Tu rol actual: {getCurrentRole()}</p>
+              <p className="mt-2 text-sm">Tu rol actual: {currentRole}</p>
             </div>
           </div>
         </div>

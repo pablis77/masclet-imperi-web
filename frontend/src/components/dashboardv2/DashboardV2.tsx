@@ -23,8 +23,7 @@ import apiService from '../../services/apiService';
 // Importar y registrar los componentes de Chart.js
 import { registerChartComponents } from '../../utils/chartConfig';
 
-// Registrar los componentes al inicio para asegurar que estén disponibles
-registerChartComponents();
+// Ya no registramos en el nivel superior - se hará en un useEffect
 
 // Importar componentes UI reutilizables
 import { SectionTitle } from '../dashboard/components/UIComponents';
@@ -230,6 +229,25 @@ const DashboardV2: React.FC = () => {
     return () => {
       observer.disconnect();
     };
+  }, []);
+
+  // Efecto para registrar los componentes de Chart.js sólo en el cliente
+  useEffect(() => {
+    const initCharts = async () => {
+      try {
+        addLog('Registrando componentes de Chart.js...');
+        await registerChartComponents();
+        addLog('✅ Componentes de Chart.js registrados correctamente');
+      } catch (error) {
+        addLog('❌ Error al registrar componentes de Chart.js', true);
+        console.error('Error registrando Chart.js:', error);
+      }
+    };
+
+    // Solo ejecutamos en el navegador
+    if (typeof window !== 'undefined') {
+      initCharts();
+    }
   }, []);
 
   // Función para cambiar tema

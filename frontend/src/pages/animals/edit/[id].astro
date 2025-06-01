@@ -2,7 +2,7 @@
 // Importar el layout y componentes necesarios
 import DefaultLayout from '../../../layouts/DefaultLayout.astro';
 import AnimalForm from '../../../components/animals/AnimalForm';
-import { getAnimalById } from '../../../services/animalService';
+import animalService from '../../../services/animalService';
 import { getAllExplotaciones } from '../../../services/explotacionService';
 import { isAuthenticated, getUserRole } from '../../../services/authService';
 import { hasAccessToRoute } from '../../../utils/roleUtils';
@@ -26,7 +26,7 @@ let error: string | null = null;
 try {
   if (id) {
     // Obtener los datos del animal
-    animal = await getAnimalById(parseInt(id));
+    animal = await animalService.getAnimalById(parseInt(id));
     
     // Obtener listado de explotaciones para el selector
     explotaciones = await getAllExplotaciones();

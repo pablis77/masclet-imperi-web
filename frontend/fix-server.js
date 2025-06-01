@@ -12,6 +12,14 @@ const app = express();
 // Configuración de middleware básico
 app.use(express.json());
 
+// Middleware para servir archivos estáticos
+app.use(express.static(join(__dirname, 'dist/client')));
+
+// Servir especialmente nuestro script de corrección de hidratación
+app.get('/client-hydration-fix.js', (req, res) => {
+  res.sendFile(join(__dirname, 'client-hydration-fix.js'));
+});
+
 // Endpoint de health check (para Render)
 app.get('/health', (req, res) => {
   console.log('>>> Health check solicitado - respondiendo 200 OK');
@@ -93,6 +101,22 @@ app.use(express.static(join(__dirname, 'dist/client'), { index: false }));
 
 // Función para manejar la renderización del lado del servidor
 async function handleSSR(req, res) {
+  // Guardar la función original para enviar respuestas
+  const originalSend = res.send;
+  
+  // Sobreescribir la función de envío para inyectar nuestro script de corrección
+  res.send = function(body) {
+    // Solo modificar respuestas HTML
+    if (typeof body === 'string' && body.includes('<html')) {
+      console.log('>>> Inyectando script de corrección de hidratación');
+      // Inyectar nuestro script antes de </head>
+      const scriptTag = '<script src="/client-hydration-fix.js"></script>';
+      body = body.replace('</head>', scriptTag + '</head>');
+    }
+    // Llamar a la función original
+    return originalSend.call(this, body);
+  };
+  
   try {
     // Intentar importar el handler de Astro
     const { handler } = await import('./dist/server/entry.mjs');
