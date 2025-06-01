@@ -1,0 +1,6 @@
+# Archivos que deben ser ignorados durante la compilación de producción
+src/pages/iconos-test.astro
+src/pages/dashboard-compare.astro
+src/pages/dashboard-direct.astro
+src/pages/dashboard-new.astro
+src/pages/dashboard2.astro

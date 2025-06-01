@@ -18,8 +18,8 @@ import apiService from '../../../services/apiService';
 // Importar configuración de Chart.js
 import { registerChartComponents } from '../../../utils/chartConfig';
 
-// Registrar los componentes de Chart.js antes de usarlos
-registerChartComponents();
+// Ya no registramos Chart.js aquí en el nivel superior
+// Lo haremos dentro de un useEffect
 
 // Importaciones de Tremor
 import {
@@ -65,6 +65,26 @@ const TremorResumenGeneralCard: React.FC<TremorResumenGeneralCardProps> = ({
   const [loadingDetallados, setLoadingDetallados] = useState<boolean>(true);
   const [errorDetallados, setErrorDetallados] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState<boolean>(false);
+
+  // Efecto para registrar los componentes de Chart.js sólo en el cliente
+  useEffect(() => {
+    const initCharts = async () => {
+      try {
+        console.log('[TremorResumenGeneralCard] Registrando componentes de Chart.js...');
+        await registerChartComponents();
+        console.log('[TremorResumenGeneralCard] ✅ Componentes de Chart.js registrados correctamente');
+      } catch (error) {
+        console.error('[TremorResumenGeneralCard] ❌ Error registrando Chart.js:', error);
+      }
+    };
+
+    // Solo ejecutamos en el navegador
+    if (typeof window !== 'undefined') {
+      setIsClient(true);
+      initCharts();
+    }
+  }, []);
 
   // Función para agregar logs
   const addLog = (message: string, isError: boolean = false) => {

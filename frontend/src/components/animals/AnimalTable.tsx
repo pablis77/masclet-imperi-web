@@ -85,17 +85,16 @@ const AnimalTable: React.FC<AnimalTableProps> = ({ initialFilters = {}, id, canE
   const tableRef = useRef<HTMLDivElement>(null);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Configuración para multilenguaje - Solución simplificada
-  const [currentLang, setCurrentLang] = useState(() => {
-    // Obtener el idioma directamente al inicializar el estado
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem('userLanguage') || 'es';
-    }
-    return 'es';
-  });
+  // Configuración para multilenguaje - Solución para SSR
+  const [currentLang, setCurrentLang] = useState('es'); // Valor por defecto para SSR
+  const [isClient, setIsClient] = useState(false);
   
-  // Sistema de idioma simple v2 - 2025-05-14-20:10
+  // Sistema de idioma simple v3 - Compatible con SSR
   useEffect(() => {
+    // Marcamos que estamos en el cliente
+    setIsClient(true);
+    
+    // Ahora es seguro acceder al localStorage
     const userLang = localStorage.getItem('userLanguage') || 'es';
     console.log('[AnimalTable] Idioma detectado:', userLang);
     setCurrentLang(userLang);

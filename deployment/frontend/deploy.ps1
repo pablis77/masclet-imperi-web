@@ -1,6 +1,4 @@
-# Script de despliegue para el Frontend de Masclet Imperi en EC2
-# Uso: .\deploy.ps1 -EC2_IP <ip-publica-ec2> -PEM_PATH <ruta-clave-pem>
-
+# Script para desplegar el frontend en EC2 usando Nginx y Node.js para Astro SSR
 param (
     [Parameter(Mandatory=$true)]
     [string]$EC2_IP,
@@ -9,78 +7,106 @@ param (
     [string]$PEM_PATH
 )
 
-Write-Host "🚀 Iniciando despliegue del FRONTEND en $EC2_IP..." -ForegroundColor Cyan
+# Definición de variables y directorios
+$LOCAL_DIST = ".\frontend\dist"
+$REMOTE_DIR = "/home/ec2-user/masclet-imperi-frontend"
 
-# 1. Verificar conexión SSH
-Write-Host "🔑 Verificando conexión SSH..." -ForegroundColor Yellow
-$sshTest = ssh -i "$PEM_PATH" ec2-user@$EC2_IP "echo Conexion SSH exitosa"
-if (-not $?) {
-    Write-Host "❌ Error en conexión SSH. Verifica IP y clave PEM." -ForegroundColor Red
+function Write-ColorText {
+    param(
+        [string]$Text,
+        [string]$Color = "White"
+    )
+    
+    Write-Host $Text -ForegroundColor $Color
+}
+
+# Paso 1: Verificar que existe el directorio de compilación
+Write-ColorText "🔍 Verificando archivos compilados..." "Cyan"
+if (-not (Test-Path "$LOCAL_DIST\client")) {
+    Write-ColorText "❌ No se encontró el directorio de compilación: $LOCAL_DIST\client" "Red"
+    Write-ColorText "   Asegúrate de compilar el frontend primero con 'npm run build'" "Yellow"
     exit 1
 }
 
-# 2. Crear directorios necesarios en EC2 (si no existen ya)
-Write-Host "📁 Creando directorios para frontend..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "mkdir -p /home/ec2-user/masclet-imperi/frontend"
-
-# 3. Copiar archivos de configuración
-Write-Host "📦 Copiando archivos de configuración..." -ForegroundColor Yellow
-scp -i "$PEM_PATH" "$(Get-Location)\docker-compose.prod.yml" "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/docker-compose.frontend.yml"
-scp -i "$PEM_PATH" "$(Get-Location)\Dockerfile.prod" "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/frontend/Dockerfile"
-
-# 4. Identificar la red Docker existente
-Write-Host "🔍 Identificando red Docker..." -ForegroundColor Yellow
-$DOCKER_NETWORK = ssh -i "$PEM_PATH" ec2-user@$EC2_IP "sudo docker network ls | grep masclet-imperi | awk '{print \`$2}'"
-Write-Host "   Red Docker detectada: $DOCKER_NETWORK" -ForegroundColor Green
-
-# 5. Detener y eliminar contenedor Frontend existente si existe
-Write-Host "🛑 Deteniendo contenedor Frontend existente..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "sudo docker stop masclet-frontend 2>/dev/null || true && sudo docker rm masclet-frontend 2>/dev/null || true"
-
-# 6. Comprimir el código fuente del frontend
-Write-Host "📦 Comprimiendo código fuente del frontend..." -ForegroundColor Yellow
-$tempZip = "$(Get-Location)\frontend-temp.zip"
-if (Test-Path $tempZip) {
-    Remove-Item $tempZip -Force
+# Paso 2: Verificar que hay archivos en el directorio
+$fileCount = (Get-ChildItem -Path "$LOCAL_DIST\client" -Recurse -File).Count
+if ($fileCount -eq 0) {
+    Write-ColorText "❌ El directorio de compilación está vacío" "Red"
+    exit 1
 }
-Compress-Archive -Path "$((Get-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\frontend")).FullName)\*" -DestinationPath $tempZip -Force
+Write-ColorText "✅ Se encontraron $fileCount archivos para desplegar" "Green"
 
-# 7. Transferir código fuente a EC2
-Write-Host "📤 Transfiriendo código fuente a EC2..." -ForegroundColor Yellow
-scp -i "$PEM_PATH" $tempZip "ec2-user@${EC2_IP}:/home/ec2-user/masclet-imperi/frontend-temp.zip"
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "cd /home/ec2-user/masclet-imperi && unzip -o frontend-temp.zip -d frontend-source && rm frontend-temp.zip"
+# Paso 3: Transferir script de limpieza y ejecutarlo
+Write-ColorText "🧹 Enviando script de limpieza al servidor..." "Yellow"
+$scpCleanupCommand = "scp -i '$PEM_PATH' '.\deployment\frontend\cleanup-linux.sh' ec2-user@${EC2_IP}:/home/ec2-user/cleanup.sh"
+Invoke-Expression $scpCleanupCommand
 
-# 8. Construir y ejecutar el contenedor Frontend
-Write-Host "🏗️ Construyendo nueva imagen Frontend..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "cd /home/ec2-user/masclet-imperi && sudo docker build -t masclet-imperi-frontend -f frontend/Dockerfile ."
+Write-ColorText "🧹 Ejecutando limpieza en el servidor..." "Yellow"
+$sshCleanupCommand = "ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'chmod +x /home/ec2-user/cleanup.sh && /home/ec2-user/cleanup.sh'"
+Invoke-Expression $sshCleanupCommand
 
-Write-Host "▶️ Iniciando contenedor Frontend..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "cd /home/ec2-user/masclet-imperi && sudo docker run -d --name masclet-frontend --restart unless-stopped -p 80:3000 -e API_URL=http://masclet-api:8000/api/v1 --network $DOCKER_NETWORK masclet-imperi-frontend"
+# Paso 4: Crear estructura de directorios en el servidor
+Write-ColorText "📁 Creando estructura de directorios en el servidor..." "Yellow"
+$sshCreateDirsCommand = "ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'mkdir -p $REMOTE_DIR/dist/client $REMOTE_DIR/dist/server'"
+Invoke-Expression $sshCreateDirsCommand
 
-# 9. Verificar estado de contenedores
-Write-Host "✅ Verificando estado de contenedores..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "sudo docker ps"
+# Paso 5: Transferir archivos compilados del cliente
+Write-ColorText "📤 Transfiriendo archivos compilados del cliente a $EC2_IP..." "Yellow"
+$scpClientCommand = "scp -r -i '$PEM_PATH' '$LOCAL_DIST\client\*' ec2-user@${EC2_IP}:$REMOTE_DIR/dist/client/"
+Invoke-Expression $scpClientCommand
 
-# 10. Probar acceso al frontend
-Write-Host "🧪 Probando acceso al frontend..." -ForegroundColor Yellow
-try {
-    $RESPONSE = Invoke-WebRequest -Uri "http://$EC2_IP/" -UseBasicParsing -TimeoutSec 10
-    if ($RESPONSE.StatusCode -eq 200) {
-        Write-Host "✅ Frontend funcionando correctamente!" -ForegroundColor Green
-    } else {
-        Write-Host "⚠️ Advertencia: Respuesta inesperada del frontend (código ${$RESPONSE.StatusCode})." -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "❌ Error al probar el frontend: $_" -ForegroundColor Red
+# Paso 6: Transferir archivos compilados del servidor
+Write-ColorText "📤 Transfiriendo archivos compilados del servidor a $EC2_IP..." "Yellow"
+$scpServerCommand = "scp -r -i '$PEM_PATH' '$LOCAL_DIST\server\*' ec2-user@${EC2_IP}:$REMOTE_DIR/dist/server/"
+Invoke-Expression $scpServerCommand
+
+# Paso 7: Transferir fix-server.js
+Write-ColorText "📤 Transfiriendo fix-server.js a $EC2_IP..." "Yellow"
+$scpFixServerCommand = "scp -i '$PEM_PATH' '.\frontend\fix-server.js' ec2-user@${EC2_IP}:$REMOTE_DIR/"
+Invoke-Expression $scpFixServerCommand
+
+# Paso 8: Transferir script de corrección de hidratación
+Write-ColorText "📤 Transfiriendo script de corrección de hidratación a $EC2_IP..." "Yellow"
+$scpHydrationFixCommand = "scp -i '$PEM_PATH' '.\frontend\client-hydration-fix.js' ec2-user@${EC2_IP}:$REMOTE_DIR/"
+Invoke-Expression $scpHydrationFixCommand
+
+# Paso 8: Transferir package.json
+Write-ColorText "📤 Transfiriendo package.json a $EC2_IP..." "Yellow"
+$scpPackageCommand = "scp -i '$PEM_PATH' '.\frontend\package.json' ec2-user@${EC2_IP}:$REMOTE_DIR/"
+Invoke-Expression $scpPackageCommand
+
+# Paso 9: Transferir configuración de Nginx
+Write-ColorText "⚙️ Transfiriendo configuración de Nginx..." "Yellow"
+$scpNginxCommand = "scp -i '$PEM_PATH' '.\deployment\frontend\nginx-linux.conf' ec2-user@${EC2_IP}:/home/ec2-user/nginx.conf"
+Invoke-Expression $scpNginxCommand
+
+# Paso 10: Transferir y ejecutar script Docker
+Write-ColorText "🐳 Enviando script Docker al servidor..." "Yellow"
+$scpDockerCommand = "scp -i '$PEM_PATH' '.\deployment\frontend\docker-linux.sh' ec2-user@${EC2_IP}:/home/ec2-user/setup_docker.sh"
+Invoke-Expression $scpDockerCommand
+
+Write-ColorText "🐳 Ejecutando configuración Docker en el servidor..." "Yellow"
+$sshDockerCommand = "ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'chmod +x /home/ec2-user/setup_docker.sh && /home/ec2-user/setup_docker.sh'"
+Invoke-Expression $sshDockerCommand
+
+# Paso 10: Verificar despliegue
+Write-ColorText "🔍 Verificando despliegue..." "Cyan"
+
+# Comprobar si los contenedores están funcionando
+$checkContainersCommand = "ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'docker ps | grep masclet'"
+$containers = Invoke-Expression $checkContainersCommand
+
+if ($containers -match "masclet-frontend" -and $containers -match "masclet-frontend-node") {
+    Write-ColorText "✅ Despliegue completado con éxito!" "Green"
+    Write-ColorText "   El frontend ahora está disponible en: http://${EC2_IP}/" "Cyan"
+    
+    Write-ColorText "📋 Para ver logs del servidor Node:" "Yellow"
+    Write-ColorText "   ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'docker logs masclet-frontend-node'" "White"
+    
+    Write-ColorText "📋 Para ver logs de Nginx:" "Yellow"
+    Write-ColorText "   ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'docker logs masclet-frontend'" "White"
+} else {
+    Write-ColorText "❌ Error: Al menos uno de los contenedores no está en ejecución." "Red"
+    Write-ColorText "   Revisa los logs para más información:" "Yellow"
+    Write-ColorText "   ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'docker logs masclet-frontend-node'" "White"
 }
-
-# 11. Crear respaldo de la imagen funcional
-Write-Host "💾 Creando respaldo de imagen funcional..." -ForegroundColor Yellow
-ssh -i "$PEM_PATH" ec2-user@$EC2_IP "sudo docker commit masclet-frontend masclet-imperi-frontend:production && sudo docker images"
-
-# 12. Limpiar archivos temporales
-Remove-Item $tempZip -Force
-
-Write-Host "🎉 Despliegue del frontend completado!" -ForegroundColor Green
-Write-Host "   Aplicación disponible en: http://$EC2_IP/" -ForegroundColor Cyan
-Write-Host "   API disponible en: http://$EC2_IP:8000/api/v1/" -ForegroundColor Cyan

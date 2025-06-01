@@ -8,10 +8,11 @@
 3. [Verificación de Funcionamiento](#verificación-de-funcionamiento)
 4. [Lecciones Aprendidas](#lecciones-aprendidas)
 5. [Plan de Contingencia](#plan-de-contingencia)
+6. [Despliegue del Frontend](#despliegue-del-frontend)
 
 ## Diagnóstico de Problemas
 
-### Problemas Identificados ✅
+### Problemas Identificados 
 
 1. **Contenedor API en reinicio constante**
    - El contenedor `masclet-api` se reiniciaba continuamente debido a errores internos
@@ -33,7 +34,7 @@
 
 ## Corrección de Contenedores Docker
 
-### Verificación del Estado Inicial ✅
+### Verificación del Estado Inicial 
 
 ```bash
 ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps -a"
@@ -42,7 +43,7 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps -a"
 - Contenedor `masclet-db` corriendo y saludable
 - Contenedor `masclet-api` en estado de reinicio constante
 
-### Inspección de Redes Docker ✅
+### Inspección de Redes Docker 
 
 ```bash
 ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker network ls && sudo docker inspect masclet-db -f '{{.NetworkSettings.Networks}}'"
@@ -51,7 +52,7 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker network ls && su
 - Base de datos en red `masclet-imperi_default`
 - API intentando conectarse a la red por defecto
 
-### Reconstrucción del Contenedor API ✅
+### Reconstrucción del Contenedor API 
 
 ```bash
 ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "cd /home/ec2-user/masclet-imperi && sudo docker stop masclet-api && sudo docker rm masclet-api && sudo docker build -t masclet-imperi-api ./backend && sudo docker run -d --name masclet-api --restart unless-stopped -p 8000:8000 -v /home/ec2-user/masclet-imperi/backend:/app -v /home/ec2-user/masclet-imperi/logs:/app/logs --env-file /home/ec2-user/masclet-imperi/.env --network masclet-imperi_default masclet-imperi-api"
@@ -59,7 +60,7 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "cd /home/ec2-user/masclet-im
 
 ## Verificación de Funcionamiento
 
-### Comprobación de Estado de Contenedores ✅
+### Comprobación de Estado de Contenedores 
 
 ```bash
 ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps"
@@ -67,7 +68,7 @@ ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker ps"
 
 - Ambos contenedores `masclet-db` y `masclet-api` corriendo correctamente
 
-### Prueba de Endpoints API ✅
+### Prueba de Endpoints API 
 
 ```bash
 curl -v http://108.129.139.119:8000/api/v1/animals/
@@ -76,13 +77,86 @@ curl -v http://108.129.139.119:8000/api/v1/animals/
 - Respuesta exitosa del endpoint, confirmando funcionamiento correcto
 - Conexión a base de datos verificada (datos recuperados correctamente)
 
-### Respaldo de Imagen Funcional ✅
+### Respaldo de Imagen Funcional 
 
 ```bash
 ssh -i "ruta-a-clave.pem" ec2-user@108.129.139.119 "sudo docker commit masclet-api masclet-imperi-api:production && sudo docker images"
 ```
 
 - Imagen de producción guardada como `masclet-imperi-api:production`
+
+## Despliegue del Frontend
+
+### Problemas de Compilación Encontrados 
+
+Durante el proceso de preparación para el despliegue del frontend, hemos identificado y corregido varios problemas de compilación:
+
+1. **Importaciones incorrectas en componentes clave**
+   - En `Sidebar.astro`: Importación de `getCurrentUserRole` que no existía (corregido para usar `getUserRole`).
+   - En `animals/edit/[id].astro`: Importación directa de `getAnimalById` que solo está disponible a través del objeto `animalService`.
+
+2. **Componentes faltantes referenciados en el código**
+   - Componente `Dashboard2` referenciado pero inexistente (creado como componente provisional).
+   - Componente `DashboardNew` referenciado pero inexistente (creado como componente provisional).
+
+3. **Problemas en listados**
+   - Warning sobre `updateListado` en archivos de listados, pero no impide la compilación exitosa.
+
+### Estrategia de Corrección 
+
+```javascript
+// 1. Corregir importaciones (ejemplo Sidebar.astro)
+// Antes:
+import { getCurrentUserRole as getUserRole } from '../../services/authService';
+// Después:
+import { getUserRole } from '../../services/authService';
+
+// 2. Corregir importaciones (ejemplo animals/edit/[id].astro)
+// Antes:
+import { getAnimalById } from '../../../services/animalService';
+// Después:
+import animalService from '../../../services/animalService';
+
+// 3. Actualizar llamadas a funciones
+// Antes:
+animal = await getAnimalById(parseInt(id));
+// Después:
+animal = await animalService.getAnimalById(parseInt(id));
+```
+
+### Compilación Exitosa 
+
+Tras las correcciones, hemos logrado una compilación exitosa que genera los siguientes artefactos:
+
+```text
+/dist
+  /client - Contiene todos los archivos estáticos para el despliegue en Nginx
+    /_astro - JavaScript, CSS y otros assets compilados
+    /assets - Imágenes y otros recursos
+    /icons - Iconos de la aplicación
+    /images - Imágenes adicionales
+    /scripts - Scripts de cliente
+    /styles - Hojas de estilo
+  /server - Archivos del servidor Node.js (si se usara ese enfoque)
+  health-check.txt - Archivo para verificación de estado
+```
+
+### Preparación para Despliegue con Nginx 
+
+Hemos preparado un script simplificado (`deploy-nginx.ps1`) que automatiza el despliegue en EC2 mediante los siguientes pasos:
+
+```powershell
+# Ejemplo de uso:
+.\deployment\frontend\deploy-nginx.ps1 -EC2_IP "108.129.139.119" -PEM_PATH "C:\Users\Usuario\Downloads\masclet-imperi-key.pem"
+```
+
+El script realiza las siguientes acciones:
+
+1. Verifica la compilación exitosa y existencia de archivos estáticos
+2. Transfiere los archivos del directorio `dist/client` al servidor EC2
+3. Configura Nginx para servir los archivos estáticos y proxy al backend API
+4. Crea un contenedor Docker con la configuración adecuada
+5. Verifica la correcta ejecución del contenedor
 
 ## Lecciones Aprendidas
 
