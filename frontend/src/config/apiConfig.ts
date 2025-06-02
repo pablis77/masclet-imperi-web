@@ -12,8 +12,8 @@ const IS_RENDER = typeof window !== 'undefined' && window.location.hostname.incl
 
 // Configuración de URLs de API
 let apiConfig = {
-  // URL base para la API - Ajustada para manejar la duplicación de '/api/' en producción
-  baseURL: IS_PRODUCTION ? '/api/api/v1' : '/api/v1',  // En producción usa la ruta duplicada detectada
+  // URL base para la API - Usamos el mismo prefijo en desarrollo y producción
+  baseURL: '/api/v1',  // Prefijo unificado: /api/v1 en todos los entornos
   
   // URL para el backend (sin /api/v1)
   backendURL: IS_PRODUCTION ? '' : 'http://localhost:8000', // En desarrollo usar URL absoluta al backend
