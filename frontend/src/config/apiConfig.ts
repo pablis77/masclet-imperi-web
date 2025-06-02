@@ -10,22 +10,14 @@
 const IS_PRODUCTION = import.meta.env.PROD || false;
 const IS_RENDER = typeof window !== 'undefined' && window.location.hostname.includes('render.com');
 
-// Configuración de URLs de API
-let apiConfig = {
-  // URL base para la API - Usamos el mismo prefijo en desarrollo y producción
+// Configuración de la API
+export const API_CONFIG = {
   baseURL: '/api/v1',  // Prefijo unificado: /api/v1 en todos los entornos
-  
-  // URL para el backend (sin /api/v1)
-  backendURL: IS_PRODUCTION ? '' : 'http://localhost:8000', // En desarrollo usar URL absoluta al backend
-    
-  // Configuración de headers por defecto
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  timeout: 15000,  // Tiempo máximo de espera para peticiones (en ms)
+  withCredentials: true  // Permite enviar cookies en peticiones cross-origin
 };
 
 // Log para saber qué configuración estamos usando
 console.log(`[API Config] Usando modo: ${IS_PRODUCTION || IS_RENDER ? 'PRODUCCIÓN' : 'DESARROLLO'}`);
-console.log(`[API Config] Base URL: ${apiConfig.baseURL}`);
-
-export default apiConfig;
+console.log(`[API Config] Base URL: ${API_CONFIG.baseURL}`);
+export default API_CONFIG;
