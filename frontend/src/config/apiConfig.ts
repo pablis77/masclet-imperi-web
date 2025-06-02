@@ -14,7 +14,8 @@ const IS_RENDER = typeof window !== 'undefined' && window.location.hostname.incl
 export const API_CONFIG = {
   baseURL: '/api/v1',  // Prefijo unificado: /api/v1 en todos los entornos
   timeout: 15000,  // Tiempo máximo de espera para peticiones (en ms)
-  withCredentials: true  // Permite enviar cookies en peticiones cross-origin
+  withCredentials: true,  // Permite enviar cookies en peticiones cross-origin
+  backendURL: IS_PRODUCTION || IS_RENDER ? '' : 'http://127.0.0.1:8000'  // URL directa para importaciones y casos especiales
 };
 
 // Log para saber qué configuración estamos usando

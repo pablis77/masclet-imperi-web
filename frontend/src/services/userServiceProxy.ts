@@ -1,5 +1,6 @@
 import api from './api';
 import type { UserRole } from './authService';
+import { API_CONFIG } from '../config/apiConfig';
 
 // Interfaces
 export interface User {
@@ -84,17 +85,13 @@ const userServiceProxy = {
       // IMPLEMENTACIÓN DIRECTA: Usamos fetch en lugar de axios para tener más control
       try {
         console.log('Intentando obtener usuarios con fetch...');
-        // En desarrollo local, siempre usar URL absoluta para usuarios
+        // Usar la configuración centralizada de apiConfig.ts
         let fullUrl;
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
-          // Forzar uso de URL absoluta en desarrollo local
-          fullUrl = `http://localhost:8000/api/v1/users?${params.toString()}`;
-        } else {
-          // En otros entornos, usar la configuración de api.ts
-          let apiUrl = api.defaults.baseURL || '';
-          const endpoint = apiUrl.endsWith('/') ? 'users' : '/users';
-          fullUrl = `${apiUrl}${endpoint}?${params.toString()}`;
-        }
+        // Construir la URL base usando API_CONFIG
+        const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+        // Asegurar que siempre usamos users/ con barra final para consistencia con el backend
+        fullUrl = `${baseUrl}/users/?${params.toString()}`;
+        console.log('URL de la API construida desde configuración centralizada:', fullUrl);
         console.log('URL completa:', fullUrl);
         
         const fetchResponse = await fetch(fullUrl, {
@@ -274,9 +271,11 @@ const userServiceProxy = {
       console.log('Creando nuevo usuario:', userData.username);
       
       // Asegurarnos que el rol siempre se envía en minúsculas para evitar errores de validación
+      // Y añadir explícitamente is_active para evitar el error en el backend
       const processedUserData = {
         ...userData,
-        role: userData.role.toLowerCase()
+        role: userData.role.toLowerCase(),
+        is_active: userData.is_active !== undefined ? userData.is_active : true
       };
       
       console.log('Datos del usuario a crear:', JSON.stringify(processedUserData, null, 2));
@@ -288,18 +287,33 @@ const userServiceProxy = {
         throw new Error('No hay token de autenticación disponible');
       }
       
-      // Configuración explícita para asegurar que se envía el token
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      };
+      // Usar la configuración centralizada en lugar de api.post directo
+      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      // IMPORTANTE: Para crear usuarios el endpoint es /users/ (CON barra al final, como los demás recursos)
+      const url = `${baseUrl}/users/`;
       
-      // Usamos el endpoint correcto: signup
-      const response = await api.post<User>('/auth/signup', processedUserData, config);
-      console.log('Respuesta al crear usuario:', response.data);
-      return response.data;
+      console.log('Usando URL construida desde API_CONFIG para crear usuario:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(processedUserData)
+      });
+      
+      if (!response.ok) {
+        throw {
+          message: 'Error al crear usuario',
+          status: response.status,
+          code: 'ERROR'
+        };
+      }
+      
+      const data = await response.json();
+      console.log('Respuesta al crear usuario:', data);
+      return data;
     } catch (error) {
       console.error('Error al crear usuario:', error);
       throw error;
@@ -310,9 +324,32 @@ const userServiceProxy = {
   async updateUser(id: number, userData: UserUpdateDto): Promise<User> {
     try {
       console.log('Actualizando usuario con ID:', id);
-      // Usamos la ruta correcta: /users/{id} en lugar de /auth/users/{id}
-      const response = await api.put<User>(`/users/${id}`, userData);
-      return response.data;
+      
+      // Usar la configuración centralizada en lugar de api.put directo
+      const token = localStorage.getItem('token');
+      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      const url = `${baseUrl}/users/${id}/`;
+      
+      console.log('Usando URL construida desde API_CONFIG:', url);
+      
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      if (!response.ok) {
+        throw {
+          message: 'Error al actualizar usuario',
+          status: response.status,
+          code: 'ERROR'
+        };
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error(`Error al actualizar usuario con ID ${id}:`, error);
       throw error;
@@ -323,8 +360,31 @@ const userServiceProxy = {
   async deleteUser(id: number): Promise<void> {
     try {
       console.log('Eliminando usuario con ID:', id);
-      // Usamos la ruta correcta: /users/{id} en lugar de /auth/users/{id}
-      await api.delete(`/users/${id}`);
+      
+      // Usar la configuración centralizada en lugar de api.delete directo
+      const token = localStorage.getItem('token');
+      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      const url = `${baseUrl}/users/${id}/`;
+      
+      console.log('Usando URL construida desde API_CONFIG para eliminar:', url);
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw {
+          message: 'Error al eliminar usuario',
+          status: response.status,
+          code: 'ERROR'
+        };
+      }
+      
+      // No hay datos a devolver para una operación DELETE exitosa
     } catch (error) {
       console.error(`Error al eliminar usuario con ID ${id}:`, error);
       throw error;

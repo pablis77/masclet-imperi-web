@@ -66,6 +66,54 @@ class BackupService:
     POSTGRES_CONTAINER = "masclet-db-new"
     
     @classmethod
+    def get_readable_file_size(cls, size_bytes: int) -> str:
+        """Convierte un tamaño en bytes a un formato legible (KB, MB, GB, etc.)"""
+        if size_bytes < 1024:
+            return f"{size_bytes} bytes"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.2f} KB"
+        elif size_bytes < 1024 * 1024 * 1024:
+            return f"{size_bytes / (1024 * 1024):.2f} MB"
+        else:
+            return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+            
+    @classmethod
+    async def cleanup_old_backups(cls):
+        """Elimina los backups antiguos que exceden el número máximo permitido"""
+        try:
+            # Verificar que el directorio de backups existe
+            if not os.path.exists(cls.BACKUP_DIR):
+                logger.warning(f"Directorio de backups no encontrado: {cls.BACKUP_DIR}")
+                return
+            
+            # Listar todos los archivos de backup
+            backup_files = [f for f in os.listdir(cls.BACKUP_DIR) if f.startswith("backup_") and f.endswith(".sql")]
+            
+            # Si no hay suficientes archivos, no hace falta limpiar
+            if len(backup_files) <= cls.MAX_BACKUPS:
+                logger.info(f"No es necesario limpiar backups antiguos. Archivos: {len(backup_files)}, Máximo: {cls.MAX_BACKUPS}")
+                return
+            
+            # Ordenar por fecha de modificación (más antiguo primero)
+            backup_files.sort(key=lambda x: os.path.getmtime(os.path.join(cls.BACKUP_DIR, x)))
+            
+            # Calcular cuántos archivos eliminar
+            files_to_delete = len(backup_files) - cls.MAX_BACKUPS
+            logger.info(f"Eliminando {files_to_delete} backups antiguos")
+            
+            # Eliminar los archivos más antiguos que exceden el límite
+            for i in range(files_to_delete):
+                file_to_delete = os.path.join(cls.BACKUP_DIR, backup_files[i])
+                os.remove(file_to_delete)
+                logger.info(f"Backup antiguo eliminado: {backup_files[i]}")
+                
+            logger.info(f"Limpieza de backups completada. Quedan {cls.MAX_BACKUPS} archivos.")
+            
+        except Exception as e:
+            logger.error(f"Error al limpiar backups antiguos: {e}")
+            # No lanzamos la excepción para no interrumpir el proceso principal
+    
+    @classmethod
     async def create_backup(cls, options: Optional[BackupOptions] = None) -> BackupInfo:
         """Crea un backup de la base de datos PostgreSQL"""
         if options is None:
@@ -434,3 +482,42 @@ class BackupService:
                 break
             size_bytes /= 1024.0
         return f"{size_bytes:.2f} {unit}"
+        
+    @classmethod
+    async def register_backup_history(cls, filename: str, backup_type: str, created_by: str, description: str, size_bytes: int) -> None:
+        """Registra un backup en el historial de backups"""
+        try:
+            # Ruta al archivo de historial
+            history_path = os.path.join(cls.BACKUP_DIR, "backup_history.json")
+            
+            # Cargar historial existente o crear uno nuevo
+            history = []
+            if os.path.exists(history_path):
+                try:
+                    with open(history_path, "r", encoding="utf-8") as f:
+                        history = json.load(f)
+                except Exception as e:
+                    logger.error(f"Error al cargar historial de backups: {str(e)}")
+            
+            # Añadir entrada al historial
+            entry = {
+                "filename": filename,
+                "date": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                "backup_type": backup_type,
+                "created_by": created_by,
+                "description": description,
+                "size_bytes": size_bytes,
+                "size": cls.get_readable_file_size(size_bytes)
+            }
+            
+            history.append(entry)
+            
+            # Guardar historial actualizado
+            with open(history_path, "w", encoding="utf-8") as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+                
+            logger.info(f"Backup registrado en el historial: {filename}")
+            
+        except Exception as e:
+            logger.error(f"Error al registrar backup en historial: {str(e)}")
+            # No lanzamos excepción para no interrumpir el flujo principal

@@ -1,0 +1,22 @@
+# Usar imagen Node.js completa en lugar de Alpine
+FROM node:18
+
+WORKDIR /app
+
+# Instalar todas las dependencias necesarias 
+# (incluyendo explícitamente es-module-lexer)
+COPY package*.json ./
+RUN npm install
+RUN npm install es-module-lexer --save
+
+# Copiar archivos de la aplicación
+COPY . .
+
+# Compilar la aplicación
+RUN npm run build
+
+# Exponer puerto
+EXPOSE 10000
+
+# Comando para iniciar la aplicación
+CMD ["node", "./dist/server/entry.mjs"]

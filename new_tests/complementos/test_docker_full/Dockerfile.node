@@ -1,0 +1,29 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar dependencias y package.json
+COPY package.json .
+COPY fix-server.js .
+COPY fix-api-urls-enhanced.cjs .
+
+# Crear estructura para código compilado
+COPY dist/ dist/
+
+# Instalar dependencias (incluyendo las críticas)
+RUN npm install
+
+# Aplicar corrección de URLs
+RUN node fix-api-urls-enhanced.cjs
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV BACKEND_URL=http://masclet-api-test:8000
+ENV API_PREFIX=""
+ENV PORT=10000
+
+# Exponer puerto
+EXPOSE 10000
+
+# Comando para iniciar el servidor con monitoreo de errores
+CMD ["sh", "-c", "node fix-server.js 2>&1 | tee /app/server.log"]

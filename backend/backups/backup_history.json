@@ -1,0 +1,29 @@
+[
+  {
+    "filename": "backup_masclet_imperi_20250603_005746.sql",
+    "date": "03/06/2025 00:57",
+    "backup_type": "manual",
+    "created_by": "admin@mascletimperi.com",
+    "description": "Backup manual creado el 3/6/2025, 0:57:46",
+    "size_bytes": 116974,
+    "size": "114.23 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250603_005808.sql",
+    "date": "03/06/2025 00:58",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+    "size_bytes": 117355,
+    "size": "114.60 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250603_005808.sql",
+    "date": "03/06/2025 00:58",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
+    "size_bytes": 117756,
+    "size": "115.00 KB"
+  }
+]

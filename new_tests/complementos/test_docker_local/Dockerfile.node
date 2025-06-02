@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY . /app/
+
+RUN npm install --legacy-peer-deps
+
+# Ejecutar los scripts de corrección
+RUN node fix-api-urls-enhanced.cjs
+ENV NODE_ENV=production
+ENV BACKEND_URL=http://108.129.139.119:8000
+ENV API_PREFIX=""
+
+CMD ["node", "fix-server.js"]
+
+EXPOSE 10000
