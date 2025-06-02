@@ -28,7 +28,7 @@ const API_CONFIG = {
     protocol: 'http',
     host: '127.0.0.1', // Usar IP literal en lugar de localhost para mayor estabilidad
     port: '8000',
-    path: '/api/v1'  // En desarrollo mantenemos la ruta api/v1
+    path: '/api/v1'  // Restaurado '/api/v1' para que funcione el desarrollo local
   },
   production: {
     // Usar variable de entorno o valor por defecto para el backend
@@ -135,11 +135,14 @@ if (typeof window !== 'undefined') {
   isProduction = currentHost !== 'localhost' && currentHost !== '127.0.0.1';
 }
 
-// IMPORTANTE: Ya NO sobrescribimos la URL base en producción para mantener la conexión directa al backend
-// El problema era que estábamos convirtiendo la URL absoluta en relativa, lo que hacía que las peticiones
-// fueran al frontend en lugar de al backend
+// IMPORTANTE: En producción, debemos evitar la duplicación de /api/v1
+// Verificamos si la URL ya contiene /api/v1 y si ya está importando apiConfig.ts
 if (isProduction) {
-  // console.log(`[ApiService] Manteniendo URL absoluta en producción: ${API_BASE_URL}`);
+  // Si estamos en producción y la URL base tiene /api/v1/api/v1, corregimos
+  if (API_BASE_URL.includes('/api/v1/api/v1')) {
+    API_BASE_URL = API_BASE_URL.replace('/api/v1/api/v1', '/api/v1');
+    console.log(`[ApiService] Corregida duplicación de prefijo en URL: ${API_BASE_URL}`);
+  }
 }
 
 // Credenciales fijas para desarrollo: admin/admin123

@@ -65,22 +65,27 @@ Write-ColorText "📤 Transfiriendo fix-server.js a $EC2_IP..." "Yellow"
 $scpFixServerCommand = "scp -i '$PEM_PATH' '.\frontend\fix-server.js' ec2-user@${EC2_IP}:$REMOTE_DIR/"
 Invoke-Expression $scpFixServerCommand
 
-# Paso 8: Transferir script de corrección de hidratación
+# Paso 8: Transferir fix-api-urls.js (corrección de URLs API)
+Write-ColorText "📤 Transfiriendo fix-api-urls.js a $EC2_IP..." "Yellow"
+$scpFixApiUrlsCommand = "scp -i '$PEM_PATH' '.\frontend\fix-api-urls.js' ec2-user@${EC2_IP}:$REMOTE_DIR/"
+Invoke-Expression $scpFixApiUrlsCommand
+
+# Paso 9: Transferir script de corrección de hidratación
 Write-ColorText "📤 Transfiriendo script de corrección de hidratación a $EC2_IP..." "Yellow"
 $scpHydrationFixCommand = "scp -i '$PEM_PATH' '.\frontend\client-hydration-fix.js' ec2-user@${EC2_IP}:$REMOTE_DIR/"
 Invoke-Expression $scpHydrationFixCommand
 
-# Paso 8: Transferir package.json
+# Paso 10: Transferir package.json
 Write-ColorText "📤 Transfiriendo package.json a $EC2_IP..." "Yellow"
 $scpPackageCommand = "scp -i '$PEM_PATH' '.\frontend\package.json' ec2-user@${EC2_IP}:$REMOTE_DIR/"
 Invoke-Expression $scpPackageCommand
 
-# Paso 9: Transferir configuración de Nginx
+# Paso 11: Transferir configuración de Nginx
 Write-ColorText "⚙️ Transfiriendo configuración de Nginx..." "Yellow"
 $scpNginxCommand = "scp -i '$PEM_PATH' '.\deployment\frontend\nginx-linux.conf' ec2-user@${EC2_IP}:/home/ec2-user/nginx.conf"
 Invoke-Expression $scpNginxCommand
 
-# Paso 10: Transferir y ejecutar script Docker
+# Paso 12: Transferir y ejecutar script Docker
 Write-ColorText "🐳 Enviando script Docker al servidor..." "Yellow"
 $scpDockerCommand = "scp -i '$PEM_PATH' '.\deployment\frontend\docker-linux.sh' ec2-user@${EC2_IP}:/home/ec2-user/setup_docker.sh"
 Invoke-Expression $scpDockerCommand
@@ -89,7 +94,7 @@ Write-ColorText "🐳 Ejecutando configuración Docker en el servidor..." "Yello
 $sshDockerCommand = "ssh -i '$PEM_PATH' ec2-user@$EC2_IP 'chmod +x /home/ec2-user/setup_docker.sh && /home/ec2-user/setup_docker.sh'"
 Invoke-Expression $sshDockerCommand
 
-# Paso 10: Verificar despliegue
+# Paso 13: Verificar despliegue
 Write-ColorText "🔍 Verificando despliegue..." "Cyan"
 
 # Comprobar si los contenedores están funcionando
