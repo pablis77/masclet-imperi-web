@@ -19,7 +19,14 @@ docker run -d \
     -e API_PREFIX="" \
     -w /app \
     node:18-alpine \
-    sh -c "cd /app && npm install --legacy-peer-deps && npm install jspdf html2canvas @react-pdf/renderer --legacy-peer-deps && node fix-server.js && node client-hydration-fix.js && echo 'API URL configurada como: '\$BACKEND_URL"
+    sh -c "cd /app && \
+        npm install --legacy-peer-deps && \
+        npm install jspdf html2canvas @react-pdf/renderer --legacy-peer-deps && \
+        node fix-server.js && \
+        node client-hydration-fix.js && \
+        node fix-api-urls.js && \
+        echo '🔌 API URL configurada como: '\$BACKEND_URL && \
+        echo '✅ Aplicadas correcciones de rutas API para solucionar problema de doble prefijo'"
 
 # Esperar a que el contenedor Node inicie
 echo "⏳ Esperando a que el servidor Node.js inicie..."

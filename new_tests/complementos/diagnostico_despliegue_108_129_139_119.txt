@@ -1,6 +1,6 @@
 DIAGNÓSTICO DE DESPLIEGUE MASCLET IMPERI
-Fecha: 2025-06-02 17:30:51
+Fecha: 2025-06-02 17:59:48
 Servidor: http://108.129.139.119
-API URL: http://108.129.139.119/api
+API URL: http://108.129.139.119/api/v1
 Autenticación: CORRECTA
-Problema de duplicación API: NO
+Problema de duplicación API: SÍ
