@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  masclet-api-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: masclet-api-test
+    ports:
+      - "8000:8000"
+    networks:
+      - masclet-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/v1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  masclet-frontend-node-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: masclet-frontend-node-test
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://masclet-api-test:8000
+      - API_PREFIX=
+      - PORT=10000
+    ports:
+      - "10000:10000"
+    depends_on:
+      masclet-api-test:
+        condition: service_healthy
+    networks:
+      - masclet-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:10000/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - node_logs:/app/logs
+
+  masclet-frontend-test:
+    image: nginx:alpine
+    container_name: masclet-frontend-test
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      masclet-frontend-node-test:
+        condition: service_healthy
+    networks:
+      - masclet-network
+
+networks:
+  masclet-network:
+    driver: bridge
+
+volumes:
+  nginx_logs:
+  node_logs:

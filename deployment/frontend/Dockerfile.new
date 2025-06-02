@@ -1,0 +1,33 @@
+# Dockerfile para el frontend (imagen completa)
+FROM node:18
+
+WORKDIR /app
+
+# Instalar dependencias globales
+RUN npm install -g npm@latest
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias con --legacy-peer-deps para evitar problemas de compatibilidad
+RUN npm install --legacy-peer-deps
+
+# Asegurarnos de instalar módulos específicos que sabemos que dan problemas
+RUN npm install es-module-lexer kleur @astrojs/node sharp --legacy-peer-deps
+
+# Copiar el resto de archivos
+COPY . .
+
+# Construir la aplicación
+RUN npm run build
+
+# Exponer puerto
+EXPOSE 10000
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=10000
+
+# Iniciar aplicación
+CMD ["node", "./dist/server/entry.mjs"]

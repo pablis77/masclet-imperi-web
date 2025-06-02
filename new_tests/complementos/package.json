@@ -1,0 +1,13 @@
+{
+  "name": "test-rutas-duplicadas",
+  "version": "1.0.0",
+  "description": "Test para diagnosticar rutas API duplicadas",
+  "main": "test_rutas_duplicadas.js",
+  "scripts": {
+    "test": "node test_rutas_duplicadas.js"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "test-rutas-duplicadas": "file:"
+  }
+}

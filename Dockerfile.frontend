@@ -1,0 +1,31 @@
+FROM node:18
+
+WORKDIR /app
+
+# Copiar solo los archivos de configuración primero
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install --legacy-peer-deps
+RUN npm install mrmime es-module-lexer kleur @astrojs/node sharp --legacy-peer-deps
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=80
+ENV API_URL=http://masclet-api:8000
+
+# Ahora copiar el código fuente (más ligero sin node_modules)
+COPY src ./src
+COPY public ./public
+COPY astro.config.mjs ./
+COPY tsconfig.json ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+
+# Construir la aplicación
+RUN npm run build
+
+EXPOSE 80
+
+CMD ["node", "./dist/server/entry.mjs"]

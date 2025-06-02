@@ -5,6 +5,7 @@ import type { User } from '../../services/userServiceProxy';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Pagination } from '../common/Pagination';
 import { t, getCurrentLanguage } from '../../i18n/config';
+import { API_CONFIG } from '../../config/apiConfig';
 
 // Variable para saber si es el primer renderizado (SSR) o no (cliente)
 let isFirstRender = typeof window === 'undefined';
@@ -64,12 +65,15 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh, forceLa
       let totalPagesCount = 1;
       let totalItemsCount = 0;
       
-      // Primero intentamos con fetch directo a http://localhost:8000/api/v1/users
+      // Usar la configuración centralizada de API_CONFIG
       try {
-        console.log('DEBUG: Intentando fetch directo a backend URL absoluta');
+        console.log('DEBUG: Usando configuración centralizada para API');
         const token = localStorage.getItem('token');
-        const directUrl = `http://localhost:8000/api/v1/users?page=${currentPage}&size=${pageSize}`;
-        console.log('DEBUG: URL completa:', directUrl);
+        
+        // Construir URL con base en API_CONFIG y asegurar que use barra diagonal final (/)
+        const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+        const directUrl = `${baseUrl}/users/?page=${currentPage}&size=${pageSize}`;
+        console.log('DEBUG: URL completa construida desde API_CONFIG:', directUrl);
         
         const directResponse = await fetch(directUrl, {
           headers: {
@@ -80,13 +84,13 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh, forceLa
         
         if (directResponse.ok) {
           response = await directResponse.json();
-          console.log('DEBUG: Éxito con fetch directo:', response);
+          console.log('DEBUG: Éxito con API centralizada:', response);
         } else {
-          throw new Error(`Error en respuesta directa: ${directResponse.status}`);
+          throw new Error(`Error en respuesta: ${directResponse.status}`);
         }
       } catch (directError) {
-        console.log('DEBUG: Error con fetch directo, usando userServiceProxy como fallback', directError);
-        // Si falla el fetch directo, usamos el método original como fallback
+        console.log('DEBUG: Error con fetch usando API_CONFIG, intentando con userServiceProxy como último recurso', directError);
+        // Si falla el fetch directo, usamos el método del servicio como fallback (que ya hemos corregido)
         response = await userServiceProxy.getUsers(currentPage, pageSize);
       }
       

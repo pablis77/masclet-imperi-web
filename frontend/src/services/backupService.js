@@ -2,8 +2,11 @@
  * Servicio para gestionar backups del sistema
  */
 
-// URL base de la API - usamos la URL directa al backend
-const API_URL = 'http://localhost:8000/api/v1';
+// Importar la configuración centralizada de API
+import API_CONFIG from '../config/apiConfig';
+
+// URL base de la API - usamos la configuración centralizada
+const API_URL = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
 
 // Registrar la URL para depuración
 console.log('BackupService inicializado - URL de API:', API_URL);
@@ -108,8 +111,8 @@ export async function createBackup(options = {}) {
     
     console.log('Opciones de backup:', backupOptions);
     
-    // Usar siempre la URL completa y correcta del backend, nunca una relativa
-    const fullApiUrl = 'http://localhost:8000/api/v1/backup/create';
+    // Usar siempre la URL completa y correcta del backend desde la configuración centralizada
+    const fullApiUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}/backup/create`;
     console.log(`URL absoluta para crear backup: ${fullApiUrl}`);
     
     // Intentar la petición al backend

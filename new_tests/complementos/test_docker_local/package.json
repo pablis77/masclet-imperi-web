@@ -1,0 +1,14 @@
+{
+    "name": "masclet-imperi-frontend-test",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "express": "^4.21.2",
+        "http-proxy-middleware": "^3.0.5",
+        "node-fetch": "^3.3.2",
+        "cookie": "^0.6.0",
+        "express-session": "^1.18.0",
+        "@astrojs/internal-helpers": "^0.2.1"
+    }
+}

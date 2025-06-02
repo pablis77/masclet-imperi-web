@@ -39,6 +39,7 @@ class UserBase(BaseModel):
     
 class UserCreate(UserBase):
     password: str
+    is_active: bool = True
 
 class PasswordChange(BaseModel):
     current_password: Optional[str] = None
