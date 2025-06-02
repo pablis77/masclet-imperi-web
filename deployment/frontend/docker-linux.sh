@@ -23,6 +23,7 @@ docker run -d \
         npm install --legacy-peer-deps && \
         npm install jspdf html2canvas @react-pdf/renderer --legacy-peer-deps && \
         echo '🔌 API URL configurada como: '\$BACKEND_URL && \
+        node fix-api-urls.js && \
         node fix-server.js"
 
 # Esperar a que el contenedor Node inicie
