@@ -1,0 +1,77 @@
+# Dockerfile para Backend Masclet Imperi - 04/06/2025 20:12
+# Imagen profesional optimizada con multistage build
+
+# ======== ETAPA DE CONSTRUCCIÓN ========
+FROM python:3.11.11-slim as builder
+
+# Configuración del entorno pip
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Instalación de dependencias de compilación
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Creación del entorno virtual
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copiar requirements e instalar dependencias
+WORKDIR /tmp
+COPY backend/requirements.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir schedule>=1.2.0
+
+# ======== IMAGEN FINAL ========
+FROM python:3.11.11-slim
+
+# Variables de entorno para Python
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# Instalación de dependencias mínimas para producción
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Creación de usuario no privilegiado
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -s /bin/bash -m appuser
+
+# Creación de directorios necesarios
+RUN mkdir -p /app /app/logs /app/uploads /app/imports /app/backups
+
+# Copiar entorno virtual desde etapa builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copiar código de la aplicación
+WORKDIR /app
+
+# Copiar directorios y archivos necesarios
+COPY backend/app/ ./app/
+COPY backend/scripts/ ./scripts/
+
+# Asignar permisos al usuario no privilegiado
+RUN chown -R appuser:appuser /app
+
+# Cambiar al usuario no privilegiado
+USER appuser
+
+# Exponer puerto
+EXPOSE 8000
+
+# Health check con curl
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Comando para iniciar la aplicación
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

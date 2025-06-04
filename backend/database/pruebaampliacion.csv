@@ -1,9 +1,3 @@
-alletar;explotacio;nom;genere;pare;mare;quadra;cod;num_serie;dob;estado;part;GenereT;EstadoT
+alletar;explotacio;nom;genere;pare;mare;origen;cod;num_serie;dob;estado;part;GenereT;EstadoT
 0;Madrid;angel;M;angel;asd;bermejo;45123582;es123098751;27/10/1977;OK;;;
 2;Madrid;elsa;F;asdaf;asfasf;Perez;23848234;es46354868493;28/07/1981;OK;23/01/2014;M;OK
-;;;;;;;;;;;;;
-;;;;;;;;;;;;;
-;;;;;;;;;;;;;
-;;;;;;;;;;;;;
-;;;;;;;;;;;;;
-;;;;;;;;;;;;;

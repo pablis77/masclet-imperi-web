@@ -1,0 +1,30 @@
+FROM node:18-alpine
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias necesarias
+RUN npm init -y && \
+    npm pkg set type="module" && \
+    npm install express compression http-proxy-middleware node-fetch
+
+# Copiar archivos necesarios
+COPY ./dist/ /app/dist/
+COPY ./fix-server.js /app/
+COPY ./fix-api-urls.js /app/
+COPY ./client-hydration-fix.js /app/
+
+# Ejecutar script para corregir URLs de API
+RUN node fix-api-urls.js
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV PORT=80
+ENV HOST=0.0.0.0
+ENV BACKEND_URL=http://masclet-api:8000
+
+# Puerto expuesto
+EXPOSE 80
+
+# Comando de inicio
+CMD ["node", "fix-server.js"]
