@@ -1,0 +1,513 @@
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-17 21:46:27,637 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7f144b48e900>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-17 21:46:27,637 - tortoise - INFO - Tortoise-ORM generating schema
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:02:58,098 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7f91353d9e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:02:58,098 - tortoise - INFO - Tortoise-ORM generating schema
+ERROR:    Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 670, in startup
+    await handler()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 263, in init_orm
+    await orm.init_orm()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 150, in init_orm
+    await Tortoise.generate_schemas()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/__init__.py", line 594, in generate_schemas
+    await generate_schema_for_client(connection, safe)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/utils.py", line 44, in generate_schema_for_client
+    await generator.generate_from_string(schema)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/schema_generator.py", line 504, in generate_from_string
+    await self.client.execute_script(creation_string)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 31, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 87, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 150, in execute_script
+    async with self.acquire_connection() as connection:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 360, in __aenter__
+    await self.ensure_connection()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 357, in ensure_connection
+    await self.client.create_connection(with_db=True)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 59, in create_connection
+    self._pool = await self.create_pool(password=self.password, **self._template)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 70, in create_pool
+    return await asyncpg.create_pool(None, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 418, in _async__init__
+    await self._initialize()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 445, in _initialize
+    await first_ch.connect()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 132, in connect
+    self._con = await self._pool._get_new_connection()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 517, in _get_new_connection
+    con = await self._connect(
+          ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.CannotConnectNowError: the database system is starting up
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:02:59,420 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7fb23f9c1e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:02:59,420 - tortoise - INFO - Tortoise-ORM generating schema
+ERROR:    Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 670, in startup
+    await handler()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 263, in init_orm
+    await orm.init_orm()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 150, in init_orm
+    await Tortoise.generate_schemas()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/__init__.py", line 594, in generate_schemas
+    await generate_schema_for_client(connection, safe)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/utils.py", line 44, in generate_schema_for_client
+    await generator.generate_from_string(schema)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/schema_generator.py", line 504, in generate_from_string
+    await self.client.execute_script(creation_string)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 31, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 87, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 150, in execute_script
+    async with self.acquire_connection() as connection:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 360, in __aenter__
+    await self.ensure_connection()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 357, in ensure_connection
+    await self.client.create_connection(with_db=True)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 59, in create_connection
+    self._pool = await self.create_pool(password=self.password, **self._template)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 70, in create_pool
+    return await asyncpg.create_pool(None, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 418, in _async__init__
+    await self._initialize()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 445, in _initialize
+    await first_ch.connect()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 132, in connect
+    self._con = await self._pool._get_new_connection()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 517, in _get_new_connection
+    con = await self._connect(
+          ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.CannotConnectNowError: the database system is starting up
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:03:00,660 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7feb892c1e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:03:00,660 - tortoise - INFO - Tortoise-ORM generating schema
+ERROR:    Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 670, in startup
+    await handler()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 263, in init_orm
+    await orm.init_orm()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 150, in init_orm
+    await Tortoise.generate_schemas()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/__init__.py", line 594, in generate_schemas
+    await generate_schema_for_client(connection, safe)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/utils.py", line 44, in generate_schema_for_client
+    await generator.generate_from_string(schema)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/schema_generator.py", line 504, in generate_from_string
+    await self.client.execute_script(creation_string)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 31, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 87, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 150, in execute_script
+    async with self.acquire_connection() as connection:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 360, in __aenter__
+    await self.ensure_connection()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 357, in ensure_connection
+    await self.client.create_connection(with_db=True)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 59, in create_connection
+    self._pool = await self.create_pool(password=self.password, **self._template)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 70, in create_pool
+    return await asyncpg.create_pool(None, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 418, in _async__init__
+    await self._initialize()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 445, in _initialize
+    await first_ch.connect()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 132, in connect
+    self._con = await self._pool._get_new_connection()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 517, in _get_new_connection
+    con = await self._connect(
+          ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.CannotConnectNowError: the database system is starting up
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:03:02,128 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7ff5b83c1e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:03:02,128 - tortoise - INFO - Tortoise-ORM generating schema
+ERROR:    Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 670, in startup
+    await handler()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 263, in init_orm
+    await orm.init_orm()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 150, in init_orm
+    await Tortoise.generate_schemas()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/__init__.py", line 594, in generate_schemas
+    await generate_schema_for_client(connection, safe)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/utils.py", line 44, in generate_schema_for_client
+    await generator.generate_from_string(schema)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/schema_generator.py", line 504, in generate_from_string
+    await self.client.execute_script(creation_string)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 31, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 87, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 150, in execute_script
+    async with self.acquire_connection() as connection:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 360, in __aenter__
+    await self.ensure_connection()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 357, in ensure_connection
+    await self.client.create_connection(with_db=True)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 59, in create_connection
+    self._pool = await self.create_pool(password=self.password, **self._template)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 70, in create_pool
+    return await asyncpg.create_pool(None, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 418, in _async__init__
+    await self._initialize()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 445, in _initialize
+    await first_ch.connect()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 132, in connect
+    self._con = await self._pool._get_new_connection()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 517, in _get_new_connection
+    con = await self._connect(
+          ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.CannotConnectNowError: the database system is starting up
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:03:03,948 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7f9c2fcb9e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:03:03,948 - tortoise - INFO - Tortoise-ORM generating schema
+ERROR:    Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 670, in startup
+    await handler()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 263, in init_orm
+    await orm.init_orm()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/contrib/fastapi/__init__.py", line 150, in init_orm
+    await Tortoise.generate_schemas()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/__init__.py", line 594, in generate_schemas
+    await generate_schema_for_client(connection, safe)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/utils.py", line 44, in generate_schema_for_client
+    await generator.generate_from_string(schema)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/schema_generator.py", line 504, in generate_from_string
+    await self.client.execute_script(creation_string)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 31, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 87, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base_postgres/client.py", line 150, in execute_script
+    async with self.acquire_connection() as connection:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 360, in __aenter__
+    await self.ensure_connection()
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/base/client.py", line 357, in ensure_connection
+    await self.client.create_connection(with_db=True)
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 59, in create_connection
+    self._pool = await self.create_pool(password=self.password, **self._template)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/tortoise/backends/asyncpg/client.py", line 70, in create_pool
+    return await asyncpg.create_pool(None, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 418, in _async__init__
+    await self._initialize()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 445, in _initialize
+    await first_ch.connect()
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 132, in connect
+    self._con = await self._pool._get_new_connection()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/pool.py", line 517, in _get_new_connection
+    con = await self._connect(
+          ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.CannotConnectNowError: the database system is starting up
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-18 08:03:06,612 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7fdd665d9e80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-18 08:03:06,612 - tortoise - INFO - Tortoise-ORM generating schema
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-02-19 11:06:13,356 - tortoise - INFO - Tortoise-ORM shutdown
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1]
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-02-19 11:06:14,822 - tortoise - INFO - Tortoise-ORM started, {'default': <tortoise.backends.asyncpg.client.AsyncpgDBClient object at 0x7f355769de80>}, {'models': {'Animal': <class 'app.models.animal.Animal'>, 'AnimalHistory': <class 'app.models.animal.AnimalHistory'>, 'Part': <class 'app.models.parto.Part'>, 'Aerich': <class 'aerich.models.Aerich'>}}
+2025-02-19 11:06:14,822 - tortoise - INFO - Tortoise-ORM generating schema
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

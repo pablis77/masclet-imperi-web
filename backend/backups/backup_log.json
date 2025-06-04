@@ -1,5 +1,17 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250604_212838.sql",
+        "date": "2025-06-04 21:28:39",
+        "timestamp": "20250604_212838",
+        "backup_type": "animal_updated",
+        "size": "114.82 KB",
+        "size_bytes": 117580,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal Alfonso (ID: 56)",
+        "reference_id": "56"
+    },
+    {
         "filename": "backup_masclet_imperi_20250603_115754.sql",
         "date": "2025-06-03 11:57:54",
         "timestamp": "20250603_115754",
@@ -66,18 +78,6 @@
         "backup_type": "animal_updated",
         "size": "106.14 KB",
         "size_bytes": 108685,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",
-        "reference_id": "3070"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250530_162820.sql",
-        "date": "30/05/2025 16:28",
-        "timestamp": "20250530_162820",
-        "backup_type": "animal_updated",
-        "size": "106.01 KB",
-        "size_bytes": 108552,
         "created_by": "sistema",
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal Nacho (ID: 3070)",

@@ -52,5 +52,23 @@
     "description": "Backup tras eliminación del animal angel (ID: 57)",
     "size_bytes": 117844,
     "size": "115.08 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250604_212838.sql",
+    "date": "04/06/2025 21:28",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras eliminación del animal Alfonso (ID: 56)",
+    "size_bytes": 117580,
+    "size": "114.82 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250604_212844.sql",
+    "date": "04/06/2025 21:28",
+    "backup_type": "manual",
+    "created_by": "pablomgallegos@gmail.com",
+    "description": "Backup manual creado el 4/6/2025, 21:28:44",
+    "size_bytes": 117805,
+    "size": "115.04 KB"
   }
 ]
