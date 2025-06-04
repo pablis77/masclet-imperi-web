@@ -1,0 +1,1 @@
+import{j as r}from"./vendor-react.DLP523nT.js";import"./vendor-charts.C44Mn7ly.js";import"./vendor.CIJYp_OF.js";const e=()=>r.jsx("div",{className:"dashboard-placeholder",children:r.jsx("p",{children:"Dashboard en construcción"})});export{e as default};
