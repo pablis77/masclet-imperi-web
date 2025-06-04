@@ -1,1 +1,0 @@
-    # Asegurar que la relación con el animal esté cargada\n    await parto.fetch_related("animal")
