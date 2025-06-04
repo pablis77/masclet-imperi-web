@@ -745,12 +745,12 @@ async def get_resumen_dashboard_card(
         try:
             # 1. Intentamos obtener la fecha de nacimiento más antigua de los animales
             logger.info("Buscando fecha de nacimiento más antigua...")
-            # Buscar primero en el campo data_naixement (fecha de nacimiento)
-            animal_mas_antiguo_nacimiento = await Animal.all().order_by('data_naixement').first()
+            # Buscar fecha de nacimiento más antigua en el campo dob (date of birth)
+            animal_mas_antiguo = await Animal.all().order_by('dob').first()
             
-            if animal_mas_antiguo_nacimiento and animal_mas_antiguo_nacimiento.data_naixement:
-                fecha_inicio = animal_mas_antiguo_nacimiento.data_naixement
-                logger.info(f"Fecha más antigua encontrada en data_naixement: {fecha_inicio}")
+            if animal_mas_antiguo and animal_mas_antiguo.dob:
+                fecha_inicio = animal_mas_antiguo.dob
+                logger.info(f"Fecha más antigua encontrada en campo dob: {fecha_inicio}")
             
             # 2. Obtener también la fecha del parto más antiguo y comparar
             logger.info("Buscando fecha de parto más antigua...")
@@ -764,8 +764,8 @@ async def get_resumen_dashboard_card(
             
             # 3. Si no encontramos ninguna fecha, usamos un valor predeterminado histórico
             if not fecha_inicio:
-                # Si no hay fechas encontradas, poner 1970 como año inicial
-                fecha_inicio = date(1970, 1, 1)  # Fecha arbitraria histórica
+                # Si no hay fechas encontradas, poner una fecha histórica muy antigua
+                fecha_inicio = date(1900, 1, 1)  # Fecha histórica muy anterior (podría ser cualquier fecha)
                 logger.info(f"No se encontraron fechas antiguas, usando fecha histórica: {fecha_inicio}")
             else:
                 # Si encontramos una fecha, ajustar al primer día del año
@@ -773,9 +773,9 @@ async def get_resumen_dashboard_card(
                 logger.info(f"Ajustando al primer día del año más antiguo: {fecha_inicio}")
                 
         except Exception as e:
-            # En caso de error, usar un valor predeterminado seguro (1970)
+            # En caso de error, usar un valor predeterminado seguro pero anterior a 1950
             logger.error(f"Error al obtener fecha más antigua: {str(e)}")
-            fecha_inicio = date(1970, 1, 1)  # Una fecha histórica segura
+            fecha_inicio = date(1900, 1, 1)  # Una fecha histórica muy anterior
         
         # Calcular periodo desde la fecha más antigua hasta hoy
         periodo_data = {
