@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 init()
 
 # Configuraciones posibles para probar
-TARGET_HOST = "108.129.139.119" # IP o dominio del servidor
+TARGET_HOST = "3.253.32.134" # IP o dominio del servidor
 ALT_HOST = "mascletimperi.com" # Dominio alternativo (si existe)
 
 # URL base del servidor desplegado (se autodetectará la mejor configuración)
