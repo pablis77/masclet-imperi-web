@@ -88,5 +88,14 @@
     "description": "Backup manual creado el 5/6/2025, 13:27:24",
     "size_bytes": 118014,
     "size": "115.25 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250605_161021.sql",
+    "date": "05/06/2025 16:10",
+    "backup_type": "manual",
+    "created_by": "pablomgallegos@gmail.com",
+    "description": "Backup manual creado el 5/6/2025, 16:10:21",
+    "size_bytes": 118223,
+    "size": "115.45 KB"
   }
 ]

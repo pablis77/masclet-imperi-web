@@ -1,37 +1,37 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Configuración para ignorar archivos de prueba
+  // Optimizaciones para build en producción
   build: {
+    // Desactivamos source maps para acelerar la compilación
+    sourcemap: false,
+    // Minificación agresiva
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
+    // Chunks más grandes para menos solicitudes HTTP
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
+      },
       external: [
-        // Excluir todos los archivos que comienzan con _test
+        // Excluir archivos de prueba
         /.*\/_test.*\.astro$/
       ]
-    }
+    },
   },
-  // Configuración para permitir acceso desde cualquier lugar
+  // Optimización para entorno Docker
   server: {
     host: '0.0.0.0',
-    port: 3000,
     strictPort: true,
-    cors: {
-      origin: '*', // Permitir todas las conexiones
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      credentials: true
-    },
-    hmr: {
-      clientPort: 443,
-      host: 'localhost'
-    },
-    // Lista de hosts permitidos explícitamente
-    allowedHosts: [
-      'localhost',
-      '127.0.0.1',
-      '0.0.0.0',
-      '192.168.68.54',
-      'masclet-imperi-web-frontend-2025.loca.lt',
-      '.loca.lt' // Permitir todos los subdominios de loca.lt
-    ]
+    // Desactivamos HMR para producción
+    hmr: false
   }
 });
