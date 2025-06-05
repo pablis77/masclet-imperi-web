@@ -1,0 +1,30 @@
+/* Estilos para bloquear botones específicos para roles restringidos */
+
+/* Bloqueo específico para el botón Nuevo Animal */
+a[href="/animals/new"] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  position: relative !important;
+}
+
+/* Contenido del candado usando pseudo-elementos para mayor compatibilidad */
+a[href="/animals/new"]::after {
+  content: " 🔒" !important;
+  display: inline-block !important;
+  margin-left: 4px !important;
+}
+
+/* Soporte para la versión con button */
+button#new-animal-btn {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  position: relative !important;
+}
+
+button#new-animal-btn::after {
+  content: " 🔒" !important;
+  display: inline-block !important;
+  margin-left: 4px !important;
+}

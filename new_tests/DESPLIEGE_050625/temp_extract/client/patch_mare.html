@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar Campo Mare</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Actualizar Campo Mare</h1>
+    <p>Esta herramienta actualiza el campo "mare" de un animal usando PATCH.</p>
+    
+    <div class="container">
+        <div class="form-group">
+            <label for="animal-id">ID del Animal:</label>
+            <input type="number" id="animal-id" value="2736">
+        </div>
+        
+        <div class="form-group">
+            <label for="mare-value">Valor de Mare:</label>
+            <input type="text" id="mare-value" placeholder="Nuevo valor para el campo mare">
+        </div>
+        
+        <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+        
+        <button id="update-btn">Actualizar</button>
+        <button id="clear-cache-btn" style="background-color: #f0ad4e; margin-top: 10px;">Limpiar Caché</button>
+    </div>
+    
+    <div id="result" class="result" style="display: none;"></div>
+    
+    <script>
+        // Función para limpiar la caché
+        document.getElementById('clear-cache-btn').addEventListener('click', function() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+            // Forzar recarga sin caché
+            window.location.reload(true);
+            alert('Caché limpiada. La página se recargará.');
+        });
+
+        document.getElementById('update-btn').addEventListener('click', async function() {
+            const animalId = document.getElementById('animal-id').value;
+            const mareValue = document.getElementById('mare-value').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'Procesando...';
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Paso 1: Obtener token de autenticación
+                const timestamp = new Date().getTime();
+                const authResponse = await fetch(`/api/v1/auth/login?v=${timestamp}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+                
+                if (!authResponse.ok) {
+                    throw new Error(`Error de autenticación: ${authResponse.status} ${authResponse.statusText}`);
+                }
+                
+                const authData = await authResponse.json();
+                const token = authData.access_token;
+                
+                // Paso 2: Realizar la petición PATCH
+                const updateData = {
+                    mare: mareValue
+                };
+                
+                const patchResponse = await fetch(`/api/v1/animals/${animalId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (!patchResponse.ok) {
+                    throw new Error(`Error al actualizar: ${patchResponse.status} ${patchResponse.statusText}`);
+                }
+                
+                const responseData = await patchResponse.json();
+                
+                // Mostrar resultado exitoso
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>¡Actualización exitosa!</h3>
+                    <p>El campo "mare" del animal ID ${animalId} ha sido actualizado a "${mareValue}".</p>
+                    <h4>Respuesta del servidor:</h4>
+                    <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                // Mostrar error
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                `;
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
