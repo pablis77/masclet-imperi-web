@@ -27,8 +27,52 @@ if (!isInDocker) {
   process.exit(0);
 }
 
-// Definimos la URL correcta del backend en el entorno Docker
-const DOCKER_API_URL = 'http://masclet-backend:8000';
+// Función para obtener la IP del backend dinámicamente
+async function getBackendIP() {
+  try {
+    console.log('🔍 Intentando resolver masclet-backend usando comandos del sistema...');
+    // Intentamos usar diferentes comandos para resolver el nombre, en orden de preferencia
+    const commands = [
+      'getent hosts masclet-backend',
+      'nslookup masclet-backend | grep Address | tail -n1',
+      'ping -c 1 masclet-backend | grep PING | head -n1'
+    ];
+    
+    for (const cmd of commands) {
+      try {
+        const { spawn } = await import('child_process');
+        const process = spawn('sh', ['-c', cmd]);
+        
+        let output = '';
+        for await (const chunk of process.stdout) {
+          output += chunk;
+        }
+        
+        if (output) {
+          // Extraemos la IP basándonos en patrones comunes de los comandos
+          const ipMatch = output.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
+          if (ipMatch && ipMatch[0]) {
+            console.log(`✅ Encontrada IP para masclet-backend: ${ipMatch[0]}`);
+            return ipMatch[0];
+          }
+        }
+      } catch (cmdError) {
+        console.log(`⚠️ Comando ${cmd} falló: ${cmdError.message}`);
+        // Continuamos con el siguiente comando
+      }
+    }
+    
+    throw new Error('Ningún comando pudo resolver la IP');
+  } catch (error) {
+    console.error(`❌ Error al resolver masclet-backend: ${error.message}`);
+    console.log('⚠️ Usando IP predeterminada como fallback: 172.18.0.2');
+    return '172.18.0.2';  // IP de fallback
+  }
+}
+
+// Obtenemos la IP y construimos la URL del backend
+const backendIP = await getBackendIP();
+const DOCKER_API_URL = `http://${backendIP}:8000`;
 console.log(`🌐 Configurando API_URL para Docker: ${DOCKER_API_URL}`);
 
 // Sobreescribir las variables de entorno globales
