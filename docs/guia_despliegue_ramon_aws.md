@@ -7,6 +7,8 @@
 | Base de datos | `C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-db-imagen-completa.tar.gz` | 149.54 KB | Imagen completa y autónoma de PostgreSQL 17 con todas las tablas y datos migrados |
 | Backend | `C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-api-imagen-completa.tar.gz` | 134 MB | Imagen completa y autónoma del backend (FastAPI) con toda la aplicación configurada |
 | Frontend | *Pendiente creación* | - | - |
+| SQL Dump | `C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-imperi-dump.sql` | Variable | Copia completa de la estructura y datos SQL para restauración independiente |
+| Env Config | `C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-backend-env.txt` | < 1 KB | Configuración y variables de entorno del backend
 
 ## ATENCIÓN: Aclaración importante sobre las imágenes
 
@@ -25,6 +27,20 @@ Los backups de base de datos y backend **contienen absolutamente todo lo necesar
 - Incluye la API de FastAPI con toda su configuración
 - Contiene todas las dependencias Python y bibliotecas necesarias
 - Está lista para funcionar solo con cargarla y arrancarla
+
+### IMPORTANTE: Configuración crítica para que todo funcione
+
+Para que el sistema funcione correctamente, es FUNDAMENTAL asegurarse de que:
+
+1. La base de datos PostgreSQL debe tener:
+   - Una base de datos llamada **`masclet_imperi`**
+   - Un usuario **`admin`** con contraseña **`admin123`**
+   - El usuario `admin` debe tener permisos para la base de datos `masclet_imperi`
+
+2. El backend está configurado para conectarse mediante:
+   - Conexión: `postgres://admin:admin123@masclet-db:5432/masclet_imperi`
+
+Si estos requisitos no se cumplen, el backend dará error de conexión a la base de datos.
 
 Aunque aparentemente los tamaños comprimidos parecen pequeños comparados con el tamaño en el servidor, esto se debe a la excelente compresión que realiza `gzip`, sin pérdida de información.
 
@@ -59,10 +75,14 @@ Este documento proporciona una guía paso a paso para desplegar la aplicación M
 
 ```bash
 # Conectarse a la instancia
-ssh -i "ruta-a-la-clave.pem" ec2-user@IP-DE-LA-INSTANCIA
+ssh -i "ruta-a-la-clave.pem" ec2-user@54.217.31.124
 
 # Crear estructura de carpetas
 mkdir -p ~/masclet-imperi/{db,backend,frontend,config,logs,backups,exito}
+
+# Crear directorio específico para backups automáticos con permisos correctos
+sudo mkdir -p /var/backups/masclet-imperi
+sudo chmod 777 /var/backups/masclet-imperi
 
 # Instalar Docker y Docker Compose (si no están ya instalados)
 sudo yum update -y
@@ -75,8 +95,10 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Reconectar para aplicar cambios de grupo
 exit
 # Volver a conectar
-ssh -i "ruta-a-la-clave.pem" ec2-user@IP-DE-LA-INSTANCIA
+ssh -i "ruta-a-la-clave.pem" ec2-user@54.217.31.124
 ```
+
+> **NOTA**: El directorio `/var/backups/masclet-imperi` es CRÍTICO para permitir las copias de seguridad automáticas del sistema.
 
 ### 2.2. Configuración de la base de datos
 
@@ -159,31 +181,69 @@ DB_HOST=masclet-db
 DB_PORT=5432
 ```
 
-### 2.3. Despliegue y restauración de la base de datos
+### 2.3. Despliegue de contenedores mediante imágenes completas (MÉTODO RECOMENDADO)
 
 ```bash
-# 1. Iniciar solo el contenedor de base de datos
-cd ~/masclet-imperi
-docker-compose up -d db
+# 0. Transferir los archivos de imágenes (ejecutar desde Windows)
+scp -i "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem" "C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-db-imagen-completa.tar.gz" ec2-user@54.217.31.124:/home/ec2-user/
+scp -i "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem" "C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-api-imagen-completa.tar.gz" ec2-user@54.217.31.124:/home/ec2-user/
 
-# 2. Esperar a que la base de datos esté lista (unos 10 segundos)
-sleep 10
+# 1. Cargar las imágenes Docker (en el servidor)
+docker load < /home/ec2-user/masclet-db-imagen-completa.tar.gz
+docker load < /home/ec2-user/masclet-api-imagen-completa.tar.gz
 
-# 3. Verificar que el contenedor está funcionando
+# 2. Iniciar el contenedor de la base de datos (IMPORTANTE: usar el nombre correcto de la imagen)
+# El nombre de la imagen puede ser algo como masclet-db-backup-20250605_125012
+docker images
+# Usar el nombre de imagen que aparezca en el listado
+docker run -d --name masclet-db -p 5432:5432 NOMBRE_DE_TU_IMAGEN_DE_BD
+
+# 3. CRÍTICO: Verificar que el contenedor de base de datos tiene configurados correctamente:
+# - La base de datos masclet_imperi
+# - El usuario admin con contraseña admin123
+docker exec masclet-db psql -U postgres -c '\l'
+docker exec masclet-db psql -U postgres -c '\du'
+
+# 4. Si falta la base de datos o el usuario, crearlos (OBLIGATORIO)
+docker exec masclet-db psql -U postgres -c "CREATE DATABASE masclet_imperi;"
+docker exec masclet-db psql -U postgres -c "CREATE USER admin WITH PASSWORD 'admin123' SUPERUSER;"
+docker exec masclet-db psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE masclet_imperi TO admin;"
+
+# 5. Iniciar el contenedor del backend (IMPORTANTE: usar el nombre correcto de la imagen)
+# El nombre de la imagen puede ser algo como masclet-api-backup-20250605_125012
+docker images
+docker run -d --name masclet-backend -p 8000:8000 --link masclet-db:masclet-db NOMBRE_DE_TU_IMAGEN_DE_BACKEND
+
+# 6. Verificar que los contenedores están funcionando
 docker ps
 
-# 4. Transferir el archivo de backup desde local
-# (Ejecutar esto desde la máquina local)
-scp -i "ruta-a-la-clave.pem" "ruta-al-backup-local.sql" ec2-user@IP-DE-LA-INSTANCIA:~/masclet-backup.sql
+# 7. Verificar logs del backend para confirmar conexión exitosa a la BD
+docker logs masclet-backend
+```
 
-# 5. Restaurar el backup en el contenedor (volver a la instancia AWS)
-cat ~/masclet-backup.sql | docker exec -i masclet-db psql -U admin -d masclet_imperi
+### 2.4. Despliegue y restauración alternativo usando SQL Dump (SOLO SI ES NECESARIO)
 
-# 6. Verificar que la restauración fue exitosa
+```bash
+# 1. Iniciar una base de datos PostgreSQL vacía
+docker run -d --name masclet-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:13
+
+# 2. Transferir el archivo de backup SQL desde local (ejecutar desde Windows)
+scp -i "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem" "C:\Proyectos\AWS\contenedores despliegue RAMON\masclet-imperi-dump.sql" ec2-user@54.217.31.124:/home/ec2-user/masclet-backup.sql
+
+# 3. Crear la base de datos y el usuario necesarios
+docker exec masclet-db psql -U postgres -c "CREATE DATABASE masclet_imperi;"
+docker exec masclet-db psql -U postgres -c "CREATE USER admin WITH PASSWORD 'admin123' SUPERUSER;"
+docker exec masclet-db psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE masclet_imperi TO admin;"
+
+# 4. Restaurar el backup en el contenedor
+cat /home/ec2-user/masclet-backup.sql | docker exec -i masclet-db psql -U postgres -d masclet_imperi
+
+# 5. Verificar que la restauración fue exitosa
 docker exec masclet-db psql -U admin -d masclet_imperi -c '\dt'
-docker exec masclet-db psql -U admin -d masclet_imperi -c 'SELECT COUNT(*) FROM animals;'
+docker exec masclet-db psql -U admin -d masclet_imperi -c 'SELECT COUNT(*) FROM animal;'
 docker exec masclet-db psql -U admin -d masclet_imperi -c 'SELECT COUNT(*) FROM part;'
 docker exec masclet-db psql -U admin -d masclet_imperi -c 'SELECT COUNT(*) FROM users;'
+```
 ```
 
 ### 2.4. Despliegue del backend y frontend

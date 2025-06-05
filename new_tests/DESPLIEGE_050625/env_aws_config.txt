@@ -1,0 +1,46 @@
+# PostgreSQL para AWS - conexión al contenedor local
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin123
+POSTGRES_DB=masclet_imperi
+DB_HOST=masclet-db
+DB_PORT=5432
+DATABASE_URL=postgresql://admin:admin123@masclet-db:5432/masclet_imperi
+
+# API Configuration
+API_KEY=Masclet2025AWS!SecureApiKey
+DEBUG=False
+
+# Traefik Dashboard (para producción, recomendamos deshabilitar o proteger)
+TRAEFIK_DASHBOARD_USER=admin
+TRAEFIK_DASHBOARD_PASSWORD=MascletAdminAWS2025!
+
+# Domain Configuration
+DOMAIN=masclet-imperi.com
+API_DOMAIN=api.masclet-imperi.com
+
+# Backup Configuration
+BACKUP_RETENTION_DAYS=14
+BACKUP_MAX_SIZE=5G
+BACKUP_DIR=/var/backups/masclet-imperi
+
+# CORS Configuration para producción
+CORS_ORIGINS=https://masclet-imperi.com,http://localhost:4321
+
+# Claves y configuración de autenticación (nuevas claves seguras)
+SECRET_KEY=a9d8e3f7c6b5a4d3e2f1c0b9a8d7e6f5c4b3a2d1
+JWT_SECRET=e5d4c3b2a1f9e8d7c6b5a4d3e2f1c0b9a8d7e6f5
+ACCESS_TOKEN_EXPIRE_MINUTES=120
+
+# Configuración general
+ENV=production
+APP_NAME=Masclet Imperi API
+ADMIN_EMAIL=pablomgallegos@gmail.com
+LOG_LEVEL=WARNING
+
+# Rate limiting (más restrictivo en producción)
+ENABLE_RATE_LIMIT=True
+RATE_LIMIT_REQUESTS=50
+RATE_LIMIT_WINDOW=60
+
+# Autenticación
+ALGORITHM=HS256

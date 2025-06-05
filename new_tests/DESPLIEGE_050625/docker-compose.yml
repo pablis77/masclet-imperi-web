@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: masclet-db
+    image: postgres:17
+    restart: always
+    env_file:
+      - db.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ~/masclet-imperi_20250604/db/data:/var/lib/postgresql/data
+      - ~/masclet-imperi_20250604/backups:/backups
+    environment:
+      - TZ=Europe/Madrid
+    networks:
+      - masclet-network
+
+networks:
+  masclet-network:
+    name: masclet-network
+    driver: bridge

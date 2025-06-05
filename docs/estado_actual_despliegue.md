@@ -1,6 +1,6 @@
 # Estado Actual del Despliegue Masclet Imperi Web
 
-Fecha de revisión: 2 junio 2025
+Fecha de revisión: 5 junio 2025 (actualizado)
 
 tenemos claramente separado el DOCKER de local del DOCKER de AWS??? tengo dudas de cuando habals de docker de AWS sea realemtren DOCKER... es DOCKER o AWS EC2 u otra tipo de ehrramiensta de AWS???
 respuesta WINDSURF: Sí, son entornos totalmente separados. En el entorno local usamos Docker Desktop en Windows para ejecutar el contenedor PostgreSQL, mientras que en AWS usamos Docker dentro de una instancia EC2 (máquina virtual de AWS). La instancia EC2 es el servidor Linux que aloja todos los contenedores Docker de producción. Por tanto, son sistemas Docker independientes que no se comunican entre sí - uno funciona en tu PC local y otro en la nube de AWS.
@@ -54,7 +54,7 @@ respuesta WINDSURF: Sí, son entornos totalmente separados. En el entorno local 
 
 **Respuesta:**
 
-## 2. Entorno AWS (Producción)
+## 2. Entorno AWS (Producción) - ACTUALIZADO 05/06/2025
 
 ### 2.1 Componentes Desplegados
 
