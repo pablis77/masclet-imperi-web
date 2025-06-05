@@ -113,30 +113,75 @@ else
   exit 1
 fi
 
+# Copiar archivo index.html de redirección - MOVIDO AQUÍ PARA QUE SE COPIE ANTES DE LA VERIFICACIÓN
+if [ -f "../index.html" ]; then
+  log_message "INFO" "Copiando archivo index.html de redirección..."
+  cp ../index.html .
+  if [ $? -eq 0 ]; then
+    log_message "SUCCESS" "Archivo index.html de redirección copiado correctamente"
+  else
+    log_message "ERROR" "Error al copiar index.html"
+    exit 1
+  fi
+else
+  log_message "WARNING" "No se encontró el archivo index.html de redirección en el directorio superior"
+  # Si no hay index.html en la raíz y tampoco tenemos nuestro archivo de redirección, creamos uno básico
+  if [ ! -f "index.html" ] && [ ! -f "client/index.html" ]; then
+    log_message "INFO" "Creando archivo index.html de redirección básico..."
+    cat > index.html << 'EOL'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0; url=client/index.html">
+    <title>Redireccionando a Masclet Imperi</title>
+</head>
+<body>
+    <p>Redirigiendo a <a href="client/index.html">Masclet Imperi</a>...</p>
+</body>
+</html>
+EOL
+    log_message "SUCCESS" "Archivo index.html de redirección creado automáticamente"
+  fi
+fi
+
 # Verificar contenido de la compilación
 log_message "SUBHEADER" "VERIFICANDO ESTRUCTURA DE ARCHIVOS"
 total_files=$(find . -type f | wc -l)
 total_dirs=$(find . -type d | wc -l)
 log_message "INFO" "Archivos totales: $total_files, Directorios: $total_dirs"
 
-# Verificar archivos críticos
+# Verificar archivos críticos para aplicación Astro
+# Comprobar index.html (puede estar en raíz o en client)
 if [ -f "index.html" ]; then
-  log_message "SUCCESS" "Archivo index.html presente"
+  log_message "SUCCESS" "Archivo index.html presente en raíz"
+elif [ -f "client/index.html" ]; then
+  log_message "SUCCESS" "Archivo index.html presente en client/"
 else
-  log_message "WARNING" "No se encontró index.html en el directorio raíz!"
   # Buscar si existe en algún subdirectorio
   index_path=$(find . -name "index.html" | head -1)
   if [ -n "$index_path" ]; then
     log_message "INFO" "index.html encontrado en: $index_path"
+  else
+    log_message "WARNING" "No se encontró index.html en ninguna ruta!"
   fi
 fi
 
-# Verificar directorio de assets
+# Verificar directorio de assets (puede estar en raíz o en client)
 if [ -d "assets" ]; then
   assets_count=$(find ./assets -type f | wc -l)
-  log_message "SUCCESS" "Directorio assets encontrado con $assets_count archivos"
+  log_message "SUCCESS" "Directorio assets encontrado en raíz con $assets_count archivos"
+elif [ -d "client/assets" ]; then
+  assets_count=$(find ./client/assets -type f | wc -l)
+  log_message "SUCCESS" "Directorio assets encontrado en client/assets/ con $assets_count archivos"
 else
-  log_message "WARNING" "No se encontró el directorio assets!"
+  # Buscar carpeta assets en cualquier subdirectorio
+  assets_path=$(find . -type d -name "assets" | head -1)
+  if [ -n "$assets_path" ]; then
+    assets_count=$(find "$assets_path" -type f | wc -l)
+    log_message "INFO" "Directorio assets encontrado en $assets_path con $assets_count archivos"
+  else
+    log_message "WARNING" "No se encontró el directorio assets en ninguna ubicación!"
+  fi
 fi
 
 # Copiar configuración de Nginx

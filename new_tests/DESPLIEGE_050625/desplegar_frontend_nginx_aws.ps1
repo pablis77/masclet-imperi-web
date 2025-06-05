@@ -45,7 +45,7 @@ function Write-Status {
 # Cabecera
 Write-Status "DESPLIEGUE DE FRONTEND MASCLET IMPERI CON NGINX EN AWS" "Header"
 Write-Status "Fecha: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')" "Info"
-Write-Status ""
+Write-Host ""
 
 # 1. Verificar archivos necesarios
 Write-Status "VERIFICANDO ARCHIVOS NECESARIOS" "Header"
@@ -127,6 +127,7 @@ Write-Status "Transfiriendo archivos de configuración de Nginx..." "Info"
 Invoke-Expression "scp -i `"$AWSKey`" `"$nginxDir\frontend-nginx.Dockerfile`" $EC2User`:$RemoteDir/frontend-nginx/"
 Invoke-Expression "scp -i `"$AWSKey`" `"$nginxDir\nginx.conf`" $EC2User`:$RemoteDir/frontend-nginx/"
 Invoke-Expression "scp -i `"$AWSKey`" `"$nginxDir\deploy-nginx-detailed.sh`" $EC2User`:$RemoteDir/frontend-nginx/"
+Invoke-Expression "scp -i `"$AWSKey`" `"$nginxDir\index.html`" $EC2User`:$RemoteDir/frontend-nginx/"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Status "Archivos de configuración transferidos" "Success"
@@ -144,7 +145,7 @@ Invoke-Expression "ssh -i `"$AWSKey`" $EC2User 'chmod +x $RemoteDir/frontend-ngi
 # Ejecutar el script de despliegue
 Write-Status "Iniciando despliegue en el servidor (puede tardar unos minutos)..." "Warning"
 Write-Status "Los logs detallados se mostrarán a continuación:" "Info"
-Write-Status "" "Info"
+Write-Host "" "Info"
 
 $deployCommand = "ssh -i `"$AWSKey`" $EC2User 'cd $RemoteDir && cp frontend-compiled.zip frontend-nginx/ && cd frontend-nginx && ./deploy-nginx-detailed.sh'"
 Invoke-Expression $deployCommand

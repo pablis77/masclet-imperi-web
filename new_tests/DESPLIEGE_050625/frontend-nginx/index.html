@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masclet Imperi - Cargando</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .debug-info { background: #f0f0f0; border: 1px solid #ddd; padding: 15px; margin-top: 20px; }
+        .loading { text-align: center; margin-top: 50px; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <div class="loading">Cargando Masclet Imperi...</div>
+    
+    <div class="debug-info">
+        <h3>Información de depuración:</h3>
+        <div id="debug-output"></div>
+    </div>
+    
+    <script>
+        // Función para añadir mensajes de depuración
+        function logDebug(message) {
+            const debugDiv = document.getElementById('debug-output');
+            const logItem = document.createElement('p');
+            logItem.textContent = new Date().toISOString() + ": " + message;
+            debugDiv.appendChild(logItem);
+        }
+        
+        // Intentar cargar un recurso JS de prueba para verificar la ruta
+        function testResourceLoading() {
+            logDebug("Comprobando rutas de recursos estáticos...");
+            
+            // Intentar cargar un recurso JS de la carpeta _astro
+            const testScript = document.createElement('script');
+            testScript.src = '/client/_astro/vendor.CIJYp_OF.js';
+            testScript.onload = function() {
+                logDebug("✅ Recurso JS cargado correctamente");
+                proceedToLogin();
+            };
+            testScript.onerror = function() {
+                logDebug("❌ Error al cargar recurso JS desde /client/_astro/vendor.CIJYp_OF.js");
+                logDebug("Intentando con ruta alternativa /_astro/vendor.CIJYp_OF.js");
+                
+                const altScript = document.createElement('script');
+                altScript.src = '/_astro/vendor.CIJYp_OF.js';
+                altScript.onload = function() {
+                    logDebug("✅ Recurso JS cargado correctamente con ruta alternativa");
+                    proceedToLogin();
+                };
+                altScript.onerror = function() {
+                    logDebug("❌ Error al cargar recurso con rutas alternativas. Esperando 5 segundos y redirigiendo a /login");
+                    setTimeout(proceedToLogin, 5000);
+                };
+                document.head.appendChild(altScript);
+            };
+            document.head.appendChild(testScript);
+        }
+        
+        function proceedToLogin() {
+            logDebug("Redirigiendo a /login");
+            window.location.href = '/login';
+        }
+        
+        // Al cargar la página
+        window.onload = function() {
+            logDebug("Página cargada, iniciando diagnóstico...");
+            // Esperar 1 segundo para que podamos ver los mensajes de depuración
+            setTimeout(testResourceLoading, 1000);
+        };
+    </script>
+</body>
+</html>
