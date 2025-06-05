@@ -1,0 +1,7 @@
+{
+  "name": "masclet-imperi-frontend",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend para Masclet Imperi"
+}

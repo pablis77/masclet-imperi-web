@@ -124,8 +124,11 @@ if (Test-Path $distRootPath) {
     }
 }
 
-# Paso 1.5: Verificar espacio en disco y limpieza preventiva
-Write-ColorMessage "PASO 1.5: Verificando espacio en disco y realizando limpieza preventiva... 🧹" $colorSuccess
+# Paso 1.5: Verificación del espacio en disco (sin limpieza automática)
+Write-ColorMessage "PASO 1.5: Verificando espacio en disco... 🧹" $colorSuccess
+Write-ColorMessage "NOTA: La limpieza de Docker debe realizarse manualmente antes de ejecutar este script" $colorWarning
+Write-ColorMessage "Comando recomendado:" $colorInfo
+Write-ColorMessage "ssh -i '\path\to\key.pem' ec2-user@ip 'docker images | grep -v masclet-api-imagen-completa | grep -v masclet-db-imagen-completa | grep -v REPOSITORY | awk \'{print $3}\' | xargs -r docker rmi -f'" $colorInfo
 
 # Verificar espacio disponible
 $diskSpace = Invoke-SshCommand "df -h | grep '/dev/xvda1'"
@@ -134,35 +137,15 @@ Write-ColorMessage "Estado actual del disco: $diskSpace" $colorInfo
 # Extraer el porcentaje de uso
 if ($diskSpace -match '(\d+)%') {
     $diskUsagePercent = [int]$Matches[1]
-    if ($diskUsagePercent -gt 85) {
-        Write-ColorMessage "⚠️ ADVERTENCIA: Espacio en disco crítico ($diskUsagePercent%). Realizando limpieza profunda..." $colorWarning
-        
-        # Limpieza más agresiva si el espacio está crítico
-        Write-ColorMessage "Eliminando imágenes Docker y volúmenes no utilizados..." $colorInfo
-        Invoke-SshCommand "docker system prune -af --filter 'until=24h' --filter 'label!=masclet-db' --filter 'label!=masclet-backend'"
+    if ($diskUsagePercent -gt 90) {
+        Write-ColorMessage "⚠️ ADVERTENCIA: Espacio en disco crítico ($diskUsagePercent%). Se recomienda ejecutar limpieza manual" $colorWarning
+        return
     } else {
-        Write-ColorMessage "✅ Espacio en disco suficiente ($diskUsagePercent%). Realizando limpieza preventiva normal..." $colorSuccess
+        Write-ColorMessage "✅ Espacio en disco suficiente ($diskUsagePercent%)." $colorSuccess
     }
 }
 
-# Limpieza segura de recursos Docker - PROTEGIENDO API Y DB
-Write-ColorMessage "Limpiando contenedores/imágenes antiguas del frontend..." $colorInfo
-
-# Eliminar solo contenedores relacionados con el frontend
-Invoke-SshCommand "for c in \$(docker ps -a --filter name=masclet-frontend -q); do docker rm -f \$c; done"
-
-# Eliminar solo imágenes huérfanas y antiguas del frontend
-Invoke-SshCommand "docker images | grep masclet-frontend | awk '{print \$3}' | xargs -r docker rmi -f"
-Invoke-SshCommand "docker images -f 'dangling=true' -q | xargs -r docker rmi"
-
-# Limpiar archivos temporales anteriores del despliegue
-Invoke-SshCommand "find /tmp -name 'docker-*' -type d -mtime +1 -exec rm -rf {} \; 2>/dev/null || true"
-
-# Verificar espacio después de limpieza
-$diskSpaceAfter = Invoke-SshCommand "df -h | grep '/dev/xvda1'"
-Write-ColorMessage "Estado del disco después de limpieza: $diskSpaceAfter" $colorSuccess
-
-# Mostrar contenedores activos - verificación de que DB y API siguen intactos
+# Mostrar contenedores activos - verificación de que DB y API están intactos
 $runningContainers = Invoke-SshCommand "docker ps"
 Write-ColorMessage "Contenedores activos (verificando que DB y API están intactos):" $colorInfo
 Write-ColorMessage $runningContainers $colorInfo
