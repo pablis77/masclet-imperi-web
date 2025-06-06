@@ -33,11 +33,30 @@ COPY package*.json ./
 COPY ./client/ /app/client/
 COPY ./server/ /app/server/
 
-# Copiar el script corrector de API para Docker
-COPY ./docker-api-fix.js /app/docker-api-fix.js
+# Copiar archivos de configuración de la API para Docker
+COPY ./docker-api-master.js /app/docker-api-master.js
+COPY ./docker-api-detector.js /app/docker-api-detector.js
+COPY ./docker-api-config.js /app/docker-api-config.js
+COPY ./docker-api-injector.js /app/docker-api-injector.js
 
-# Asegurarse de que el punto de entrada existe
-RUN ls -la /app/server/entry.mjs || echo "ADVERTENCIA: No se encuentra el punto de entrada!"
+# Copiar script de diagnóstico
+COPY ./docker-diagnose.js /app/docker-diagnose.js
+
+# Instalar herramientas de diagnóstico para Alpine Linux
+RUN apk update && apk add --no-cache \
+    iputils \
+    busybox-extras \
+    iproute2 \
+    bind-tools \
+    curl
+
+# Verificar estructura antes de la ejecución
+RUN mkdir -p /app/logs \
+    && touch /app/logs/node-startup.log \
+    && echo "Contenido de /app:" > /app/logs/node-startup.log \
+    && ls -la /app >> /app/logs/node-startup.log \
+    && echo "\nContenido de /app/server (si existe):" >> /app/logs/node-startup.log \
+    && ls -la /app/server >> /app/logs/node-startup.log 2>&1 || echo "No existe /app/server todavía"
 
 # Asegurar que tenemos todos los módulos necesarios
 RUN echo "Listado de dependencias principales instaladas:" && \
@@ -54,8 +73,12 @@ ENV DOCKER_CONTAINER=true
 # Exponer el puerto donde correrá la aplicación
 EXPOSE 3000
 
-# Ejecutar el script de configuración de API y luego la aplicación
-CMD ["sh", "-c", "node /app/docker-api-fix.js && node ./server/entry.mjs"]
+# Crear script de arranque para ejecutar diagnóstico y configuración
+RUN echo '#!/bin/sh\n\n# Verificar archivos clave\necho "Verificando archivos necesarios..."\nls -la /app\nls -la /app/server\nfind /app -name "entry.mjs" || echo "ERROR: No se encuentra entry.mjs"\n\n# Iniciar diagnóstico en segundo plano\necho "Iniciando diagnóstico en segundo plano..."\nnode /app/docker-diagnose.js > /app/diagnostico.log 2>&1 &\n\n# Ejecutar el script de configuración API\necho "Iniciando script de configuración API..."\nnode /app/docker-api-master.js\n\n# Ejecutar la aplicación\necho "Iniciando la aplicación..."\ncd /app && node server/entry.mjs\n\n# Mantener el contenedor ejecutándose en caso de error\necho "La aplicación ha terminado, manteniendo contenedor activo..."\ntail -f /app/diagnostico.log\n' > /app/startup.sh \
+    && chmod +x /app/startup.sh && cat /app/startup.sh
+
+# Comando para ejecutar
+CMD ["/bin/sh", "/app/startup.sh"]
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
