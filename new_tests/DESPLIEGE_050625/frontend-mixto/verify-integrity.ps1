@@ -1,6 +1,6 @@
 # Script para verificar integridad de archivos críticos durante el despliegue
 param (
-    [string]$remoteHost = "3.253.32.134",
+    [string]$remoteHost = "34.253.203.194",
     [string]$remoteUser = "ec2-user",
     [string]$keyPath = "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem",
     [string]$deploySourceDir = "C:\Proyectos\claude\masclet-imperi-web",

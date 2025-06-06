@@ -1,0 +1,127 @@
+# Multi-stage build para reducir problemas de dependencias
+
+# Primera etapa: Instalación de dependencias
+FROM node:18-alpine AS dependencies
+
+WORKDIR /app
+
+# Copiar solo los archivos necesarios para instalar dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias sin restricciones de producción
+# para asegurar que todo se instale correctamente
+RUN npm install --legacy-peer-deps
+
+# Instalar manualmente express y dependencias críticas
+RUN npm install cookie express compression --legacy-peer-deps
+
+# Segunda etapa: Construcción de la aplicación final
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar solo los módulos node necesarios de la etapa anterior
+COPY --from=dependencies /app/node_modules /app/node_modules
+
+# Copiar package.json también (aunque ya instalamos sus dependencias)
+COPY package*.json ./
+
+# Copiar archivos de la aplicación compilada
+COPY ./client/ /app/client/
+COPY ./server/ /app/server/
+
+# Copiar archivos de configuración de la API para Docker
+COPY ./docker-api-*.js /app/
+
+# Copiar script de diagnóstico
+COPY ./docker-diagnose.js /app/docker-diagnose.js
+
+# Instalar herramientas de diagnóstico para Alpine Linux
+RUN apk update && apk add --no-cache \
+    iputils \
+    busybox-extras \
+    iproute2 \
+    bind-tools \
+    curl
+
+# Verificar estructura antes de la ejecución y crear logs
+RUN mkdir -p /app/logs \
+    && touch /app/logs/node-startup.log \
+    && echo "Contenido de /app:" > /app/logs/node-startup.log \
+    && ls -la /app >> /app/logs/node-startup.log \
+    && echo "\nContenido de /app/server (si existe):" >> /app/logs/node-startup.log \
+    && ls -la /app/server >> /app/logs/node-startup.log 2>&1 || echo "No existe /app/server todavía"
+
+# Configurar variables de entorno
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV API_URL=http://masclet-backend:8000
+ENV API_PREFIX=/api/v1
+ENV DOCKER_CONTAINER=true
+
+# Exponer el puerto donde correrá la aplicación
+EXPOSE 3000
+
+# Crear script de arranque más robusto
+RUN echo '#!/bin/sh
+
+# Crear directorios necesarios si no existen
+mkdir -p /app/server
+
+# Verificar archivos clave y estructura
+echo "Verificando estructura del proyecto..."
+echo "-----------------------------------"
+ls -la /app
+echo "-----------------------------------"
+find /app -type f -name "*.mjs" | sort
+
+# Buscar entry.mjs en cualquier lugar del proyecto
+ENTRY_FILE=$(find /app -type f -name "entry.mjs" | head -1)
+
+if [ -z "$ENTRY_FILE" ]; then
+    echo "⚠️ ERROR CRÍTICO: No se encuentra entry.mjs en ninguna ubicación"
+    echo "Buscando archivos .mjs alternativos que puedan servir como punto de entrada:"
+    find /app -type f -name "*.mjs" | head -5
+    
+    # Intentar encontrar cualquier archivo que pueda ser un punto de entrada
+    ALT_ENTRY=$(find /app -type f -name "*.mjs" | head -1)
+    
+    if [ -n "$ALT_ENTRY" ]; then
+        echo "⚠️ Usando archivo alternativo como punto de entrada: $ALT_ENTRY"
+        ENTRY_FILE=$ALT_ENTRY
+    else
+        echo "❌ No se encontraron archivos .mjs. Imposible continuar."
+        # Mantener el contenedor vivo para diagnóstico
+        tail -f /dev/null
+        exit 1
+    fi
+fi
+
+# Iniciar diagnóstico en segundo plano
+echo "Iniciando diagnóstico en segundo plano..."
+node /app/docker-diagnose.js > /app/logs/diagnostico.log 2>&1 &
+
+# Ejecutar el script de configuración API
+echo "Iniciando script de configuración API..."
+node /app/docker-api-master.js
+
+# Guardar ubicación de entry.mjs en logs
+echo "Usando punto de entrada: $ENTRY_FILE" >> /app/logs/node-startup.log
+
+# Ejecutar la aplicación
+echo "Iniciando la aplicación..."
+cd $(dirname "$ENTRY_FILE") && node $(basename "$ENTRY_FILE")
+
+# Mantener el contenedor ejecutándose en caso de error
+echo "La aplicación ha terminado, manteniendo contenedor activo..."
+tail -f /app/logs/diagnostico.log
+' > /app/startup.sh \
+    && chmod +x /app/startup.sh
+
+# Comando para ejecutar
+CMD ["/bin/sh", "/app/startup.sh"]
+
+# Healthcheck mejorado
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1

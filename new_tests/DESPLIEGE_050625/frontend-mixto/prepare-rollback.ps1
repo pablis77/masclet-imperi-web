@@ -1,6 +1,6 @@
 # Script para preparar respaldo para rollback
 param (
-    [string]$remoteHost = "3.253.32.134",
+    [string]$remoteHost = "34.253.203.194",
     [string]$remoteUser = "ec2-user",
     [string]$keyPath = "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem",
     [string]$remoteDeployDir = "~/masclet-imperi-web-deploy"
