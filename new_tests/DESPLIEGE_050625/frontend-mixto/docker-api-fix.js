@@ -133,4 +133,139 @@ ${injectedCode}`
   }
 }
 
+// Creamos el archivo de inyección HTML con etiquetas script
+const injectionFile = path.join(__dirname, 'docker-api-injection.html');
+const injectionContent = `<script src="/docker-api-config.js" type="text/javascript"></script><script>console.log('🔌 Script de configuración Docker inyectado');</script>`;
+
+fs.writeFileSync(injectionFile, injectionContent);
+console.log(`✅ Script de inyección HTML creado: ${injectionFile}`);
+
+// Interceptamos las respuestas HTTP para inyectar nuestro script en páginas HTML
+try {
+  // Solo intentamos modificar módulos Node si aún no estamos en el proceso de importación
+  // Creamos la función para interceptar y modificar las respuestas
+  const setupHttpInterceptor = () => {
+    const http = require('http');
+    const originalCreateServer = http.createServer;
+    
+    // Reemplazamos el método createServer para interceptar las respuestas
+    http.createServer = function(requestListener) {
+      // Si no hay listener, devolvemos el servidor original
+      if (!requestListener) {
+        return originalCreateServer();
+      }
+      
+      // Envolvemos el listener original para interceptar respuestas
+      const wrappedListener = (req, res) => {
+        // Guardamos los métodos originales
+        const originalWrite = res.write;
+        const originalEnd = res.end;
+        
+        // Solo modificamos respuestas HTML
+        const isHtml = (res.getHeader('content-type') || '').includes('html');
+        
+        if (isHtml) {
+          let body = '';
+          
+          // Interceptamos el método write
+          res.write = function(chunk, encoding, callback) {
+            // Capturamos el contenido
+            body += chunk.toString();
+            return true; // Indicamos que se procesó correctamente
+          };
+          
+          // Interceptamos el método end
+          res.end = function(chunk, encoding, callback) {
+            // Añadimos el último chunk si existe
+            if (chunk) {
+              body += chunk.toString();
+            }
+            
+            try {
+              // Leemos el contenido de inyección
+              const injectionPath = path.join(__dirname, 'docker-api-injection.html');
+              const injectionScript = fs.readFileSync(injectionPath, 'utf8');
+              
+              // Inyectamos justo antes del cierre del body usando template literals para manejar correctamente el string
+              body = body.replace('</body>', `${injectionScript}</body>`);
+              
+              // Restauramos los métodos originales
+              res.write = originalWrite;
+              res.end = originalEnd;
+              
+              // Enviamos el contenido modificado
+              return originalEnd.call(res, body, encoding, callback);
+            } catch (error) {
+              console.error(`❌ Error al inyectar script: ${error.message}`);
+              // En caso de error, enviamos el contenido original
+              res.write = originalWrite;
+              res.end = originalEnd;
+              return originalEnd.call(res, body, encoding, callback);
+            }
+          };
+        }
+        
+        // Llamamos al listener original con la request y la response modificada
+        return requestListener(req, res);
+      };
+      
+      // Creamos el servidor con nuestro listener modificado
+      return originalCreateServer(wrappedListener);
+    };
+    
+    console.log('✅ Interceptor HTTP instalado correctamente');
+  };
+  
+  // Ejecutamos la función para instalar el interceptor
+  setupHttpInterceptor();
+  
+  // Si estamos usando Express, también interceptamos su método estático
+  try {
+    const expressPath = path.join(__dirname, 'node_modules', 'express');
+    if (fs.existsSync(expressPath)) {
+      console.log('🔍 Detectado Express, configurando middleware...');
+      const express = require('express');
+      const originalStatic = express.static;
+      
+      // Envolvemos el método static de Express
+      express.static = function(root, options) {
+        const originalMiddleware = originalStatic(root, options);
+        
+        // Creamos un nuevo middleware para inyectar nuestro script
+        return function(req, res, next) {
+          // Guardamos el método original send
+          const originalSend = res.send;
+          
+          // Solo interceptamos respuestas HTML
+          res.send = function(body) {
+            // Si es una respuesta HTML, inyectamos nuestro script
+            if (typeof body === 'string' && body.includes('</body>') && 
+                (res.get('Content-Type') || '').includes('html')) {
+              try {
+                const injectionPath = path.join(__dirname, 'docker-api-injection.html');
+                const injectionScript = fs.readFileSync(injectionPath, 'utf8');
+                body = body.replace('</body>', `${injectionScript}</body>`);
+              } catch (error) {
+                console.error(`❌ Error al inyectar script en Express: ${error.message}`);
+              }
+            }
+            
+            // Llamamos al método original con el contenido modificado
+            return originalSend.call(this, body);
+          };
+          
+          // Continuamos con el middleware original
+          return originalMiddleware(req, res, next);
+        };
+      };
+      
+      console.log('✅ Middleware Express configurado correctamente');
+    }
+  } catch (expressError) {
+    console.log(`ℹ️ Express no encontrado o no requiere modificación: ${expressError.message}`);
+  }
+} catch (error) {
+  console.error(`❌ Error al configurar interceptor HTTP: ${error.message}`);
+}
+
 console.log('✅ Corrección de URLs de API completada');

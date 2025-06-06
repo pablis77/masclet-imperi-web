@@ -106,5 +106,14 @@
     "description": "Backup manual creado el 6/6/2025, 0:35:28",
     "size_bytes": 118432,
     "size": "115.66 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250606_020002.sql",
+    "date": "06/06/2025 02:00",
+    "backup_type": "daily",
+    "created_by": "sistema",
+    "description": "Backup diario programado (06/06/2025)",
+    "size_bytes": 119380,
+    "size": "116.58 KB"
   }
 ]

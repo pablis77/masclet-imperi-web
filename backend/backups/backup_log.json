@@ -1,5 +1,17 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250606_020002.sql",
+        "date": "2025-06-06 02:00:02",
+        "timestamp": "20250606_020002",
+        "backup_type": "daily",
+        "size": "116.58 KB",
+        "size_bytes": 119380,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup diario programado (06/06/2025)",
+        "reference_id": null
+    },
+    {
         "filename": "backup_masclet_imperi_20250605_020002.sql",
         "date": "2025-06-05 02:00:02",
         "timestamp": "20250605_020002",
@@ -66,18 +78,6 @@
         "backup_type": "animal_updated",
         "size": "114.60 KB",
         "size_bytes": 117355,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
-        "reference_id": "3065"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250603_005808.sql",
-        "date": "2025-06-03 00:58:09",
-        "timestamp": "20250603_005808",
-        "backup_type": "animal_updated",
-        "size": "115.00 KB",
-        "size_bytes": 117756,
         "created_by": "sistema",
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
