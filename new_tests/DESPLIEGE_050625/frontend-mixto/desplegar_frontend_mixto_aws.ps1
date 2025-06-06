@@ -1,6 +1,6 @@
 # Script para desplegar frontend mixto (Nginx + Node.js) en AWS
 # Configuración
-$remoteHost = "3.253.32.134"
+$remoteHost = "34.253.203.194"
 $remoteUser = "ec2-user"
 $keyPath = "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem"
 $localSourceDir = "C:\Proyectos\claude\masclet-imperi-web"

@@ -4,7 +4,7 @@
 
 # Configuración de variables
 $AWSKey = "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem"
-$EC2IP = "3.253.32.134"  # IP pública actual del servidor AWS
+$EC2IP = "34.253.203.194"  # IP pública actual del servidor AWS
 $EC2User = "ec2-user@$EC2IP"
 $LocalProjectRoot = "C:\Proyectos\claude\masclet-imperi-web"
 $RemoteTempDir = "/home/ec2-user/frontend_compiled_$(Get-Date -Format 'yyyyMMdd_HHmmss')"

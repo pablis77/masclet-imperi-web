@@ -6,7 +6,7 @@
 $LocalProjectRoot = "C:\Proyectos\claude\masclet-imperi-web"
 $DeployDir = "$LocalProjectRoot\new_tests\DESPLIEGE_050625"
 $AWSKey = "C:\Proyectos\primeros proyectos\AWS\masclet-imperi-key.pem"
-$AWSServerIP = "3.253.32.134"  # IP pública actual del servidor AWS
+$AWSServerIP = "34.253.203.194"  # IP pública actual del servidor AWS
 $EC2User = "ec2-user@$AWSServerIP"
 $RemoteDir = "/home/ec2-user/frontend-deploy"
 $DeployLogFile = "$DeployDir\despliegue_frontend_nginx_aws.log"

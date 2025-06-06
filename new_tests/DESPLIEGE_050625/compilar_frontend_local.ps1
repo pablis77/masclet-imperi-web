@@ -6,7 +6,7 @@
 # Configuración de variables
 $LocalProjectRoot = "C:\Proyectos\claude\masclet-imperi-web"
 $LocalFrontendDir = "$LocalProjectRoot\frontend"
-$AWSServerIP = "3.253.32.134"  # IP pública actual del servidor AWS
+$AWSServerIP = "34.253.203.194"  # IP pública actual del servidor AWS
 $BackupDir = "$LocalFrontendDir\backups\$(Get-Date -Format 'yyyyMMdd_HHmmss')"
 $OptimizedConfigFile = "$LocalProjectRoot\new_tests\DESPLIEGE_050625\vite.config.production.js"
 $DistDir = "$LocalFrontendDir\dist"
