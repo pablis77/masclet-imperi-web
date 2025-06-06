@@ -213,13 +213,25 @@ if (Test-Path (Join-Path -Path $frontendPath -ChildPath "package.json")) {
     exit 1
 }
 
-# Transferir archivos de configuración
+# Definir directorio de origen del despliegue
 $deploySourceDir = "C:\Proyectos\claude\masclet-imperi-web\new_tests\DESPLIEGE_050625\frontend-mixto"
-Invoke-ScpTransfer "$deploySourceDir/nginx.conf" "$remoteDeployDir/"
-Invoke-ScpTransfer "$deploySourceDir/node.Dockerfile" "$remoteDeployDir/"
-Invoke-ScpTransfer "$deploySourceDir/nginx.Dockerfile" "$remoteDeployDir/"
-Invoke-ScpTransfer "$deploySourceDir/docker-compose.yml" "$remoteDeployDir/"
-Invoke-ScpTransfer "$deploySourceDir/docker-api-fix.js" "$remoteDeployDir/"
+Write-ColorMessage "Directorio de origen: $deploySourceDir" $colorInfo
+
+# Transferir todos los archivos de configuración de la API para Docker
+Write-ColorMessage "Transfiriendo scripts modulares de configuración de API para Docker..." $colorInfo
+Invoke-ScpTransfer "$deploySourceDir\docker-api-master.js" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-api-detector.js" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-api-config.js" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-api-injector.js" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-diagnose.js" "$remoteDeployDir/"
+Write-ColorMessage "Script de diagnóstico transferido correctamente" $colorSuccess
+
+# Transferir archivos de configuración
+Invoke-ScpTransfer "$deploySourceDir\nginx.conf" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\node.Dockerfile" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\nginx.Dockerfile" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-compose.yml" "$remoteDeployDir/"
+Invoke-ScpTransfer "$deploySourceDir\docker-api-fix.js" "$remoteDeployDir/"
 
 # Verificar que docker-api-fix.js fue transferido correctamente
 $apiFixCheck = Invoke-SshCommand "ls -la $remoteDeployDir/docker-api-fix.js"

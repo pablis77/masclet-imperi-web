@@ -77,7 +77,25 @@ const getApiUrl = (): string => {
   }
   
   // Seleccionar configuración según entorno
-  const config = isLocal ? API_CONFIG.development : API_CONFIG.production;
+  // Para redes locales, SIEMPRE usar configuración de desarrollo
+  // Comprobación adicional: si estamos en una IP de red local
+  let isLocalNetwork = false;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    isLocalNetwork = 
+      hostname === 'localhost' || 
+      hostname === '127.0.0.1' ||
+      /^192\.168\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(hostname);
+  }
+  
+  // Si es red local, FORZAR modo desarrollo independientemente de otras variables
+  const config = (isLocal || isLocalNetwork) ? API_CONFIG.development : API_CONFIG.production;
+  
+  if (isLocalNetwork && !isLocal) {
+    console.log('[ApiService] Modo desarrollo forzado por detección de red local:', window.location.hostname);
+  }
   
   // SOLUCIÓN DIRECTA PARA TÚNELES: DETECTAR DINÁMICAMENTE LA URL
   if (isTunnel) {
@@ -132,7 +150,16 @@ API_BASE_URL = getApiUrl();
 let isProduction = false;
 if (typeof window !== 'undefined') {
   const currentHost = window.location.hostname;
-  isProduction = currentHost !== 'localhost' && currentHost !== '127.0.0.1';
+  // Detectar redes locales (igual que en apiConfig.ts)
+  const isLocalNetwork = 
+    currentHost === 'localhost' || 
+    currentHost === '127.0.0.1' ||
+    /^192\.168\./.test(currentHost) ||
+    /^10\./.test(currentHost) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(currentHost);
+  
+  isProduction = !isLocalNetwork;
+  console.log(`[ApiService] Host: ${currentHost}, Es red local: ${isLocalNetwork}, Modo producción: ${isProduction}`);
 }
 
 // IMPORTANTE: En producción, debemos evitar la duplicación de /api/v1
@@ -543,19 +570,54 @@ export async function login(username: string, password: string) {
     // Ruta de login directa sin concatenar baseURL para evitar problemas
     const loginEndpoint = '/auth/login';
     
-    // En producción, usar siempre rutas relativas para el login
-    if (isProduction) {
-      console.log(`Realizando login a: /api/v1${loginEndpoint}`);
+    // Determinar qué URL usar para el login
+    let loginUrl = loginEndpoint;
+    let useBaseUrlOverride = false;
+    let baseUrlOverride = '';
+    
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isLocalNetwork = 
+        hostname === 'localhost' || 
+        hostname === '127.0.0.1' ||
+        /^192\.168\./.test(hostname) ||
+        /^10\./.test(hostname) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(hostname);
+      
+      if (isLocalNetwork) {
+        // Para redes locales usando IP, forzar conexión a localhost:8000
+        useBaseUrlOverride = true;
+        baseUrlOverride = 'http://127.0.0.1:8000/api/v1';
+        loginUrl = '/auth/login'; // Sin api/v1 ya que está en baseUrlOverride
+        console.log(`Realizando login a: ${baseUrlOverride}${loginUrl}`);
+      } else if (isProduction) {
+        console.log(`Realizando login a: /api/v1${loginEndpoint}`);
+      } else {
+        console.log(`Realizando login a: ${api.defaults.baseURL}${loginEndpoint}`);
+      }
     } else {
       console.log(`Realizando login a: ${api.defaults.baseURL}${loginEndpoint}`);
     }
     
     // Realizar la solicitud con el formato correcto
-    const response = await api.post(loginEndpoint, formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
+    let response;
+    if (useBaseUrlOverride) {
+      // Crear una instancia de axios temporal para esta petición específica
+      const tempAxios = axios.create({
+        baseURL: baseUrlOverride,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      response = await tempAxios.post(loginUrl, formData);
+    } else {
+      // Usar configuración estándar
+      response = await api.post(loginEndpoint, formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+    }
     
     // Guardar el token en localStorage
     if (typeof window !== 'undefined' && window.localStorage && response.data.access_token) {
