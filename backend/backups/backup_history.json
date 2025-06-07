@@ -115,5 +115,23 @@
     "description": "Backup diario programado (06/06/2025)",
     "size_bytes": 119380,
     "size": "116.58 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250607_020044.sql",
+    "date": "07/06/2025 02:00",
+    "backup_type": "daily",
+    "created_by": "sistema",
+    "description": "Backup diario programado (07/06/2025)",
+    "size_bytes": 119380,
+    "size": "116.58 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250607_104630.sql",
+    "date": "07/06/2025 10:46",
+    "backup_type": "manual",
+    "created_by": "pablomgallegos@gmail.com",
+    "description": "Backup manual creado el 7/6/2025, 10:46:30",
+    "size_bytes": 119380,
+    "size": "116.58 KB"
   }
 ]

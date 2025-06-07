@@ -82,5 +82,17 @@
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal Marta (ID: 3065)",
         "reference_id": "3065"
+    },
+    {
+        "filename": "backup_masclet_imperi_20250607_020044.sql",
+        "date": "2025-06-07 02:00:44",
+        "timestamp": "20250607_020044",
+        "backup_type": "daily",
+        "size": "116.58 KB",
+        "size_bytes": 119380,
+        "created_by": "sistema",
+        "retention_category": "weekly",
+        "description": "Backup diario programado (07/06/2025)",
+        "reference_id": null
     }
 ]

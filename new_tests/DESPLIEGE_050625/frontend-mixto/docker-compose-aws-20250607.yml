@@ -1,14 +1,16 @@
+version: '3.8'
+
 services:
   # Servidor Node.js para SSR
   masclet-frontend-node:
-    build:
-      context: .
-      dockerfile: node.Dockerfile
+    image: masclet-imperi-web-deploy-masclet-frontend-node:latest
     container_name: masclet-frontend-node
     restart: unless-stopped
     networks:
       - masclet-network
-    # No exponemos el puerto 3000 al exterior, solo internamente para Nginx
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://34.253.203.194:8000
     deploy:
       resources:
         limits:
@@ -19,9 +21,7 @@ services:
 
   # Nginx como proxy inverso y servidor de estáticos
   masclet-frontend-nginx:
-    build:
-      context: .
-      dockerfile: nginx.Dockerfile
+    image: masclet-imperi-web-deploy-masclet-frontend-nginx:latest
     container_name: masclet-frontend
     restart: unless-stopped
     ports:

@@ -266,21 +266,42 @@ Invoke-SshCommand "docker rm masclet-frontend masclet-frontend-node 2>/dev/null 
 Write-ColorMessage "Eliminando imágenes anteriores..." $colorInfo
 Invoke-SshCommand "docker rmi masclet-imperi-web-deploy-masclet-frontend-node masclet-imperi-web-deploy-masclet-frontend-nginx masclet-frontend-nginx:latest masclet-frontend-node:latest 2>/dev/null || echo 'No hay imágenes que eliminar'"
 
-# Paso 6: Construir y desplegar con docker-compose (sin cache)
+# Paso 6: Construir y desplegar con docker-compose (con verificación de recursos)
 Write-ColorMessage "PASO 6: Desplegando contenedores Docker... 🚀" $colorSuccess
 
-# Utilizamos --no-cache para forzar una reconstrucción completa de las imágenes
-$deployResult = Invoke-SshCommand "cd $remoteDeployDir && docker-compose build --no-cache && docker-compose up -d"
+# Verificar recursos disponibles antes de compilar
+Write-ColorMessage "Verificando recursos disponibles antes de compilar..." $colorInfo
+$diskSpace = Invoke-SshCommand "df -h | grep xvda1"
+$memInfo = Invoke-SshCommand "free -m | grep Mem"
+Write-ColorMessage "Espacio en disco: $diskSpace" $colorInfo
+Write-ColorMessage "Memoria disponible: $memInfo" $colorInfo
+
+# Limpiar caché de Docker para liberar espacio
+Write-ColorMessage "Limpiando caché de Docker para liberar espacio..." $colorInfo
+Invoke-SshCommand "docker system prune -f"
+
+# SIN --no-cache para ahorrar recursos y permitir reutilizar capas
+$deployResult = Invoke-SshCommand "cd $remoteDeployDir && docker-compose build && docker-compose up -d"
 Write-ColorMessage $deployResult $colorInfo
 
 # Paso 7: Verificar estado de los contenedores
 Write-ColorMessage "PASO 7: Verificando estado de los contenedores... ⚙️" $colorSuccess
 
-    # Esperar para que los contenedores se inicien completamente (más tiempo para mejor estabilidad)
-    Write-ColorMessage "Esperando 15 segundos para que los servicios se inicialicen completamente..." $colorInfo
-    Start-Sleep -Seconds 15
+# Esperar para que los contenedores se inicien completamente (más tiempo para mejor estabilidad)
+Write-ColorMessage "Esperando 15 segundos para que los servicios se inicialicen completamente..." $colorInfo
+Start-Sleep -Seconds 15
 
-# Verificar que los contenedores están corriendo
+# Verificar estado actual de recursos
+Write-ColorMessage "Recursos tras despliegue:" $colorInfo
+$afterMem = Invoke-SshCommand "free -m | grep Mem"
+Write-ColorMessage "Memoria: $afterMem" $colorInfo
+
+# Verificar estado de los contenedores con información más detallada
+$containerStatus = Invoke-SshCommand "docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'"
+Write-ColorMessage "Estado actual de los contenedores:" $colorInfo
+Write-ColorMessage $containerStatus $colorInfo
+
+# Verificar que los contenedores específicos están corriendo
 $containersRunning = Invoke-SshCommand "docker ps --format '{{.Names}}' | grep -E 'masclet-frontend|masclet-frontend-node'"
 
 if ($containersRunning -match "masclet-frontend" -and $containersRunning -match "masclet-frontend-node") {
@@ -328,8 +349,8 @@ if ($containersRunning -match "masclet-frontend" -and $containersRunning -match 
         Write-ColorMessage "docker logs masclet-frontend-node" $colorInfo
     }
 } else {
-    Write-ColorMessage "❌ ERROR: Uno o más contenedores no están ejecutándose correctamente" $colorError
-    Write-ColorMessage "⚠️ Estado actual de los contenedores:" $colorWarning
+    Write-ColorMessage " ERROR: Uno o más contenedores no están ejecutándose correctamente" $colorError
+    Write-ColorMessage " Estado actual de los contenedores:" $colorWarning
     $dockerPs = Invoke-SshCommand "docker ps -a"
     Write-ColorMessage $dockerPs $colorInfo
     

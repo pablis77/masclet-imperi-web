@@ -1,0 +1,47 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar solo lo necesario para instalar dependencias primero
+# Esto mejora el uso de caché en Docker
+COPY frontend/package*.json ./
+COPY frontend/.npmrc ./
+
+# Instalar dependencias con opciones optimizadas
+RUN npm ci --only=production --no-audit --legacy-peer-deps
+
+# Copiar código compilado (asumimos que se compiló localmente)
+COPY frontend/dist/client ./client
+COPY frontend/dist/server ./server
+
+# Copiar configuración de API y scripts de diagnóstico
+COPY new_tests/DESPLIEGE_050625/frontend-mixto/docker-api-*.js ./
+
+# Crear directorio para logs
+RUN mkdir -p /var/log/masclet-frontend
+
+# Exponer puerto para SSR
+EXPOSE 8080
+
+# Script de inicio simplificado
+RUN echo '#!/bin/sh\n\
+echo "Iniciando detección de API..."\n\
+node docker-api-master.js\n\
+\n\
+echo "Buscando archivo de entrada..."\n\
+ENTRY_FILE=$(find /app -name "entry.mjs" | head -n 1)\n\
+\n\
+if [ -z "$ENTRY_FILE" ]; then\n\
+  echo "ERROR: No se encontró entry.mjs"\n\
+  exit 1\n\
+fi\n\
+\n\
+echo "Iniciando servidor con $ENTRY_FILE..."\n\
+exec node $ENTRY_FILE\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Health check básico
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD wget -q --spider http://localhost:8080/health || exit 1
+
+# Comando de inicio
+CMD ["/app/start.sh"]

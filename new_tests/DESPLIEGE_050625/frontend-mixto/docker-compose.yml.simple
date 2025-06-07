@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  masclet-frontend-node:
+    build:
+      context: ../..
+      dockerfile: new_tests/DESPLIEGE_050625/frontend-mixto/node.Dockerfile.simple
+    container_name: masclet-frontend-node
+    networks:
+      - masclet-network
+    restart: always
+    # Límites de recursos para evitar problemas de memoria
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  masclet-frontend-nginx:
+    build:
+      context: ../..
+      dockerfile: new_tests/DESPLIEGE_050625/frontend-mixto/nginx.Dockerfile
+    container_name: masclet-frontend-nginx
+    ports:
+      - "80:80"
+    networks:
+      - masclet-network
+    restart: always
+    depends_on:
+      - masclet-frontend-node
+    # Límites de recursos más ajustados para Nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  masclet-network:
+    external: true
