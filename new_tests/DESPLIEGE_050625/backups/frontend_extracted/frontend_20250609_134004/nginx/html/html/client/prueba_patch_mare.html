@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba PATCH Mare - Masclet Imperi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #2563eb;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            color: #dc2626;
+            background-color: #fee2e2;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success {
+            color: #16a34a;
+            background-color: #dcfce7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 10px;
+            color: #4b5563;
+        }
+    </style>
+<script src="/login-direct-fix.js"></script></head>
+
+<body>
+    <h1>Prueba PATCH Mare - Masclet Imperi</h1>
+
+    <div class="card">
+        <h2>Login</h2>
+        <div class="error" id="loginErrorMessage"></div>
+        <div class="success" id="loginSuccessMessage"></div>
+
+        <form id="loginForm">
+            <div>
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" value="admin" required>
+            </div>
+
+            <div>
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" value="admin123" required>
+            </div>
+
+            <button type="submit" id="loginBtn">Iniciar Sesión</button>
+            <div class="loading" id="loginLoadingIndicator">Procesando...</div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Actualización Parcial de Animal (Campo Mare)</h2>
+        <p>Esta página permite probar la actualización parcial del campo "mare" (madre) de un animal usando el método
+            PATCH.</p>
+
+        <div class="error" id="errorMessage"></div>
+        <div class="success" id="successMessage"></div>
+
+        <form id="patchForm">
+            <div>
+                <label for="animalId">ID del Animal:</label>
+                <input type="number" id="animalId" required placeholder="Ej: 2736">
+            </div>
+
+            <div>
+                <label for="mareValue">Nuevo valor para Mare (Madre):</label>
+                <input type="text" id="mareValue" placeholder="Nombre de la madre o dejar vacío para null">
+            </div>
+
+            <button type="submit" id="submitBtn" disabled>Actualizar Mare</button>
+            <div class="loading" id="loadingIndicator">Procesando...</div>
+        </form>
+
+        <h3>Resultado:</h3>
+        <div class="result" id="resultOutput">Aquí se mostrará el resultado de la operación</div>
+    </div>
+
+    <div class="card">
+        <h2>Consultar Animal</h2>
+        <p>Consulta los datos actuales de un animal para verificar los cambios.</p>
+
+        <div>
+            <label for="getAnimalId">ID del Animal:</label>
+            <input type="number" id="getAnimalId" placeholder="Ej: 2736">
+            <button id="getAnimalBtn" disabled>Consultar Animal</button>
+            <div class="loading" id="getLoadingIndicator">Cargando...</div>
+        </div>
+
+        <h3>Datos del Animal:</h3>
+        <div class="result" id="getResultOutput">Aquí se mostrarán los datos del animal</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Obtener referencias a elementos del DOM
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginLoadingIndicator = document.getElementById('loginLoadingIndicator');
+            const loginErrorMessage = document.getElementById('loginErrorMessage');
+            const loginSuccessMessage = document.getElementById('loginSuccessMessage');
+
+            const patchForm = document.getElementById('patchForm');
+            const animalIdInput = document.getElementById('animalId');
+            const mareValueInput = document.getElementById('mareValue');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultOutput = document.getElementById('resultOutput');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            const getAnimalIdInput = document.getElementById('getAnimalId');
+            const getAnimalBtn = document.getElementById('getAnimalBtn');
+            const getLoadingIndicator = document.getElementById('getLoadingIndicator');
+            const getResultOutput = document.getElementById('getResultOutput');
+
+            // Función para obtener el token JWT del localStorage
+            function getToken() {
+                return localStorage.getItem('token');
+            }
+
+            // Verificar si ya hay un token
+            if (getToken()) {
+                submitBtn.disabled = false;
+                getAnimalBtn.disabled = false;
+                loginSuccessMessage.textContent = "Ya has iniciado sesión";
+                loginSuccessMessage.style.display = 'block';
+            }
+
+            // Función para mostrar un mensaje de error
+            function showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+
+            // Función para mostrar un mensaje de éxito
+            function showSuccess(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+
+            // Manejador para el formulario de login
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!username || !password) {
+                    showError(loginErrorMessage, 'Por favor, introduce usuario y contraseña');
+                    return;
+                }
+
+                // Mostrar indicador de carga
+                loginLoadingIndicator.style.display = 'block';
+                loginBtn.disabled = true;
+
+                try {
+                    // Realizar petición de login
+                    const response = await fetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username,
+                            password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.detail || 'Error de autenticación');
+                    }
+
+                    // Guardar token
+                    localStorage.setItem('token', data.access_token);
+
+                    // Mostrar mensaje de éxito
+                    showSuccess(loginSuccessMessage, 'Inicio de sesión exitoso');
+
+                    // Habilitar botones
+                    submitBtn.disabled = false;
+                    getAnimalBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error de login:', error);
+                    showError(loginErrorMessage, `Error de login: ${error.message}`);
+                } finally {
+                    // Ocultar indicador de carga
+                    loginLoadingIndicator.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
+            });
+
+            // Manejador para el formulario de PATCH
+            patchForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const animalId = animalIdInput.value.trim();
+                const mareValue = mareValueInput.value.trim();
+
+                if (!animalId) {
+                    showError(errorMessage, 'Por favor, introduce el ID del animal');
+                    return;
+                }
+
+                // Preparar datos para la petición
+                const updateData = {
+                    mare: mareValue === '' ? null : mareValue
+                };
+
+                // Mostrar indicador de carga
+                loadingIndicator.style.display = 'block';
+                submitBtn.disabled = true;
+
+                try {
+                    const token = getToken();
+                    if (!token) {
+                        throw new Error('No hay token de autenticación. Por favor, inicia sesión primero.');
+                    }
+
+                    // Evitar caché
+                    const timestamp = new Date().getTime();
+
+                    // Realizar petición PATCH
+                    const response = await fetch(`/api/v1/animals/${animalId}?_t=${timestamp}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updateData),
+                        cache: 'no-cache'
+                    });
+
+                    // Procesar respuesta
+                    const responseText = await response.text();
+                    let responseData;
+
+                    try {
+                        responseData = JSON.parse(responseText);
+                    } catch (e) {
+                        responseData = responseText;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(responseData.detail || `Error ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Mostrar resultado
+                    resultOutput.textContent = JSON.stringify(responseData, null, 2);
+                    showSuccess(successMessage, `Campo 'mare' actualizado correctamente para el animal #${animalId}`);
+
+                    // Actualizar automáticamente la consulta
+                    getAnimalIdInput.value = animalId;
+                    getAnimalBtn.click();
+
+                } catch (error) {
+                    console.error('Error al actualizar animal:', error);
+                    resultOutput.textContent = `Error: ${error.message}`;
+                    showError(errorMessage, `Error al actualizar: ${error.message}`);
+                } finally {
+                    // Ocultar indicador de carga
+                    loadingIndicator.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Manejador para el botón de consulta
+            getAnimalBtn.addEventListener('click', async function () {
+                const animalId = getAnimalIdInput.value.trim();
+
+                if (!animalId) {
+                    showError(errorMessage, 'Por favor, introduce el ID del animal a consultar');
+                    return;
+                }
+
+                // Mostrar indicador de carga
+                getLoadingIndicator.style.display = 'block';
+                getAnimalBtn.disabled = true;
+
+                try {
+                    const token = getToken();
+                    if (!token) {
+                        throw new Error('No hay token de autenticación. Por favor, inicia sesión primero.');
+                    }
+
+                    // Evitar caché
+                    const timestamp = new Date().getTime();
+
+                    // Realizar petición GET
+                    const response = await fetch(`/api/v1/animals/${animalId}?_t=${timestamp}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        cache: 'no-cache'
+                    });
+
+                    // Procesar respuesta
+                    const responseText = await response.text();
+                    let responseData;
+
+                    try {
+                        responseData = JSON.parse(responseText);
+                    } catch (e) {
+                        responseData = responseText;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(responseData.detail || `Error ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Extraer datos del animal
+                    let animalData;
+                    if (responseData && responseData.status === 'success' && responseData.data) {
+                        animalData = responseData.data;
+                    } else {
+                        animalData = responseData;
+                    }
+
+                    // Mostrar resultado
+                    getResultOutput.textContent = JSON.stringify(animalData, null, 2);
+
+                } catch (error) {
+                    console.error('Error al consultar animal:', error);
+                    getResultOutput.textContent = `Error: ${error.message}`;
+                    showError(errorMessage, `Error al consultar: ${error.message}`);
+                } finally {
+                    // Ocultar indicador de carga
+                    getLoadingIndicator.style.display = 'none';
+                    getAnimalBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

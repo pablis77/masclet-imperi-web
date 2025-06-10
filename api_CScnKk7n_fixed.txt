@@ -1,0 +1,35 @@
+import axios from 'axios';
+
+const getEnvironment = () => {
+  if (typeof window === "undefined") return "server";
+  const hostname = window.location.hostname;
+  if (hostname.includes("loca.lt")) return "localtunnel";
+  if (hostname === "localhost" || hostname.includes("192.168.")) return "local";
+  return "production";
+};
+const environment = getEnvironment();
+const isLocalTunnel = environment === "localtunnel";
+let baseURL;
+let useRelativeUrls = false;
+switch (environment) {
+  case "localtunnel":
+    baseURL = "https://api-masclet-imperi.loca.lt/api/v1";
+    break;
+  case "local":
+    baseURL = "http://localhost:8000/api/v1";
+    break;
+  case "production":
+    baseURL = "http://masclet-api:8000/api/v1";
+    useRelativeUrls = false;  // Cambiado a false para usar URLs absolutas en Docker
+    break;
+  case "server":
+    baseURL = "http://masclet-api:8000/api/v1";
+    useRelativeUrls = false;  // URLs absolutas para el servidor Docker
+    break;
+  default:
+    baseURL = "http://masclet-api:8000/api/v1";  // Default apuntando al servicio Docker
+}
+const API_BASE_URL = baseURL;
+console.log("🌎 Modo de conexión:", environment);
+console.log("🔌 API Base URL:", baseURL);
+console.log("🔗 URLs Relativas:", useRelativeUrls ? "SÍ" : "NO");
