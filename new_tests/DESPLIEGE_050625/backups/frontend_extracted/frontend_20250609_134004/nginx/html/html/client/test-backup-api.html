@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de API de Backup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+<script src="/login-direct-fix.js"></script></head>
+<body>
+    <h1>Prueba de API de Backup</h1>
+    
+    <div class="container">
+        <h2>Configuración</h2>
+        <div>
+            <label for="api-url">URL de la API:</label>
+            <select id="api-url" style="width: 300px;">
+                <option value="/api/v1">Relativa: /api/v1 (proxy)</option>
+                <option value="http://localhost:8000/api/v1">Directa: http://localhost:8000/api/v1</option>
+                <option value="https://api-masclet-imperi.loca.lt/api/v1">Túnel: https://api-masclet-imperi.loca.lt/api/v1</option>
+            </select>
+        </div>
+        <div style="margin-top: 10px;">
+            <label for="include-credentials">Incluir credentials:</label>
+            <input type="checkbox" id="include-credentials" checked>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Prueba de Listado de Backups</h2>
+        <button id="list-backups">Listar Backups</button>
+        <div id="list-result"></div>
+    </div>
+
+    <div class="container">
+        <h2>Prueba de Creación de Backup</h2>
+        <button id="create-backup">Crear Backup</button>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        // Función para obtener el token de autenticación
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        // Función para mostrar resultados
+        function showResult(elementId, success, message, data) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <p class="${success ? 'success' : 'error'}">${message}</p>
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+        }
+
+        // Función para realizar peticiones a la API
+        async function fetchAPI(endpoint, method = 'GET', data = null) {
+            const apiUrl = document.getElementById('api-url').value;
+            const includeCredentials = document.getElementById('include-credentials').checked;
+            
+            const url = `${apiUrl}${endpoint}`;
+            console.log(`Realizando petición ${method} a: ${url}`);
+            
+            const token = getToken();
+            if (!token) {
+                console.warn('No hay token de autenticación');
+            }
+            
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            };
+            
+            if (includeCredentials) {
+                options.credentials = 'include';
+            }
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                console.log('Opciones de fetch:', options);
+                const response = await fetch(url, options);
+                console.log('Respuesta recibida:', response);
+                
+                // Mostrar encabezados de la respuesta
+                console.log('Encabezados de respuesta:');
+                for (const [key, value] of response.headers.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Error en la petición:', error);
+                throw error;
+            }
+        }
+
+        // Evento para listar backups
+        document.getElementById('list-backups').addEventListener('click', async () => {
+            try {
+                const result = await fetchAPI('/backup/list');
+                showResult('list-result', true, 'Backups obtenidos correctamente', result);
+            } catch (error) {
+                showResult('list-result', false, `Error: ${error.message}`);
+            }
+        });
+
+        // Evento para crear backup
+        document.getElementById('create-backup').addEventListener('click', async () => {
+            try {
+                const data = {
+                    include_animals: true,
+                    include_births: true,
+                    include_config: true,
+                    created_by: 'test_html',
+                    description: 'Backup creado desde página de prueba'
+                };
+                
+                const result = await fetchAPI('/backup/create', 'POST', data);
+                showResult('create-result', true, 'Backup creado correctamente', result);
+            } catch (error) {
+                showResult('create-result', false, `Error: ${error.message}`);
+            }
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            if (!token) {
+                alert('No hay token de autenticación. Por favor, inicia sesión primero.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+import axios from 'axios';
+
+const getEnvironment = () => {
+  if (typeof window === "undefined") return "server";
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname.includes("192.168.")) return "local";
+  return "production";
+};
+const environment = getEnvironment();
+let baseURL;
+let useRelativeUrls = false;
+switch (environment) {
+  case "local":
+    baseURL = "http://localhost:8000/api/v1";
+    break;
+  case "production":
+    baseURL = "http://masclet-api:8000/api/v1";
+    useRelativeUrls = false;
+    break;
+  case "server":
+    baseURL = "http://masclet-api:8000/api/v1";
+    useRelativeUrls = false;
+    break;
+  default:
+    baseURL = "http://masclet-api:8000/api/v1";
+}
+const API_BASE_URL = baseURL;
+console.log("🌎 Modo de conexión:", environment);
+console.log("🔌 API Base URL:", baseURL);
+console.log("🔗 URLs Relativas:", useRelativeUrls ? "SÍ" : "NO");
+function normalizePath(path) {
+  path = path.startsWith("/") ? path.substring(1) : path;
+  return path.endsWith("/") ? path : `${path}/`;
+}
+console.log("🌎 Modo de conexión:", environment);
+console.log("🔌 API Base URL:", baseURL || "URL relativa");
+const api = axios.create({
+  baseURL,
+  timeout: 15e3,
+  headers: {
+    "Content-Type": "application/json",
+    "X-Environment": environment
+  },
+  withCredentials: false
+  // Evita problemas con CORS
+});
+
+api.interceptors.request.use(
+  (config) => {
+    console.log("Usando token JWT para autenticación");
+    // Obtener el token desde localStorage (cliente) o desde Cookie (servidor)
+    let token = null;
+    if (typeof window !== "undefined") {
+      token = window.localStorage.getItem("token");
+    }
+    
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log("Respuesta del servidor recibida:", {
+      url: response.config.url,
+      status: response.status,
+      data: response.data ? "Datos recibidos" : "Sin datos"
+    });
+    return response;
+  },
+  (error) => {
+    console.error("Error en respuesta API:", error.message);
+    if (error.response) {
+      console.log("Status:", error.response.status);
+      console.log("Datos:", error.response.data);
+    }
+    return Promise.reject(error);
+  }
+);
+
+async function fetchData(endpoint, params = {}, token = null) {
+  try {
+    let headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    let queryParams = new URLSearchParams();
+    Object.keys(params).forEach((key) => {
+      if (params[key] !== null && params[key] !== undefined) {
+        queryParams.append(key, params[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+
+    console.log("Fetching data from:", url);
+    const response = await api.get(url, { headers });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
+}
+
+async function postData(endpoint, data = {}, method = "POST") {
+  try {
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json"
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    let response;
+    if (method === "POST") {
+      response = await api.post(endpoint, data, { headers });
+    } else if (method === "PUT") {
+      response = await api.put(endpoint, data, { headers });
+    } else if (method === "PATCH") {
+      response = await api.patch(endpoint, data, { headers });
+    } else {
+      throw new Error(`Método no soportado: ${method}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error en operación:", error);
+    throw error;
+  }
+}
+
+async function deleteData(endpoint, id) {
+  try {
+    const token = localStorage.getItem("token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const url = id ? `${endpoint}/${id}` : endpoint;
+    const response = await api.delete(url, { headers });
+    return response.data;
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    throw error;
+  }
+}
+
+export { api as a, fetchData as f, postData as p, deleteData as d, API_BASE_URL as A };
