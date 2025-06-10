@@ -1,0 +1,295 @@
+import {b5 as u} from "./vendor.CwhrWGr6.js";
+let f = "development"
+  , i = "";
+const h = {
+    development: {
+        protocol: "http",
+        host: "127.0.0.1",
+        port: "8000",
+        path: "/api/v1"
+    },
+    production: {
+        protocol: "https",
+        host: "masclet-imperi-web-backend.onrender.com",
+        port: "",
+        path: ""
+    }
+}
+  , m = () => {
+    let e = !1
+      , t = !1;
+    if (typeof window < "u") {
+        const n = window.location.hostname;
+        t = n.includes("loca.lt"),
+        e = n === "localhost" || n === "127.0.0.1" || t
+    } else
+        e = f !== "production";
+    typeof window < "u" && window.location.hostname.includes("loca.lt") && (t = !0);
+    let a = !1;
+    if (typeof window < "u") {
+        const n = window.location.hostname;
+        a = n === "localhost" || n === "127.0.0.1" || /^192\.168\./.test(n) || /^10\./.test(n) || /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(n)
+    }
+    const r = e || a ? h.development : h.production;
+    if (a && !e && console.log("[ApiService] Modo desarrollo forzado por detección de red local:", window.location.hostname),
+    t) {
+        if (typeof window < "u" && window.location.hostname.includes("loca.lt")) {
+            let c = "https://api-masclet-imperi.loca.lt/api/v1";
+            const l = localStorage.getItem("backend_tunnel_url");
+            return l && (c = l),
+            c
+        }
+        return "https://api-masclet-imperi.loca.lt/api/v1"
+    }
+    return `${r.protocol}://${r.host}${r.port ? ":" + r.port : ""}${r.path}`
+}
+;
+f = "production";
+i = m();
+let p = !1;
+if (typeof window < "u") {
+    const e = window.location.hostname
+      , t = e === "localhost" || e === "127.0.0.1" || /^192\.168\./.test(e) || /^10\./.test(e) || /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(e);
+    p = !t,
+    console.log(`[ApiService] Host: ${e}, Es red local: ${t}, Modo producción: ${p}`)
+}
+p && i.includes("/api/v1/api/v1") && (i = i.replace("/api/v1/api/v1", "/api/v1"),
+console.log(`[ApiService] Corregida duplicación de prefijo en URL: ${i}`));
+const s = u.create({
+    baseURL: i,
+    headers: {
+        "Content-Type": "application/json"
+    }
+});
+s.interceptors.request.use(e => {
+    const t = e.url || "";
+    if (typeof window < "u" && window.location.hostname.includes("loca.lt")) {
+        if (!(localStorage.getItem("tunnelMessageShown") === "true") && !document.getElementById("tunnel-auth-message")) {
+            localStorage.setItem("tunnelMessageShown", "true");
+            const o = document.createElement("div");
+            o.id = "tunnel-auth-message",
+            o.style.position = "fixed",
+            o.style.top = "50px",
+            o.style.left = "50%",
+            o.style.transform = "translateX(-50%)",
+            o.style.backgroundColor = "#f8d7da",
+            o.style.color = "#721c24",
+            o.style.padding = "15px 20px",
+            o.style.borderRadius = "5px",
+            o.style.zIndex = "9999",
+            o.style.maxWidth = "80%",
+            o.style.textAlign = "center",
+            o.style.boxShadow = "0 3px 10px rgba(0,0,0,0.2)",
+            o.innerHTML = `
+          <h3 style="margin-top: 0;">Autenticación de túnel necesaria</h3>
+          <p>Para usar el túnel correctamente, necesitas autenticar ambos túneles manualmente.</p>
+          <p><strong>1.</strong> Haz clic en este botón para abrir el túnel del backend:</p>
+          <a href="https://api-masclet-imperi.loca.lt/api/v1/health" target="_blank" 
+             style="display: inline-block; background: #28a745; color: white; text-decoration: none; 
+                    padding: 8px 15px; margin: 10px 0; border-radius: 4px;">
+            Autenticar Túnel Backend
+          </a>
+          <p><strong>2.</strong> En la nueva pestaña, completa cualquier autenticación que solicite LocalTunnel</p>
+          <p><strong>3.</strong> Cierra esa pestaña y vuelve aquí</p>
+          <p><strong>4.</strong> Recarga esta página</p>
+          <button id="close-tunnel-msg" style="background: #6c757d; border: none; color: white; padding: 5px 10px; 
+                                             border-radius: 3px; margin-top: 10px; cursor: pointer;">
+            Cerrar este mensaje
+          </button>
+        `,
+            document.body.appendChild(o),
+            document.getElementById("close-tunnel-msg")?.addEventListener("click", () => {
+                o.style.display = "none"
+            }
+            )
+        }
+        if (!t.startsWith("/api/v1") && !t.startsWith("api/v1")) {
+            const o = t.startsWith("/") ? t : `/${t}`;
+            e.url = `/api/v1${o}`,
+            console.log(`[TÚNEL] Añadiendo prefijo: ${t} -> ${e.url}`)
+        }
+        const r = `${e.baseURL || ""}${e.url || ""}`;
+        if (r.includes("/api/v1/api/v1/")) {
+            console.log(`[TÚNEL] Corrigiendo URL duplicada: ${r}`);
+            const o = r.replace("/api/v1/api/v1/", "/api/v1/")
+              , n = e.baseURL || "";
+            e.url = o.replace(n, ""),
+            console.log(`[TÚNEL] URL corregida: ${n}${e.url}`)
+        }
+    }
+    return typeof localStorage < "u" && localStorage.getItem("token") && (e.headers.Authorization = `Bearer ${localStorage.getItem("token")}`),
+    e.withCredentials = !1,
+    p && (e.url && e.url.startsWith("http:") && (e.url = e.url.replace("http:", "https:")),
+    e.baseURL && e.baseURL.startsWith("http:") && (e.baseURL = e.baseURL.replace("http:", "https:")),
+    console.log(`[PROD] URL final: ${e.baseURL}${e.url}`)),
+    e
+}
+, e => Promise.reject(e));
+s.interceptors.request.use(e => {
+    if (typeof window < "u" && window.localStorage)
+        try {
+            const t = localStorage.getItem("token");
+            t ? (e.headers.Authorization = `Bearer ${t}`,
+            console.log("Usando token JWT para autenticación")) : console.warn("No se encontró token en localStorage")
+        } catch (t) {
+            console.warn("No se pudo acceder a localStorage:", t)
+        }
+    return e
+}
+, e => Promise.reject(e));
+function y(e, t=!1) {
+    i = e,
+    s.defaults.baseURL = e
+}
+async function w(e) {
+    try {
+        const t = e.startsWith("/") ? e : `/${e}`
+          , a = !t.includes("?") && t.endsWith("/") ? t.slice(0, -1) : t
+          , r = await s.get(a);
+        return r.data === void 0 || r.data === null ? Array.isArray(r.data) ? [] : {} : r.data
+    } catch (t) {
+        if (u.isAxiosError(t) ? console.error(`❌ Error en petición GET a ${e}: ${t.message} (${t.response?.status || "sin status"})`) : console.error(`❌ Error no relacionado con Axios en ${e}: ${t}`),
+        u.isAxiosError(t) && t.response?.status === 404) {
+            const a = t.config?.url || ""
+              , r = t.config?.baseURL ? `${t.config.baseURL}${a}` : a;
+            if (p) {
+                if (r.includes("://"))
+                    try {
+                        const o = new URL(r)
+                          , n = o.pathname + o.search;
+                        try {
+                            return (await u.get(n, {
+                                baseURL: "",
+                                headers: t.config?.headers
+                            })).data
+                        } catch {}
+                    } catch {}
+                if (a.includes("//") || a.includes("api/api") || a.includes("/api/v1") && e.includes("/api/v1")) {
+                    let o = e.replace(/api\/api/g, "api");
+                    if (o = o.replace(/\/api\/v1\/api\/v1/g, "/api/v1"),
+                    o = o.replace(/\/\/api\/v1/g, "/api/v1"),
+                    o !== e)
+                        try {
+                            return (await s.get(o)).data
+                        } catch {}
+                }
+                if (t.config?.baseURL)
+                    try {
+                        let o = a;
+                        return o.startsWith("/api") || (o = `/api/v1/${o.startsWith("/") ? o.substring(1) : o}`),
+                        (await u.get(o, {
+                            baseURL: ""
+                        })).data
+                    } catch {}
+            }
+            if (e.includes("list") || e.includes("all") || e.includes("explotacions") || e.includes("animales"))
+                return []
+        }
+        return {}
+    }
+}
+async function b(e, t) {
+    try {
+        const a = e.startsWith("/") ? e : `/${e}`;
+        return (await s.post(a, t)).data
+    } catch (a) {
+        throw console.error(`Error en petición POST a ${e}:`, a),
+        a
+    }
+}
+async function v(e, t) {
+    try {
+        const a = e.startsWith("/") ? e : `/${e}`;
+        return (await s.put(a, t)).data
+    } catch (a) {
+        throw console.error(`Error en petición PUT a ${e}:`, a),
+        a
+    }
+}
+async function $(e, t) {
+    try {
+        const a = e.startsWith("/") ? e : `/${e}`;
+        return console.log(`Realizando petición PATCH a ${i}${a}`),
+        console.log("Datos enviados:", t),
+        (await s.patch(a, t)).data
+    } catch (a) {
+        throw console.error(`Error en petición PATCH a ${e}:`, a),
+        a
+    }
+}
+async function U(e) {
+    try {
+        const t = e.startsWith("/") ? e : `/${e}`;
+        return (await s.delete(t)).data
+    } catch (t) {
+        throw console.error(`Error en petición DELETE a ${e}:`, t),
+        t
+    }
+}
+async function g() {
+    try {
+        return typeof window < "u" && window.localStorage ? !!localStorage.getItem("token") : !1
+    } catch (e) {
+        return console.error("Error al verificar autenticación:", e),
+        !1
+    }
+}
+async function R() {
+    try {
+        return await g() ? await w("/users/me") : null
+    } catch (e) {
+        return console.error("Error al obtener información del usuario:", e),
+        null
+    }
+}
+async function E(e, t) {
+    try {
+        const a = new URLSearchParams;
+        a.append("username", e),
+        a.append("password", t),
+        a.append("grant_type", "password");
+        const r = "/auth/login";
+        let o = r
+          , n = !1
+          , d = "";
+        if (typeof window < "u") {
+            const l = window.location.hostname;
+            l === "localhost" || l === "127.0.0.1" || /^192\.168\./.test(l) || /^10\./.test(l) || /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(l) ? (n = !0,
+            d = "http://127.0.0.1:8000/api/v1",
+            o = "/auth/login",
+            console.log(`Realizando login a: ${d}${o}`)) : console.log(p ? `Realizando login a: /api/v1${r}` : `Realizando login a: ${s.defaults.baseURL}${r}`)
+        } else
+            console.log(`Realizando login a: ${s.defaults.baseURL}${r}`);
+        let c;
+        return n ? c = await u.create({
+            baseURL: d,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+        }).post(o, a) : c = await s.post(r, a, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+        }),
+        typeof window < "u" && window.localStorage && c.data.access_token && (localStorage.setItem("token", c.data.access_token),
+        console.log("Token guardado correctamente")),
+        c
+    } catch (a) {
+        throw console.error("Error al iniciar sesión:", a),
+        a
+    }
+}
+const L = () => i
+  , S = {
+    get: w,
+    post: b,
+    put: v,
+    patch: $,
+    del: U,
+    isAuthenticated: g,
+    getUserInfo: R,
+    login: E,
+    configureApi: y,
+    getBaseUrl: L
+};
+export {S as a, E as l};
