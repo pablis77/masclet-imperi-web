@@ -327,17 +327,26 @@ export async function get<T = any>(endpoint: string): Promise<T> {
     // Normalizar endpoint asegurando que empiece con /
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     
+    // IMPORTANTE: Añadir prefijo /api/v1 si no está presente y no hay ya un prefijo en la URL base
+    let apiEndpoint = normalizedEndpoint;
+    // Comprobar si ya hay un prefijo en la URL base (config.baseURL) o si ya hay un prefijo en el endpoint
+    const baseUrlHasPrefix = API_BASE_URL.includes('/api/v1');
+    if (!apiEndpoint.startsWith('/api/v1') && !baseUrlHasPrefix) {
+      apiEndpoint = `/api/v1${normalizedEndpoint}`;
+      console.log(`Añadiendo prefijo a endpoint: ${normalizedEndpoint} -> ${apiEndpoint}`);
+    }
+    
     // Quitar / al final si el endpoint lo tiene y no contiene query params
     // El backend está redirigiendo los endpoints con / al final a los que no lo tienen
-    const finalEndpoint = (!normalizedEndpoint.includes('?') && normalizedEndpoint.endsWith('/')) 
-      ? normalizedEndpoint.slice(0, -1) 
-      : normalizedEndpoint;
+    const finalEndpoint = (!apiEndpoint.includes('?') && apiEndpoint.endsWith('/')) 
+      ? apiEndpoint.slice(0, -1) 
+      : apiEndpoint;
     
     // IMPORTANTE: En producción, solo imprimir la ruta relativa
     if (isProduction) {
-      // console.log(`Realizando petición GET a: /api/v1${finalEndpoint}`);
-    } else {
       // console.log(`Realizando petición GET a: ${finalEndpoint}`);
+    } else {
+      console.log(`Realizando petición GET a: ${finalEndpoint}`);
     }
     
     const response = await api.get<T>(finalEndpoint);
