@@ -1,0 +1,26 @@
+{
+  "total": 240,
+  "modificados": 5,
+  "conURLs": [
+    {
+      "ruta": "C:\\Proyectos\\claude\\masclet-imperi-web\\frontend\\src\\components\\animals\\HabitualesForm.astro",
+      "importacion": "import { API_CONFIG } from '../../config/apiConfig.centralizado';"
+    },
+    {
+      "ruta": "C:\\Proyectos\\claude\\masclet-imperi-web\\frontend\\src\\config\\apiConfig.centralizado.ts",
+      "importacion": "import { API_CONFIG } from '/apiConfig.centralizado';"
+    },
+    {
+      "ruta": "C:\\Proyectos\\claude\\masclet-imperi-web\\frontend\\src\\scripts\\animal-history.js",
+      "importacion": "import { API_CONFIG } from '../config/apiConfig.centralizado';"
+    },
+    {
+      "ruta": "C:\\Proyectos\\claude\\masclet-imperi-web\\frontend\\src\\services\\api.ts",
+      "importacion": "import { API_CONFIG } from '../config/apiConfig.centralizado';"
+    },
+    {
+      "ruta": "C:\\Proyectos\\claude\\masclet-imperi-web\\frontend\\src\\services\\apiService.ts",
+      "importacion": "import { API_CONFIG } from '../config/apiConfig.centralizado';"
+    }
+  ]
+}

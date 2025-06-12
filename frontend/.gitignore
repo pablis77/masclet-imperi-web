@@ -37,3 +37,6 @@ dist-ssr/
 .env.development.local
 .env.test.local
 .env.production.local
+
+AWS_AMPLIFY/sonarqube-data
+AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/javascript/sonar-javascript-plugin-10.23.0.32711-multi.jar

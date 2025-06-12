@@ -27,3 +27,6 @@ env/
 echo "backend/docker/backups/**" >> .gitignore
 echo "backend/docker/postgres/data/**" >> .gitignore
 echo "*.tar" >> .gitignore
+
+AWS_AMPLIFY/sonarqube-data
+AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/javascript/sonar-javascript-plugin-10.23.0.32711-multi.jar
