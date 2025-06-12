@@ -1,0 +1,3 @@
+import "/src/scripts/updateUserRole.js";
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkRlZmF1bHRMYXlvdXQuYXN0cm8/YXN0cm8mdHlwZT1zY3JpcHQmaW5kZXg9MSZsYW5nLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBcIi9zcmMvc2NyaXB0cy91cGRhdGVVc2VyUm9sZS5qc1wiIl0sIm1hcHBpbmdzIjoiQUFBQSxPQUFPOyIsIm5hbWVzIjpbXX0=

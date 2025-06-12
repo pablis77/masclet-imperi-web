@@ -1,0 +1,414 @@
+/* Estados de animales para el dashboard */
+.animal-status-ok {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: rgb(136 196 37 / 10%);
+  color: var(--success);
+}
+
+.dark .animal-status-ok {
+  background-color: rgb(136 196 37 / 20%);
+  color: #a3e635;
+}
+
+.animal-status-def {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: rgb(239 68 68 / 10%);
+  color: var(--danger);
+}
+
+.dark .animal-status-def {
+  background-color: rgb(239 68 68 / 20%);
+  color: #f87171;
+}
+
+/* Animaciones */
+@keyframes fade-in {
+  from { 
+    opacity: 0; 
+  }
+
+  to { 
+    opacity: 1; 
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+/* Formularios */
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  outline: none;
+}
+
+.form-control:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(136 196 37 / 30%);
+  border-color: var(--primary);
+}
+
+.form-control::-moz-placeholder {
+  color: #9ca3af;
+}
+
+.form-control::placeholder {
+  color: #9ca3af;
+}
+
+.dark .form-control {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.dark .form-label {
+  color: #cbd5e1;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-checkbox {
+  height: 1rem;
+  width: 1rem;
+  border-radius: 0.25rem;
+  border-color: #d1d5db;
+  color: var(--primary);
+}
+
+.form-checkbox:focus {
+  box-shadow: 0 0 0 2px rgb(136 196 37 / 30%);
+}
+
+.dark .form-checkbox {
+  border-color: #334155;
+}
+
+.form-select {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  outline: none;
+  padding-right: 2.5rem;
+  font-size: 1rem;
+}
+
+.form-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(136 196 37 / 30%);
+  border-color: var(--primary);
+}
+
+.dark .form-select {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+/* Tablas */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .table th {
+  color: #cbd5e1;
+  background-color: #1e293b;
+  border-bottom: 1px solid #475569;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-dark-card-header {
+  background-color: #1e293b !important;
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .table td {
+  border-bottom: 1px solid #475569;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 0.25rem;
+}
+
+.badge-primary {
+  color: var(--primary);
+  background-color: rgb(136 196 37 / 10%);
+}
+
+.badge-success {
+  color: var(--success);
+  background-color: rgb(34 197 94 / 10%);
+}
+
+.badge-warning {
+  color: var(--warning);
+  background-color: rgb(254 215 170 / 10%);
+}
+
+.badge-danger {
+  color: var(--danger);
+  background-color: rgb(239 68 68 / 10%);
+}
+
+.badge-info {
+  color: var(--info);
+  background-color: rgb(99 102 241 / 10%);
+}
+
+.dark .badge {
+  background-color: #2f365f;
+}
+
+.dark .badge-primary {
+  color: #a3e635;
+  background-color: rgb(136 196 37 / 20%);
+}
+
+.dark .badge-success {
+  color: #22c55e;
+  background-color: rgb(34 197 94 / 20%);
+}
+
+.dark .badge-warning {
+  color: #f59e0b;
+  background-color: rgb(254 215 170 / 20%);
+}
+
+.dark .badge-danger {
+  color: #f87171;
+  background-color: rgb(239 68 68 / 20%);
+}
+
+.dark .badge-info {
+  color: #6366f1;
+  background-color: rgb(99 102 241 / 20%);
+}
+
+/* Alertas */
+.alert {
+  padding: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+}
+
+.alert-success {
+  background-color: rgb(34 197 94 / 10%);
+  color: var(--success);
+  border-color: rgb(34 197 94 / 20%);
+}
+
+.alert-warning {
+  background-color: rgb(254 215 170 / 10%);
+  color: var(--warning);
+  border-color: rgb(254 215 170 / 20%);
+}
+
+.alert-danger {
+  background-color: rgb(239 68 68 / 10%);
+  color: var(--danger);
+  border-color: rgb(239 68 68 / 20%);
+}
+
+.alert-info {
+  background-color: rgb(99 102 241 / 10%);
+  color: var(--info);
+  border-color: rgb(99 102 241 / 20%);
+}
+
+.dark .alert {
+  border-color: #334155;
+}
+
+.dark .alert-success {
+  background-color: rgb(34 197 94 / 20%);
+  color: #22c55e;
+  border-color: rgb(34 197 94 / 30%);
+}
+
+.dark .alert-warning {
+  background-color: rgb(254 215 170 / 20%);
+  color: #f59e0b;
+  border-color: rgb(254 215 170 / 30%);
+}
+
+.dark .alert-danger {
+  background-color: rgb(239 68 68 / 20%);
+  color: #f87171;
+  border-color: rgb(239 68 68 / 30%);
+}
+
+.dark .alert-info {
+  background-color: rgb(99 102 241 / 20%);
+  color: #6366f1;
+  border-color: rgb(99 102 241 / 30%);
+}
+
+/* Navegación */
+.nav-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.nav-link:hover {
+  background-color: #f9fafb;
+}
+
+.nav-link.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.dark .nav-link {
+  color: #cbd5e1;
+}
+
+.dark .nav-link:hover {
+  background-color: #2f365f;
+}
+
+.dark .nav-link.active {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Animaciones suaves (estilo Lemon Squeezy) */
+.transition-lemon {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Diseño para el Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+@media (width >= 640px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width >= 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.dashboard-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%);
+  padding: 1.5rem;
+  border: 1px solid #f3f4f6;
+  transition: all 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%);
+  border-color: rgb(136 196 37 / 20%);
+}
+
+.dark .dashboard-card {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.dark .dashboard-card:hover {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+}
+
+.dashboard-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.dark .dashboard-card-title {
+  color: #cbd5e1;
+}
+
+.dashboard-card-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.dark .dashboard-card-value {
+  color: #f1f5f9;
+}
+
+.dashboard-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.dark .dashboard-card-footer {
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+/* Elementos estado animal - ya definidos anteriormente */

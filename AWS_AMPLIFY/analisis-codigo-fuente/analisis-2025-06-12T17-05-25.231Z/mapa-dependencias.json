@@ -1,0 +1,1200 @@
+{
+  "\\frontend\\.astro\\types.d.ts": [],
+  "\\frontend\\app\\page.tsx": [
+    "@/components/DataTable",
+    "./columns",
+    "@/lib/data"
+  ],
+  "\\frontend\\build-deploy.js": [
+    "react"
+  ],
+  "\\frontend\\client-hydration-fix.js": [],
+  "\\frontend\\fix-api-urls.js": [],
+  "\\frontend\\post-build.js": [
+    "fs/promises",
+    "path",
+    "url"
+  ],
+  "\\frontend\\public\\scripts\\animal-history.js": [],
+  "\\frontend\\public\\scripts\\block-animal-buttons.js": [],
+  "\\frontend\\public\\scripts\\block-delete-button.js": [],
+  "\\frontend\\public\\scripts\\block-new-animal-button.js": [],
+  "\\frontend\\public\\scripts\\block-parto-simple.js": [],
+  "\\frontend\\public\\scripts\\bloquear-acciones-listados.js": [],
+  "\\frontend\\public\\scripts\\bloquear-actualizar-animal.js": [],
+  "\\frontend\\public\\scripts\\bloquear-editar-parto.js": [],
+  "\\frontend\\public\\scripts\\bloquear-eliminar-parto.js": [],
+  "\\frontend\\public\\scripts\\editar-parto-v2.js": [],
+  "\\frontend\\public\\scripts\\editar-parto-v3.js": [],
+  "\\frontend\\public\\scripts\\editar-parto-v4.js": [],
+  "\\frontend\\public\\scripts\\editarParto.js": [],
+  "\\frontend\\public\\scripts\\permisos-eliminar-parto.js": [],
+  "\\frontend\\public\\scripts\\permissions-ui.js": [],
+  "\\frontend\\public\\scripts\\translation-fixer.js": [],
+  "\\frontend\\render.js": [
+    "http",
+    "./dist/server/entry.mjs",
+    "express",
+    "url",
+    "path"
+  ],
+  "\\frontend\\scripts\\optimizar-imagenes\\mejorar_toro.js": [
+    "sharp",
+    "fs",
+    "path",
+    "url"
+  ],
+  "\\frontend\\scripts\\optimizar-imagenes\\optimizar.js": [
+    "sharp",
+    "fs",
+    "path",
+    "url"
+  ],
+  "\\frontend\\scripts\\optimize-css.js": [],
+  "\\frontend\\scripts\\organize-assets.js": [],
+  "\\frontend\\server.js": [
+    "./dist/server/entry.mjs",
+    "express",
+    "url",
+    "path"
+  ],
+  "\\frontend\\src\\api\\authApi.ts": [
+    "axios",
+    "axios"
+  ],
+  "\\frontend\\src\\App.tsx": [
+    "react",
+    "./routes"
+  ],
+  "\\frontend\\src\\assets\\flatpickr\\es.js": [],
+  "\\frontend\\src\\assets\\flatpickr\\flatpickr.min.js": [],
+  "\\frontend\\src\\components\\admin\\ResetDatabaseButton.tsx": [
+    "react",
+    "../../services/adminService"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalCard.astro": [
+    "../../types/types",
+    "../../utils/dateHelpers"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalChangesTab.astro": [],
+  "\\frontend\\src\\components\\animals\\AnimalDetails.astro": [],
+  "\\frontend\\src\\components\\animals\\AnimalFilters.tsx": [
+    "react",
+    "../../services/animalService"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalForm.astro": [
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalForm.tsx": [
+    "react",
+    "../../services/animalService",
+    "../../services/animalService"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalIcon.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalInfoTab.astro": [],
+  "\\frontend\\src\\components\\animals\\AnimalPartosTab.astro": [],
+  "\\frontend\\src\\components\\animals\\AnimalTable.tsx": [
+    "react",
+    "../../services/animalService",
+    "../../services/animalService",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalTableFixed.tsx": [
+    "react",
+    "../../services/animalService",
+    "../../services/animalService"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalTableSimple.tsx": [
+    "react",
+    "../../services/animalService",
+    "../../services/animalService"
+  ],
+  "\\frontend\\src\\components\\animals\\AnimalTabs.astro": [
+    "./AnimalInfoTab.astro",
+    "./AnimalPartosTab.astro",
+    "./AnimalChangesTab.astro",
+    "./PartoModal.astro"
+  ],
+  "\\frontend\\src\\components\\animals\\CreateAnimalForm.astro": [
+    "../../types/types",
+    "../ui/Alert.astro",
+    "../../stores/messageStore",
+    "../../stores/cacheStore",
+    "../../services/animalService"
+  ],
+  "\\frontend\\src\\components\\animals\\EditarPartoModal.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\animals\\HabitualesForm.astro": [
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\animals\\PartoForm.astro": [],
+  "\\frontend\\src\\components\\animals\\PartoModal.astro": [],
+  "\\frontend\\src\\components\\auth\\ClearLocalStorage.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\auth\\LoginForm.tsx": [
+    "react",
+    "../../services/authService",
+    "../../services/authService"
+  ],
+  "\\frontend\\src\\components\\auth\\LogoutButton.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\auth\\PermissionGuard.tsx": [
+    "react",
+    "../../services/roleService",
+    "../../services/roleService"
+  ],
+  "\\frontend\\src\\components\\auth\\ProtectedRoute.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\common\\ConfirmDialog.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\common\\LoadingState.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\common\\Pagination.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\ActivityFeed.tsx": [
+    "react",
+    "../ui",
+    "../icons",
+    "../../services/dashboardService"
+  ],
+  "\\frontend\\src\\components\\dashboard\\charts\\GenderChart.tsx": [
+    "react",
+    "react-chartjs-2"
+  ],
+  "\\frontend\\src\\components\\dashboard\\charts\\MonthlyDistributionChart.tsx": [
+    "react",
+    "react-chartjs-2"
+  ],
+  "\\frontend\\src\\components\\dashboard\\charts\\YearlyDistributionChart.tsx": [
+    "react",
+    "react-chartjs-2"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\ChartComponents.tsx": [
+    "react",
+    "react-chartjs-2",
+    "../../../i18n/config",
+    "../../../utils/chartConfig"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\DashboardCard.tsx": [
+    "react",
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\DistribucionAnualChart.tsx": [
+    "react",
+    "react-chartjs-2"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\DistribucionMensualTabla.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\LoadingIndicator.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\StatDisplay.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\UIComponents.tsx": [
+    "react",
+    "../../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\dashboard\\components\\VisualesOriginales.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\Dashboard.tsx": [
+    "react",
+    "axios",
+    "../../services/apiService",
+    "chart.js",
+    "./sections/ResumenGeneralSection",
+    "./sections/PartosSection",
+    "./sections/ExplotacionesSection",
+    "./components/UIComponents"
+  ],
+  "\\frontend\\src\\components\\dashboard\\Dashboard2.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\DashboardNew.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboard\\hooks\\useDarkMode.ts": [
+    "react",
+    "../types"
+  ],
+  "\\frontend\\src\\components\\dashboard\\index.ts": [],
+  "\\frontend\\src\\components\\dashboard\\sections\\AnimalesAnalisis.tsx": [
+    "react",
+    "../components/DashboardCard",
+    "react-chartjs-2",
+    "../types"
+  ],
+  "\\frontend\\src\\components\\dashboard\\sections\\PartosSection.tsx": [
+    "react",
+    "../components/ChartComponents",
+    "../components/UIComponents",
+    "../types",
+    "../../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\dashboard\\types\\dashboard.ts": [],
+  "\\frontend\\src\\components\\dashboard\\types\\index.ts": [],
+  "\\frontend\\src\\components\\dashboard\\types.ts": [],
+  "\\frontend\\src\\components\\Dashboard.tsx": [
+    "react",
+    "react-chartjs-2"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\AnalisisPoblacionalCard.tsx": [
+    "react",
+    "../../dashboard/types/dashboard"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\DiagnosticoDataCard.tsx": [
+    "react",
+    "react",
+    "@tremor/react",
+    "../../../services/apiService"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\EstadoAmamantamientoCard.tsx": [
+    "react",
+    "../../dashboard/types/dashboard"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\ResumenAnimalesCard.tsx": [
+    "react",
+    "../../dashboard/types/dashboard"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\ResumenOriginalCard.tsx": [
+    "react",
+    "../../../services/apiService",
+    "react-chartjs-2",
+    "chart.js",
+    "../../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\ResumenVisualCardV2.tsx": [
+    "react",
+    "react-icons/fi",
+    "react-icons/fa",
+    "react-icons/io5",
+    "react-icons/gi",
+    "../../../services/apiService"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\cards\\TremorResumenGeneralCard.tsx": [
+    "react",
+    "../../dashboard/types/dashboard",
+    "../../../services/apiService",
+    "../../../utils/chartConfig"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\components\\SkeletonLoader.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\dashboardv2\\DashboardV2.tsx": [
+    "react",
+    "../../services/apiService",
+    "../../utils/chartConfig",
+    "../dashboard/components/UIComponents",
+    "../dashboard/sections/PartosSection",
+    "./cards/ResumenOriginalCard",
+    "./cards/DiagnosticoDataCard"
+  ],
+  "\\frontend\\src\\components\\debug\\LoginDebugger.tsx": [
+    "react",
+    "jwt-decode"
+  ],
+  "\\frontend\\src\\components\\explotaciones-react\\ExplotacionesPage.tsx": [
+    "react",
+    "../../services/apiService",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\Explotaciones.tsx": [
+    "react",
+    "react",
+    "../services/animalService",
+    "../services/animalService",
+    "./ui"
+  ],
+  "\\frontend\\src\\components\\guards\\PermissionGuard.tsx": [
+    "react",
+    "../../services/roleService"
+  ],
+  "\\frontend\\src\\components\\guards\\RoleGuard.tsx": [
+    "react",
+    "../../services/roleService",
+    "../../services/roleService",
+    "../../services/authService"
+  ],
+  "\\frontend\\src\\components\\icons\\AnimalIcon.tsx": [
+    "react",
+    "./types",
+    "./BullIcon",
+    "./CowIcon",
+    "./NursingCowIcon",
+    "./DeceasedAnimalIcon"
+  ],
+  "\\frontend\\src\\components\\icons\\BullIcon.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\icons\\CowIcon.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\icons\\DeceasedAnimalIcon.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\icons\\index.ts": [],
+  "\\frontend\\src\\components\\icons\\NursingCowIcon.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\icons\\types.ts": [],
+  "\\frontend\\src\\components\\imports\\ImportContainer.tsx": [
+    "react",
+    "./ImportForm",
+    "./ImportHistory",
+    "../../services/importService"
+  ],
+  "\\frontend\\src\\components\\imports\\ImportCsv.tsx": [
+    "react",
+    "axios",
+    "react-bootstrap",
+    "../../config"
+  ],
+  "\\frontend\\src\\components\\imports\\ImportForm.tsx": [
+    "react",
+    "../../services/importService",
+    "../../services/importService"
+  ],
+  "\\frontend\\src\\components\\imports\\ImportHistory.tsx": [
+    "react",
+    "../../services/importService",
+    "../../services/importService"
+  ],
+  "\\frontend\\src\\components\\LanguageSwitcher.astro": [
+    "../i18n/config"
+  ],
+  "\\frontend\\src\\components\\layout\\Footer.astro": [
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\layout\\Footer.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\layout\\index.ts": [],
+  "\\frontend\\src\\components\\layout\\MainLayout.astro": [
+    "./Navbar.astro",
+    "./Sidebar.astro",
+    "./Footer.astro"
+  ],
+  "\\frontend\\src\\components\\layout\\MainLayout.tsx": [
+    "react",
+    "./types",
+    "./Navbar",
+    "./Sidebar",
+    "./Footer"
+  ],
+  "\\frontend\\src\\components\\layout\\Navbar.astro": [
+    "../../i18n/config",
+    "../auth/LogoutButton",
+    "../LanguageSwitcher.astro",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\layout\\Navbar.tsx": [
+    "react",
+    "./types",
+    "../icons",
+    "../ui/OptimizedImage"
+  ],
+  "\\frontend\\src\\components\\layout\\Sidebar.astro": [
+    "../../i18n/config",
+    "../../services/authService"
+  ],
+  "\\frontend\\src\\components\\layout\\Sidebar.tsx": [
+    "react",
+    "../ui/OptimizedImage",
+    "./types",
+    "../icons"
+  ],
+  "\\frontend\\src\\components\\layout\\types.ts": [],
+  "\\frontend\\src\\components\\LazyComponents.tsx": [
+    "react",
+    "../utils/lazyLoad"
+  ],
+  "\\frontend\\src\\components\\modals\\PasswordErrorModal.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\notifications\\NotificationsMenu.js": [
+    "../../services/notificationService"
+  ],
+  "\\frontend\\src\\components\\permissions\\PermissionsManager.astro": [],
+  "\\frontend\\src\\components\\profile\\ProfileManagement.tsx": [
+    "react",
+    "../../services/authService",
+    "../../services/authService",
+    "../../services/roleService",
+    "jwt-decode"
+  ],
+  "\\frontend\\src\\components\\settings\\SettingsForm.astro": [
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\Toast.tsx": [
+    "react-hot-toast"
+  ],
+  "\\frontend\\src\\components\\translation-fixer.js": [],
+  "\\frontend\\src\\components\\ui\\Alert.astro": [],
+  "\\frontend\\src\\components\\ui\\Button.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\ui\\Card.astro": [
+    "./Card"
+  ],
+  "\\frontend\\src\\components\\ui\\Card.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\ui\\IconoAnimal.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\ui\\index.ts": [],
+  "\\frontend\\src\\components\\ui\\Input.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\ui\\MessageContainer.astro": [
+    "../../stores/messageStore"
+  ],
+  "\\frontend\\src\\components\\ui\\Messages.tsx": [
+    "@nanostores/react",
+    "../../stores/messageStore",
+    "../../types/types"
+  ],
+  "\\frontend\\src\\components\\ui\\Modal.tsx": [
+    "react",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\ui\\OptimizedImage.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\components\\ui\\PasswordErrorModal.tsx": [
+    "react",
+    "./Modal",
+    "./types"
+  ],
+  "\\frontend\\src\\components\\ui\\Tabs.astro": [
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\ui\\types.ts": [],
+  "\\frontend\\src\\components\\users\\UserForm.tsx": [
+    "react",
+    "../../services/userServiceProxy",
+    "../../services/userServiceProxy",
+    "../../services/authService",
+    "../../services/authService"
+  ],
+  "\\frontend\\src\\components\\users\\UsersManagement.tsx": [
+    "react",
+    "./UserForm",
+    "./UserTable",
+    "../../services/authService",
+    "../../services/authService",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\components\\users\\UserTable.tsx": [
+    "react",
+    "../../services/authService",
+    "../../services/userServiceProxy",
+    "../../services/userServiceProxy",
+    "../common/ConfirmDialog",
+    "../common/Pagination",
+    "../../i18n/config",
+    "../../config/apiConfig"
+  ],
+  "\\frontend\\src\\config\\apiConfig.ts": [],
+  "\\frontend\\src\\contexts\\LanguageContext.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\env.d.ts": [],
+  "\\frontend\\src\\i18n\\config.ts": [
+    "./locales/es.json",
+    "./locales/ca.json"
+  ],
+  "\\frontend\\src\\i18n\\index.js": [],
+  "\\frontend\\src\\layouts\\AuthLayout.astro": [],
+  "\\frontend\\src\\layouts\\DefaultLayout.astro": [
+    "../components/layout/Navbar.astro",
+    "../components/layout/Sidebar.astro",
+    "../components/layout/Footer.astro",
+    "../middlewares/AuthMiddleware",
+    "../services/authService"
+  ],
+  "\\frontend\\src\\layouts\\LoginLayout.astro": [],
+  "\\frontend\\src\\middlewares\\AuthMiddleware.tsx": [
+    "react"
+  ],
+  "\\frontend\\src\\middlewares\\authUtils.ts": [
+    "../services/authService",
+    "../services/authService"
+  ],
+  "\\frontend\\src\\pages\\animals\\edit\\[id].astro": [
+    "../../../layouts/DefaultLayout.astro",
+    "../../../components/animals/AnimalForm",
+    "../../../services/animalService",
+    "../../../services/explotacionService",
+    "../../../services/authService",
+    "../../../utils/roleUtils"
+  ],
+  "\\frontend\\src\\pages\\animals\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/animals/AnimalTable",
+    "../../components/animals/AnimalFilters",
+    "../../services/authService",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\animals\\new.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/animals/CreateAnimalForm.astro",
+    "../../components/ui/MessageContainer.astro",
+    "../../components/ui/Alert.astro",
+    "../../services/animalService",
+    "../../stores/cacheStore",
+    "../../stores/messageStore"
+  ],
+  "\\frontend\\src\\pages\\animals\\partos\\edit\\[id].astro": [
+    "../../../../components/layout/MainLayout.astro",
+    "../../../../components/ui/MessageContainer.astro"
+  ],
+  "\\frontend\\src\\pages\\animals\\update\\[id].astro": [
+    "../../../components/layout/MainLayout.astro",
+    "../../../components/animals/AnimalForm.astro",
+    "../../../components/animals/HabitualesForm.astro",
+    "../../../components/ui/Tabs.astro",
+    "../../../components/ui/MessageContainer.astro",
+    "../../../services/animalService",
+    "../../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\animals\\[id].astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../services/animalService",
+    "../../i18n/config",
+    "../../components/animals/EditarPartoModal"
+  ],
+  "\\frontend\\src\\pages\\api\\auth-proxy\\index.ts": [
+    "astro"
+  ],
+  "\\frontend\\src\\pages\\api\\auth-proxy.js": [],
+  "\\frontend\\src\\pages\\api\\auth-proxy.ts": [
+    "astro"
+  ],
+  "\\frontend\\src\\pages\\api\\proxy.js": [
+    "node-fetch"
+  ],
+  "\\frontend\\src\\pages\\backup\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/permissions/PermissionsManager.astro",
+    "../../i18n/config",
+    "../../services/backupService.js",
+    "../../i18n/config.ts"
+  ],
+  "\\frontend\\src\\pages\\dashboard-direct.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/Dashboard2",
+    "../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\dashboard-simple.astro": [
+    "../components/dashboard/DashboardNew"
+  ],
+  "\\frontend\\src\\pages\\dashboard-test.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/DashboardNew"
+  ],
+  "\\frontend\\src\\pages\\dashboard.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/DashboardNew",
+    "../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\dashboard2.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/Dashboard2"
+  ],
+  "\\frontend\\src\\pages\\diagnostico-api.astro": [
+    "../layouts/DefaultLayout.astro"
+  ],
+  "\\frontend\\src\\pages\\diagnostico.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/debug/LoginDebugger"
+  ],
+  "\\frontend\\src\\pages\\explotaciones-react\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/explotaciones-react/ExplotacionesPage"
+  ],
+  "\\frontend\\src\\pages\\imports\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/imports/ImportContainer",
+    "../../components/admin/ResetDatabaseButton",
+    "../../components/permissions/PermissionsManager.astro",
+    "js-base64"
+  ],
+  "\\frontend\\src\\pages\\index.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboardv2/DashboardV2",
+    "../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\listados\\editar\\[id].astro": [
+    "../../../components/layout/MainLayout.astro",
+    "../../../i18n/config",
+    "../../../services/listados-service",
+    "../../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\listados\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../i18n/config",
+    "../../services/listados-service",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\listados\\nuevo.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../i18n/config",
+    "../../services/listados-service"
+  ],
+  "\\frontend\\src\\pages\\listados\\[id].astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../i18n/config",
+    "../../services/listados-service",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\login-deploy.astro": [
+    "../layouts/LoginLayout.astro",
+    "../components/modals/PasswordErrorModal"
+  ],
+  "\\frontend\\src\\pages\\login-test.astro": [
+    "../layouts/DefaultLayout.astro",
+    "../services/apiService"
+  ],
+  "\\frontend\\src\\pages\\login.astro": [
+    "../layouts/LoginLayout.astro",
+    "../components/modals/PasswordErrorModal",
+    "../services/apiService"
+  ],
+  "\\frontend\\src\\pages\\logout.astro": [
+    "../layouts/AuthLayout.astro",
+    "../components/auth/ClearLocalStorage"
+  ],
+  "\\frontend\\src\\pages\\notifications.astro": [
+    "../components/layout/MainLayout.astro",
+    "../i18n/config",
+    "../services/notificationService"
+  ],
+  "\\frontend\\src\\pages\\partos\\index.astro": [
+    "../../components/layout/MainLayout.astro"
+  ],
+  "\\frontend\\src\\pages\\profile\\index.astro": [
+    "../../layouts/DefaultLayout.astro",
+    "../../components/profile/ProfileManagement",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\settings.astro": [
+    "../components/layout/MainLayout.astro",
+    "../i18n"
+  ],
+  "\\frontend\\src\\pages\\test-api.astro": [
+    "../layouts/DefaultLayout.astro"
+  ],
+  "\\frontend\\src\\pages\\users\\index.astro": [
+    "../../components/layout/MainLayout.astro",
+    "../../components/users/UsersManagement",
+    "../../components/guards/RoleGuard",
+    "../../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\_dashboard-compare.astro": [
+    "../components/layout/MainLayout.astro",
+    "../i18n/config"
+  ],
+  "\\frontend\\src\\pages\\_dashboard-enhanced.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/DashboardEnhanced",
+    "../layouts/Layout.astro"
+  ],
+  "\\frontend\\src\\pages\\_dashboard-new.astro": [
+    "../components/layout/MainLayout.astro",
+    "../components/dashboard/Dashboard2"
+  ],
+  "\\frontend\\src\\pages\\_iconos-test.astro": [
+    "../pages/IconosTest"
+  ],
+  "\\frontend\\src\\pages\\_IconosTest.tsx": [
+    "react",
+    "../components/ui/IconoAnimal",
+    "../components/ui/OptimizedImage"
+  ],
+  "\\frontend\\src\\pages\\_listados-test.astro": [
+    "../layouts/DefaultLayout.astro",
+    "../components/ui/Card.astro",
+    "../components/ui/PageTitle.astro",
+    "../services/apiService"
+  ],
+  "\\frontend\\src\\routes\\index.tsx": [
+    "react",
+    "react-router-dom",
+    "../components/dashboard/Dashboard",
+    "../components/dashboardv2/DashboardV2",
+    "../components/imports/ImportCsv",
+    "../components/Explotaciones",
+    "../pages/IconosTest"
+  ],
+  "\\frontend\\src\\scripts\\animal-history.js": [],
+  "\\frontend\\src\\scripts\\block-eliminar-parto.js": [],
+  "\\frontend\\src\\scripts\\debug_auth.ts": [
+    "jwt-decode",
+    "../services/authService",
+    "../services/roleService"
+  ],
+  "\\frontend\\src\\scripts\\editarParto.js": [],
+  "\\frontend\\src\\scripts\\fix_ramon_login.js": [],
+  "\\frontend\\src\\scripts\\permissions-ui.js": [],
+  "\\frontend\\src\\scripts\\role_functions_fix.js": [],
+  "\\frontend\\src\\scripts\\updateUserRole.js": [],
+  "\\frontend\\src\\services\\adminService.ts": [],
+  "\\frontend\\src\\services\\animalCacheService.ts": [
+    "../types/types",
+    "../stores/cacheStore",
+    "./animalService",
+    "../stores/cacheStore"
+  ],
+  "\\frontend\\src\\services\\animalService.backup.ts": [
+    "./apiService",
+    "./mockData",
+    "./api"
+  ],
+  "\\frontend\\src\\services\\animalService.nuevo.ts": [
+    "./apiService"
+  ],
+  "\\frontend\\src\\services\\animalService.ts": [
+    "./apiService",
+    "./mockData",
+    "./api"
+  ],
+  "\\frontend\\src\\services\\api.ts": [
+    "axios",
+    "axios"
+  ],
+  "\\frontend\\src\\services\\apiMiddleware.ts": [],
+  "\\frontend\\src\\services\\apiService.ts": [
+    "axios"
+  ],
+  "\\frontend\\src\\services\\authHelper.js": [],
+  "\\frontend\\src\\services\\authService.js": [],
+  "\\frontend\\src\\services\\authService.temp.ts": [
+    "axios",
+    "./api",
+    "./apiService",
+    "../api/authApi",
+    "../api/authApi"
+  ],
+  "\\frontend\\src\\services\\authService.ts": [
+    "axios",
+    "./api",
+    "./apiService",
+    "../api/authApi",
+    "../config/apiConfig",
+    "jwt-decode",
+    "../api/authApi"
+  ],
+  "\\frontend\\src\\services\\backupService.js": [
+    "../config/apiConfig"
+  ],
+  "\\frontend\\src\\services\\dashboardService.ts": [
+    "./apiService"
+  ],
+  "\\frontend\\src\\services\\explotacionService.ts": [
+    "./api"
+  ],
+  "\\frontend\\src\\services\\explotacioService.ts": [
+    "./mockData",
+    "./apiService"
+  ],
+  "\\frontend\\src\\services\\fixAuthStorage.js": [],
+  "\\frontend\\src\\services\\formService.ts": [
+    "../types/types",
+    "../utils/formHelpers",
+    "../utils/apiHelpers"
+  ],
+  "\\frontend\\src\\services\\importService.ts": [
+    "./apiService",
+    "../config/apiConfig"
+  ],
+  "\\frontend\\src\\services\\listados-service.ts": [
+    "./apiService"
+  ],
+  "\\frontend\\src\\services\\listadosService.ts": [
+    "./api"
+  ],
+  "\\frontend\\src\\services\\mockData.ts": [
+    "./authService"
+  ],
+  "\\frontend\\src\\services\\notificationService.ts": [
+    "axios",
+    "./notificationService",
+    "./notificationService"
+  ],
+  "\\frontend\\src\\services\\partoService.ts": [
+    "./api"
+  ],
+  "\\frontend\\src\\services\\partService.ts": [
+    "./apiService",
+    "./mockData"
+  ],
+  "\\frontend\\src\\services\\realDashboardService.js": [
+    "./apiService"
+  ],
+  "\\frontend\\src\\services\\roleService.ts": [
+    "jwt-decode",
+    "./authService"
+  ],
+  "\\frontend\\src\\services\\userService.ts": [
+    "./api",
+    "./authService"
+  ],
+  "\\frontend\\src\\services\\userServiceProxy.ts": [
+    "./api",
+    "./authService",
+    "../config/apiConfig"
+  ],
+  "\\frontend\\src\\stores\\cacheStore.ts": [
+    "nanostores",
+    "../types/types"
+  ],
+  "\\frontend\\src\\stores\\formStore.ts": [
+    "nanostores",
+    "../types/types",
+    "../services/formService"
+  ],
+  "\\frontend\\src\\stores\\messageStore.ts": [
+    "nanostores",
+    "../types/types"
+  ],
+  "\\frontend\\src\\styles\\theme.ts": [],
+  "\\frontend\\src\\tremor.d.ts": [
+    "react"
+  ],
+  "\\frontend\\src\\types\\imports.ts": [],
+  "\\frontend\\src\\types\\types.ts": [],
+  "\\frontend\\src\\utils\\apiHelpers.js": [],
+  "\\frontend\\src\\utils\\chartConfig.ts": [],
+  "\\frontend\\src\\utils\\dateHelpers.js": [],
+  "\\frontend\\src\\utils\\debugPanel.js": [],
+  "\\frontend\\src\\utils\\formHelpers.js": [],
+  "\\frontend\\src\\utils\\lazyLoad.ts": [
+    "react",
+    "./logger"
+  ],
+  "\\frontend\\src\\utils\\logger.ts": [],
+  "\\frontend\\src\\utils\\mareUpdater.js": [],
+  "\\frontend\\src\\utils\\roleUtils.ts": [
+    "../services/authService"
+  ],
+  "\\frontend\\src\\utils\\sortHelper.ts": [],
+  "\\frontend\\start.js": [
+    "http",
+    "node:http"
+  ],
+  "\\frontend\\vite.config.js": [
+    "vite"
+  ],
+  "\\frontend\\vite.force-hosts.js": [
+    "fs",
+    "path",
+    "vite"
+  ],
+  "\\backend\\app\\api\\deps\\auth.py": [],
+  "\\backend\\app\\api\\deps\\db.py": [],
+  "\\backend\\app\\api\\endpoints\\admin.py": [],
+  "\\backend\\app\\api\\endpoints\\animals.py": [],
+  "\\backend\\app\\api\\endpoints\\animals.py.fix.py": [],
+  "\\backend\\app\\api\\endpoints\\animals_new.py": [],
+  "\\backend\\app\\api\\endpoints\\animals_patch.py": [],
+  "\\backend\\app\\api\\endpoints\\animals_with_history.py": [],
+  "\\backend\\app\\api\\endpoints\\auth.py": [],
+  "\\backend\\app\\api\\endpoints\\backup.py": [],
+  "\\backend\\app\\api\\endpoints\\backup_corregido.py": [],
+  "\\backend\\app\\api\\endpoints\\backup_fixed.py": [],
+  "\\backend\\app\\api\\endpoints\\backup_old.py": [],
+  "\\backend\\app\\api\\endpoints\\backup_simple.py": [],
+  "\\backend\\app\\api\\endpoints\\dashboard.py": [],
+  "\\backend\\app\\api\\endpoints\\dashboard_detallado.py": [],
+  "\\backend\\app\\api\\endpoints\\dashboard_periodo.py": [],
+  "\\backend\\app\\api\\endpoints\\diagnostico.py": [],
+  "\\backend\\app\\api\\endpoints\\explotacions.py": [],
+  "\\backend\\app\\api\\endpoints\\health.py": [],
+  "\\backend\\app\\api\\endpoints\\imports.py": [],
+  "\\backend\\app\\api\\endpoints\\listados.py": [],
+  "\\backend\\app\\api\\endpoints\\listados_fixed.py": [],
+  "\\backend\\app\\api\\endpoints\\notifications.py": [],
+  "\\backend\\app\\api\\endpoints\\olds\\animals_old.py": [],
+  "\\backend\\app\\api\\endpoints\\olds\\imports.py": [],
+  "\\backend\\app\\api\\endpoints\\partos.py": [],
+  "\\backend\\app\\api\\endpoints\\partos_standalone.py": [],
+  "\\backend\\app\\api\\endpoints\\scheduled_backup.py": [],
+  "\\backend\\app\\api\\endpoints\\temp\\imports.py": [],
+  "\\backend\\app\\api\\endpoints\\users.py": [],
+  "\\backend\\app\\api\\endpoints\\__init__.py": [],
+  "\\backend\\app\\api\\router.py": [],
+  "\\backend\\app\\api\\router_old.py": [],
+  "\\backend\\app\\api\\stable\\animals.py": [],
+  "\\backend\\app\\api\\stable\\router.py": [],
+  "\\backend\\app\\api\\__init__.py": [],
+  "\\backend\\app\\auth\\auth_utils.py": [],
+  "\\backend\\app\\auth\\dependencies.py": [],
+  "\\backend\\app\\auth\\models.py": [],
+  "\\backend\\app\\auth\\router.py": [],
+  "\\backend\\app\\auth\\schemas.py": [],
+  "\\backend\\app\\auth\\security.py": [],
+  "\\backend\\app\\auth\\__init__.py": [],
+  "\\backend\\app\\core\\auth.py": [],
+  "\\backend\\app\\core\\backup_config.py": [],
+  "\\backend\\app\\core\\cache.py": [],
+  "\\backend\\app\\core\\config.py": [],
+  "\\backend\\app\\core\\database.py": [],
+  "\\backend\\app\\core\\date_utils.py": [],
+  "\\backend\\app\\core\\environment.py": [],
+  "\\backend\\app\\core\\error_handlers.py": [],
+  "\\backend\\app\\core\\json_encoder.py": [],
+  "\\backend\\app\\core\\json_utils.py": [],
+  "\\backend\\app\\core\\logging_config.py": [],
+  "\\backend\\app\\core\\messages.py": [],
+  "\\backend\\app\\core\\middleware.py": [],
+  "\\backend\\app\\core\\olds\\middleware copy.py": [],
+  "\\backend\\app\\core\\openapi_utils.py": [],
+  "\\backend\\app\\core\\permissions.py": [],
+  "\\backend\\app\\core\\rate_limit.py": [],
+  "\\backend\\app\\core\\responses.py": [],
+  "\\backend\\app\\core\\security.py": [],
+  "\\backend\\app\\core\\validation.py": [],
+  "\\backend\\app\\core\\validations.py": [],
+  "\\backend\\app\\core\\__init__.py": [],
+  "\\backend\\app\\custom_openapi.py": [],
+  "\\backend\\app\\database.py": [],
+  "\\backend\\app\\db.py": [],
+  "\\backend\\app\\main.py": [],
+  "\\backend\\app\\models\\animal.py": [],
+  "\\backend\\app\\models\\animal_history.py": [],
+  "\\backend\\app\\models\\base.py": [],
+  "\\backend\\app\\models\\enums.py": [],
+  "\\backend\\app\\models\\estat.py": [],
+  "\\backend\\app\\models\\explotacio.py": [],
+  "\\backend\\app\\models\\icons.py": [],
+  "\\backend\\app\\models\\import_model.py": [],
+  "\\backend\\app\\models\\listado.py": [],
+  "\\backend\\app\\models\\notification.py": [],
+  "\\backend\\app\\models\\parto.py": [],
+  "\\backend\\app\\models\\schemas.py": [],
+  "\\backend\\app\\models\\user.py": [],
+  "\\backend\\app\\models\\__init__.py": [],
+  "\\backend\\app\\routes\\animals.py": [],
+  "\\backend\\app\\routes\\auth.py": [],
+  "\\backend\\app\\routes\\dashboard.py": [],
+  "\\backend\\app\\routes\\imports.py": [],
+  "\\backend\\app\\routes\\notification_routes.py": [],
+  "\\backend\\app\\routes\\partos.py": [],
+  "\\backend\\app\\routes\\__init__.py": [],
+  "\\backend\\app\\schemas\\animal.py": [],
+  "\\backend\\app\\schemas\\dashboard.py": [],
+  "\\backend\\app\\schemas\\explotacio.py": [],
+  "\\backend\\app\\schemas\\import_schema.py": [],
+  "\\backend\\app\\schemas\\listado.py": [],
+  "\\backend\\app\\schemas\\parto.py": [],
+  "\\backend\\app\\schemas\\responses.py": [],
+  "\\backend\\app\\schemas\\user.py": [],
+  "\\backend\\app\\schemas\\__init__.py": [],
+  "\\backend\\app\\scripts\\check_postgres.py": [],
+  "\\backend\\app\\scripts\\create_admin.py": [],
+  "\\backend\\app\\scripts\\create_tables.py": [],
+  "\\backend\\app\\scripts\\import_csv.py": [],
+  "\\backend\\app\\scripts\\init_db.py": [],
+  "\\backend\\app\\scripts\\setup_db.py": [],
+  "\\backend\\app\\scripts\\verify_db.py": [],
+  "\\backend\\app\\security\\auth.py": [],
+  "\\backend\\app\\services\\animal_history_service.py": [],
+  "\\backend\\app\\services\\animal_service.py": [],
+  "\\backend\\app\\services\\backup_service.py": [],
+  "\\backend\\app\\services\\dashboard_service.py": [],
+  "\\backend\\app\\services\\dashboard_service_extended.py": [],
+  "\\backend\\app\\services\\dashboard_service_fixed.py": [],
+  "\\backend\\app\\services\\dashboard_service_nuevo.py": [],
+  "\\backend\\app\\services\\data_service.py": [],
+  "\\backend\\app\\services\\import_service.py": [],
+  "\\backend\\app\\services\\notification_service.py": [],
+  "\\backend\\app\\services\\parto_service.py": [],
+  "\\backend\\app\\services\\reset_database_service.py": [],
+  "\\backend\\app\\services\\scheduled_backup_service.py": [],
+  "\\backend\\app\\services\\scheduler_service.py": [],
+  "\\backend\\app\\services\\__init__.py": [],
+  "\\backend\\app\\tests\\test_auth_simple.py": [],
+  "\\backend\\app\\tests\\test_login_simple.py": [],
+  "\\backend\\app\\utils\\db_check.py": [],
+  "\\backend\\app\\utils\\db_reset_import.py": [],
+  "\\backend\\app\\utils\\screen_capture\\converter.py": [],
+  "\\backend\\app\\utils\\screen_capture\\screen_to_json.py": [],
+  "\\backend\\app\\utils\\screen_capture\\swagger_capture.py": [],
+  "\\backend\\app\\__init__.py": [],
+  "\\backend\\apply_alletar_migration.py": [],
+  "\\backend\\apply_migrations.py": [],
+  "\\backend\\check_alletar_values.py": [],
+  "\\backend\\check_animals.py": [],
+  "\\backend\\check_db_and_auth.py": [],
+  "\\backend\\check_db_connection.py": [],
+  "\\backend\\check_users.py": [],
+  "\\backend\\check_users_db.py": [],
+  "\\backend\\conftest.py": [],
+  "\\backend\\dashboard.py": [],
+  "\\backend\\fix_dashboard.py": [],
+  "\\backend\\fix_dashboard_endpoint.py": [],
+  "\\backend\\fix_dashboard_service.py": [],
+  "\\backend\\fix_database.py": [],
+  "\\backend\\fix_dates.py": [],
+  "\\backend\\fix_imports.py": [],
+  "\\backend\\get_explotacions.py": [],
+  "\\backend\\htmlcov\\coverage_html_cb_497bf287.js": [],
+  "\\backend\\list_users.py": [],
+  "\\backend\\migrations\\models\\1_20250218094226_None.py": [],
+  "\\backend\\migrations\\models\\2_20250218173230_remove_cod_unique.py": [],
+  "\\backend\\migrations\\models\\3_20250320124400_update_alletar_field.py": [],
+  "\\backend\\modificar_fechas.py": [],
+  "\\backend\\scripts\\apply_animal_history_fix.py": [],
+  "\\backend\\scripts\\backup_database.py": [],
+  "\\backend\\scripts\\cargar_db_render.py": [],
+  "\\backend\\scripts\\check_encoding.py": [],
+  "\\backend\\scripts\\conectar_historial.py": [],
+  "\\backend\\scripts\\crear_admin_render.py": [],
+  "\\backend\\scripts\\create_notifications_table.py": [],
+  "\\backend\\scripts\\fix_animal_history.py": [],
+  "\\backend\\scripts\\generate_secure_keys.py": [],
+  "\\backend\\scripts\\import_animals_from_csv.py": [],
+  "\\backend\\scripts\\init_render_db.py": [],
+  "\\backend\\scripts\\load_render_db.py": [],
+  "\\backend\\scripts\\migrate_explotacio.py": [],
+  "\\backend\\scripts\\migrations\\extend_animal_history.py": [],
+  "\\backend\\scripts\\optimize_db_queries.py": [],
+  "\\backend\\scripts\\optimize_server.py": [],
+  "\\backend\\scripts\\prepare_db_migration.py": [],
+  "\\backend\\scripts\\probar_historial.py": [],
+  "\\backend\\scripts\\reset_database.py": [],
+  "\\backend\\scripts\\reset_database_revised.py": [],
+  "\\backend\\scripts\\restore_database.py": [],
+  "\\backend\\scripts\\secure_production.py": [],
+  "\\backend\\scripts\\security_audit.py": [],
+  "\\backend\\scripts\\seed_data.py": [],
+  "\\backend\\scripts\\test_animal_history.py": [],
+  "\\backend\\scripts\\test_postgres.py": [],
+  "\\backend\\scripts\\validate_dates.py": [],
+  "\\backend\\terminal.js": [],
+  "\\backend\\tests\\api\\conftest.py": [],
+  "\\backend\\tests\\api\\test_animal_endpoints.py": [],
+  "\\backend\\tests\\api\\test_auth_endpoints.py": [],
+  "\\backend\\tests\\api\\test_complete_flows.py": [],
+  "\\backend\\tests\\api\\test_dashboard_endpoints.py": [],
+  "\\backend\\tests\\api\\test_dashboard_endpoints_real.py": [],
+  "\\backend\\tests\\api\\test_explotacion_endpoints.py": [],
+  "\\backend\\tests\\api\\test_helpers.py": [],
+  "\\backend\\tests\\api\\test_import_endpoints.py": [],
+  "\\backend\\tests\\api\\test_pagination_filtering.py": [],
+  "\\backend\\tests\\api\\test_parto_endpoints.py": [],
+  "\\backend\\tests\\api\\test_parto_endpoints_final.py": [],
+  "\\backend\\tests\\api\\test_parto_endpoints_final_conftest.py": [],
+  "\\backend\\tests\\api\\test_parto_endpoints_fixed.py": [],
+  "\\backend\\tests\\api\\test_parto_endpoints_updated.py": [],
+  "\\backend\\tests\\api\\test_utils.py": [],
+  "\\backend\\tests\\conftest.py": [],
+  "\\backend\\tests\\conftest_new.py": [],
+  "\\backend\\tests\\db_fixtures.py": [],
+  "\\backend\\tests\\e2e\\api\\test_crud_flows.py": [],
+  "\\backend\\tests\\integration\\db\\test_constraints.py": [],
+  "\\backend\\tests\\integration\\db\\test_migrations.py": [],
+  "\\backend\\tests\\integration\\test_alletar_functionality.py": [],
+  "\\backend\\tests\\integration\\test_auth_integration.py": [],
+  "\\backend\\tests\\integration\\test_date_integration.py": [],
+  "\\backend\\tests\\integration\\test_import_integration.py": [],
+  "\\backend\\tests\\integration\\test_real_data_import.py": [],
+  "\\backend\\tests\\integration\\test_roles_workflow_integration.py": [],
+  "\\backend\\tests\\integration\\test_workflow_animal_parto_dashboard.py": [],
+  "\\backend\\tests\\integration\\test_workflow_complete.py": [],
+  "\\backend\\tests\\models\\test_alletar.py": [],
+  "\\backend\\tests\\models\\test_animal.py": [],
+  "\\backend\\tests\\models\\test_explotacio.py": [],
+  "\\backend\\tests\\models\\test_parto.py": [],
+  "\\backend\\tests\\schemas\\test_animal_schema.py": [],
+  "\\backend\\tests\\schemas\\test_dashboard_schema.py": [],
+  "\\backend\\tests\\schemas\\test_explotacio_schema.py": [],
+  "\\backend\\tests\\schemas\\test_import_schema.py": [],
+  "\\backend\\tests\\schemas\\test_parto_schema.py": [],
+  "\\backend\\tests\\schemas\\test_parto_schema_corrected.py": [],
+  "\\backend\\tests\\schemas\\test_parto_schema_final.py": [],
+  "\\backend\\tests\\schemas\\test_parto_schema_fixed.py": [],
+  "\\backend\\tests\\schemas\\test_responses_schema.py": [],
+  "\\backend\\tests\\services\\test_animal_service.py": [],
+  "\\backend\\tests\\services\\test_backup_service.py": [],
+  "\\backend\\tests\\services\\test_dashboard_integration.py": [],
+  "\\backend\\tests\\services\\test_dashboard_service.py": [],
+  "\\backend\\tests\\services\\test_data_service.py": [],
+  "\\backend\\tests\\services\\test_import_service.py": [],
+  "\\backend\\tests\\services\\test_parto_service.py": [],
+  "\\backend\\tests\\services\\test_parto_service_fixed.py": [],
+  "\\backend\\tests\\services\\__init__.py": [],
+  "\\backend\\tests\\test_api\\test_animals_api.py": [],
+  "\\backend\\tests\\test_api\\test_animals_endpoint.py": [],
+  "\\backend\\tests\\test_dates_and_partos.py": [],
+  "\\backend\\tests\\test_date_field.py": [],
+  "\\backend\\tests\\test_date_utils.py": [],
+  "\\backend\\tests\\test_db_config.py": [],
+  "\\backend\\tests\\test_endpoints.py": [],
+  "\\backend\\tests\\test_explotacio.py": [],
+  "\\backend\\tests\\test_explotacions.py": [],
+  "\\backend\\tests\\test_icons.py": [],
+  "\\backend\\tests\\test_imports.py": [],
+  "\\backend\\tests\\test_imports_full.py": [],
+  "\\backend\\tests\\test_imports_sync.py": [],
+  "\\backend\\tests\\test_import_service.py": [],
+  "\\backend\\tests\\test_integration.py": [],
+  "\\backend\\tests\\test_main.py": [],
+  "\\backend\\tests\\test_middleware.py": [],
+  "\\backend\\tests\\test_models.py": [],
+  "\\backend\\tests\\test_partos.py": [],
+  "\\backend\\tests\\test_partos_date.py": [],
+  "\\backend\\tests\\test_real_cases.py": [],
+  "\\backend\\tests\\test_real_data.py": [],
+  "\\backend\\tests\\test_real_integration.py": [],
+  "\\backend\\tests\\test_simple.py": [],
+  "\\backend\\tests\\test_simple_curl.py": [],
+  "\\backend\\tests\\test_simple_httpx.py": [],
+  "\\backend\\tests\\test_simple_requests.py": [],
+  "\\backend\\tests\\test_tortoise_setup.py": [],
+  "\\backend\\tests\\test_user.py": [],
+  "\\backend\\tests\\unit\\models\\test_animal.py": [],
+  "\\backend\\tests\\unit\\models\\test_part.py": [],
+  "\\backend\\tests\\unit\\test_date_utils.py": [],
+  "\\backend\\tests\\__init__.py": [],
+  "\\backend\\test_all_dashboard_endpoints.py": [],
+  "\\backend\\test_auth.py": [],
+  "\\backend\\test_auth_direct.py": [],
+  "\\backend\\test_auth_simple.py": [],
+  "\\backend\\test_dashboard.py": [],
+  "\\backend\\test_dashboard_endpoint.py": [],
+  "\\backend\\test_dashboard_endpoints.py": [],
+  "\\backend\\test_dates_manual.py": [],
+  "\\backend\\test_endpoint.py": [],
+  "\\backend\\test_explotacions.py": [],
+  "\\backend\\test_explotacio_dashboard.py": [],
+  "\\backend\\test_http_login.py": [],
+  "\\backend\\test_import_script.py": [],
+  "\\backend\\test_login.py": [],
+  "\\backend\\test_partos.py": [],
+  "\\backend\\test_terneros_count.py": [],
+  "\\backend\\update_alletar_field.py": [],
+  "\\backend\\verificar_imports.py": [],
+  "\\backend\\verificar_partos.py": [],
+  "\\backend\\verify_users.py": []
+}

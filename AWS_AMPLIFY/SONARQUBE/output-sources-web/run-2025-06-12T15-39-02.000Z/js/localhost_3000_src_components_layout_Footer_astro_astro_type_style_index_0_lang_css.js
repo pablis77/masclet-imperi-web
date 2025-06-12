@@ -1,0 +1,6 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/layout/Footer.astro?astro&type=style&index=0&lang.css");import { updateStyle as __vite__updateStyle, removeStyle as __vite__removeStyle } from "/@vite/client"
+const __vite__id = "C:/Proyectos/claude/masclet-imperi-web/frontend/src/components/layout/Footer.astro?astro&type=style&index=0&lang.css"
+const __vite__css = ".high-contrast-mode{--contrast-bg: black;--contrast-text: white;--contrast-border: yellow;--contrast-focus: yellow}.high-contrast-mode body{background-color:var(--contrast-bg);color:var(--contrast-text)}.high-contrast-mode a[data-astro-cid-35ed7um5],.high-contrast-mode button[data-astro-cid-35ed7um5]{color:var(--contrast-text);border-color:var(--contrast-border)}.high-contrast-mode a[data-astro-cid-35ed7um5]:focus,.high-contrast-mode button[data-astro-cid-35ed7um5]:focus{outline:2px solid var(--contrast-focus)}.accessibility-mode{font-size:1.2em;line-height:1.5}.accessibility-mode button[data-astro-cid-35ed7um5],.accessibility-mode a[data-astro-cid-35ed7um5]{padding:0.5em!important}"
+__vite__updateStyle(__vite__id, __vite__css)
+import.meta.hot.accept()
+import.meta.hot.prune(() => __vite__removeStyle(__vite__id))
