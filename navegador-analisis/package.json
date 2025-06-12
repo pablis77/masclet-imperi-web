@@ -1,0 +1,15 @@
+{
+  "name": "navegador-analisis",
+  "version": "1.0.0",
+  "main": "temp-puppeteer-script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "puppeteer": "^24.10.0"
+  }
+}

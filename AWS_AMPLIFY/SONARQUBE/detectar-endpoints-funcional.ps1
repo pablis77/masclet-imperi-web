@@ -1,6 +1,6 @@
 # Script para detectar endpoints en Masclet Imperi Web
 # Este script NO modifica la base de datos ni ejecuta ningún endpoint
- este script dice qu TODOS los endpoints que tiene cada archio .py... sin deferenciar cuales estan funcionando con ROUTER.py es una vision egeneral de lo que teniamos, e incluso util apra borrar archvios .py obsoletos
+# este script dice qu TODOS los endpoints que tiene cada archio .py... sin deferenciar cuales estan funcionando con ROUTER.py es una vision egeneral de lo que teniamos, e incluso util apra borrar archvios .py obsoletos
 #
 # Configuración de directorios
 $proyectoPath = "C:\Proyectos\claude\masclet-imperi-web"
@@ -97,7 +97,7 @@ foreach ($file in $endpointFiles) {
             elseif ($fullRoute -like "*import*") {
                 $importacionesEndpoints += $endpoint
             }
-            elseif ($fullRoute -like "*backup*") {
+            elseif ($fullRoute -like "*backup*" -or $fileName -like "backup*" -or $fileName -like "scheduled_backup*") {
                 $backupsEndpoints += $endpoint
             }
             elseif ($fullRoute -like "*list*" -or $fullRoute -like "*report*") {

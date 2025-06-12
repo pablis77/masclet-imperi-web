@@ -1,0 +1,457 @@
+{
+  "/": {
+    "title": "Panel de Control - Masclet Imperi",
+    "scripts": [
+      "http://172.20.160.1:3000/scripts/bloquear-eliminar-parto.js",
+      "http://172.20.160.1:3000/scripts/bloquear-editar-parto.js",
+      "http://172.20.160.1:3000/scripts/bloquear-actualizar-animal.js",
+      "http://172.20.160.1:3000/scripts/bloquear-acciones-listados.js",
+      "http://172.20.160.1:3000/src/pages/index.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/src/pages/index.astro?astro&type=script&index=1&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/MainLayout.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/MainLayout.astro?astro&type=script&index=1&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/Navbar.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/Navbar.astro?astro&type=script&index=1&lang.ts",
+      "http://172.20.160.1:3000/src/components/LanguageSwitcher.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/Sidebar.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/Sidebar.astro?astro&type=script&index=1&lang.ts",
+      "http://172.20.160.1:3000/src/components/layout/Footer.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/@vite/client",
+      "http://172.20.160.1:3000/@fs/C:/Proyectos/claude/masclet-imperi-web/frontend/node_modules/astro/dist/runtime/client/dev-toolbar/entrypoint.js?v=5e89932e",
+      "http://172.20.160.1:3000/node_modules/@astrojs/tailwind/base.css",
+      "http://172.20.160.1:3000/src/components/LanguageSwitcher.astro?astro&type=style&index=0&lang.css",
+      "http://172.20.160.1:3000/src/components/layout/Sidebar.astro?astro&type=style&index=0&lang.css",
+      "http://172.20.160.1:3000/src/components/layout/Footer.astro?astro&type=style&index=0&lang.css",
+      "http://172.20.160.1:3000/src/components/layout/MainLayout.astro?astro&type=style&index=0&lang.css",
+      "http://172.20.160.1:3000/scripts/permissions-ui.js"
+    ],
+    "styles": [],
+    "links": [
+      {
+        "text": "📊  Dashboard",
+        "href": "http://172.20.160.1:3000/"
+      },
+      {
+        "text": "🏡  Explotaciones",
+        "href": "http://172.20.160.1:3000/explotaciones-react"
+      },
+      {
+        "text": "🐄  Animales",
+        "href": "http://172.20.160.1:3000/animals"
+      },
+      {
+        "text": "📋 Listados",
+        "href": "http://172.20.160.1:3000/listados"
+      },
+      {
+        "text": "📥  Importación",
+        "href": "http://172.20.160.1:3000/imports"
+      },
+      {
+        "text": "👥  Usuarios",
+        "href": "http://172.20.160.1:3000/users"
+      },
+      {
+        "text": "💾  Copias de seguridad",
+        "href": "http://172.20.160.1:3000/backup"
+      },
+      {
+        "text": "📊  Dashboard",
+        "href": "http://172.20.160.1:3000/"
+      },
+      {
+        "text": "🏡  Explotaciones",
+        "href": "http://172.20.160.1:3000/explotaciones-react"
+      },
+      {
+        "text": "🐄  Animales",
+        "href": "http://172.20.160.1:3000/animals"
+      },
+      {
+        "text": "👥  Usuarios",
+        "href": "http://172.20.160.1:3000/users"
+      },
+      {
+        "text": "📥  Importación",
+        "href": "http://172.20.160.1:3000/imports"
+      },
+      {
+        "text": "💾  Copias de seguridad",
+        "href": "http://172.20.160.1:3000/backup"
+      },
+      {
+        "text": "Ver todas las alertas",
+        "href": "http://172.20.160.1:3000/notifications"
+      },
+      {
+        "text": "Mi Perfil",
+        "href": "http://172.20.160.1:3000/profile"
+      },
+      {
+        "text": "Configuración",
+        "href": "http://172.20.160.1:3000/settings"
+      },
+      {
+        "text": "Cerrar Sesión",
+        "href": "http://172.20.160.1:3000/logout"
+      },
+      {
+        "text": "Mi Perfil",
+        "href": "http://172.20.160.1:3000/profile"
+      },
+      {
+        "text": "Configuración",
+        "href": "http://172.20.160.1:3000/settings"
+      },
+      {
+        "text": "📊  Dashboard",
+        "href": "http://172.20.160.1:3000/"
+      },
+      {
+        "text": "🏡  Explotaciones",
+        "href": "http://172.20.160.1:3000/explotaciones-react"
+      },
+      {
+        "text": "🐄  Animales",
+        "href": "http://172.20.160.1:3000/animals"
+      },
+      {
+        "text": "👥  Usuarios",
+        "href": "http://172.20.160.1:3000/users"
+      },
+      {
+        "text": "📥  Importación",
+        "href": "http://172.20.160.1:3000/imports"
+      },
+      {
+        "text": "💾  Copias de seguridad",
+        "href": "http://172.20.160.1:3000/backup"
+      },
+      {
+        "text": "Cerrar Sesión",
+        "href": "http://172.20.160.1:3000/logout"
+      },
+      {
+        "text": "Acerca de",
+        "href": "http://172.20.160.1:3000/about"
+      },
+      {
+        "text": "Ayuda",
+        "href": "http://172.20.160.1:3000/help"
+      },
+      {
+        "text": "Privacidad",
+        "href": "http://172.20.160.1:3000/privacy"
+      },
+      {
+        "text": "Términos",
+        "href": "http://172.20.160.1:3000/terms"
+      }
+    ],
+    "interactiveElements": [
+      {
+        "tagName": "BUTTON",
+        "id": "close-sidebar",
+        "text": "✕",
+        "class": "md:hidden absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📊 Dashboard",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-primary-dark bg-primary/10 dark:text-primary-light dark:bg-primary-dark/20 border-r-4 border-primary dark:border-primary-light"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🏡 Explotaciones",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🐄 Animales",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📋\nListados",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📥 Importación",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "👥 Usuarios",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "💾 Copias de seguridad",
+        "class": "flex items-center px-6 py-3 text-sm font-medium transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📊 Dashboard",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium bg-primary-dark text-white"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🏡 Explotaciones",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium hover:bg-primary/20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🐄 Animales",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium hover:bg-primary/20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "👥 Usuarios",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium hover:bg-primary/20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📥 Importación",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium hover:bg-primary/20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "💾 Copias de seguridad",
+        "class": "flex items-center transition-colors duration-150 px-2 py-2 rounded-md text-sm font-medium hover:bg-primary/20"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "mobile-menu-button",
+        "text": "☰",
+        "class": "text-white text-2xl p-2 mr-2 md:hidden"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "theme-toggle",
+        "text": "🌙",
+        "class": "text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "notifications-button",
+        "text": "🔔",
+        "class": "relative text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "mark-all-read",
+        "text": "Marcar todo como leído",
+        "class": "text-xs text-primary dark:text-primary-light hover:underline"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Ver todas las alertas",
+        "class": "text-sm text-primary dark:text-primary-light hover:underline"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "profile-button",
+        "text": "A",
+        "class": "flex items-center space-x-2 text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-primary/20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "class": "block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "class": "block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "class": "block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "close-mobile-menu",
+        "text": "✕",
+        "class": "text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Mi Perfil",
+        "class": "flex-1 text-center text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Configuración",
+        "class": "flex-1 text-center text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📊  Dashboard",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 bg-primary/10 text-primary dark:bg-primary-dark/20 dark:text-primary-light"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🏡  Explotaciones",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "🐄  Animales",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "👥  Usuarios",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "📥  Importación",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "💾  Copias de seguridad",
+        "class": "flex items-center py-3 px-4 text-gray-700 dark:text-gray-200 rounded-md mb-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "mobile-theme-toggle",
+        "text": "🌞 🌙",
+        "class": "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Cerrar Sesión",
+        "class": "block w-full text-center py-2 px-4 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-800/30 text-sm"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "open-sidebar",
+        "text": "☰",
+        "class": "fixed bottom-4 left-4 md:hidden bg-primary text-white p-3 rounded-full shadow-lg z-20"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Acerca de",
+        "class": "text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Ayuda",
+        "class": "text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Privacidad",
+        "class": "text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors"
+      },
+      {
+        "tagName": "A",
+        "id": "",
+        "text": "Términos",
+        "class": "text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "footer-contrast-toggle",
+        "text": "👁️",
+        "class": "p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+      },
+      {
+        "tagName": "BUTTON",
+        "id": "accessibility-toggle",
+        "text": "♿",
+        "class": "p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+      }
+    ],
+    "apiCalls": [
+      "http://127.0.0.1:8000/api/v1/auth/login",
+      "http://127.0.0.1:8000/api/v1/dashboard/resumen-card",
+      "http://127.0.0.1:8000/api/v1/dashboard/stats",
+      "http://127.0.0.1:8000/api/v1/dashboard/partos"
+    ]
+  },
+  "/explotaciones": {
+    "title": "404: Not Found",
+    "scripts": [],
+    "styles": [],
+    "links": [],
+    "interactiveElements": [],
+    "apiCalls": []
+  },
+  "/animal": {
+    "title": "404: Not Found",
+    "scripts": [],
+    "styles": [],
+    "links": [],
+    "interactiveElements": [],
+    "apiCalls": []
+  },
+  "/importar": {
+    "title": "404: Not Found",
+    "scripts": [],
+    "styles": [],
+    "links": [],
+    "interactiveElements": [],
+    "apiCalls": []
+  },
+  "/usuarios": {
+    "title": "404: Not Found",
+    "scripts": [],
+    "styles": [],
+    "links": [],
+    "interactiveElements": [],
+    "apiCalls": []
+  },
+  "/backup": {
+    "title": "Login - Masclet Imperi | Masclet Imperi",
+    "scripts": [
+      "http://172.20.160.1:3000/src/pages/login.astro?astro&type=script&index=0&lang.ts",
+      "http://172.20.160.1:3000/@vite/client",
+      "http://172.20.160.1:3000/@fs/C:/Proyectos/claude/masclet-imperi-web/frontend/node_modules/astro/dist/runtime/client/dev-toolbar/entrypoint.js?v=5e89932e",
+      "http://172.20.160.1:3000/node_modules/@astrojs/tailwind/base.css",
+      "http://172.20.160.1:3000/src/styles/global.css",
+      "http://172.20.160.1:3000/src/styles/lemon-squeezy.css"
+    ],
+    "styles": [],
+    "links": [],
+    "interactiveElements": [
+      {
+        "tagName": "BUTTON",
+        "id": "",
+        "text": "Iniciar sesión",
+        "class": "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      }
+    ],
+    "apiCalls": []
+  }
+}

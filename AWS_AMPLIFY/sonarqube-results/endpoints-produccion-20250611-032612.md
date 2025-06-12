@@ -1,6 +1,6 @@
 # Endpoints en Uso Real - Masclet Imperi Web
 
-Informe generado automáticamente el 2025-06-11 02:45:11
+Informe generado automáticamente el 2025-06-11 03:26:12
 
 > **NOTA IMPORTANTE:** Este informe solo incluye endpoints de los archivos importados en router.py, es decir, los que están actualmente en uso en la aplicación.
 

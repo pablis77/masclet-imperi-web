@@ -19,11 +19,9 @@ Write-Host "
 
 # Verificar que SonarQube está corriendo
 Write-Host "✔️ Verificando que SonarQube esté ejecutándose..." -ForegroundColor Yellow
-$sonarqubeRunning = $false
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:9000/api/system/status" -Method GET -ErrorAction SilentlyContinue
     if ($response.StatusCode -eq 200) {
-        $sonarqubeRunning = $true
         Write-Host "  SonarQube está ejecutándose correctamente" -ForegroundColor Green
     }
 } catch {
@@ -38,32 +36,45 @@ if (-not (Test-Path $RESULTS_DIR)) {
     Write-Host "📁 Creado directorio para resultados de análisis" -ForegroundColor Green
 }
 
-# Paso 1: Generar informe de endpoints usando nuestro nuevo script
-Write-Host "`n📊 Generando informe de endpoints en producción..." -ForegroundColor Yellow
+# Paso 1: Generar informe de rutas frontend
+Write-Host "`n📱 Generando informe de rutas frontend..." -ForegroundColor Yellow
+Write-Host "  Ejecutando detectar-rutas-frontend.ps1..." -ForegroundColor Blue
+$frontendScriptPath = "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\detectar-rutas-frontend.ps1"
+& $frontendScriptPath
+
+# Buscar el informe frontend más reciente
+$frontendReportsDir = "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\frontend-detectado"
+$frontendReport = Get-ChildItem -Path $frontendReportsDir -Filter "rutas-frontend-*.md" | 
+                 Sort-Object LastWriteTime -Descending | 
+                 Select-Object -First 1
+
+if ($frontendReport) {
+    $frontendReportPath = $frontendReport.FullName
+    Write-Host "  ✅ Informe de rutas frontend generado: $($frontendReport.Name)" -ForegroundColor Green
+} else {
+    Write-Host "  ⚠️ No se encontró un informe de rutas frontend reciente" -ForegroundColor Yellow
+}
+
+# Paso 2: Generar informe de endpoints usando nuestro nuevo script
+Write-Host "`n Generando informe de endpoints en producción..." -ForegroundColor Yellow
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $reportPathProduccion = "$RESULTS_DIR\endpoints-produccion-$timestamp.md"
 
 # Ejecutar nuestro nuevo script de detección de endpoints
-Write-Host "  Ejecutando detectar-endpoints-produccion.ps1..." -ForegroundColor Blue
-$scriptPath = "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\detectar-endpoints-produccion.ps1"
-$endpointsResult = & $scriptPath
+Write-Host "  Ejecutando detectar-endpoints-funcional.ps1..." -ForegroundColor Blue
+$scriptPath = "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\detectar-endpoints-funcional.ps1"
+& $scriptPath
 
-# Verificar si el script se ejecutó correctamente
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  ❌ Error al generar informe de endpoints" -ForegroundColor Red
-    exit 1
+# Buscar el archivo generado más reciente con el patrón correcto
+$endpointFile = Get-ChildItem -Path "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\endpoints-detectados" -Filter "endpoints-detectados-*.md" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+if ($endpointFile) {
+    # Copiar el archivo al directorio de resultados
+    Copy-Item -Path $endpointFile.FullName -Destination $reportPathProduccion
+    Write-Host "  ✓ Informe de endpoints generado y copiado a: $reportPathProduccion" -ForegroundColor Green
 } else {
-    # Buscar el archivo generado más reciente
-    $endpointFile = Get-ChildItem -Path "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\endpoints-detectados" -Filter "endpoints-produccion-*.md" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    
-    if ($endpointFile) {
-        # Copiar el archivo al directorio de resultados
-        Copy-Item -Path $endpointFile.FullName -Destination $reportPathProduccion
-        Write-Host "  ✓ Informe de endpoints copiado a: $reportPathProduccion" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠️ No se encontró el archivo de informe de endpoints generado" -ForegroundColor Yellow
-        # Continuar con el análisis de todas formas
-    }
+    Write-Host "  ⚠️ No se encontró el archivo de informe de endpoints generado" -ForegroundColor Yellow
+    # Continuar con el análisis de todas formas
 }
 
 # Paso 2: Crear archivo de propiedades para el análisis
@@ -122,23 +133,86 @@ Get-ChildItem -Path "$PROJECT_DIR\frontend\src" -Recurse -Include "*.tsx","*.jsx
 
 Write-Host "  ✓ Análisis de llamadas API frontend guardado en: $frontendApiCallsPath" -ForegroundColor Green
 
-# Paso 4: Ejecutar el análisis de SonarQube
+# Paso 4: Ejecutar análisis de SonarQube
 Write-Host "`n🚀 Ejecutando análisis de SonarQube..." -ForegroundColor Yellow
-Write-Host "  Este proceso puede tomar varios minutos, por favor espere..." -ForegroundColor Blue
+Write-Host "  Este proceso puede tomar varios minutos, por favor espere..." -ForegroundColor DarkYellow
 
-# Ejecutar el scanner de SonarQube
-docker run --rm `
-    -e SONAR_HOST_URL="http://host.docker.internal:9000" `
-    -e SONAR_LOGIN="$token" `
-    -v "${PROJECT_DIR}:/usr/src" `
-    -w /usr/src `
-    sonarsource/sonar-scanner-cli:4.8.0 `
-    -Dsonar.projectBaseDir=/usr/src
+# Crear archivo de propiedades temporal para el análisis
+$sonarPropertiesPath = "$PROJECT_DIR\AWS_AMPLIFY\sonar-project.properties"
+$sonarProperties | Out-File -FilePath $sonarPropertiesPath -Encoding utf8
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n✅ Análisis de SonarQube completado correctamente!" -ForegroundColor Green
-} else {
-    Write-Host "`n❌ Error durante el análisis de SonarQube. Revisa los mensajes anteriores." -ForegroundColor Red
+# Ejecutar Docker con SonarQube Scanner con formato correcto de parámetros
+Write-Host "Ejecutando análisis SonarQube..." -ForegroundColor DarkGray
+
+try {
+    # En PowerShell, es más fácil y seguro usar una matriz de argumentos para ejecutar docker
+    # Esto evita problemas complejos de escape de comillas
+    $dockerArgs = @(
+        "run",
+        "--rm",
+        "-e", "SONAR_HOST_URL=http://host.docker.internal:9000",
+        "-e", "SONAR_LOGIN=$token",
+        "-v", "${PROJECT_DIR}:/usr/src",
+        "-w", "/usr/src",
+        "sonarsource/sonar-scanner-cli:5.0.1",
+        "-Dsonar.projectBaseDir=/usr/src",
+        "-Dsonar.projectKey=masclet-imperi"
+    )
+    
+    Write-Host "Ejecutando: docker $dockerArgs" -ForegroundColor DarkGray
+    & docker $dockerArgs
+
+    $scanSuccess = $?
+    
+    if ($scanSuccess) {
+        Write-Host "`n✅ Análisis completado exitosamente" -ForegroundColor Green
+    } else {
+        Write-Host "`n❌ Error durante el análisis de SonarQube. Revisa los mensajes anteriores." -ForegroundColor Red
+    }
+} catch {
+    Write-Host "❌ Error durante el análisis de SonarQube: $_" -ForegroundColor Red
+}
+
+# Generar informe final con enlaces a informes generados
+try {
+    $endpointsReportPath = (Get-ChildItem -Path "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\endpoints-detectados" -Filter "endpoints-produccion-*.md" | 
+                           Sort-Object LastWriteTime -Descending | 
+                           Select-Object -First 1).FullName
+
+    $finalReportContent = @"
+# Informe de Análisis SonarQube - Masclet Imperi Web
+*Generado: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")*
+
+## Rutas Backend
+"@
+    
+    if ($endpointsReportPath) {
+        $finalReportContent += "- [Ver informe completo de endpoints]($endpointsReportPath)\n"
+    } else {
+        $finalReportContent += "- No se encontró el informe de endpoints\n"
+    }
+
+    $finalReportContent += "\n## Rutas Frontend\n"
+
+    # Añadir enlace al informe frontend si existe
+    if ($frontendReportPath) {
+        $finalReportContent += "- [Ver informe de rutas frontend]($frontendReportPath)\n"
+    } else {
+        $finalReportContent += "- No se generó el informe de rutas frontend\n"
+    }
+
+    $finalReportContent += @"
+
+## Análisis SonarQube
+- [Acceder al dashboard SonarQube](http://localhost:9000/dashboard?id=masclet-imperi)
+"@
+    
+    $finalReportPath = "$PROJECT_DIR\AWS_AMPLIFY\SONARQUBE\resultado-analisis.md"
+    $finalReportContent | Out-File -FilePath $finalReportPath -Encoding utf8
+    
+    Write-Host "`n📊 Informe final generado: $finalReportPath" -ForegroundColor Green
+} catch {
+    Write-Host "`n❌ Error al generar informe final: $_" -ForegroundColor Red
 }
 
 Write-Host "`n📊 Resultados del análisis disponibles en: http://localhost:9000/dashboard?id=masclet-imperi" -ForegroundColor Cyan

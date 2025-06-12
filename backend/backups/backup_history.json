@@ -196,5 +196,23 @@
     "description": "Backup tras modificación (PATCH) del animal Mariaelena (ID: 3071)",
     "size_bytes": 120936,
     "size": "118.10 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250611_042527.sql",
+    "date": "11/06/2025 04:25",
+    "backup_type": "manual",
+    "created_by": "pablomgallegos@gmail.com",
+    "description": "Backup manual creado el 11/6/2025, 4:25:27",
+    "size_bytes": 121161,
+    "size": "118.32 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250612_020057.sql",
+    "date": "12/06/2025 02:00",
+    "backup_type": "daily",
+    "created_by": "sistema",
+    "description": "Backup diario programado (12/06/2025)",
+    "size_bytes": 121370,
+    "size": "118.53 KB"
   }
 ]

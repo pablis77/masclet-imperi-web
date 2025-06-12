@@ -1,6 +1,6 @@
 # Endpoints Detectados en Masclet Imperi Web
 
-Informe generado automáticamente el 2025-06-11 02:35:19
+Informe generado automáticamente el 2025-06-11 04:38:26
 
 ## Resumen
 
@@ -8,11 +8,11 @@ Informe generado automáticamente el 2025-06-11 02:35:19
 - Animales: 35 endpoints
 - Usuarios: 4 endpoints
 - Importaciones: 4 endpoints
-- Backups: 0 endpoints
-- Listados: 14 endpoints
+- Backups: 29 endpoints
+- Listados: 9 endpoints
 - Notificaciones: 2 endpoints
 - Explotaciones (directos): 6 endpoints
-- Otros: 93 endpoints
+- Otros: 69 endpoints
 
 ## Endpoints por Módulo
 
@@ -83,17 +83,40 @@ GET /api/v1/{import_id}/errors
 ### Backups
 
 `
-
+GET /api/v1/list
+POST /api/v1/create
+POST /api/v1/restore/{filename}
+DELETE /api/v1/delete/{filename}
+GET /api/v1/download/{filename}
+GET /api/v1/list
+POST /api/v1/create
+POST /api/v1/restore/{filename}
+DELETE /api/v1/delete/{filename}
+GET /api/v1/download/{filename}
+GET /api/v1/list
+POST /api/v1/create
+POST /api/v1/restore/{filename}
+DELETE /api/v1/delete/{filename}
+GET /api/v1/download/{filename}
+GET /api/v1/list
+POST /api/v1/create
+POST /api/v1/restore/{filename}
+DELETE /api/v1/delete/{filename}
+GET /api/v1/download/{filename}
+GET /api/v1/list
+POST /api/v1/create
+POST /api/v1/restore/{filename}
+DELETE /api/v1/delete/{filename}
+GET /api/v1/download/{filename}
+GET /api/v1/history
+POST /api/v1/trigger/daily
+POST /api/v1/configure
+POST /api/v1/cleanup
 `
 
 ### Listados
 
 `
-GET /api/v1/list
-GET /api/v1/list
-GET /api/v1/list
-GET /api/v1/list
-GET /api/v1/list
 GET /api/v1/{listado_id}
 PUT /api/v1/{listado_id}
 DELETE /api/v1/{listado_id}
@@ -159,26 +182,6 @@ GET /api/v1/{animal_id}/parts
 POST /api/v1/signup
 GET /api/v1/me
 POST /api/v1/refresh
-POST /api/v1/create
-POST /api/v1/restore/{filename}
-DELETE /api/v1/delete/{filename}
-GET /api/v1/download/{filename}
-POST /api/v1/create
-POST /api/v1/restore/{filename}
-DELETE /api/v1/delete/{filename}
-GET /api/v1/download/{filename}
-POST /api/v1/create
-POST /api/v1/restore/{filename}
-DELETE /api/v1/delete/{filename}
-GET /api/v1/download/{filename}
-POST /api/v1/create
-POST /api/v1/restore/{filename}
-DELETE /api/v1/delete/{filename}
-GET /api/v1/download/{filename}
-POST /api/v1/create
-POST /api/v1/restore/{filename}
-DELETE /api/v1/delete/{filename}
-GET /api/v1/download/{filename}
 GET /api/v1/animales-detallado
 GET /api/v1/periodo-dinamico
 GET /api/v1/stats
@@ -209,10 +212,6 @@ GET /api/v1/{parto_id}
 PATCH /api/v1/{parto_id}
 GET /api/v1
 DELETE /api/v1/{parto_id}
-GET /api/v1/history
-POST /api/v1/trigger/daily
-POST /api/v1/configure
-POST /api/v1/cleanup
 GET /api/v1/me
 GET /api/v1
 GET /api/v1/{user_id}
