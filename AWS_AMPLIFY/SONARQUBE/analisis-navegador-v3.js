@@ -197,9 +197,25 @@ async function analizarEstructura() {
                 // Limpiar registro de llamadas API para esta ruta
                 apiCalls.clear();
                 
-                // Navegar a la ruta
-                await page.goto(baseUrl + ruta, { waitUntil: 'networkidle0', timeout: 30000 });
-                await esperar(page, 3000); // Tiempo para carga completa
+                // Navegar a la ruta con manejo especial para dashboard (doble navegación para garantizar hidratación)
+                if (ruta === '/dashboard') {
+                    console.log('\ud83d\udccc Tratamiento especial para Dashboard (doble navegación para hidratación)...');
+                    // Primera visita para precarga
+                    await page.goto(baseUrl + ruta, { waitUntil: 'networkidle0', timeout: 30000 });
+                    await esperar(page, 5000); // Primera espera para hidratación inicial
+                    
+                    // Volver a la página principal y luego regresar al dashboard
+                    await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+                    await esperar(page, 2000);
+                    
+                    // Segunda visita para garantizar datos cargados
+                    await page.goto(baseUrl + ruta, { waitUntil: 'networkidle0', timeout: 30000 });
+                    await esperar(page, 5000); // Segunda espera extendida para hidratación completa
+                } else {
+                    // Navegación normal para otras rutas
+                    await page.goto(baseUrl + ruta, { waitUntil: 'networkidle0', timeout: 30000 });
+                    await esperar(page, 3000); // Tiempo para carga completa
+                }
                 
                 // Capturar screenshot de la página
                 await tomarCaptura(page, `pagina-${ruta.replace(/\//g, '-')}`);
@@ -475,6 +491,56 @@ async function analizarEstructura() {
                 // Determinar si la ruta es obsoleta
                 const esObsoleta = rutasObsoletas.includes(ruta);
                 
+                // Detectar URLs en el código para análisis de despliegue (accediendo al DOM y scripts)
+                const urlsDetectadas = await page.evaluate(() => {
+                    const urlPatterns = [
+                        /https?:\/\/(?:localhost|127\.0\.0\.1)(?::[0-9]+)?(\/[^\s"'`]*)?/g,  // URLs locales
+                        /https?:\/\/[^\s"'`]*\.loca\.lt[^\s"'`]*/g,  // Localtunnel
+                        /https?:\/\/[^\s"'`]*\.onrender\.com[^\s"'`]*/g,  // Render
+                        /https?:\/\/[^\s"'`]*ngrok\.io[^\s"'`]*/g,  // Ngrok
+                        /https?:\/\/172\.(?:\d{1,3}\.){2}\d{1,3}(?::[0-9]+)?(\/[^\s"'`]*)?/g  // IPs locales 172.x.x.x
+                    ];
+
+                    const detectarUrls = (contenido) => {
+                        let urls = [];
+                        if (!contenido) return urls;
+                        
+                        urlPatterns.forEach(pattern => {
+                            const matches = contenido.match(pattern);
+                            if (matches) urls = [...urls, ...matches];
+                        });
+                        
+                        return urls;
+                    };
+                    
+                    // Buscar en scripts inline
+                    let urls = [];
+                    document.querySelectorAll('script').forEach(script => {
+                        if (script.textContent) {
+                            urls = [...urls, ...detectarUrls(script.textContent)];
+                        }
+                    });
+                    
+                    // Buscar en atributos hardcodeados
+                    document.querySelectorAll('[src], [href], [data-api], [data-url], [data-src], [data-href]').forEach(el => {
+                        const attrs = [
+                            el.getAttribute('src'), 
+                            el.getAttribute('href'),
+                            el.getAttribute('data-api'),
+                            el.getAttribute('data-url'),
+                            el.getAttribute('data-src'),
+                            el.getAttribute('data-href')
+                        ];
+                        
+                        attrs.forEach(attr => {
+                            if (attr) urls = [...urls, ...detectarUrls(attr)];
+                        });
+                    });
+                    
+                    // Eliminar duplicados y retornar
+                    return [...new Set(urls)];
+                });
+                
                 // Almacenar información completa de la página con todos los datos recogidos
                 rutasInfo[ruta] = {
                     titulo: pageData.title,
@@ -488,7 +554,8 @@ async function analizarEstructura() {
                     formularios: interfaceElements.forms,
                     sources: pageData.sources || [],      // Archivos source y componentes
                     sourceFiles: pageData.sourceFiles || {}, // Sources agrupados por sección
-                    recursos: pageData.resources || [],    // Recursos cargados (JS, CSS, etc)
+                    recursos: pageData.resources || [],    // Recursos cargados (JS, CSS, etc),
+                    urlsDespliegue: urlsDetectadas || [],  // URLs detectadas para análisis de despliegue
                     cargaOk: true
                 };
                 
@@ -588,6 +655,7 @@ Fecha: ${new Date().toLocaleString()}
         return url;
     }
 }))].length}
+- **Rutas obsoletas detectadas**: ${rutasObsoletas.length}
 
 ## Rutas y Componentes
 
@@ -744,10 +812,19 @@ Fecha: ${new Date().toLocaleString()}
 
 Las siguientes rutas están marcadas como obsoletas y deberían ser revisadas para su eliminación:
 
+| Ruta Obsoleta | Recomendación | Ruta Actualizada |
+|---------------|---------------|-----------------|
 `;
                 
+                // Mapear rutas obsoletas con sus sustitutos recomendados
+                const rutasSustitutos = {
+                    '/explotacions': '/explotaciones-react',
+                    '/backups': '/backup'
+                };
+                
                 rutasObsoletasDetectadas.forEach(ruta => {
-                    markdownReport += `- \`${ruta}\` - Reemplazar con versión actualizada o eliminar\n`;
+                    const rutaSustituta = rutasSustitutos[ruta] || 'No disponible';
+                    markdownReport += `| \`${ruta}\` | Eliminar y actualizar referencias | \`${rutaSustituta}\` |\n`;
                 });
                 
                 markdownReport += `
@@ -761,7 +838,97 @@ Las siguientes rutas están marcadas como obsoletas y deberían ser revisadas pa
 `;
             }
             
-            // Añadir mapa de endpoints más utilizados
+            // 4. Análisis de URLs para despliegue
+            markdownReport += '\n## Análisis de URLs para Despliegue en AWS Amplify\n\n';
+            
+            // Recopilar todas las URLs detectadas de todas las rutas
+            const todasUrlsDespliegue = [];
+            for (const [ruta, data] of Object.entries(rutasInfo)) {
+                if (data.urlsDespliegue && data.urlsDespliegue.length > 0) {
+                    todasUrlsDespliegue.push(...data.urlsDespliegue);
+                }
+            }
+            
+            // Eliminar duplicados
+            const urlsUnicas = [...new Set(todasUrlsDespliegue)];
+            
+            // Clasificar las URLs por tipo
+            const urlsClasificadas = {
+                local: [],
+                tunnel: [],
+                rendercom: [],
+                ip: [],
+                otras: []
+            };
+            
+            urlsUnicas.forEach(url => {
+                if (url.includes('localhost') || url.includes('127.0.0.1')) {
+                    urlsClasificadas.local.push(url);
+                } else if (url.includes('.loca.lt') || url.includes('ngrok.io')) {
+                    urlsClasificadas.tunnel.push(url);
+                } else if (url.includes('.onrender.com')) {
+                    urlsClasificadas.rendercom.push(url);
+                } else if (url.match(/^https?:\/\/172\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) {
+                    urlsClasificadas.ip.push(url);
+                } else {
+                    urlsClasificadas.otras.push(url);
+                }
+            });
+            
+            markdownReport += '### URLs de desarrollo local\n\nEstas URLs deberán ser reemplazadas por variables de entorno en el despliegue:\n\n';
+            
+            if (urlsClasificadas.local.length > 0) {
+                markdownReport += '| URL Local | Recomendación para Amplify |\n|-----------|-------------------------|\n';
+                urlsClasificadas.local.forEach(url => {
+                    markdownReport += `| \`${url}\` | Reemplazar por variable de entorno \`${url.includes('8000') ? 'REACT_APP_API_URL' : 'REACT_APP_FRONTEND_URL'}\` |\n`;
+                });
+            } else {
+                markdownReport += '*No se detectaron URLs locales.*\n\n';
+            }
+            
+            markdownReport += '\n### URLs de túneles locales\n\nEstas URLs deben ser eliminadas o reemplazadas:\n\n';
+            
+            if (urlsClasificadas.tunnel.length > 0) {
+                markdownReport += '| URL Túnel | Recomendación |\n|-----------|--------------|\n';
+                urlsClasificadas.tunnel.forEach(url => {
+                    markdownReport += `| \`${url}\` | Reemplazar por variable de entorno \`REACT_APP_API_URL\` |\n`;
+                });
+            } else {
+                markdownReport += '*No se detectaron URLs de túneles locales.*\n\n';
+            }
+            
+            markdownReport += '\n### URLs de render.com\n\nEstas URLs deben ser actualizadas para producción:\n\n';
+            
+            if (urlsClasificadas.rendercom.length > 0) {
+                markdownReport += '| URL Render | Recomendación |\n|-----------|--------------|\n';
+                urlsClasificadas.rendercom.forEach(url => {
+                    markdownReport += `| \`${url}\` | Revisar si debe mantenerse en producción o sustituirse por AWS |\n`;
+                });
+            } else {
+                markdownReport += '*No se detectaron URLs de render.com.*\n\n';
+            }
+            
+            markdownReport += '\n### URLs con IPs locales\n\nEstas URLs deben ser reemplazadas:\n\n';
+            
+            if (urlsClasificadas.ip.length > 0) {
+                markdownReport += '| URL IP | Recomendación |\n|--------|--------------|\n';
+                urlsClasificadas.ip.forEach(url => {
+                    markdownReport += `| \`${url}\` | Reemplazar por variable de entorno (\`${url.includes('8000') ? 'REACT_APP_API_URL' : 'REACT_APP_FRONTEND_URL'}\`) |\n`;
+                });
+            } else {
+                markdownReport += '*No se detectaron URLs con IPs locales.*\n\n';
+            }
+            
+            markdownReport += '\n### Recomendaciones para Amplify\n\n';
+            markdownReport += `- **Variables de entorno requeridas**:
+  - \`REACT_APP_API_URL\`: URL base de la API en AWS (Ej: https://api.mascletimperi.com)
+  - \`REACT_APP_FRONTEND_URL\`: URL base del frontend en AWS Amplify
+- **Redirecciones necesarias**: Configurar redirección de todas las rutas a index.html para SPA
+- **Configuración CORS**: Asegurar que la API EC2 acepta peticiones del dominio de Amplify
+
+`;
+            
+            // 5. Añadir mapa de endpoints más utilizados
             markdownReport += `## Endpoints más utilizados
 
 `;
