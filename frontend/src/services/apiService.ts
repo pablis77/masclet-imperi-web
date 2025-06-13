@@ -1,186 +1,48 @@
 /**
- * ¡¡¡ADVERTENCIA!!! - NO MODIFICAR ESTE ARCHIVO
- * ========================================
+ * Servicio API centralizado para Masclet Imperi
+ * ==========================================
  * 
- * Este archivo es CRÍTICO para el funcionamiento de toda la aplicación.
- * Modificarlo puede romper la conexión entre frontend y backend.
- * 
- * REGLAS ESTRICTAS:
- * 1. NUNCA modificar este archivo directamente - crear servicios independientes si es necesario
- * 2. NUNCA cambiar la estructura existente de llamadas API que funcionan
- * 3. NUNCA tocar la configuración de conexión, URLs base o los interceptors
- * 4. Si necesitas implementar nuevas funcionalidades, hazlo en archivos separados
- * 
- * Si aparecen errores como "ERR_NETWORK_CHANGED" o problemas de CORS tras modificaciones,
- * restaurar inmediatamente este archivo y revisar la configuración CORS en backend/app/main.py
+ * Esta versión ha sido actualizada para usar la configuración centralizada
+ * de API a través del adaptador apiConfigAdapter.ts
  */
 
 import axios from 'axios';
+import { 
+  API_BASE_URL,
+  API_TIMEOUT,
+  API_DEFAULT_HEADERS,
+  environment,
+  isProduction,
+  isLocal,
+  TOKEN_NAME
+} from './apiConfigAdapter';
 
-// Constantes de entorno
-let ENVIRONMENT: string = 'development';
-let API_BASE_URL: string = '';
-let USE_MOCK_DATA: boolean = false; // Variable faltante
+// Variables para mantener compatibilidad con código existente
+let ENVIRONMENT: string = environment;
+let USE_MOCK_DATA: boolean = false;
 
-// URLs configurables para diferentes entornos
-const API_CONFIG = {
-  development: {
-    protocol: 'http',
-    host: '127.0.0.1', // Usar IP literal en lugar de localhost para mayor estabilidad
-    port: '8000',
-    path: '/api/v1'  // Restaurado '/api/v1' para que funcione el desarrollo local
-  },
-  production: {
-    // Usar variable de entorno o valor por defecto para el backend
-    protocol: 'https',
-    host: import.meta.env.VITE_BACKEND_HOST || 'masclet-imperi-web-backend.onrender.com',
-    port: '',  // No usamos puerto en producción con HTTPS
-    path: ''   // En producción, las rutas del backend NO empiezan con /api/v1
-  }
-};
+// Imprimir información de diagnóstico
+console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
+console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
 
-// Configuración global usando variables de entorno
-const getApiUrl = (): string => {
-  // Obtener URL de API de las variables de entorno (prioridad máxima)
-  const envApiUrl = import.meta.env.VITE_API_URL;
-  
-  // Si existe una URL explícita configurada, usarla
-  if (envApiUrl) {
-    // console.log(`[ApiService] Usando URL explícita de variable de entorno: ${envApiUrl}`);
-    return envApiUrl;
-  }
-
-  // LOG del entorno detectado
-  // console.log(`[ApiService] Entorno detectado: ${ENVIRONMENT}`);
-  
-  // Detectar explícitamente entorno local vs producción
-  let isLocal = false;
-  let isTunnel = false;
-  
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // Comprobar si estamos en LocalTunnel
-    isTunnel = hostname.includes('loca.lt');
-    // Comprobar si estamos en localhost o en tunnel
-    isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || isTunnel;
-    // console.log(`[ApiService] Hostname detectado: ${hostname}, isLocal: ${isLocal}, isTunnel: ${isTunnel}`);
-  } else {
-    // Si window no está definido (SSR), usar variable de entorno
-    isLocal = ENVIRONMENT !== 'production';
-    // console.log(`[ApiService] SSR, usando ENVIRONMENT: ${ENVIRONMENT}, isLocal: ${isLocal}`);
-  }
-  
-  // FORZAR MODO TUNNEL SI LA URL INCLUYE loca.lt
-  if (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')) {
-    isTunnel = true;
-    // console.log('[ApiService] Modo tunnel forzado porque la URL contiene loca.lt');
-  }
-  
-  // Seleccionar configuración según entorno
-  // Para redes locales, SIEMPRE usar configuración de desarrollo
-  // Comprobación adicional: si estamos en una IP de red local
-  let isLocalNetwork = false;
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    isLocalNetwork = 
-      hostname === 'localhost' || 
-      hostname === '127.0.0.1' ||
-      /^192\.168\./.test(hostname) ||
-      /^10\./.test(hostname) ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(hostname);
-  }
-  
-  // Si es red local, FORZAR modo desarrollo independientemente de otras variables
-  const config = (isLocal || isLocalNetwork) ? API_CONFIG.development : API_CONFIG.production;
-  
-  if (isLocalNetwork && !isLocal) {
-    console.log('[ApiService] Modo desarrollo forzado por detección de red local:', window.location.hostname);
-  }
-  
-  // SOLUCIÓN DIRECTA PARA TÚNELES: DETECTAR DINÁMICAMENTE LA URL
-  if (isTunnel) {
-    // Obtener la URL del frontend y construir la URL del backend basada en ella
-    if (typeof window !== 'undefined') {
-      // Extraer el subdominio del frontend
-      const hostname = window.location.hostname;
-      // Si el frontend está en loca.lt, construir la URL del backend
-      if (hostname.includes('loca.lt')) {
-        // URL actual de LocalTunnel del backend (desde entorno o último conocido)
-        let backendTunnelUrl = import.meta.env.VITE_BACKEND_TUNNEL_URL || 'https://api-masclet-imperi.loca.lt/api/v1';
-        
-        // Si tenemos una URL de backend en el almacenamiento local, usarla
-        const savedBackendUrl = localStorage.getItem('backend_tunnel_url');
-        if (savedBackendUrl) {
-          backendTunnelUrl = savedBackendUrl;
-        }
-        
-        // console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL!: ${backendTunnelUrl}`);
-        return backendTunnelUrl;
-      }
-    }
-    
-    // Fallback a la URL conocida si no podemos construirla dinámicamente
-    const tunnelBackendUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
-    // console.log(`[ApiService] ¡USANDO URL COMPLETA DE LOCALTUNNEL (fallback)!: ${tunnelBackendUrl}`);
-    return tunnelBackendUrl;
-  }
-  
-  // Para conexiones normales, construir URL estándar
-  const baseUrl = `${config.protocol}://${config.host}${config.port ? ':' + config.port : ''}${config.path}`;
-  
-  // console.log(`[ApiService] API configurada para entorno ${isLocal ? 'desarrollo' : 'producción'}: ${baseUrl}`);
-  return baseUrl;
-};
-
-// Opciones de entorno
-if (import.meta.env.PROD) {
-  ENVIRONMENT = 'production';
-} else {
-  ENVIRONMENT = 'development';
-}
-
-// Configurar la URL base de la API
-API_BASE_URL = getApiUrl();
-
-// console.log(`[ApiService] Entorno: ${ENVIRONMENT}`);
-// console.log(`[ApiService] API configurada para conectarse a: ${API_BASE_URL}`);
-
-// IMPORTANTE: Detectar si estamos en producción para forzar rutas relativas
-// y evitar problemas de CORS
-let isProduction = false;
-if (typeof window !== 'undefined') {
-  const currentHost = window.location.hostname;
-  // Detectar redes locales (igual que en apiConfig.ts)
-  const isLocalNetwork = 
-    currentHost === 'localhost' || 
-    currentHost === '127.0.0.1' ||
-    /^192\.168\./.test(currentHost) ||
-    /^10\./.test(currentHost) ||
-    /^172\.(1[6-9]|2[0-9]|3[0-1])/.test(currentHost);
-  
-  isProduction = !isLocalNetwork;
-  console.log(`[ApiService] Host: ${currentHost}, Es red local: ${isLocalNetwork}, Modo producción: ${isProduction}`);
-}
-
-// IMPORTANTE: En producción, debemos evitar la duplicación de /api/v1
-// Verificamos si la URL ya contiene /api/v1 y si ya está importando apiConfig.ts
 if (isProduction) {
-  // Si estamos en producción y la URL base tiene /api/v1/api/v1, corregimos
-  if (API_BASE_URL.includes('/api/v1/api/v1')) {
-    API_BASE_URL = API_BASE_URL.replace('/api/v1/api/v1', '/api/v1');
-    console.log(`[ApiService] Corregida duplicación de prefijo en URL: ${API_BASE_URL}`);
-  }
+  console.log('[ApiService] Ejecutando en modo PRODUCCIÓN');
+} else {
+  // Modo local (incluye localhost, 127.0.0.1, redes internas, etc.)
+  console.log('[ApiService] Ejecutando en modo LOCAL');
 }
 
 // Credenciales fijas para desarrollo: admin/admin123
 // Estas son las credenciales indicadas en los requisitos
 
-// Crear instancia de axios con configuración base
+// Mantener una copia local de la URL base para posibles modificaciones
+let apiBaseUrl = API_BASE_URL;
+
+// Crear instancia de axios con configuración base centralizada
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: apiBaseUrl,
+  timeout: API_TIMEOUT,
+  headers: API_DEFAULT_HEADERS
 });
 
 // GESTIÓN UNIVERSAL DE PETICIONES API
@@ -292,7 +154,7 @@ api.interceptors.request.use(
     // Intentar usar el token JWT del localStorage
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(TOKEN_NAME);
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
           console.log('Usando token JWT para autenticación');
@@ -313,12 +175,12 @@ api.interceptors.request.use(
 
 // Función para configurar la API
 export function configureApi(baseUrl: string, useMockData: boolean = false) {
-  API_BASE_URL = baseUrl;
+  apiBaseUrl = baseUrl; // Usar variable local en lugar de la importada
   USE_MOCK_DATA = useMockData;
   api.defaults.baseURL = baseUrl;
   
-  // console.log(`API configurada con URL base: ${baseUrl}`);
-  // console.log(`Uso de datos simulados: ${useMockData ? 'SÍ' : 'NO'}`);
+  console.log(`API configurada con URL base: ${baseUrl}`);
+  console.log(`Uso de datos simulados: ${useMockData ? 'SÍ' : 'NO'}`);
 }
 
 // Función para realizar peticiones GET
@@ -330,7 +192,7 @@ export async function get<T = any>(endpoint: string): Promise<T> {
     // IMPORTANTE: Añadir prefijo /api/v1 si no está presente y no hay ya un prefijo en la URL base
     let apiEndpoint = normalizedEndpoint;
     // Comprobar si ya hay un prefijo en la URL base (config.baseURL) o si ya hay un prefijo en el endpoint
-    const baseUrlHasPrefix = API_BASE_URL.includes('/api/v1');
+    const baseUrlHasPrefix = apiBaseUrl.includes('/api/v1');
     if (!apiEndpoint.startsWith('/api/v1') && !baseUrlHasPrefix) {
       apiEndpoint = `/api/v1${normalizedEndpoint}`;
       console.log(`Añadiendo prefijo a endpoint: ${normalizedEndpoint} -> ${apiEndpoint}`);
@@ -511,10 +373,10 @@ export async function patch<T = any>(endpoint: string, data: any): Promise<T> {
   try {
     // Normalizar endpoint
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    console.log(`Realizando petición PATCH a ${API_BASE_URL}${normalizedEndpoint}`);
+    console.log(`Realizando petición PATCH a ${apiBaseUrl}${normalizedEndpoint}`);
     console.log('Datos enviados:', data);
     
-    // Realizar petición
+    // Realizar petición utilizando URL base local
     const response = await api.patch<T>(normalizedEndpoint, data);
     return response.data;
   } catch (error) {
@@ -642,8 +504,8 @@ export async function login(username: string, password: string) {
 }
 
 // Función para obtener la URL base de la API (para depuración)
-const getBaseUrl = (): string => {
-  return API_BASE_URL;
+export function getBaseUrl(): string {
+  return apiBaseUrl;
 };
 
 export default {

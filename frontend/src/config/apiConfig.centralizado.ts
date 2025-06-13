@@ -26,23 +26,31 @@ export const isLocalEnvironment = (): boolean => {
 };
 
 /**
+ * Detecta si estamos en un ambiente de producción (AWS Amplify)
+ */
+export const isProductionEnvironment = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return !isLocalEnvironment();
+};
+
+/**
  * Obtiene la URL base de la API según el entorno
  */
 export const getApiBaseUrl = (): string => {
-  // 1. Prioridad máxima: variable de entorno específica
+  // 1. Prioridad máxima: variable de entorno específica de la API
   const configuredApiUrl = import.meta.env.VITE_API_URL;
   if (configuredApiUrl) {
     console.log('✅ Usando URL de API configurada:', configuredApiUrl);
     return configuredApiUrl;
   }
   
-  // 2. En producción: usar URL relativa (mismo dominio)
-  if (IS_PRODUCTION) {
+  // 2. En producción (AWS Amplify): usar URL relativa (mismo dominio)
+  if (IS_PRODUCTION || isProductionEnvironment()) {
     // La API está en el mismo dominio, pero en la ruta /api/v1
     return '/api/v1';
   }
   
-  // 3. En desarrollo: usar localhost
+  // 3. En desarrollo local: siempre usar localhost
   return 'http://localhost:8000/api/v1';
 };
 
