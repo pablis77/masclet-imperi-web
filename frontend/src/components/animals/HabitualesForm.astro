@@ -194,20 +194,13 @@ console.log('[HabitualesForm] Idioma detectado:', lang);
           // Mostrar mensaje de proceso
           window.mostrarMensaje('Registrando nuevo parto...', 'info');
           
-          // Determinar la URL base de la API dinámicamente
+          // Determinar la URL base de la API dinámicamente 
           let apiBaseUrl = '';
           if (typeof window !== 'undefined') {
-            const hostname = window.location.hostname;
-            const isTunnel = hostname.includes('loca.lt');
-            
-            if (isTunnel) {
-              apiBaseUrl = 'https://api-masclet-imperi.loca.lt/api/v1';
-              console.log('Usando URL de túnel para API: ' + apiBaseUrl);
-            } else {
-              // Usar IP literal en vez de localhost para mayor estabilidad
-              apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
-              console.log('Usando URL local para API (IP literal): ' + apiBaseUrl);
-            }
+            // Usado centralización de configuración para obtener la URL
+            import { apiConfig } from '@/services/apiConfig.centralizado';
+            apiBaseUrl = apiConfig.getBaseUrl();
+            console.log('Usando URL para API: ' + apiBaseUrl);
           } else {
             apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
           }

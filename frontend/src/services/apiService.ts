@@ -53,73 +53,19 @@ api.interceptors.request.use(
     // Debug para todas las peticiones
     // console.log(`[API] Procesando solicitud: ${endpoint}`);
     
-    // SOLUCIÓN PARA TÚNELES DE LOCALTUNNEL
-    if (typeof window !== 'undefined' && window.location.hostname.includes('loca.lt')) {
-      // Si es la primera vez que detectamos un error 511, mostrar mensaje informativo
-      const tunnelMessageShown = localStorage.getItem('tunnelMessageShown') === 'true';
-      if (!tunnelMessageShown && !document.getElementById('tunnel-auth-message')) {
-        localStorage.setItem('tunnelMessageShown', 'true');
-        
-        // Mostrar mensaje para autenticar el túnel manualmente
-        const msgDiv = document.createElement('div');
-        msgDiv.id = 'tunnel-auth-message';
-        msgDiv.style.position = 'fixed';
-        msgDiv.style.top = '50px';
-        msgDiv.style.left = '50%';
-        msgDiv.style.transform = 'translateX(-50%)';
-        msgDiv.style.backgroundColor = '#f8d7da';
-        msgDiv.style.color = '#721c24';
-        msgDiv.style.padding = '15px 20px';
-        msgDiv.style.borderRadius = '5px';
-        msgDiv.style.zIndex = '9999';
-        msgDiv.style.maxWidth = '80%';
-        msgDiv.style.textAlign = 'center';
-        msgDiv.style.boxShadow = '0 3px 10px rgba(0,0,0,0.2)';
-        msgDiv.innerHTML = `
-          <h3 style="margin-top: 0;">Autenticación de túnel necesaria</h3>
-          <p>Para usar el túnel correctamente, necesitas autenticar ambos túneles manualmente.</p>
-          <p><strong>1.</strong> Haz clic en este botón para abrir el túnel del backend:</p>
-          <a href="https://api-masclet-imperi.loca.lt/api/v1/health" target="_blank" 
-             style="display: inline-block; background: #28a745; color: white; text-decoration: none; 
-                    padding: 8px 15px; margin: 10px 0; border-radius: 4px;">
-            Autenticar Túnel Backend
-          </a>
-          <p><strong>2.</strong> En la nueva pestaña, completa cualquier autenticación que solicite LocalTunnel</p>
-          <p><strong>3.</strong> Cierra esa pestaña y vuelve aquí</p>
-          <p><strong>4.</strong> Recarga esta página</p>
-          <button id="close-tunnel-msg" style="background: #6c757d; border: none; color: white; padding: 5px 10px; 
-                                             border-radius: 3px; margin-top: 10px; cursor: pointer;">
-            Cerrar este mensaje
-          </button>
-        `;
-        document.body.appendChild(msgDiv);
-        
-        // Añadir manejador para cerrar el mensaje
-        document.getElementById('close-tunnel-msg')?.addEventListener('click', () => {
-          msgDiv.style.display = 'none';
-        });
-      }
-      
-      // Formatear correctamente la URL
-      if (!endpoint.startsWith('/api/v1') && !endpoint.startsWith('api/v1')) {
-        const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-        config.url = `/api/v1${path}`;
-        console.log(`[TÚNEL] Añadiendo prefijo: ${endpoint} -> ${config.url}`);
-      }
-      
-      // Evitar duplicación de prefijos /api/v1
-      const finalUrl = `${config.baseURL || ''}${config.url || ''}`;
-      if (finalUrl.includes('/api/v1/api/v1/')) {
-        console.log(`[TÚNEL] Corrigiendo URL duplicada: ${finalUrl}`);
-        const fixedUrl = finalUrl.replace('/api/v1/api/v1/', '/api/v1/');
-        const baseUrlPart = config.baseURL || '';
-        config.url = fixedUrl.replace(baseUrlPart, '');
-        console.log(`[TÚNEL] URL corregida: ${baseUrlPart}${config.url}`);
-      }
+    // Evitar duplicación de prefijos /api/v1
+    const finalUrl = `${config.baseURL || ''}${config.url || ''}`;
+    if (finalUrl.includes('/api/v1/api/v1/')) {
+      console.log(`[API] Corrigiendo URL duplicada: ${finalUrl}`);
+      const fixedUrl = finalUrl.replace('/api/v1/api/v1/', '/api/v1/');
+      const baseUrlPart = config.baseURL || '';
+      config.url = fixedUrl.replace(baseUrlPart, '');
+      console.log(`[API] URL corregida: ${baseUrlPart}${config.url}`);
     }
+    
     // Asegurar encabezados AUTH
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('token')) {
-      config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_NAME)) {
+      config.headers.Authorization = `Bearer ${localStorage.getItem(TOKEN_NAME)}`;
     }
     
     // NO activamos withCredentials en ningún entorno para evitar problemas CORS

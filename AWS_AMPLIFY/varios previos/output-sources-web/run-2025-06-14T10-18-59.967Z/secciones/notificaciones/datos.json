@@ -1,0 +1,426 @@
+{
+  "nombre": "Notificaciones",
+  "titulo": "Alertas del sistema",
+  "url": "http://localhost:3000/notifications",
+  "scripts": [
+    "http://localhost:3000/scripts/bloquear-eliminar-parto.js",
+    "http://localhost:3000/scripts/bloquear-editar-parto.js",
+    "http://localhost:3000/scripts/bloquear-actualizar-animal.js",
+    "http://localhost:3000/scripts/bloquear-acciones-listados.js",
+    "http://localhost:3000/src/pages/notifications.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/src/components/layout/MainLayout.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/src/components/layout/MainLayout.astro?astro&type=script&index=1&lang.ts",
+    "http://localhost:3000/src/components/layout/Navbar.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/src/components/layout/Navbar.astro?astro&type=script&index=1&lang.ts",
+    "http://localhost:3000/src/components/LanguageSwitcher.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/src/components/layout/Sidebar.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/src/components/layout/Sidebar.astro?astro&type=script&index=1&lang.ts",
+    "http://localhost:3000/src/components/layout/Footer.astro?astro&type=script&index=0&lang.ts",
+    "http://localhost:3000/@vite/client",
+    "http://localhost:3000/@fs/C:/Proyectos/claude/masclet-imperi-web/frontend/node_modules/astro/dist/runtime/client/dev-toolbar/entrypoint.js?v=5e89932e",
+    "http://localhost:3000/node_modules/@astrojs/tailwind/base.css",
+    "http://localhost:3000/src/components/LanguageSwitcher.astro?astro&type=style&index=0&lang.css",
+    "http://localhost:3000/src/components/layout/Sidebar.astro?astro&type=style&index=0&lang.css",
+    "http://localhost:3000/src/components/layout/Footer.astro?astro&type=style&index=0&lang.css",
+    "http://localhost:3000/src/components/layout/MainLayout.astro?astro&type=style&index=0&lang.css",
+    "http://localhost:3000/scripts/permissions-ui.js"
+  ],
+  "estilos": [],
+  "componentes": [
+    {
+      "id": "sidebar-container",
+      "tipo": "div",
+      "clases": [
+        "md:block"
+      ]
+    },
+    {
+      "id": "close-sidebar",
+      "tipo": "button",
+      "clases": [
+        "md:hidden",
+        "absolute",
+        "top-4",
+        "right-4",
+        "text-gray-500",
+        "dark:text-gray-400",
+        "hover:text-gray-700",
+        "dark:hover:text-gray-200"
+      ]
+    },
+    {
+      "id": "nav-title",
+      "tipo": "h3",
+      "clases": [
+        "px-6",
+        "mb-2",
+        "text-xs",
+        "font-semibold",
+        "text-gray-500",
+        "dark:text-gray-400",
+        "uppercase",
+        "tracking-wider"
+      ]
+    },
+    {
+      "id": "sidebar-overlay",
+      "tipo": "div",
+      "clases": [
+        "fixed",
+        "inset-0",
+        "bg-black",
+        "bg-opacity-50",
+        "z-30",
+        "hidden",
+        "md:hidden"
+      ]
+    },
+    {
+      "id": "page-title",
+      "tipo": "div",
+      "clases": [
+        "font-bold",
+        "text-xl"
+      ]
+    },
+    {
+      "id": "mobile-menu-button",
+      "tipo": "button",
+      "clases": [
+        "text-white",
+        "text-2xl",
+        "p-2",
+        "mr-2",
+        "md:hidden"
+      ]
+    },
+    {
+      "id": "language-selector",
+      "tipo": "select",
+      "clases": [
+        "bg-white",
+        "dark:bg-gray-800",
+        "border",
+        "border-gray-300",
+        "dark:border-gray-700",
+        "text-gray-800",
+        "dark:text-white",
+        "rounded",
+        "py-1",
+        "px-2",
+        "text-sm"
+      ]
+    },
+    {
+      "id": "current-lang-indicator",
+      "tipo": "div",
+      "clases": [
+        "hidden",
+        "text-xs",
+        "mt-1",
+        "text-white",
+        "p-1",
+        "rounded",
+        "bg-green-600"
+      ]
+    },
+    {
+      "id": "theme-toggle",
+      "tipo": "button",
+      "clases": [
+        "text-white",
+        "hover:text-gray-200",
+        "transition-colors",
+        "p-2",
+        "rounded-full",
+        "hover:bg-primary/20"
+      ]
+    },
+    {
+      "id": "theme-toggle-light-icon",
+      "tipo": "span",
+      "clases": [
+        "hidden"
+      ]
+    },
+    {
+      "id": "theme-toggle-dark-icon",
+      "tipo": "span",
+      "clases": []
+    },
+    {
+      "id": "notifications-button",
+      "tipo": "button",
+      "clases": [
+        "relative",
+        "text-white",
+        "hover:text-gray-200",
+        "transition-colors",
+        "p-2",
+        "rounded-full",
+        "hover:bg-primary/20"
+      ]
+    },
+    {
+      "id": "notifications-menu",
+      "tipo": "div",
+      "clases": [
+        "absolute",
+        "right-24",
+        "mt-12",
+        "w-80",
+        "bg-white",
+        "dark:bg-gray-800",
+        "rounded-md",
+        "shadow-lg",
+        "overflow-hidden",
+        "z-50",
+        "hidden"
+      ]
+    },
+    {
+      "id": "mark-all-read",
+      "tipo": "button",
+      "clases": [
+        "text-xs",
+        "text-primary",
+        "dark:text-primary-light",
+        "hover:underline"
+      ]
+    },
+    {
+      "id": "user-role-display",
+      "tipo": "span",
+      "clases": [
+        "hidden",
+        "sm:inline-block",
+        "text-sm",
+        "capitalize",
+        "bg-primary-dark/30",
+        "px-3",
+        "py-1",
+        "rounded-full"
+      ]
+    },
+    {
+      "id": "profile-button",
+      "tipo": "button",
+      "clases": [
+        "flex",
+        "items-center",
+        "space-x-2",
+        "text-white",
+        "hover:text-gray-200",
+        "transition-colors",
+        "p-2",
+        "rounded-full",
+        "hover:bg-primary/20"
+      ]
+    },
+    {
+      "id": "profile-dropdown",
+      "tipo": "div",
+      "clases": [
+        "absolute",
+        "right-0",
+        "mt-2",
+        "w-48",
+        "bg-white",
+        "dark:bg-gray-800",
+        "rounded-md",
+        "shadow-lg",
+        "overflow-hidden",
+        "z-50",
+        "hidden",
+        "md:block",
+        "opacity-0",
+        "invisible",
+        "group-hover:opacity-100",
+        "group-hover:visible",
+        "transition-all",
+        "duration-300"
+      ]
+    },
+    {
+      "id": "mobile-menu",
+      "tipo": "div",
+      "clases": [
+        "fixed",
+        "inset-0",
+        "bg-black",
+        "bg-opacity-50",
+        "z-40",
+        "hidden"
+      ]
+    },
+    {
+      "id": "close-mobile-menu",
+      "tipo": "button",
+      "clases": [
+        "text-gray-500",
+        "hover:text-gray-700",
+        "dark:text-gray-300",
+        "dark:hover:text-white"
+      ]
+    },
+    {
+      "id": "mobile-language-selector",
+      "tipo": "select",
+      "clases": [
+        "bg-white",
+        "dark:bg-gray-800",
+        "border",
+        "border-gray-300",
+        "dark:border-gray-700",
+        "text-gray-800",
+        "dark:text-white",
+        "rounded",
+        "py-1",
+        "px-2",
+        "text-sm"
+      ]
+    },
+    {
+      "id": "mobile-theme-toggle",
+      "tipo": "button",
+      "clases": [
+        "text-gray-500",
+        "dark:text-gray-400",
+        "hover:text-gray-700",
+        "dark:hover:text-gray-200"
+      ]
+    },
+    {
+      "id": "mobile-theme-toggle-light-icon",
+      "tipo": "span",
+      "clases": [
+        "hidden"
+      ]
+    },
+    {
+      "id": "mobile-theme-toggle-dark-icon",
+      "tipo": "span",
+      "clases": []
+    },
+    {
+      "id": "open-sidebar",
+      "tipo": "button",
+      "clases": [
+        "fixed",
+        "bottom-4",
+        "left-4",
+        "md:hidden",
+        "bg-primary",
+        "text-white",
+        "p-3",
+        "rounded-full",
+        "shadow-lg",
+        "z-20"
+      ]
+    },
+    {
+      "id": "filter-type",
+      "tipo": "select",
+      "clases": [
+        "ml-2",
+        "p-2",
+        "border",
+        "border-gray-300",
+        "dark:border-gray-700",
+        "rounded-md",
+        "bg-white",
+        "dark:bg-gray-800",
+        "text-gray-700",
+        "dark:text-gray-300"
+      ]
+    },
+    {
+      "id": "mark-all-read-btn",
+      "tipo": "button",
+      "clases": [
+        "px-4",
+        "py-2",
+        "bg-primary",
+        "text-white",
+        "rounded-md",
+        "hover:bg-primary-dark"
+      ]
+    },
+    {
+      "id": "clear-all-btn",
+      "tipo": "button",
+      "clases": [
+        "ml-2",
+        "px-4",
+        "py-2",
+        "bg-red-500",
+        "text-white",
+        "rounded-md",
+        "hover:bg-red-600"
+      ]
+    },
+    {
+      "id": "notifications-container",
+      "tipo": "div",
+      "clases": [
+        "divide-y",
+        "divide-gray-100",
+        "dark:divide-gray-700"
+      ]
+    },
+    {
+      "id": "notifications-count",
+      "tipo": "span",
+      "clases": []
+    },
+    {
+      "id": "load-more-btn",
+      "tipo": "button",
+      "clases": [
+        "px-4",
+        "py-2",
+        "bg-gray-200",
+        "dark:bg-gray-700",
+        "text-gray-700",
+        "dark:text-gray-300",
+        "rounded-md",
+        "hover:bg-gray-300",
+        "dark:hover:bg-gray-600",
+        "hidden"
+      ]
+    },
+    {
+      "id": "footer-contrast-toggle",
+      "tipo": "button",
+      "clases": [
+        "p-2",
+        "rounded-full",
+        "bg-gray-100",
+        "dark:bg-gray-700",
+        "text-gray-700",
+        "dark:text-gray-300",
+        "hover:bg-gray-200",
+        "dark:hover:bg-gray-600",
+        "transition-colors"
+      ]
+    },
+    {
+      "id": "accessibility-toggle",
+      "tipo": "button",
+      "clases": [
+        "p-2",
+        "rounded-full",
+        "bg-gray-100",
+        "dark:bg-gray-700",
+        "text-gray-700",
+        "dark:text-gray-300",
+        "hover:bg-gray-200",
+        "dark:hover:bg-gray-600",
+        "transition-colors"
+      ]
+    }
+  ],
+  "reactComponents": [],
+  "sourceMaps": [],
+  "endpoints": []
+}

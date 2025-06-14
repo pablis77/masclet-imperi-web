@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from '../components/dashboard/Dashboard';
+// Reemplazamos el Dashboard original por DashboardV2 que es el que se usa actualmente
+// import Dashboard from '../components/dashboard/Dashboard'; // Ya no se usa
 import DashboardV2 from '../components/dashboardv2/DashboardV2';
 import ImportCsv from '../components/imports/ImportCsv';
 import Explotaciones from '../components/Explotaciones';
@@ -13,8 +14,8 @@ const AppRouter: React.FC = () => {
         {/* Ruta principal redirige al dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         
-        {/* Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Dashboard - Ahora usa DashboardV2 para mantener consistencia con el resto de la app */}
+        <Route path="/dashboard" element={<DashboardV2 />} />
         
         {/* Dashboard V2 - Nueva versión mejorada */}
         <Route path="/dashboard-v2" element={<DashboardV2 />} />

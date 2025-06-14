@@ -1,6 +1,18 @@
 import axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse, AxiosInstance } from 'axios';
 
+// Importar configuración centralizada desde el adaptador
+import {
+  API_BASE_URL as CENTRAL_API_URL,
+  API_TIMEOUT,
+  API_DEFAULT_HEADERS,
+  environment as centralEnvironment,
+  isProduction,
+  isLocal,
+  normalizePath as apiNormalizePath,
+  TOKEN_NAME
+} from './apiConfigAdapter';
+
 // Extender la interfaz AxiosInstance para incluir nuestros métodos personalizados
 declare module 'axios' {
   interface AxiosInstance {
@@ -14,124 +26,49 @@ declare module 'axios' {
 }
 
 // Tipos para el entorno de ejecución
-type Environment = 'server' | 'localtunnel' | 'local' | 'production';
+type Environment = 'server' | 'local' | 'production';
 
-// Detectar el entorno actual
-const getEnvironment = (): Environment => {
-    if (typeof window === 'undefined') return 'server';
-    
-    const hostname = window.location.hostname;
-    if (hostname.includes('loca.lt')) return 'localtunnel';
-    if (hostname === 'localhost' || hostname.includes('192.168.')) return 'local';
-    return 'production';
-};
-
-const environment = getEnvironment();
-const isLocalTunnel = environment === 'localtunnel'; // Para compatibilidad con código existente
+// Usar el entorno detectado por el adaptador centralizado
+const environment = centralEnvironment as Environment;
 
 // Configuración base según el entorno
-let baseURL: string;
-let useRelativeUrls = false;
+let baseURL: string = CENTRAL_API_URL;
+let useRelativeUrls = isProduction;
 
-switch(environment) {
-    case 'localtunnel':
-        baseURL = 'https://api-masclet-imperi.loca.lt/api/v1';
-        break;
-    case 'local':
-        // En local, siempre usar la URL absoluta del backend
-        baseURL = 'http://localhost:8000/api/v1';
-        break;
-    case 'production':
-        // En producción, usar rutas relativas para evitar problemas de CORS
-        // PERO siempre asegurarse de que incluyan el prefijo /api/v1
-        baseURL = '/api/v1';
-        useRelativeUrls = true;
-        break;
-    default:
-        // En caso de duda, usar la URL absoluta local para desarrollo
-        baseURL = 'http://localhost:8000/api/v1';
-}
+// Ya no usamos LocalTunnel ni otros servicios de túneles
 
 // URL base para el proxy local (usado en desarrollo)
-const API_BASE_URL = baseURL;
+const API_BASE_URL_LOCAL = baseURL;
 
 // Imprimir información importante de depuración
 console.log('🌎 Modo de conexión:', environment);
 console.log('🔌 API Base URL:', baseURL);
 console.log('🔗 URLs Relativas:', useRelativeUrls ? 'SÍ' : 'NO');
 
-// Funciones de utilidad
+// Función para normalizar rutas (usando el adaptador centralizado)
 function normalizePath(path: string): string {
-    // Eliminar barra inicial si existe
-    path = path.startsWith('/') ? path.substring(1) : path;
-    // Asegurar barra final
-    return path.endsWith('/') ? path : `${path}/`;
+    return apiNormalizePath(path);
 }
 
 // Logs para depuración
-console.log('🌎 Modo de conexión:', environment);
-console.log('🔌 API Base URL:', baseURL || 'URL relativa');
+console.log('🌎 [api.ts] Modo de conexión:', environment);
+console.log('🔌 [api.ts] API Base URL:', baseURL || 'URL relativa');
 
-// Crear instancia de axios con configuración base
+// Configuración de Axios personalizada para integrarse mejor con el backend
 const api = axios.create({
     baseURL,
-    timeout: 15000,
-    headers: {
-        'Content-Type': 'application/json',
-        'X-Environment': environment
-    },
-    withCredentials: false // Evita problemas con CORS
+    timeout: API_TIMEOUT,
+    headers: API_DEFAULT_HEADERS,
+    validateStatus: function (status) {
+        return status >= 200 && status < 500; // Tratamos respuestas 4xx como válidas para manejarlas
+    }
 });
 
 // Interceptor para agregar el token JWT a las solicitudes
-api.interceptors.request.use(
-    (config) => {
-        // Versión MEJORADA del interceptor de token
-        console.log('Usando token JWT para autenticación');
-        
-        // 1. OBTENER TOKEN: Probar todas las fuentes posibles
-        let token = null;
-        
-        // Probar localStorage (varias claves posibles)
-        const possibleKeys = ['token', 'accessToken', 'jwt', 'access_token'];
-        
-        // Búsqueda exhaustiva en localStorage
-        if (typeof window !== 'undefined' && window.localStorage) {
-            for (const key of possibleKeys) {
-                const value = localStorage.getItem(key);
-                if (value) {
-                    token = value;
-                    console.log(`Token encontrado en localStorage['${key}']`);
-                    break;
-                }
-            }
-        }
-        
-        // Si no hay token en localStorage, buscar en sessionStorage
-        if (!token && typeof window !== 'undefined' && window.sessionStorage) {
-            for (const key of possibleKeys) {
-                const value = sessionStorage.getItem(key);
-                if (value) {
-                    token = value;
-                    console.log(`Token encontrado en sessionStorage['${key}']`);
-                    break;
-                }
-            }
-        }
-        
-        // 2. USAR EL TOKEN: Añadirlo a las cabeceras si existe
-        if (token && config.headers) {
-            // IMPORTANTE: Asegurar que el token no tenga 'Bearer' duplicado
-            if (token.startsWith('Bearer ')) {
-                config.headers['Authorization'] = token;
-            } else {
-                config.headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            // También añadir token como X-Auth-Token por si acaso
-            config.headers['X-Auth-Token'] = token;
-            
-            console.log('🔐 Token JWT añadido correctamente a las cabeceras');
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem(TOKEN_NAME);
+    if (token && config.headers) {
+        config.headers['Authorization'] = `Bearer ${token}`;
         } else {
             console.warn('⚠️ No se encontró token JWT para autenticar la petición');
             
@@ -285,17 +222,11 @@ export async function fetchData(endpoint: string, params: Record<string, any> = 
     
     // Construir la URL según el entorno
     let url;
-    if (isLocalTunnel) {
-      // En LocalTunnel, llamamos directamente al backend
-      const normalizedEndpoint = normalizePath(endpoint);
-      url = `${baseURL}${normalizedEndpoint}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    } else {
-      // En local, usamos el proxy
-      queryParams.append('endpoint', endpoint);
-      url = `${API_BASE_URL}/proxy?${queryParams.toString()}`;
-    }
+    // En local, usamos el proxy
+    queryParams.append('endpoint', endpoint);
+    url = `${API_BASE_URL_LOCAL}/proxy?${queryParams.toString()}`;
     
-    console.log(`🔍 Fetching data [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url);
+    console.log(`🔍 Fetching data:`, url);
 
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
@@ -350,25 +281,18 @@ export async function postData(endpoint: string, data: Record<string, any> = {},
     let url;
     let requestBody;
     
-    if (isLocalTunnel) {
-      // En LocalTunnel, llamamos directamente al backend
-      const normalizedEndpoint = normalizePath(endpoint);
-      url = `${baseURL}${normalizedEndpoint}`;
-      requestBody = JSON.stringify(data);
-    } else {
-      // En local, usamos el proxy
-      url = `${API_BASE_URL}/proxy`;
-      requestBody = JSON.stringify({
-        endpoint,
-        data,
-        method
-      });
-    }
+    // En local, usamos el proxy
+    url = `${API_BASE_URL_LOCAL}/proxy`;
+    requestBody = JSON.stringify({
+      endpoint,
+      data,
+      method
+    });
     
-    console.log(`📤 ${method} [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url, data);
+    console.log(`📤 ${method}:`, url, data);
     
     const response = await fetch(url, {
-      method: isLocalTunnel ? method : 'POST',
+      method: 'POST',
       headers,
       body: requestBody
     });
@@ -412,16 +336,10 @@ export async function patchData(endpoint: string, data: Record<string, any> = {}
     let url;
     let requestBody = JSON.stringify(data);
     
-    if (isLocalTunnel) {
-      // En LocalTunnel, llamamos directamente al backend
-      const normalizedEndpoint = normalizePath(endpoint);
-      url = `${baseURL}${normalizedEndpoint}`;
-    } else {
-      // En local, usamos el proxy
-      url = `${API_BASE_URL}${endpoint}`;
-    }
+    // En local, usamos el proxy
+    url = `${API_BASE_URL_LOCAL}${endpoint}`;
     
-    console.log(`🔧 PATCH [${isLocalTunnel ? 'TUNNEL' : 'LOCAL'}]:`, url, data);
+    console.log(`🔧 PATCH:`, url, data);
     
     const response = await fetch(url, {
       method: 'PATCH',

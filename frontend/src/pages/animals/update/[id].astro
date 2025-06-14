@@ -640,12 +640,11 @@ try {
           // Obtener token de autenticación si está disponible
           const token = localStorage.getItem('token');
           
-          // Realizar la solicitud DELETE al endpoint con URL completa
-          // Construimos la URL correcta para acceder a la API
-          const apiBaseUrl = 'http://localhost:8000'; // URL local
-          // También podríamos usar 'https://api-masclet-imperi.loca.lt' para acceso externo
+          // Importar la configuración centralizada para la API
+          import { apiConfig } from '@/services/apiConfig.centralizado';
+          const apiBaseUrl = apiConfig.getBaseUrl();
           
-          const response = await fetch(`${apiBaseUrl}/api/v1/animals/${animalId}`, {
+          const response = await fetch(`${apiBaseUrl}/animals/${animalId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
