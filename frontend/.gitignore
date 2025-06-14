@@ -1,42 +1,129 @@
-# Dependencias
-node_modules/
-.pnp
-.pnp.js
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*
+!.env.example
+.venv
+env/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+*.code-workspace
 
 # Logs
-logs
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+.log/
 
-# Directorios de build
-dist/
-dist-ssr/
-*.local
-.cache/
-.astro/
+# Database
+*.sqlite3
+*.db
 
-# Editores
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+/build
+/dist
+frontend/dist/
+frontend/public/assets/css/masclet-bundle*.css
+
+# Archivos de seguridad y respaldo
+*.bak
+*.tmp
+*.swp
+*~
 .DS_Store
+ThumbsEE.db
+.directory
+*.dump
+*.sql
+*.zip
+*.tar
+*.gz
 
-# Variables de entorno (por seguridad)
-.env
+# Archivos de configuración específicos de producción
+render.env
+security_audit_report.*
+
+# Archivos de certificados y claves
+*.pem
+*.key
+*.crt
+*.cer
+*.cert
+*.keystore
+*.p12
+*.pfx
+
+# misc
+.DS_Store
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-AWS_AMPLIFY/sonarqube-data
+# Backups and large files
+backend/docker/backups/**
+backend/docker/postgres/data/**
+*.tar
+*.zip
+*.gz*.bak*
+
+# Archivos de entorno
+.env
+.env.local
+.env.development
+.env.production
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production
+
+
+# SonarQube y archivos de análisis grandes
+AWS_AMPLIFY/sonarqube-data/
+AWS_AMPLIFY/analisis-codigo-fuente/**/*.json
+AWS_AMPLIFY/varios\ previos/output-sources-web/
+
+# Archivos específicos que superan límites de GitHub
 AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/javascript/sonar-javascript-plugin-10.23.0.32711-multi.jar
+AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/cpp/sonar-cfamily-plugin-6.67.0.84717.jar
+AWS_AMPLIFY/analisis-codigo-fuente/analisis-2025-06-12T16-57-47.062Z/analisis-completo.json
