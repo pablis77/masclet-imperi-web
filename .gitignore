@@ -49,6 +49,24 @@ pnpm-debug.log*
 *.sqlite3
 *.db
 
+# SonarQube y análisis de código
+sonarqube-data/
+sonarqube-extensions/
+sonarqube-logs/
+sonarqube-results/
+AWS_AMPLIFY/SONARQUBE/
+AWS_AMPLIFY/sonarqube-*/
+AWS_AMPLIFY/analisis-codigo-fuente/**/analisis-completo.json
+
+# Archivos grandes
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.json.gz
+
 # Node
 node_modules/
 npm-debug.log*
