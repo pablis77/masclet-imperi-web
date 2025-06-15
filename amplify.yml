@@ -1,21 +1,19 @@
 version: 1
-applications:
-  - frontend:
-      phases:
-        preBuild:
-          commands:
-            - cd frontend
-            - npm ci
-        build:
-          commands:
-            - cd frontend
-            - npm run build
-            - node create-index.cjs
-      artifacts:
-        baseDirectory: frontend/dist/client
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - frontend/node_modules/**/*
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd frontend
+        - npm ci
+    build:
+      commands:
+        - npm run build
+        - node create-index.cjs
+  artifacts:
+    baseDirectory: frontend/dist/client
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
     appRoot: .
