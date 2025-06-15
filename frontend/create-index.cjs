@@ -113,12 +113,7 @@ const htmlContent = `<!DOCTYPE html>
         console.log('Auth check: Token ' + (token ? 'encontrado' : 'no encontrado'));
         console.log('Auth check: Role ' + (userRole || 'no detectado'));
         
-        // Redirección a login si no hay token
-        if (!token && window.location.pathname !== '/login') {
-          console.log('Redirigiendo a login (no autenticado)');
-          window.location.href = '/login';
-          return false;
-        }
+        // No hay redirección forzada. La SPA se monta completamente
         return true;
       } catch (error) {
         console.error('Error en checkAuth:', error);
@@ -303,17 +298,11 @@ const htmlContent = `<!DOCTYPE html>
       });
     }
     
-    // Función para manejar redirección a login
-    function redirigirALogin() {
-      // Si ya estamos en /login, no redirigimos
-      if (window.location.pathname.includes('/login')) {
-        console.log('Ya estamos en login, inicializando SPA...');
-        cargarScripts();
-        return;
-      }
-      
-      console.log('Redirigiendo a login (no autenticado)');
-      window.location.href = '/login';
+    // Función para manejar inicialización (sin redirección automática)
+    function inicializarSPA() {
+      console.log('Inicializando SPA...');
+      // Siempre cargar scripts independientemente de la ruta
+      cargarScripts();
     }
     
     // Función para cargar todos los scripts
@@ -356,13 +345,9 @@ const htmlContent = `<!DOCTYPE html>
       console.log('Auth check: Token ' + (token ? 'encontrado' : 'no encontrado'));
       console.log('Auth check: Role ' + (userRole || 'no detectado'));
       
-      // Redirección a login si no hay token
-      if (!token && window.location.pathname !== '/login') {
-        redirigirALogin();
-      } else {
-        // Si hay token o estamos en login, continuar cargando normalmente
-        cargarScripts();
-      }
+      // Ya no redirigimos automáticamente
+      // Siempre inicializamos la SPA independientemente de la autenticación
+      inicializarSPA();
     } catch (error) {
       console.error('Error en verificación de auth:', error);
       // En caso de error, intentar cargar scripts de todas formas
