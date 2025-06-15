@@ -1,21 +1,26 @@
-// Script para crear index.html que redireccione a nuestro punto de entrada
+// Script para crear index.html para SPA en Astro
 const fs = require('fs');
 const path = require('path');
 
-// Contenido del index.html
+// Contenido del HTML para SPA (sin redirecciones)
 const htmlContent = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Masclet Imperi Web</title>
-  <script>
-    // Cargamos automáticamente la SPA
-    window.location.href = './_astro/client.SUp79uPH.js';
-  </script>
+  <!-- Busca archivos CSS automáticamente -->
+  <link rel="stylesheet" href="./_astro/index.css">
 </head>
 <body>
-  <p>Cargando aplicación...</p>
+  <div id="app">
+    <!-- Contenedor donde se montará la aplicación -->
+    <h1>Masclet Imperi Web</h1>
+    <p>Cargando aplicación...</p>
+  </div>
+  
+  <!-- Cargar el main entry point de la aplicación -->
+  <script type="module" src="./_astro/index.js"></script>
 </body>
 </html>`;
 
