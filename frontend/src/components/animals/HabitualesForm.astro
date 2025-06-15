@@ -196,13 +196,13 @@ console.log('[HabitualesForm] Idioma detectado:', lang);
           
           // Determinar la URL base de la API dinámicamente 
           let apiBaseUrl = '';
-          if (typeof window !== 'undefined') {
-            // Usado centralización de configuración para obtener la URL
-            import { apiConfig } from '@/services/apiConfig.centralizado';
-            apiBaseUrl = apiConfig.getBaseUrl();
-            console.log('Usando URL para API: ' + apiBaseUrl);
+          // Obtenemos la API base URL desde la variable global que configuramos en la página principal
+          if (typeof window !== 'undefined' && window.apiBaseUrl) {
+            apiBaseUrl = window.apiBaseUrl;
+            console.log('Usando URL para API desde variable global: ' + apiBaseUrl);
           } else {
             apiBaseUrl = 'http://127.0.0.1:8000/api/v1';
+            console.log('Usando URL fallback para API: ' + apiBaseUrl);
           }
           
           // Añadir slash final para evitar redirecciones 307

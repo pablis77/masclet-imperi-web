@@ -284,6 +284,17 @@ try {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM completamente cargado y analizado');
     
+    // Definir el ID del animal como variable global para que otros scripts puedan usarlo
+    const urlParts = window.location.pathname.split('/');
+    const animalId = urlParts[urlParts.length - 1]; // El último segmento de la URL es el ID
+    
+    // Definimos variables globales para que los componentes puedan acceder a ellos
+    window.animalId = animalId;
+    window.apiBaseUrl = 'http://127.0.0.1:8000/api/v1'; // Usamos la URL base por defecto
+    
+    console.log(`[AnimalUpdate] ID del animal definido globalmente: ${window.animalId}`);
+    console.log(`[AnimalUpdate] URL base API definida globalmente: ${window.apiBaseUrl}`);
+    
     // Configurar pestañas
     const tabs = document.querySelectorAll('[data-tab]');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -539,7 +550,7 @@ try {
         console.log('Enviando solo campos modificados para actualización:', datosModificados);
         
         // Realizar la petición PATCH usando fetch
-        const response = await fetch(`http://localhost:8000/api/v1/animals/${window.animalId}`, {
+        const response = await fetch(`${window.apiBaseUrl}/animals/${window.animalId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -639,10 +650,8 @@ try {
           
           // Obtener token de autenticación si está disponible
           const token = localStorage.getItem('token');
-          
-          // Importar la configuración centralizada para la API
-          import { apiConfig } from '@/services/apiConfig.centralizado';
-          const apiBaseUrl = apiConfig.getBaseUrl();
+                    // Usar la configuración global de la API
+            const apiBaseUrl = window.apiBaseUrl;
           
           const response = await fetch(`${apiBaseUrl}/animals/${animalId}`, {
             method: 'DELETE',

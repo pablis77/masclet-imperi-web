@@ -313,5 +313,32 @@
     "description": "Backup manual creado el 13/6/2025, 9:02:21",
     "size_bytes": 125856,
     "size": "122.91 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250615_020030.sql",
+    "date": "15/06/2025 02:00",
+    "backup_type": "daily",
+    "created_by": "sistema",
+    "description": "Backup diario programado (15/06/2025)",
+    "size_bytes": 126065,
+    "size": "123.11 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250615_120032.sql",
+    "date": "15/06/2025 12:00",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras modificación (PATCH) del animal 19-01 (ID: 3120)",
+    "size_bytes": 126237,
+    "size": "123.28 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250615_120032.sql",
+    "date": "15/06/2025 12:00",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras modificación (PATCH) del animal 19-01 (ID: 3120)",
+    "size_bytes": 126634,
+    "size": "123.67 KB"
   }
 ]
