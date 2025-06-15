@@ -245,62 +245,128 @@ const htmlContent = `<!DOCTYPE html>
   <script>
     // Control de estado de carga
     let loadedScripts = 0;
-    const totalScripts = ${Object.keys(targetsToFind).filter(key => key.includes('Js')).length};
+    // Usar el número de archivos JS que realmente se encontraron, no el total esperado
+    const foundJsFiles = Object.entries(${JSON.stringify(foundFiles)})
+      .filter(([key]) => key.includes('Js'))
+      .length;
+    const totalScripts = foundJsFiles > 0 ? foundJsFiles : 5; // Al menos 5 scripts a cargar para seguridad
     
     function scriptLoaded() {
       loadedScripts++;
       if (loadedScripts >= totalScripts) {
         console.log('Todos los scripts cargados correctamente');
-        // Permitir un tiempo para inicialización antes de ocultar el loader
-        setTimeout(() => {
-          const loader = document.getElementById('loading-container');
-          if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => {
-              loader.style.display = 'none';
-            }, 500);
-          }
-        }, 1000);
+        finalizarCarga();
       }
+    }
+    
+    function finalizarCarga() {
+      // Permitir un tiempo para inicialización antes de ocultar el loader
+      setTimeout(() => {
+        const loader = document.getElementById('loading-container');
+        if (loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => {
+            loader.style.display = 'none';
+          }, 500);
+        }
+        
+        // Si estamos en /login, establecer clase especial
+        if (window.location.pathname.includes('/login')) {
+          document.body.classList.add('login-page');
+        }
+        
+        // Inicializar aplicación manualmente si necesario
+        const event = new Event('app-fully-loaded');
+        document.dispatchEvent(event);
+      }, 800);
     }
     
     function loadScript(src, id) {
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = src;
-        script.id = id;
+        script.id = id || 'script-' + Math.random().toString(36).substring(2, 9);
         script.async = false;
         script.onload = () => {
           scriptLoaded();
           resolve();
         };
         script.onerror = (e) => {
+          console.warn('Error al cargar:', src, e);
+          // Contar errores como scripts cargados para no bloquear progreso
+          scriptLoaded(); 
           window.handleAssetLoadError(src);
-          reject(e);
+          // Resolvemos igualmente para continuar la cadena de promesas
+          resolve();
         };
         document.body.appendChild(script);
       });
     }
     
-    // Verificación inicial de autorización
-    if (checkAuth()) {
+    // Función para manejar redirección a login
+    function redirigirALogin() {
+      // Si ya estamos en /login, no redirigimos
+      if (window.location.pathname.includes('/login')) {
+        console.log('Ya estamos en login, inicializando SPA...');
+        cargarScripts();
+        return;
+      }
+      
+      console.log('Redirigiendo a login (no autenticado)');
+      window.location.href = '/login';
+    }
+    
+    // Función para cargar todos los scripts
+    function cargarScripts() {
       // Cargar scripts principales en secuencia
       Promise.resolve()
-        ${foundFiles.vendorJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorJs}", "vendor-main"))` : ''}
-        ${foundFiles.vendorReactJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorReactJs}", "vendor-react"))` : ''}
-        ${foundFiles.vendorChartsJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorChartsJs}", "vendor-charts"))` : ''}
-        ${foundFiles.clientJs ? `.then(() => loadScript("/_astro/${foundFiles.clientJs}", "astro-client"))` : ''}
-        ${foundFiles.configJs ? `.then(() => loadScript("/_astro/${foundFiles.configJs}", "config"))` : ''}
-        ${foundFiles.apiConfigJs ? `.then(() => loadScript("/_astro/${foundFiles.apiConfigJs}", "api-config"))` : ''}
-        ${foundFiles.authServiceJs ? `.then(() => loadScript("/_astro/${foundFiles.authServiceJs}", "auth-service"))` : ''}
-        ${foundFiles.apiServiceJs ? `.then(() => loadScript("/_astro/${foundFiles.apiServiceJs}", "api-service"))` : ''}
+        ${foundFiles.vendorJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorJs}", "vendor-main"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.vendorReactJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorReactJs}", "vendor-react"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.vendorChartsJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorChartsJs}", "vendor-charts"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.clientJs ? `.then(() => loadScript("/_astro/${foundFiles.clientJs}", "astro-client"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.configJs ? `.then(() => loadScript("/_astro/${foundFiles.configJs}", "config"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.apiConfigJs ? `.then(() => loadScript("/_astro/${foundFiles.apiConfigJs}", "api-config"))` : '.then(() => Promise.resolve())'}
+        // Manejar opcionales con Promise.resolve()
+        .then(() => ${foundFiles.authServiceJs ? `loadScript("/_astro/${foundFiles.authServiceJs}", "auth-service")` : 'Promise.resolve()'})
+        .then(() => ${foundFiles.apiServiceJs ? `loadScript("/_astro/${foundFiles.apiServiceJs}", "api-service")` : 'Promise.resolve()'})
+        // Cargar todos los JS extras que podamos encontrar
         .then(() => {
           console.log('Scripts principales cargados');
+          // Si hay menos scripts cargados que los esperados, finalizar manualmente
+          if (loadedScripts < totalScripts) {
+            console.log('Finalizando carga manualmente');
+            while(loadedScripts < totalScripts) {
+              scriptLoaded();
+            }
+          }
         })
         .catch(error => {
           console.error('Error cargando scripts:', error);
           document.getElementById('error-panel').style.display = 'block';
+          // Finalizar carga de todas formas para mostrar UI
+          finalizarCarga();
         });
+    }
+    
+    // Verificación inicial de autorización
+    try {
+      const token = localStorage.getItem('jwt');
+      const userRole = localStorage.getItem('userRole');
+      
+      console.log('Auth check: Token ' + (token ? 'encontrado' : 'no encontrado'));
+      console.log('Auth check: Role ' + (userRole || 'no detectado'));
+      
+      // Redirección a login si no hay token
+      if (!token && window.location.pathname !== '/login') {
+        redirigirALogin();
+      } else {
+        // Si hay token o estamos en login, continuar cargando normalmente
+        cargarScripts();
+      }
+    } catch (error) {
+      console.error('Error en verificación de auth:', error);
+      // En caso de error, intentar cargar scripts de todas formas
+      cargarScripts();
     }
   </script>
 </body>
