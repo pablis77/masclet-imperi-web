@@ -125,6 +125,24 @@ export async function getAnimals() {
 /**
  * Actualizar los estados y observaciones de los animales de un listado
  */
+/**
+ * Actualiza un listado existente
+ * @param id ID del listado a actualizar
+ * @param listado Datos a actualizar
+ * @returns Promise con el listado actualizado
+ */
+export async function updateListado(id: number, listado: any): Promise<any> {
+  try {
+    console.log(`📝 Actualizando listado ${id}:`, listado);
+    const data = await apiService.put(`listados/${id}`, listado);
+    console.log('✅ Listado actualizado:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error al actualizar listado:', error);
+    throw error;
+  }
+}
+
 export async function updateListadoAnimales(id: string | number, animales: any[]) {
   try {
     return await apiService.put(`listados/${id}/animales`, { animales });

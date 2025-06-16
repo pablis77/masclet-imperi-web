@@ -189,64 +189,53 @@ function generateHtml(importantFiles) {
         
         // No hay redirección forzada. La SPA se monta completamente
         return true;
-      } catch (error) {
-        console.error('Error en checkAuth:', error);
-        return false;
-      }
-    };
-    
-    // Registro de inicialización
-    console.log('Masclet Imperi Web - Inicializando aplicación');
-  </script>
-
   <style>
-    /* Estilos básicos de carga */
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       margin: 0;
       padding: 0;
       background-color: #f5f5f5;
+      color: var(--text-primary);
     }
-    
-    #loading-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+    .container {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      background-color: #f5f5f5;
-      z-index: 9999;
-      transition: opacity 0.5s ease-out;
+      justify-content: center;
+      height: 100vh;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
     }
-    
-    .app-logo {
-      width: 160px;
-      height: 160px;
-      margin-bottom: 20px;
-    }
-    
-    .app-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #333;
-    }
-    
     .spinner {
-      width: 48px;
-      height: 48px;
       border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      border-left-color: #09f;
+      border-left-color: #59961A;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+      margin-top: 20px;
     }
-    
-    .loading-text {
+    h1 {
+      color: #59961A;
+    }
+    .error-box {
+      margin-top: 20px;
+      border: 2px solid #cc0000;
+      background-color: #ffeeee;
+      color: #cc0000;
+      padding: 15px;
+      border-radius: 5px;
+      max-width: 600px;
+      text-align: left;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .debug-info {
+      margin-top: 10px;
+      text-align: left;
+      font-size: 12px;
       font-size: 16px;
       color: #666;
     }
