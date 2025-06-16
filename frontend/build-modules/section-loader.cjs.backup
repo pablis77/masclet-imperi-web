@@ -6,22 +6,12 @@
 /**
  * Configuración de las secciones con sus rutas y dependencias
  * Rutas actualizadas según configuración real de la aplicación
- * IMPLEMENTACIÓN 26: Reemplazar patrones regex con listas exactas de archivos
  */
 const SECTIONS = {
   // Core (siempre cargado)
   CORE: {
     pattern: null, // No tiene patrón URL, siempre se carga
-    jsFiles: [
-      'src/config/apiConfig.centralizado.ts',
-      'src/services/apiConfigAdapter.ts',
-      'src/services/apiService.ts',
-      'src/services/notificationService.ts',
-      'src/services/authService.js',
-      'node_modules/.vite/deps/axios.js',
-      'node_modules/.vite/deps/react.js',
-      'node_modules/.vite/deps/react-shared-subset.js'
-    ],
+    jsPattern: /(vendor|client|main|apiConfig\.centralizado|apiService|apiConfigAdapter|auth|notificationService)/i,
     cssPattern: /(index|global|lemon-squeezy)/i,
     priority: 0 // Prioridad máxima (se carga primero)
   },
@@ -29,10 +19,7 @@ const SECTIONS = {
   // Login (página de entrada)
   LOGIN: {
     pattern: '/login',
-    jsFiles: [
-      'src/components/modals/PasswordErrorModal.tsx',
-      'src/pages/login.astro'
-    ],
+    jsPattern: /(login|auth|PasswordErrorModal)/i,
     cssPattern: /(login)/i,
     priority: 1
   },
@@ -40,13 +27,7 @@ const SECTIONS = {
   // Dashboard (principal tras login)
   DASHBOARD: {
     pattern: ['/', '/dashboard', '/index', '/dashboard-direct', '/dashboard-simple', '/dashboard-test', '/dashboard2'],
-    jsFiles: [
-      'src/components/dashboard/dashboardv2/cards/DashboardV2.tsx',
-      'src/components/dashboard/sections/PartosSection.tsx',
-      'src/components/dashboard/components/ResumenOriginalCard.tsx',
-      'src/components/dashboard/components/ChartComponents.tsx',
-      'src/components/dashboard/components/UIComponents.tsx'
-    ],
+    jsPattern: /(dashboardv2|partossection|chartcomponents|uicomponents|resumenoriginalcard)/i,
     cssPattern: /(dashboard|index)/i,
     priority: 2
   },
@@ -54,9 +35,7 @@ const SECTIONS = {
   // Explotaciones
   EXPLOTACIONES: {
     pattern: ['/explotaciones', '/explotaciones-react'], 
-    jsFiles: [
-      'src/components/explotaciones-react/ExplotacionesPage.tsx'
-    ],
+    jsPattern: /(explotacion|ExplotacionesPage)/i,
     cssPattern: /(explotacion)/i,
     priority: 3
   },
@@ -64,16 +43,7 @@ const SECTIONS = {
   // Animales
   ANIMALES: {
     pattern: ['/animals', '/animal'], 
-    jsFiles: [
-      'src/components/animals/AnimalFilters.tsx',
-      'src/components/animals/AnimalTable.tsx',
-      'src/components/animals/AnimalForm.astro',
-      'src/components/animals/HabitualesForm.astro',
-      'src/components/animals/CreateAnimalForm.astro',
-      'scripts/animal-history.js',
-      'scripts/editar-parto-v4.js',
-      'src/services/animalService.ts'
-    ],
+    jsPattern: /(animal|AnimalTable|AnimalFilters)/i,
     cssPattern: /(animal)/i,
     priority: 3
   },
@@ -81,9 +51,7 @@ const SECTIONS = {
   // Listados
   LISTADOS: {
     pattern: '/listados',
-    jsFiles: [
-      'src/services/listados-service.ts'
-    ],
+    jsPattern: /(listados?|reports?|ListadosContainer|ListadosTable)/i,
     cssPattern: /(listado)/i,
     priority: 3
   },
@@ -91,16 +59,7 @@ const SECTIONS = {
   // Usuarios
   USUARIOS: {
     pattern: ['/users', '/user'],
-    jsFiles: [
-      'src/components/guards/RoleGuard.tsx',
-      'src/components/common/ConfirmDialog.tsx',
-      'src/components/common/Pagination.tsx',
-      'src/components/users/UserForm.tsx',
-      'src/components/users/UserTable.tsx',
-      'src/components/users/UsersManagement.tsx',
-      'src/services/roleService.ts',
-      'src/services/userServiceProxy.ts'
-    ],
+    jsPattern: /(users?|RoleGuard|ConfirmDialog|Pagination|userServices)/i,
     cssPattern: /(user)/i,
     priority: 4
   },
@@ -108,14 +67,7 @@ const SECTIONS = {
   // Importación
   IMPORTACION: {
     pattern: ['/imports', '/import'],
-    jsFiles: [
-      'src/components/admin/ResetDatabaseButton.tsx',
-      'src/components/imports/ImportContainer.tsx',
-      'src/components/imports/ImportForm.tsx',
-      'src/components/imports/ImportHistory.tsx',
-      'src/services/importService.ts',
-      'src/services/adminService.ts'
-    ],
+    jsPattern: /(import|ImportContainer|ImportForm|ImportHistory|ResetDatabaseButton)/i,
     cssPattern: /(import)/i,
     priority: 4
   },
@@ -123,9 +75,7 @@ const SECTIONS = {
   // Backups
   BACKUPS: {
     pattern: '/backup',
-    jsFiles: [
-      'scripts/block-delete-button.js'
-    ],
+    jsPattern: /(backup|restore|block-delete-button)/i,
     cssPattern: /(backup)/i,
     priority: 4
   },
@@ -133,9 +83,7 @@ const SECTIONS = {
   // Notificaciones
   NOTIFICACIONES: {
     pattern: '/notifications',
-    jsFiles: [
-      'src/components/notifications/NotificationsMenu.js'
-    ],
+    jsPattern: /(notifi|alert)/i,
     cssPattern: /(notifi|alert)/i,
     priority: 5
   },
@@ -143,9 +91,7 @@ const SECTIONS = {
   // Mi perfil
   PERFIL: {
     pattern: '/profile',
-    jsFiles: [
-      'src/services/userServiceProxy.ts'
-    ],
+    jsPattern: /(profile|account|user)/i,
     cssPattern: /(profile|account)/i,
     priority: 5
   },
@@ -153,9 +99,7 @@ const SECTIONS = {
   // Configuración
   AJUSTES: {
     pattern: '/settings',
-    jsFiles: [
-      'src/config/apiConfig.centralizado.ts'
-    ],
+    jsPattern: /(settings|config|configuracion)/i,
     cssPattern: /(settings|config)/i,
     priority: 5
   }
@@ -230,12 +174,10 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
 
   // 1. Procesar scripts CORE (siempre cargan)
   const coreConfig = SECTIONS.CORE;
-  if (coreConfig.jsFiles && Array.isArray(coreConfig.jsFiles)) {
-    // Buscar en todos los JS que coincidan con los archivos listados
+  if (coreConfig.jsPattern) {
+    // Buscar en todos los JS que coincidan con el patrón
     if (assets.allJs) {
-      const matchingJs = assets.allJs.filter(jsPath => {
-        return coreConfig.jsFiles.some(jsFile => jsPath.includes(jsFile));
-      });
+      const matchingJs = assets.allJs.filter(js => coreConfig.jsPattern.test(js));
       result.core.js.push(...matchingJs);
     }
   }
@@ -251,14 +193,12 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
 
   // 2. Procesar scripts específicos para la sección actual
   const currentConfig = SECTIONS[currentSection] || SECTIONS.DASHBOARD;
-  if (currentConfig && currentConfig.jsFiles && Array.isArray(currentConfig.jsFiles)) {
+  if (currentConfig && currentConfig.jsPattern) {
     if (assets.allJs) {
-      const matchingJs = assets.allJs.filter(jsPath => {
-        // Verificar que el archivo está en la lista de la sección actual
-        // y que no ha sido ya incluido en el core
-        return currentConfig.jsFiles.some(jsFile => jsPath.includes(jsFile)) && 
-               !result.core.js.includes(jsPath);
-      });
+      const matchingJs = assets.allJs.filter(js => 
+        currentConfig.jsPattern.test(js) && 
+        !result.core.js.includes(js)
+      );
       result.current.js.push(...matchingJs);
     }
     

@@ -207,7 +207,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '_astro') {
 }
 
 /**
- * Filtra los assets por sección según listas exactas de archivos
+ * Filtra los assets por sección según patrones
  * @param {Object} foundAssets - Assets encontrados
  * @returns {Object} - Assets organizados por sección
  */
@@ -219,20 +219,22 @@ function organizeAssetsBySections(foundAssets) {
     result[sectionName] = { js: [], css: [] };
     
     // Filtrar CSS de la sección
-    if (sectionConfig.cssPattern && foundAssets.cssFiles) {
+    if (sectionConfig.cssPatterns && foundAssets.cssFiles) {
       result[sectionName].css = foundAssets.cssFiles.filter(file => {
-        return sectionConfig.cssPattern.test(file);
+        return sectionConfig.cssPatterns.some(pattern => {
+          return file.toLowerCase().includes(pattern.toLowerCase());
+        });
       });
     }
     
-    // Filtrar JS de la sección usando jsFiles (listas explícitas)
-    if (sectionConfig.jsFiles && Array.isArray(sectionConfig.jsFiles) && foundAssets.jsFiles) {
+    // Filtrar JS de la sección
+    if (sectionConfig.jsPatterns && foundAssets.jsFiles) {
       // Para archivos JS clasificados
       ['vendorFiles', 'configFiles', 'serviceFiles', 'clientFiles', 'otherFiles'].forEach(category => {
         if (foundAssets[category]) {
           const matchingFiles = foundAssets[category].filter(file => {
-            return sectionConfig.jsFiles.some(jsFile => {
-              return file.includes(jsFile);
+            return sectionConfig.jsPatterns.some(pattern => {
+              return file.toLowerCase().includes(pattern.toLowerCase());
             });
           });
           result[sectionName].js.push(...matchingFiles);
@@ -242,8 +244,8 @@ function organizeAssetsBySections(foundAssets) {
       // Para archivos JS generales
       if (foundAssets.jsFiles) {
         const matchingGeneralFiles = foundAssets.jsFiles.filter(file => {
-          return sectionConfig.jsFiles.some(jsFile => {
-            return file.includes(jsFile);
+          return sectionConfig.jsPatterns.some(pattern => {
+            return file.toLowerCase().includes(pattern.toLowerCase());
           });
         });
         

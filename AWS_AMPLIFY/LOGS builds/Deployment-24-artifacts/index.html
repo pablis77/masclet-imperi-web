@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Masclet Imperi - Gestión de explotaciones ganaderas">
+  <title>Masclet Imperi Web</title>
+  <link rel="icon" href="/favico.ico" type="image/x-icon">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    #loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #ffffff;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    .app-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #333;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    .loading-text {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .loading-progress {
+      width: 200px;
+      height: 5px;
+      background-color: #eee;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #007bff;
+      transition: width 0.3s ease-in-out;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error-panel {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 15px;
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 400px;
+      z-index: 10000;
+    }
+    .error-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .error-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .retry-button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .retry-button:hover {
+      background-color: #c82333;
+    }
+  </style>
+  <!-- ESTILOS CSS -->
+  <link rel="stylesheet" href="/_astro/_id_.CtbIiy9S.css">
+  <link rel="stylesheet" href="/_astro/index.DJoSdzOi.css">
+  <link rel="stylesheet" href="/_astro/logout.Cc07-JCR.css">
+  <link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
+
+</head>
+<body>
+  <!-- Panel de carga inicial -->
+  <div id="loading-container">
+    <div class="app-title">Masclet Imperi Web</div>
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando aplicación...</div>
+    <div class="loading-progress">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="loading-text" id="loading-status">Inicializando...</div>
+  </div>
+  
+  <!-- Panel de error (oculto inicialmente) -->
+  <div id="error-panel" class="error-panel">
+    <div class="error-title">Error al cargar la aplicación</div>
+    <ul class="error-list">
+      
+    </ul>
+    <button class="retry-button" onclick="location.reload()">Reintentar</button>
+  </div>
+
+  <script>
+    // Control de estado de carga
+    let loadedScripts = 0;
+    const totalScripts = 53;
+    
+    // Función para actualizar el progreso
+    function scriptLoaded() {
+      loadedScripts++;
+      const progressBar = document.getElementById('progress-bar');
+      const percentage = (loadedScripts / totalScripts) * 100;
+      progressBar.style.width = percentage + '%';
+      
+      document.getElementById('loading-status').textContent = 
+        `Cargando recursos... (${loadedScripts}/${totalScripts})`;
+      
+      if (loadedScripts >= totalScripts) {
+        finalizarCarga();
+      }
+    }
+    
+    // Función para completar la carga
+    function finalizarCarga() {
+      document.getElementById('loading-status').textContent = 'Renderizando...';
+      
+      // Dar tiempo para que se complete el render
+      setTimeout(() => {
+        const loadingContainer = document.getElementById('loading-container');
+        loadingContainer.style.opacity = '0';
+        
+        // Ocultar completamente después de la transición
+        setTimeout(() => {
+          loadingContainer.style.display = 'none';
+        }, 500);
+      }, 300);
+    }
+    
+    // Función para manejar errores
+    function handleError(error) {
+      console.error('Error en la aplicación:', error);
+      document.getElementById('error-panel').style.display = 'block';
+    }
+    
+    // Iniciar carga de recursos al cargar la página
+    window.addEventListener('DOMContentLoaded', function() {
+      try {
+        console.log('DOM cargado, iniciando carga de scripts...');
+        
+        // Si no hay scripts para cargar, finalizar directamente
+        if (totalScripts === 0) {
+          console.warn('No se encontraron scripts para cargar');
+          finalizarCarga();
+        }
+        
+        // Verificación de tiempo de carga
+        setTimeout(() => {
+          if (loadedScripts < totalScripts) {
+            console.warn('Tiempo de espera excedido, finalizando carga manualmente');
+            finalizarCarga();
+          }
+        }, 10000); // 10 segundos de timeout
+      } catch (error) {
+        handleError(error);
+      }
+    });
+  </script>
+  
+  <!-- SCRIPTS DINÁMICOS -->
+  
+  <!-- VENDOR: Bibliotecas y dependencias -->
+  <script type="module" src="/_astro/vendor.BAk4NxX6.js" id="vendor-vendor.BAk4NxX6" onload="scriptLoaded()"></script>
+
+  <!-- CONFIG: Archivos de configuración -->
+  <script type="module" src="/_astro/config.DUTcyYPh.js" id="config-config.DUTcyYPh" onload="scriptLoaded()"></script>
+
+  <!-- SERVICES: Servicios de la aplicación -->
+  <script type="module" src="/_astro/api.SKp-IjmL.js" id="service-api.SKp-IjmL" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/apiConfig.BYL0hBvc.js" id="service-apiConfig.BYL0hBvc" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/apiConfigAdapter.B0N4Zv2p.js" id="service-apiConfigAdapter.B0N4Zv2p" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/apiService.DCRZ96ES.js" id="service-apiService.DCRZ96ES" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/authService.CvC7CJU-.js" id="service-authService.CvC7CJU-" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/listados-service.C0iTSrMs.js" id="service-listados-service.C0iTSrMs" onload="scriptLoaded()"></script>
+
+  <!-- CLIENT: Scripts principales de la aplicación -->
+  <script type="module" src="/_astro/client.DKNAXmG2.js" id="client-client.DKNAXmG2" onload="scriptLoaded()"></script>
+
+  <!-- OTHER: Scripts adicionales -->
+  <script type="module" src="/_astro/AnimalFilters.BavX2u2F.js" id="other-AnimalFilters.BavX2u2F" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/AnimalForm.DLmlRJVi.js" id="other-AnimalForm.DLmlRJVi" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/AnimalTable.DwggHQYQ.js" id="other-AnimalTable.DwggHQYQ" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/AuthMiddleware.CgZXvxDX.js" id="other-AuthMiddleware.CgZXvxDX" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/ClearLocalStorage.i7bUfcoq.js" id="other-ClearLocalStorage.i7bUfcoq" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/Dashboard2.CHYKY2KF.js" id="other-Dashboard2.CHYKY2KF" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/DashboardNew.CHYKY2KF.js" id="other-DashboardNew.CHYKY2KF" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/DashboardV2.D3-bt97t.js" id="other-DashboardV2.D3-bt97t" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/ExplotacionesPage.B9QRgxsO.js" id="other-ExplotacionesPage.B9QRgxsO" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/ImportContainer.C-yjQJUV.js" id="other-ImportContainer.C-yjQJUV" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/LanguageSwitcher.astro_astro_type_script_index_0_lang.BhT4Hx0d.js" id="other-LanguageSwitcher.astro_astro_type_script_index_0_lang.BhT4Hx0d" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/LoginDebugger.DewzcQPo.js" id="other-LoginDebugger.DewzcQPo" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/NotificationsMenu._4m-Nx7C.js" id="other-NotificationsMenu._4m-Nx7C" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/PasswordErrorModal.BrSl3daN.js" id="other-PasswordErrorModal.BrSl3daN" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/ProfileManagement.4Mpz4qBu.js" id="other-ProfileManagement.4Mpz4qBu" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/ResetDatabaseButton.D6oeMAPH.js" id="other-ResetDatabaseButton.D6oeMAPH" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/RoleGuard.tKckocPJ.js" id="other-RoleGuard.tKckocPJ" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/UsersManagement.BG60y4Gz.js" id="other-UsersManagement.BG60y4Gz" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/animalService.Dx4yrBkr.js" id="other-animalService.Dx4yrBkr" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.1V3GKfbn.js" id="other-hoisted.1V3GKfbn" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BIV2cWaw.js" id="other-hoisted.BIV2cWaw" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BIqjo7BV.js" id="other-hoisted.BIqjo7BV" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BU6HnSsH.js" id="other-hoisted.BU6HnSsH" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BV_2N16L.js" id="other-hoisted.BV_2N16L" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BZelodpO.js" id="other-hoisted.BZelodpO" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.BaUD3TW-.js" id="other-hoisted.BaUD3TW-" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.C3xYb-ui.js" id="other-hoisted.C3xYb-ui" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.CAmN3r4C.js" id="other-hoisted.CAmN3r4C" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.CIMOwe07.js" id="other-hoisted.CIMOwe07" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.CLA89lsY.js" id="other-hoisted.CLA89lsY" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.CZWJGYzn.js" id="other-hoisted.CZWJGYzn" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.CZe9BKd0.js" id="other-hoisted.CZe9BKd0" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.D2c55RlZ.js" id="other-hoisted.D2c55RlZ" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.D3qLyoWa.js" id="other-hoisted.D3qLyoWa" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.DGGcg4U_.js" id="other-hoisted.DGGcg4U_" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.J-PvLqDK.js" id="other-hoisted.J-PvLqDK" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.URzcT_LN.js" id="other-hoisted.URzcT_LN" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted._g6EniQO.js" id="other-hoisted._g6EniQO" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.a0A2-I9N.js" id="other-hoisted.a0A2-I9N" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.gdKQoGeX.js" id="other-hoisted.gdKQoGeX" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.gwLOX2bX.js" id="other-hoisted.gwLOX2bX" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/hoisted.iM3qY8sM.js" id="other-hoisted.iM3qY8sM" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/notificationService.DETo-XEc.js" id="other-notificationService.DETo-XEc" onload="scriptLoaded()"></script>
+  <script type="module" src="/_astro/roleService.DPZjdIfe.js" id="other-roleService.DPZjdIfe" onload="scriptLoaded()"></script>
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+2025-06-16T17:28:33.830Z [INFO]: # Build environment configured with Standard build compute type: 8GiB Memory, 4vCPUs, 128GB Disk Space
+2025-06-16T17:28:34.396Z [INFO]: # Cloning repository: git@github.com:pablis77/masclet-imperi-web.git
+2025-06-16T17:28:38.813Z [INFO]: 
+2025-06-16T17:28:38.882Z [INFO]: Cloning into 'masclet-imperi-web'...
+                                 Updating files:  54% (1958/3599)Updating files:  55% (1980/3599)Updating files:  56% (2016/3599)Updating files:  57% (2052/3599)Updating files:  58% (2088/3599)Updating files:  59% (2124/3599)Updating files:  60% (2160/3599)Updating files:  61% (2196/3599)Updating files:  62% (2232/3599)Updating files:  63% (2268/3599)Updating files:  64% (2304/3599)Updating files:  65% (2340/3599)Updating files:  66% (2376/3599)Updating files:  67% (2412/3599)Updating files:  68% (2448/3599)Updating files:  69% (2484/3599)Updating files:  70% (2520/3599)Updating files:  71% (2556/3599)Updating files:  72% (2592/3599)Updating files:  73% (2628/3599)Updating files:  74% (2664/3599)Updating files:  75% (2700/3599)Updating files:  76% (2736/3599)Updating files:  77% (2772/3599)Updating files:  78% (2808/3599)Updating files:  79% (2844/3599)Updating files:  80% (2880/3599)Updating files:  81% (2916/3599)Updating files:  82% (2952/3599)Updating files:  83% (2988/3599)Updating files:  84% (3024/3599)Updating files:  85% (3060/3599)Updating files:  86% (3096/3599)Updating files:  87% (3132/3599)Updating files:  88% (3168/3599)Updating files:  89% (3204/3599)Updating files:  90% (3240/3599)Updating files:  91% (3276/3599)Updating files:  92% (3312/3599)Updating files:  93% (3348/3599)Updating files:  94% (3384/3599)Updating files:  95% (3420/3599)Updating files:  96% (3456/3599)Updating files:  97% (3492/3599)Updating files:  98% (3528/3599)Updating files:  99% (3564/3599)Updating files: 100% (3599/3599)Updating files: 100% (3599/3599), done.
+2025-06-16T17:28:38.882Z [INFO]: # Switching to commit: 66dd03d36e68fb2296dba653a68e54e3db1ab9a8
+2025-06-16T17:28:39.412Z [INFO]: Note: switching to '66dd03d36e68fb2296dba653a68e54e3db1ab9a8'.
+                                 You are in 'detached HEAD' state. You can look around, make experimental
+                                 changes and commit them, and you can discard any commits you make in this
+                                 state without impacting any branches by switching back to a branch.
+                                 If you want to create a new branch to retain commits you create, you may
+                                 do so (now or later) by using -c with the switch command. Example:
+                                 git switch -c <new-branch-name>
+                                 Or undo this operation with:
+                                 git switch -
+                                 Turn off this advice by setting config variable advice.detachedHead to false
+                                 HEAD is now at 66dd03d Refactor: Implementar sistema modular de generación de index.html con build-index.cjs
+2025-06-16T17:28:39.426Z [INFO]: Successfully cleaned up Git credentials
+2025-06-16T17:28:39.427Z [INFO]: # Checking for Git submodules at: /codebuild/output/src4166153037/src/masclet-imperi-web/.gitmodules
+2025-06-16T17:28:39.427Z [INFO]: # Updating Git submodules...
+2025-06-16T17:28:39.558Z [INFO]: # Retrieving environment cache...
+2025-06-16T17:28:39.628Z [INFO]: # Retrieved environment cache
+2025-06-16T17:28:39.628Z [INFO]: ---- Setting Up SSM Secrets ----
+2025-06-16T17:28:39.628Z [INFO]: SSM params {"Path":"/amplify/d22i0xni7fl97z/production/","WithDecryption":true}
+2025-06-16T17:28:39.675Z [WARNING]: !Failed to set up process.env.secrets
+2025-06-16T17:28:40.265Z [INFO]: # No package override configuration found.
+2025-06-16T17:28:40.269Z [INFO]: # Retrieving cache...
+2025-06-16T17:28:40.358Z [INFO]: # Extracting cache...
+2025-06-16T17:28:40.359Z [INFO]: # Extraction completed
+2025-06-16T17:28:40.360Z [INFO]: # Retrieved cache
+2025-06-16T17:28:44.072Z [INFO]: ## Starting Backend Build
+                                 ## Checking for associated backend environment...
+                                 ## No backend environment association found, continuing...
+                                 ## Completed Backend Build
+2025-06-16T17:28:44.087Z [INFO]: ## Starting Frontend Build
+                                 # Starting phase: preBuild
+                                 # Executing command: cd frontend
+2025-06-16T17:28:44.130Z [INFO]: # Executing command: npm ci
+2025-06-16T17:28:57.727Z [WARNING]: npm warn EBADENGINE Unsupported engine {
+                                    npm warn EBADENGINE   package: 'nanostores@1.0.1',
+                                    npm warn EBADENGINE   required: { node: '^20.0.0 || >=22.0.0' },
+                                    npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+                                    npm warn EBADENGINE }
+2025-06-16T17:28:57.733Z [WARNING]: npm warn EBADENGINE Unsupported engine {
+                                    npm warn EBADENGINE   package: 'react-router@7.3.0',
+                                    npm warn EBADENGINE   required: { node: '>=20.0.0' },
+                                    npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+                                    npm warn EBADENGINE }
+                                    npm warn EBADENGINE Unsupported engine {
+                                    npm warn EBADENGINE   package: 'react-router-dom@7.3.0',
+                                    npm warn EBADENGINE   required: { node: '>=20.0.0' },
+                                    npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+                                    npm warn EBADENGINE }
+2025-06-16T17:29:13.130Z [INFO]: added 818 packages, and audited 819 packages in 26s
+2025-06-16T17:29:13.137Z [INFO]: 257 packages are looking for funding
+                                 run `npm fund` for details
+2025-06-16T17:29:13.186Z [INFO]: 10 vulnerabilities (1 low, 5 moderate, 4 high)
+                                 To address issues that do not require attention, run:
+                                 npm audit fix
+                                 To address all issues (including breaking changes), run:
+                                 npm audit fix --force
+                                 Run `npm audit` for details.
+2025-06-16T17:29:13.206Z [INFO]: # Completed phase: preBuild
+                                 # Starting phase: build
+2025-06-16T17:29:13.206Z [INFO]: # Executing command: npm run build
+2025-06-16T17:29:13.338Z [INFO]: > masclet-imperi-frontend@0.1.0 build
+                                 > astro build && node post-build.js
+2025-06-16T17:29:15.870Z [INFO]: 17:29:15 [types] Generated 71ms
+2025-06-16T17:29:15.870Z [INFO]: 17:29:15 [build] output: "server"
+                                 17:29:15 [build] directory: /codebuild/output/src4166153037/src/masclet-imperi-web/frontend/dist/
+                                 17:29:15 [build] adapter: @astrojs/node
+                                 17:29:15 [build] Collecting build info...
+2025-06-16T17:29:15.870Z [INFO]: 17:29:15 [build] ✓ Completed in 133ms.
+2025-06-16T17:29:15.873Z [INFO]: 17:29:15 [build] Building server entrypoints...
+2025-06-16T17:29:22.264Z [INFO]: 17:29:22 [vite] ✓ built in 6.35s
+                                 17:29:22 [build] ✓ Completed in 6.39s.
+                                 building client (vite)
+2025-06-16T17:29:22.281Z [INFO]: 17:29:22 [vite] transforming...
+2025-06-16T17:29:30.320Z [INFO]: 17:29:30 [vite] ✓ 2532 modules transformed.
+2025-06-16T17:29:30.958Z [INFO]: 17:29:30 [vite] rendering chunks...
+2025-06-16T17:29:31.614Z [INFO]: 17:29:31 [vite] computing gzip size...
+2025-06-16T17:29:31.677Z [INFO]: 17:29:31 [vite] dist/client/_astro/client.DKNAXmG2.js                                                     0.06 kB │ gzip:   0.08 kB
+2025-06-16T17:29:31.677Z [INFO]: 17:29:31 [vite] dist/client/_astro/DashboardNew.CHYKY2KF.js                                               0.18 kB │ gzip:   0.17 kB
+                                 17:29:31 [vite] dist/client/_astro/Dashboard2.CHYKY2KF.js                                                 0.18 kB │ gzip:   0.17 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.CLA89lsY.js                                                    0.22 kB │ gzip:   0.19 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.CZWJGYzn.js                                                    0.41 kB │ gzip:   0.29 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.URzcT_LN.js                                                    0.44 kB │ gzip:   0.31 kB
+                                 17:29:31 [vite] dist/client/_astro/AuthMiddleware.CgZXvxDX.js                                             0.46 kB │ gzip:   0.36 kB
+                                 17:29:31 [vite] dist/client/_astro/apiConfigAdapter.B0N4Zv2p.js                                           0.52 kB │ gzip:   0.34 kB
+                                 17:29:31 [vite] dist/client/_astro/ClearLocalStorage.i7bUfcoq.js                                          0.55 kB │ gzip:   0.37 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.J-PvLqDK.js                                                    0.61 kB │ gzip:   0.40 kB
+                                 17:29:31 [vite] dist/client/_astro/apiConfig.BYL0hBvc.js                                                  0.73 kB │ gzip:   0.42 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BIV2cWaw.js                                                    1.12 kB │ gzip:   0.62 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.gdKQoGeX.js                                                    1.36 kB │ gzip:   0.60 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.gwLOX2bX.js                                                    1.37 kB │ gzip:   0.72 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.D3qLyoWa.js                                                    1.58 kB │ gzip:   0.82 kB
+                                 17:29:31 [vite] dist/client/_astro/RoleGuard.tKckocPJ.js                                                  1.86 kB │ gzip:   0.98 kB
+                                 17:29:31 [vite] dist/client/_astro/listados-service.C0iTSrMs.js                                           1.95 kB │ gzip:   0.80 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.iM3qY8sM.js                                                    2.03 kB │ gzip:   0.75 kB
+                                 17:29:31 [vite] dist/client/_astro/LoginDebugger.DewzcQPo.js                                              2.05 kB │ gzip:   0.74 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.D2c55RlZ.js                                                    2.25 kB │ gzip:   1.03 kB
+2025-06-16T17:29:31.677Z [INFO]: 17:29:31 [vite] dist/client/_astro/hoisted.DGGcg4U_.js                                                    2.25 kB │ gzip:   0.85 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BaUD3TW-.js                                                    2.38 kB │ gzip:   1.16 kB
+                                 17:29:31 [vite] dist/client/_astro/notificationService.DETo-XEc.js                                        2.40 kB │ gzip:   0.79 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BZelodpO.js                                                    2.41 kB │ gzip:   1.20 kB
+                                 17:29:31 [vite] dist/client/_astro/authService.CvC7CJU-.js                                                2.43 kB │ gzip:   0.88 kB
+                                 17:29:31 [vite] dist/client/_astro/AnimalFilters.BavX2u2F.js                                              2.44 kB │ gzip:   1.02 kB
+                                 17:29:31 [vite] dist/client/_astro/PasswordErrorModal.BrSl3daN.js                                         2.45 kB │ gzip:   1.09 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.C3xYb-ui.js                                                    2.72 kB │ gzip:   1.25 kB
+2025-06-16T17:29:31.677Z [INFO]: 17:29:31 [vite] dist/client/_astro/roleService.DPZjdIfe.js                                                3.43 kB │ gzip:   1.04 kB
+                                 17:29:31 [vite] dist/client/_astro/ResetDatabaseButton.D6oeMAPH.js                                        3.84 kB │ gzip:   1.37 kB
+                                 17:29:31 [vite] dist/client/_astro/NotificationsMenu._4m-Nx7C.js                                          4.26 kB │ gzip:   1.57 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.CZe9BKd0.js                                                    4.33 kB │ gzip:   1.50 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.1V3GKfbn.js                                                    4.55 kB │ gzip:   1.64 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BU6HnSsH.js                                                    4.78 kB │ gzip:   1.79 kB
+                                 17:29:31 [vite] dist/client/_astro/apiService.DCRZ96ES.js                                                 5.23 kB │ gzip:   2.01 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BV_2N16L.js                                                    5.43 kB │ gzip:   1.98 kB
+                                 17:29:31 [vite] dist/client/_astro/api.SKp-IjmL.js                                                        5.66 kB │ gzip:   2.08 kB
+                                 17:29:31 [vite] dist/client/_astro/ProfileManagement.4Mpz4qBu.js                                          6.04 kB │ gzip:   1.99 kB
+                                 17:29:31 [vite] dist/client/_astro/AnimalForm.DLmlRJVi.js                                                 8.61 kB │ gzip:   2.11 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.BIqjo7BV.js                                                   11.76 kB │ gzip:   3.67 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.CAmN3r4C.js                                                   11.92 kB │ gzip:   4.07 kB
+2025-06-16T17:29:31.677Z [INFO]: 17:29:31 [vite] dist/client/_astro/animalService.Dx4yrBkr.js                                             13.12 kB │ gzip:   4.07 kB
+                                 17:29:31 [vite] dist/client/_astro/LanguageSwitcher.astro_astro_type_script_index_0_lang.BhT4Hx0d.js     13.20 kB │ gzip:   3.67 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted._g6EniQO.js                                                   14.52 kB │ gzip:   4.31 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.CIMOwe07.js                                                   14.75 kB │ gzip:   4.40 kB
+                                 17:29:31 [vite] dist/client/_astro/AnimalTable.DwggHQYQ.js                                               16.84 kB │ gzip:   4.71 kB
+                                 17:29:31 [vite] dist/client/_astro/hoisted.a0A2-I9N.js                                                   22.25 kB │ gzip:   7.06 kB
+                                 17:29:31 [vite] dist/client/_astro/ExplotacionesPage.B9QRgxsO.js                                         22.79 kB │ gzip:   6.67 kB
+                                 17:29:31 [vite] dist/client/_astro/ImportContainer.C-yjQJUV.js                                           24.28 kB │ gzip:   6.75 kB
+                                 17:29:31 [vite] dist/client/_astro/DashboardV2.D3-bt97t.js                                               28.45 kB │ gzip:   6.95 kB
+                                 17:29:31 [vite] dist/client/_astro/UsersManagement.BG60y4Gz.js                                           32.02 kB │ gzip:   8.70 kB
+                                 17:29:31 [vite] dist/client/_astro/config.DUTcyYPh.js                                                    34.04 kB │ gzip:   9.29 kB
+                                 17:29:31 [vite] dist/client/_astro/vendor.BAk4NxX6.js                                                 1,995.95 kB │ gzip: 599.85 kB
+2025-06-16T17:29:31.678Z [INFO]: 17:29:31 [WARN] [vite]
+                                 (!) Some chunks are larger than 500 kB after minification. Consider:
+                                 - Using dynamic import() to code-split the application
+                                 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+                                 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2025-06-16T17:29:31.678Z [INFO]: 17:29:31 [vite] ✓ built in 9.41s
+2025-06-16T17:29:31.720Z [INFO]: 17:29:31 [build] Rearranging server assets...
+2025-06-16T17:29:31.721Z [INFO]: 17:29:31 [build] Server built in 15.98s
+2025-06-16T17:29:31.721Z [INFO]: 17:29:31 [build] Complete!
+2025-06-16T17:29:31.794Z [INFO]: Ejecutando script post-build simplificado...
+2025-06-16T17:29:31.795Z [INFO]: ✅ Verificado que /codebuild/output/src4166153037/src/masclet-imperi-web/frontend/dist/server/entry.mjs existe correctamente
+2025-06-16T17:29:31.795Z [INFO]: ✅ Documentación de health check creada en /codebuild/output/src4166153037/src/masclet-imperi-web/frontend/dist/health-check.txt
+2025-06-16T17:29:31.796Z [INFO]: ✅ Post-build completado con éxito!
+2025-06-16T17:29:31.803Z [INFO]: # Executing command: node build-index.cjs
+2025-06-16T17:29:31.834Z [INFO]: 📂 GENERADOR INDEX.HTML PARA AMPLIFY
+2025-06-16T17:29:31.834Z [INFO]: =====================================
+2025-06-16T17:29:31.835Z [INFO]: 🔍 Buscando archivos necesarios...
+2025-06-16T17:29:31.835Z [INFO]: 🔍 Buscando assets en /codebuild/output/src4166153037/src/masclet-imperi-web/frontend/dist/client/_astro
+2025-06-16T17:29:31.835Z [INFO]: 📊 Encontrados 53 archivos JS y 4 archivos CSS
+2025-06-16T17:29:31.835Z [INFO]: ✅ Archivo requerido vendorJs: vendor.BAk4NxX6.js
+2025-06-16T17:29:31.836Z [INFO]: ✅ Archivo requerido clientJs: client.DKNAXmG2.js
+2025-06-16T17:29:31.836Z [INFO]: ✅ Archivo requerido configJs: config.DUTcyYPh.js
+2025-06-16T17:29:31.836Z [INFO]: ✅ Archivo requerido apiConfigJs: apiConfig.BYL0hBvc.js
+2025-06-16T17:29:31.836Z [INFO]: ✅ Archivo requerido apiServiceJs: apiService.DCRZ96ES.js
+2025-06-16T17:29:31.836Z [INFO]: ✅ Archivo requerido mainCss: index.DJoSdzOi.css
+2025-06-16T17:29:31.837Z [INFO]: ✅ Archivo opcional authServiceJs: authService.CvC7CJU-.js
+2025-06-16T17:29:31.837Z [INFO]: ✅ Archivo opcional logoutCss: logout.Cc07-JCR.css
+2025-06-16T17:29:31.837Z [INFO]: 📝 Generando index.html...
+2025-06-16T17:29:31.838Z [INFO]: ✅ index.html creado correctamente en /codebuild/output/src4166153037/src/masclet-imperi-web/frontend/dist/client/index.html
+2025-06-16T17:29:31.838Z [INFO]: 🚀 Proceso completado con éxito
+2025-06-16T17:29:31.840Z [INFO]: # Completed phase: build
+                                 ## Completed Frontend Build
+2025-06-16T17:29:31.853Z [INFO]: ## Build completed successfully
+2025-06-16T17:29:31.853Z [INFO]: # Starting caching...
+2025-06-16T17:29:31.856Z [INFO]: # Creating cache artifact...
+2025-06-16T17:29:31.859Z [INFO]: # Created cache artifact
+2025-06-16T17:29:31.859Z [INFO]: # Uploading cache artifact...
+2025-06-16T17:29:31.944Z [INFO]: # Uploaded cache artifact
+2025-06-16T17:29:31.945Z [INFO]: # Caching completed
+2025-06-16T17:29:31.965Z [INFO]: # Starting build artifact upload process...
+2025-06-16T17:29:32.363Z [INFO]: # Uploading build artifact '__artifacts.zip'...
+2025-06-16T17:29:32.540Z [INFO]: # Build artifact upload completed
+2025-06-16T17:29:32.540Z [INFO]: # Starting environment caching...
+2025-06-16T17:29:32.541Z [INFO]: # Uploading environment cache artifact...
+2025-06-16T17:29:32.615Z [INFO]: # Uploaded environment cache artifact
+2025-06-16T17:29:32.615Z [INFO]: # Environment caching completed
+
