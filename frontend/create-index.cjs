@@ -7,72 +7,132 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-// Configuración
+// Directorios de trabajo
 const clientDir = path.join(__dirname, 'dist', 'client');
 const astroDir = path.join(clientDir, '_astro');
-// Targets obligatorios y opcionales para buscar
+
+console.log('\n📂 DIAGNÓSTICO DE DESPLIEGUE EN AWS AMPLIFY');
+console.log('========================================');
+console.log(`📁 Cliente: ${clientDir}`);
+console.log(`📁 Astro: ${astroDir}`);
+
+// Verificar si existen las carpetas
+if (!fs.existsSync(clientDir)) {
+  console.error(`❌ ERROR CRÍTICO: No existe el directorio ${clientDir}`);
+  process.exit(1);
+}
+if (!fs.existsSync(astroDir)) {
+  console.error(`❌ ERROR CRÍTICO: No existe el directorio ${astroDir}`);
+  process.exit(1);
+}
+
+// Archivos críticos que deben estar presentes (sin estos la aplicación no funciona)
 const requiredTargets = {
-  vendorCss: /vendor\.[A-Za-z0-9]+\.css$/,
-  indexCss: /index\.[A-Za-z0-9]+\.css$/,
-  idCss: /_id_\.[A-Za-z0-9]+\.css$/,
-  vendorJs: /vendor\.[A-Za-z0-9]+\.js$/,
-  vendorReactJs: /vendor-react\.[A-Za-z0-9]+\.js$/,
-  vendorChartsJs: /vendor-charts\.[A-Za-z0-9]+\.js$/,
-  clientJs: /client\.[A-Za-z0-9]+\.js$/,
-  configJs: /config\.[A-Za-z0-9]+\.js$/,
-  apiConfigJs: /apiConfig\.[A-Za-z0-9]+\.js$/,
-  apiServiceJs: /apiService\.[A-Za-z0-9]+\.js$/
+  // Vendor chunks - Código de terceros
+  vendorJs: /vendor\.[A-Za-z0-9\-_]+\.js$/,
+  vendorReactJs: /vendor\-react\.[A-Za-z0-9\-_]+\.js$/,
+  vendorChartsJs: /vendor\-charts\.[A-Za-z0-9\-_]+\.js$/,
+  
+  // Código de aplicación
+  clientJs: /client\.[A-Za-z0-9\-_]+\.js$/,
+  configJs: /config\.[A-Za-z0-9\-_]+\.js$/,
+  apiConfigJs: /api\-config\.[A-Za-z0-9\-_]+\.js$/,
+  apiServiceJs: /api\-service\.[A-Za-z0-9\-_]+\.js$/,
+  
+  // Estilos críticos
+  loginCss: /login\.[A-Za-z0-9\-_]+\.css$/,
+  mainCss: /index\.[A-Za-z0-9\-_]+\.css$/,
 };
 
-// Archivos opcionales (no críticos si faltan)
+// Archivos importantes pero no críticos (la app puede funcionar sin ellos en algunos casos)
 const optionalTargets = {
-  logoutCss: /logout\.[A-Za-z0-9]+\.css$/,
-  authServiceJs: /authService\.[A-Za-z0-9]+\.js$/
+  // Autenticación y servicios
+  authServiceJs: /authService\.[A-Za-z0-9_\-]+\.js$/,
+  
+  // Estilos adicionales
+  logoutCss: /logout\.[A-Za-z0-9_\-]+\.css$/,
 };
 
 // Combinamos ambos para búsqueda
-const targetsToFind = {
-  ...requiredTargets,
-  ...optionalTargets
+const allTargets = { ...requiredTargets, ...optionalTargets };
+
+// Listar todos los archivos en _astro para diagnóstico
+const allAstroFiles = fs.readdirSync(astroDir);
+console.log(`\n📊 INVENTARIO: Se encontraron ${allAstroFiles.length} archivos en _astro`);
+const fileTypes = {
+  js: allAstroFiles.filter(f => f.endsWith('.js')),
+  css: allAstroFiles.filter(f => f.endsWith('.css')),
+  other: allAstroFiles.filter(f => !f.endsWith('.js') && !f.endsWith('.css'))
 };
+console.log(`   - ${fileTypes.js.length} archivos JavaScript (.js)`);
+console.log(`   - ${fileTypes.css.length} archivos CSS (.css)`);
+console.log(`   - ${fileTypes.other.length} otros archivos`);
 
 // Función para buscar y encontrar archivos que coinciden con un patrón
 function findMatchingFiles(dir, pattern) {
   try {
-    const files = fs.readdirSync(dir);
-    const matches = files.filter(file => pattern.test(file));
-    return matches.length > 0 ? matches[0] : null;
-  } catch (error) {
-    console.error(`Error al buscar archivos con patrón ${pattern}: ${error.message}`);
+    const files = fs.readdirSync(dir).filter(f => pattern.test(f));
+    if (files.length > 1) {
+      console.warn(`⚠️ Se encontraron múltiples archivos para el patrón ${pattern}: ${files.join(', ')}`);
+      console.warn(`   Se utilizará el primero: ${files[0]}`);
+    }
+    return files.length ? files[0] : null;
+  } catch (err) {
+    console.error(`❌ Error buscando archivos con patrón ${pattern}: ${err}`);
     return null;
   }
 }
 
-// Buscar todos los archivos necesarios
-console.log('🔍 Buscando archivos principales para la SPA...');
-const foundFiles = {};
-let allFilesFound = true;
-
-Object.entries(targetsToFind).forEach(([key, pattern]) => {
-  const matchedFile = findMatchingFiles(astroDir, pattern);
-  if (matchedFile) {
-    foundFiles[key] = matchedFile;
-    console.log(`✅ Encontrado ${key}: ${matchedFile}`);
-  } else {
-    console.error(`❌ No se encontró archivo para ${key}`);
-    allFilesFound = false;
+// Función para buscar específicamente archivos que contengan una cadena en su nombre
+function findFilesByString(dir, searchString) {
+  try {
+    const files = fs.readdirSync(dir).filter(f => f.includes(searchString));
+    return files;
+  } catch (err) {
+    console.error(`❌ Error buscando archivos que contienen '${searchString}': ${err}`);
+    return [];
   }
-});
-
-if (!allFilesFound) {
-  console.error('⚠️ Algunos archivos críticos no se encontraron. El index.html podría no funcionar correctamente.');
 }
 
-// Generar identificador único para evitar caché no deseada
-const buildId = crypto.randomBytes(4).toString('hex');
+// Función principal para crear index.html
+function generateHtml(importantFiles) {
+  // Verificar si hay activos críticos faltantes
+  let foundAllImportant = true;
+  const missingFiles = [];
+  
+  // Ya no creamos archivos vacíos, sino que tratamos los opcionales como realmente opcionales
+  for (const key in optionalTargets) {
+    if (!importantFiles[key]) {
+      console.warn(`⚠️ Archivo opcional ${key} no encontrado. La aplicación seguirá funcionando.`);
+    } else {
+      console.log(`✅ Archivo opcional ${key} encontrado: ${importantFiles[key]}`);
+    }
+  }
 
-// Crear contenido del HTML con los archivos encontrados
-const htmlContent = `<!DOCTYPE html>
+  // Solo verificar archivos requeridos
+  for (const key in requiredTargets) {
+    if (!importantFiles[key]) {
+      foundAllImportant = false;
+      missingFiles.push(key);
+    }
+  }
+
+  if (!foundAllImportant) {
+    console.warn('⚠️ Algunos archivos críticos no se encontraron. El index.html podría no funcionar correctamente.');
+  }
+
+  // Crear scripts para manejar errores de carga
+  const assetErrorScript = `
+    window.handleAssetLoadError = function(src) {
+      console.error('Error al cargar asset:', src);
+    };
+  `;
+
+  // Generar identificador único para evitar caché no deseada
+  const buildId = crypto.randomBytes(4).toString('hex');
+
+  // Crear contenido del HTML con los archivos encontrados
+  const htmlContent = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -319,20 +379,33 @@ const htmlContent = `<!DOCTYPE html>
     
     // Función para cargar todos los scripts
     function cargarScripts() {
-      // Cargar scripts principales en secuencia
+      console.log('Cargando scripts en orden optimizado...');
+      // Cargar scripts principales en secuencia siguiendo el orden correcto
+      // IMPORTANTE: Este orden es crítico para evitar ReferenceError
       Promise.resolve()
+        // 1. Vendor base (bibliotecas fundamentales)
         ${foundFiles.vendorJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorJs}", "vendor-main"))` : '.then(() => Promise.resolve())'}
+        
+        // 2. React (dependencia para componentes)
         ${foundFiles.vendorReactJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorReactJs}", "vendor-react"))` : '.then(() => Promise.resolve())'}
-        ${foundFiles.vendorChartsJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorChartsJs}", "vendor-charts"))` : '.then(() => Promise.resolve())'}
-        ${foundFiles.clientJs ? `.then(() => loadScript("/_astro/${foundFiles.clientJs}", "astro-client"))` : '.then(() => Promise.resolve())'}
+        
+        // 3-4. Configuración (debe cargarse antes que los servicios)
         ${foundFiles.configJs ? `.then(() => loadScript("/_astro/${foundFiles.configJs}", "config"))` : '.then(() => Promise.resolve())'}
         ${foundFiles.apiConfigJs ? `.then(() => loadScript("/_astro/${foundFiles.apiConfigJs}", "api-config"))` : '.then(() => Promise.resolve())'}
-        // Manejar opcionales con Promise.resolve()
-        .then(() => ${foundFiles.authServiceJs ? `loadScript("/_astro/${foundFiles.authServiceJs}", "auth-service")` : 'Promise.resolve()'})
-        .then(() => ${foundFiles.apiServiceJs ? `loadScript("/_astro/${foundFiles.apiServiceJs}", "api-service")` : 'Promise.resolve()'})
-        // Cargar todos los JS extras que podamos encontrar
+        
+        // 5. Servicios (dependen de config, pero el cliente depende de ellos)
+        ${foundFiles.apiServiceJs ? `.then(() => loadScript("/_astro/${foundFiles.apiServiceJs}", "api-service"))` : '.then(() => Promise.resolve())'}
+        ${foundFiles.authServiceJs ? `.then(() => loadScript("/_astro/${foundFiles.authServiceJs}", "auth-service"))` : '.then(() => Promise.resolve())'}
+        
+        // 6. Cliente (usa todos los anteriores)
+        ${foundFiles.clientJs ? `.then(() => loadScript("/_astro/${foundFiles.clientJs}", "astro-client"))` : '.then(() => Promise.resolve())'}
+        
+        // 7. Charts AL FINAL - Esto resuelve el error "ReferenceError: Cannot access 'X' before initialization"
+        ${foundFiles.vendorChartsJs ? `.then(() => loadScript("/_astro/${foundFiles.vendorChartsJs}", "vendor-charts"))` : '.then(() => Promise.resolve())'}
+        
+        // Cuando todos los scripts principales estén cargados
         .then(() => {
-          console.log('Scripts principales cargados');
+          console.log('Scripts principales cargados correctamente');
           // Si hay menos scripts cargados que los esperados, finalizar manualmente
           if (loadedScripts < totalScripts) {
             console.log('Finalizando carga manualmente');
@@ -381,4 +454,81 @@ try {
   console.log(`✅ Build ID único generado: ${buildId}`);
 } catch (error) {
   console.error(`❌ Error creando el archivo: ${error.message}`);
+}
+
+// Exportamos la función
+return htmlContent;
+}; // Cierre de la función generateHtml
+
+// Buscar todos los archivos necesarios
+console.log('\n🔍 BÚSQUEDA DE ARCHIVOS PRINCIPALES');
+console.log('=================================');
+const foundFiles = {};
+let allFilesFound = true;
+let criticalMissing = false;
+
+// Listar todos los archivos JS para diagnóstico avanzado
+console.log('\n📄 CONTENIDO DE ARCHIVOS JS:');
+fileTypes.js.forEach(file => console.log(`   - ${file}`));
+
+// Listar todos los archivos CSS para diagnóstico avanzado
+console.log('\n📄 CONTENIDO DE ARCHIVOS CSS:');
+fileTypes.css.forEach(file => console.log(`   - ${file}`));
+
+// Buscar específicamente archivos críticos de autenticación
+console.log('\n🔒 VERIFICACIÓN DE AUTENTICACIÓN:');
+const authFiles = findFilesByString(astroDir, 'auth');
+const serviceFiles = findFilesByString(astroDir, 'Service');
+
+console.log(`   - Archivos de autenticación encontrados: ${authFiles.length}`);
+authFiles.forEach(file => console.log(`     > ${file}`));
+
+console.log(`   - Archivos de servicios encontrados: ${serviceFiles.length}`);
+serviceFiles.forEach(file => console.log(`     > ${file}`));
+
+// Buscar archivos según patrones definidos
+console.log('\n🧩 ARCHIVOS NECESARIOS SEGÚN PATRONES:');
+
+// Primero obligatorios
+Object.entries(requiredTargets).forEach(([key, pattern]) => {
+  const matchedFile = findMatchingFiles(astroDir, pattern);
+  if (matchedFile) {
+    foundFiles[key] = matchedFile;
+    console.log(`✅ Encontrado ${key}: ${matchedFile}`);
+  } else {
+    console.error(`❌ CRÍTICO: No se encontró ${key}`);
+    allFilesFound = false;
+    criticalMissing = true;
+  }
+});
+
+// Luego opcionales
+Object.entries(optionalTargets).forEach(([key, pattern]) => {
+  const matchedFile = findMatchingFiles(astroDir, pattern);
+  if (matchedFile) {
+    foundFiles[key] = matchedFile;
+    console.log(`✅ Encontrado ${key}: ${matchedFile}`);
+  } else {
+    console.warn(`⚠️ Opcional no encontrado: ${key}`);
+    allFilesFound = false;
+  }
+});
+
+// Alerta si faltan archivos críticos
+if (criticalMissing) {
+  console.error('\n❌❌❌ FALTAN ARCHIVOS CRÍTICOS - LA APLICACIÓN NO FUNCIONARÁ CORRECTAMENTE');
+}
+
+// Generar el HTML
+const htmlContent = generateHtml(foundFiles);
+
+// Ruta donde guardar el archivo
+const targetPath = path.join(clientDir, 'index.html');
+
+// Escribir el archivo
+try {
+  fs.writeFileSync(targetPath, htmlContent);
+  console.log(`✅ index.html creado exitosamente en ${targetPath}`);
+} catch (error) {
+  console.error(`❌ Error al escribir index.html: ${error.message}`);
 }
