@@ -48,8 +48,9 @@ const optionalTargets = {
   // Autenticación y servicios
   authServiceJs: /authService\.[A-Za-z0-9_\-]+\.js$|auth[\-_]service\.[A-Za-z0-9_\-]+\.js$/,
   
-  // Estilos adicionales
-  loginCss: /[Ll]ogin\.[A-Za-z0-9\-_]+\.css$/,
+  // NOTA: Se ha confirmado que login NO tiene un archivo CSS específico,
+  // los estilos provienen directamente de login.astro y hojas globales.
+  // Se eliminó la búsqueda loginCss para evitar advertencias innecesarias.
   logoutCss: /[Ll]ogout\.[A-Za-z0-9_\-]+\.css$/,
 };
 

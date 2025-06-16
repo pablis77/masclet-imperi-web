@@ -114,12 +114,13 @@ export default defineConfig({
             /\/src\/.*\/_test.*\.astro$/
           ],
           output: {
-            // Fragmentar los chunks para mejor caching
+            // Fragmentar los chunks para mejor caching pero evitando errores de dependencias
             manualChunks: (id) => {
               // Todos los módulos de node_modules en un chunk separado
               if (id.includes('node_modules')) {
                 if (id.includes('react')) return 'vendor-react';
-                if (id.includes('chart')) return 'vendor-charts';
+                // Unimos charts con vendor principal para evitar errores de dependencias
+                // FIX: "ReferenceError: Cannot access 'A' before initialization"
                 return 'vendor';
               }
             }
