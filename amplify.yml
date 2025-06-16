@@ -8,7 +8,7 @@ frontend:
     build:
       commands:
         - npm run build
-        - node create-index.cjs
+        - node build-index.cjs
   artifacts:
     baseDirectory: frontend/dist/client
     files:

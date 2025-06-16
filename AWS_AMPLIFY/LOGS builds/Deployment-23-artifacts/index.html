@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema Masclet Imperi - Gestión ganadera profesional">
+  <meta name="build-id" content="aa211a04">
+  <link rel="icon" type="image/x-icon" href="/favico.ico">
+  <title>Masclet Imperi Web</title>
+  
+  <!-- Estilos principales -->
+  
+  
+  
+  <link rel="stylesheet" href="/_astro/logout.Cc07-JCR.css">
+  
+  <!-- Configuración -->  
+  <script>
+    // Configuración global de la aplicación
+    window.MASCLET_CONFIG = {
+      API_BASE_URL: 'http://34.253.203.194:8000',
+      DEFAULT_LANGUAGE: 'es',
+      VERSION: '0.1.0',
+      BUILD_ID: 'aa211a04',
+      BUILD_DATE: '2025-06-16T15:41:24.902Z',
+      IS_PRODUCTION: true
+    };
+    
+    // Función para manejar errores de carga
+    window.handleAssetLoadError = function(asset) {
+      console.error('Error cargando recurso:', asset);
+      const errorPanel = document.getElementById('error-panel');
+      if (errorPanel) {
+        errorPanel.style.display = 'block';
+        const errorList = errorPanel.querySelector('.error-list');
+        if (errorList) {
+          const errorItem = document.createElement('li');
+          errorItem.textContent = 'Error cargando: ' + asset;
+          errorList.appendChild(errorItem);
+        }
+      }
+    };
+    
+    // Funciones de almacenamiento local
+    const checkAuth = function() {
+      try {
+        const token = localStorage.getItem('jwt');
+        const userRole = localStorage.getItem('userRole');
+        
+        console.log('Auth check: Token ' + (token ? 'encontrado' : 'no encontrado'));
+        console.log('Auth check: Role ' + (userRole || 'no detectado'));
+        
+        // No hay redirección forzada. La SPA se monta completamente
+        return true;
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: var(--text-primary);
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #59961A;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+    h1 {
+      color: #59961A;
+    }
+    .error-box {
+      margin-top: 20px;
+      border: 2px solid #cc0000;
+      background-color: #ffeeee;
+      color: #cc0000;
+      padding: 15px;
+      border-radius: 5px;
+      max-width: 600px;
+      text-align: left;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .debug-info {
+      margin-top: 10px;
+      text-align: left;
+      font-size: 12px;
+      font-size: 16px;
+      color: #666;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #error-panel {
+      display: none;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff3f3;
+      border: 1px solid #ffcaca;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #error-panel h2 {
+      color: #d32f2f;
+      margin-top: 0;
+    }
+    
+    .retry-button {
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    
+    .retry-button:hover {
+      background-color: #1976d2;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Panel de carga inicial -->
+  <div id="loading-container">
+    <div class="app-title">Masclet Imperi Web</div>
+    <div class="spinner"></div>
+    <p class="loading-text">Cargando aplicación...</p>
+    
+    <div id="error-panel">
+      <h2>Error al cargar recursos</h2>
+      <p>Se han producido errores al cargar algunos recursos necesarios:</p>
+      <ul class="error-list"></ul>
+      <button class="retry-button" onclick="window.location.reload()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Contenedor principal de la SPA -->
+  <div id="app-root"></div>
+  
+  <!-- Scripts principales en orden óptimo de carga -->
+  <script>
+    // Control de estado de carga
+    let loadedScripts = 0;
+    // Usar el número de archivos JS que realmente se encontraron, no el total esperado
+    const foundJsFiles = Object.entries({"vendorJs":"vendor.BAk4NxX6.js","clientJs":"client.DKNAXmG2.js","configJs":"config.DUTcyYPh.js","apiConfigJs":"apiConfig.BYL0hBvc.js","apiServiceJs":"apiService.DCRZ96ES.js","mainCss":"index.DJoSdzOi.css","authServiceJs":"authService.CvC7CJU-.js","logoutCss":"logout.Cc07-JCR.css"})
+      .filter(([key]) => key.includes('Js'))
+      .length;
+    const totalScripts = foundJsFiles > 0 ? foundJsFiles : 5; // Al menos 5 scripts a cargar para seguridad
+    
+    function scriptLoaded() {
+      loadedScripts++;
+      if (loadedScripts >= totalScripts) {
+        console.log('Todos los scripts cargados correctamente');
+        finalizarCarga();
+      }
+    }
+    
+    function finalizarCarga() {
+      // Permitir un tiempo para inicialización antes de ocultar el loader
+      setTimeout(() => {
+        const loader = document.getElementById('loading-container');
+        if (loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => {
+            loader.style.display = 'none';
+          }, 500);
+        }
+        
+        // Si estamos en /login, establecer clase especial
+        if (window.location.pathname.includes('/login')) {
+          document.body.classList.add('login-page');
+        }
+        
+        // Inicializar aplicación manualmente si necesario
+        const event = new Event('app-fully-loaded');
+        document.dispatchEvent(event);
+      }, 800);
+    }
+    
+    function loadScript(src, id) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.id = id || 'script-' + Math.random().toString(36).substring(2, 9);
+        script.type = 'module'; // Añadimos type="module" para soportar import/export
+        script.async = false;
+        script.onload = () => {
+          scriptLoaded();
+          resolve();
+        };
+        script.onerror = (e) => {
+          console.warn('Error al cargar:', src, e);
+          // Contar errores como scripts cargados para no bloquear progreso
+          scriptLoaded(); 
+          window.handleAssetLoadError(src);
+          // Resolvemos igualmente para continuar la cadena de promesas
+          resolve();
+        };
+        document.body.appendChild(script);
+      });
+    }
+    
+    // Función para manejar inicialización (sin redirección automática)
+    function inicializarSPA() {
+      console.log('Inicializando SPA...');
+      // Siempre cargar scripts independientemente de la ruta
+      cargarScripts();
+    }
+    
+    // Función para cargar todos los scripts
+    function cargarScripts() {
+      console.log('Cargando scripts en orden optimizado...');
+      // Cargar scripts principales en secuencia siguiendo el orden correcto
+      // IMPORTANTE: Este orden es crítico para evitar ReferenceError
+      Promise.resolve()
+        // 1. Vendor base (bibliotecas fundamentales)
+        .then(() => loadScript("/_astro/vendor.BAk4NxX6.js", "vendor-main"))
+        
+        // 2. React (dependencia para componentes)
+        .then(() => Promise.resolve())
+        
+        // 3-4. Configuración (debe cargarse antes que los servicios)
+        .then(() => loadScript("/_astro/config.DUTcyYPh.js", "config"))
+        .then(() => loadScript("/_astro/apiConfig.BYL0hBvc.js", "api-config"))
+        
+        // 5. Servicios (dependen de config, pero el cliente depende de ellos)
+        .then(() => loadScript("/_astro/apiService.DCRZ96ES.js", "api-service"))
+        .then(() => loadScript("/_astro/authService.CvC7CJU-.js", "auth-service"))
+        
+        // 6. Cliente (usa todos los anteriores)
+        .then(() => loadScript("/_astro/client.DKNAXmG2.js", "astro-client"))
+        
+        // 7. Charts AL FINAL - Esto resuelve el error "ReferenceError: Cannot access 'X' before initialization"
+        .then(() => Promise.resolve())
+        
+        // Cuando todos los scripts principales estén cargados
+        .then(() => {
+          console.log('Scripts principales cargados correctamente');
+          // Si hay menos scripts cargados que los esperados, finalizar manualmente
+          if (loadedScripts < totalScripts) {
+            console.log('Finalizando carga manualmente');
+            while(loadedScripts < totalScripts) {
+              scriptLoaded();
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error cargando scripts:', error);
+          document.getElementById('error-panel').style.display = 'block';
+          // Finalizar carga de todas formas para mostrar UI
+          finalizarCarga();
+        });
+    }
+    
+    // Verificación inicial de autorización
+    try {
+      const token = localStorage.getItem('jwt');
+      const userRole = localStorage.getItem('userRole');
+      
+      console.log('Auth check: Token ' + (token ? 'encontrado' : 'no encontrado'));
+      console.log('Auth check: Role ' + (userRole || 'no detectado'));
+      
+      // Ya no redirigimos automáticamente
+      // Siempre inicializamos la SPA independientemente de la autenticación
+      inicializarSPA();
+    } catch (error) {
+      console.error('Error en verificación de auth:', error);
+      // En caso de error, intentar cargar scripts de todas formas
+      cargarScripts();
+    }
+  </script>
+</body>
+</html>

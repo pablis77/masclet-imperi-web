@@ -1,0 +1,1 @@
+import"./hoisted.BIV2cWaw.js";import"./LanguageSwitcher.astro_astro_type_script_index_0_lang.BhT4Hx0d.js";import"./authService.CvC7CJU-.js";import"./vendor.BAk4NxX6.js";document.addEventListener("DOMContentLoaded",()=>{});

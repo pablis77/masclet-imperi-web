@@ -97,6 +97,72 @@ function findFilesByString(dir, searchString) {
   }
 }
 
+// Función para generar las etiquetas script en orden correcto
+function generarTagsScripts(files) {
+  // Verificar si tenemos las categorías de scripts clasificados
+  const hasClassifiedScripts = files.allVendorJs || files.allConfigJs || files.allServiceJs || files.allClientJs || files.allOtherJs;
+  
+  if (!hasClassifiedScripts) {
+    console.warn('\n\u26A0️ No se encontraron scripts clasificados, generando solo scripts básicos');
+    // Si no hay scripts clasificados, generar scripts básicos con los archivos que tenemos
+    const scriptTags = [];
+    
+    // Añadir scripts cruciales que siempre deben estar
+    ['mainJs', 'apiConfigJs', 'apiServiceJs', 'authServiceJs'].forEach(key => {
+      if (files[key]) {
+        scriptTags.push(`<script type="module" src="${files[key]}" id="${key}" onload="scriptLoaded()"></script>`);
+      }
+    });
+    
+    return scriptTags.join('\n  ');
+  }
+  
+  // Generar scripts por categorías
+  let resultado = '';
+  
+  // 1. Scripts de librerías vendor (React, etc.)
+  if (files.allVendorJs && files.allVendorJs.length) {
+    resultado += '\n  <!-- SCRIPTS VENDOR: Bibliotecas de terceros -->\n  ';
+    resultado += files.allVendorJs.map(js => 
+      `<script type="module" src="${js}" id="vendor-${js.split('/').pop().replace('.js', '')}" onload="scriptLoaded()"></script>`
+    ).join('\n  ');
+  }
+  
+  // 2. Scripts de configuración
+  if (files.allConfigJs && files.allConfigJs.length) {
+    resultado += '\n\n  <!-- SCRIPTS CONFIG: Configuración de la aplicación -->\n  ';
+    resultado += files.allConfigJs.map(js => 
+      `<script type="module" src="${js}" id="config-${js.split('/').pop().replace('.js', '')}" onload="scriptLoaded()"></script>`
+    ).join('\n  ');
+  }
+  
+  // 3. Scripts de servicios
+  if (files.allServiceJs && files.allServiceJs.length) {
+    resultado += '\n\n  <!-- SCRIPTS SERVICE: Servicios de la aplicación -->\n  ';
+    resultado += files.allServiceJs.map(js => 
+      `<script type="module" src="${js}" id="service-${js.split('/').pop().replace('.js', '')}" onload="scriptLoaded()"></script>`
+    ).join('\n  ');
+  }
+  
+  // 4. Scripts cliente principal
+  if (files.allClientJs && files.allClientJs.length) {
+    resultado += '\n\n  <!-- SCRIPTS CLIENT: Cliente principal -->\n  ';
+    resultado += files.allClientJs.map(js => 
+      `<script type="module" src="${js}" id="client-${js.split('/').pop().replace('.js', '')}" onload="scriptLoaded()"></script>`
+    ).join('\n  ');
+  }
+  
+  // 5. Otros scripts
+  if (files.allOtherJs && files.allOtherJs.length) {
+    resultado += '\n\n  <!-- SCRIPTS OTHERS: Scripts adicionales -->\n  ';
+    resultado += files.allOtherJs.map(js => 
+      `<script type="module" src="${js}" id="other-${js.split('/').pop().replace('.js', '')}" onload="scriptLoaded()"></script>`
+    ).join('\n  ');
+  }
+  
+  return resultado;
+}
+
 // Función principal para crear index.html
 function generateHtml(importantFiles) {
   // Verificar si hay activos críticos faltantes
@@ -178,6 +244,24 @@ function generateHtml(importantFiles) {
       }
     };
     
+    // Función para manejar errores de scripts
+    function handleError(scriptId, error) {
+      console.error(`Error en script ${scriptId}:`, error);
+      const errorList = document.querySelector('.error-list');
+      const errorPanel = document.getElementById('error-panel');
+      
+      if (errorList && errorPanel) {
+        const errorItem = document.createElement('li');
+        errorItem.textContent = `Script ${scriptId}: ${error.message || 'Error desconocido'}`;
+        errorList.appendChild(errorItem);
+        errorPanel.style.display = 'block';
+      }
+    }
+  </script>
+
+  <!-- SCRIPTS DINÁMICOS GENERADOS AUTOMÁTICAMENTE -->
+  ${generarTagsScripts(importantFiles)}
+  
     // Funciones de almacenamiento local
     const checkAuth = function() {
       try {
@@ -303,11 +387,13 @@ function generateHtml(importantFiles) {
   <script>
     // Control de estado de carga
     let loadedScripts = 0;
-    // Usar el número de archivos JS que realmente se encontraron, no el total esperado
-    const foundJsFiles = Object.entries(${JSON.stringify(foundFiles)})
-      .filter(([key]) => key.includes('Js'))
-      .length;
-    const totalScripts = foundJsFiles > 0 ? foundJsFiles : 5; // Al menos 5 scripts a cargar para seguridad
+    // Calcular el número total de scripts que vamos a cargar dinámicamente
+    const totalScripts = 
+      ${(importantFiles.allVendorJs || []).length} + 
+      ${(importantFiles.allConfigJs || []).length} + 
+      ${(importantFiles.allServiceJs || []).length} + 
+      ${(importantFiles.allClientJs || []).length} + 
+      ${(importantFiles.allOtherJs || []).length} || 5; // Al menos 5 scripts
     
     function scriptLoaded() {
       loadedScripts++;
@@ -511,8 +597,43 @@ if (criticalMissing) {
   console.error('\n❌❌❌ FALTAN ARCHIVOS CRÍTICOS - LA APLICACIÓN NO FUNCIONARÁ CORRECTAMENTE');
 }
 
-// Generar el HTML
-const htmlContent = generateHtml(foundFiles);
+// Detectar TODOS los archivos JS en _astro para incluirlos en el HTML
+console.log('\n📦 DETECTANDO TODOS LOS ARCHIVOS JS DISPONIBLES:');
+const allJsFiles = fileTypes.js;
+console.log(`   - Encontrados ${allJsFiles.length} archivos JavaScript`);
+
+// Clasificar archivos para cargarlos en orden correcto
+const jsFilesByType = {
+  vendor: allJsFiles.filter(f => f.includes('vendor')),
+  config: allJsFiles.filter(f => f.includes('config')),
+  service: allJsFiles.filter(f => f.includes('Service') || f.includes('service')),
+  client: allJsFiles.filter(f => f.includes('client'))
+};
+
+// Filtrar otros archivos que no entran en las categorías principales
+const otherJsFiles = allJsFiles.filter(f => {
+  return !Object.values(jsFilesByType).flat().some(file => file === f);
+});
+jsFilesByType.other = otherJsFiles;
+
+// Añadir todos los JS al foundFiles para que se incluyan en el HTML
+console.log('\n🔄 CLASIFICACIÓN DE SCRIPTS PARA CARGA ORDENADA:');
+Object.entries(jsFilesByType).forEach(([type, files]) => {
+  console.log(`   - ${type}: ${files.length} archivos`);
+  files.forEach(file => console.log(`     > ${file}`));
+});
+
+console.log('\n📝 GENERANDO INDEX.HTML COMPLETO CON TODOS LOS SCRIPTS DETECTADOS');
+// Ahora generamos el HTML incluyendo todos los archivos JS detectados
+const htmlContent = generateHtml({
+  ...foundFiles,
+  // Añadir arrays con todos los JS por categoría para uso en la plantilla
+  allVendorJs: jsFilesByType.vendor,
+  allConfigJs: jsFilesByType.config, 
+  allServiceJs: jsFilesByType.service,
+  allClientJs: jsFilesByType.client,
+  allOtherJs: jsFilesByType.other
+});
 
 // Ruta donde guardar el archivo
 const targetPath = path.join(clientDir, 'index.html');
@@ -520,7 +641,7 @@ const targetPath = path.join(clientDir, 'index.html');
 // Escribir el archivo
 try {
   fs.writeFileSync(targetPath, htmlContent);
-  console.log(`✅ index.html creado exitosamente en ${targetPath}`);
+  console.log(`✅ index.html creado exitosamente en ${targetPath} con todos los scripts detectados`);
 } catch (error) {
   console.error(`❌ Error al escribir index.html: ${error.message}`);
 }
