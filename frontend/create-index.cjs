@@ -29,11 +29,11 @@ if (!fs.existsSync(astroDir)) {
 // Archivos críticos que deben estar presentes (sin estos la aplicación no funciona)
 const requiredTargets = {
   // Vendor chunks - Código de terceros
-  // NOTA: Unificamos todos los chunks de vendor para evitar problemas de inicialización
+  // NOTA: Unificamos todos los chunks en un solo vendor para evitar problemas de inicialización
   // y dependencias circulares (charts y react ahora están dentro de vendor principal)
   vendorJs: /vendor\.[A-Za-z0-9\-_]+\.js$/,
-  vendorReactJs: /vendor\-react\.[A-Za-z0-9\-_]+\.js$/,
-  // vendorChartsJs ya no existe, se unificó con vendor principal
+  // IMPORTANTE: vendorReactJs y vendorChartsJs ya no existen como archivos separados
+  // Se han consolidado en el vendor principal para evitar errores de inicialización
   
   // Código de aplicación
   clientJs: /client\.[A-Za-z0-9\-_]+\.js$/,
