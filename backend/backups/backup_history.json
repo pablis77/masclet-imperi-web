@@ -439,5 +439,14 @@
     "description": "Backup tras creación del animal Pablo (ID: 133)",
     "size_bytes": 128942,
     "size": "125.92 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250616_020052.sql",
+    "date": "16/06/2025 02:00",
+    "backup_type": "daily",
+    "created_by": "sistema",
+    "description": "Backup diario programado (16/06/2025)",
+    "size_bytes": 129167,
+    "size": "126.14 KB"
   }
 ]

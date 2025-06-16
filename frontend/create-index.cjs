@@ -10,19 +10,30 @@ const crypto = require('crypto');
 // Configuración
 const clientDir = path.join(__dirname, 'dist', 'client');
 const astroDir = path.join(clientDir, '_astro');
-const targetsToFind = {
+// Targets obligatorios y opcionales para buscar
+const requiredTargets = {
   vendorCss: /vendor\.[A-Za-z0-9]+\.css$/,
   indexCss: /index\.[A-Za-z0-9]+\.css$/,
   idCss: /_id_\.[A-Za-z0-9]+\.css$/,
-  logoutCss: /logout\.[A-Za-z0-9]+\.css$/,
   vendorJs: /vendor\.[A-Za-z0-9]+\.js$/,
   vendorReactJs: /vendor-react\.[A-Za-z0-9]+\.js$/,
   vendorChartsJs: /vendor-charts\.[A-Za-z0-9]+\.js$/,
   clientJs: /client\.[A-Za-z0-9]+\.js$/,
   configJs: /config\.[A-Za-z0-9]+\.js$/,
   apiConfigJs: /apiConfig\.[A-Za-z0-9]+\.js$/,
-  authServiceJs: /authService\.[A-Za-z0-9]+\.js$/,
   apiServiceJs: /apiService\.[A-Za-z0-9]+\.js$/
+};
+
+// Archivos opcionales (no críticos si faltan)
+const optionalTargets = {
+  logoutCss: /logout\.[A-Za-z0-9]+\.css$/,
+  authServiceJs: /authService\.[A-Za-z0-9]+\.js$/
+};
+
+// Combinamos ambos para búsqueda
+const targetsToFind = {
+  ...requiredTargets,
+  ...optionalTargets
 };
 
 // Función para buscar y encontrar archivos que coinciden con un patrón
@@ -281,6 +292,7 @@ const htmlContent = `<!DOCTYPE html>
         const script = document.createElement('script');
         script.src = src;
         script.id = id || 'script-' + Math.random().toString(36).substring(2, 9);
+        script.type = 'module'; // Añadimos type="module" para soportar import/export
         script.async = false;
         script.onload = () => {
           scriptLoaded();
