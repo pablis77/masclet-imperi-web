@@ -1,14 +1,435 @@
 /**
  * Módulo para generar el contenido HTML del index.html
+ * Optimizado para cargar scripts por secciones según la navegación
  */
 
+const fs = require('fs');
+const path = require('path');
+
+// Importamos configuración de secciones desde section-loader
+const { SECTIONS, detectSection } = require('./section-loader.cjs');
+
 /**
- * Genera tags de script para los archivos JS
- * @param {Object} assets - Objeto con los assets encontrados
- * @returns {string} - HTML con los tags de script
+ * Genera el HTML base para la aplicación
+ * @param {string} title - Título de la página
+ * @returns {string} - HTML base
  */
-function generateScriptTags(assets) {
-  let scriptTags = '';
+function generateBaseHtml(title = 'Masclet Imperi') {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplicación de Gestión Ganadera Masclet Imperi">
+  <title>${title}</title>
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/favico.ico" type="image/x-icon">
+  <!-- CSS Crítico -->
+  <!-- MARCADOR: CSS CRÍTICO -->
+  
+  <!-- CSS por sección -->
+  <!-- MARCADOR: CSS SECCIONES -->
+</head>
+<body>
+  <div id="app">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Cargando aplicación...</p>
+      <noscript>
+        <p class="error-message">Esta aplicación requiere JavaScript para funcionar. Por favor, habilítalo en tu navegador.</p>
+      </noscript>
+    </div>
+  </div>
+  
+  <!-- Scripts críticos -->
+  <!-- MARCADOR: SCRIPTS CRÍTICOS -->
+  
+  <!-- Scripts por sección (carga dinámica) -->
+  <!-- MARCADOR: SCRIPTS SECCIONES -->
+  
+  <!-- Script de diagnóstico y carga -->
+  <script>
+    // Muestra mensajes de diagnóstico en caso de error
+    window.addEventListener('error', function(e) {
+      console.error('⚠️ Error en la carga:', e);
+      const loadingText = document.querySelector('.loading-text');
+      if (loadingText) {
+        loadingText.innerHTML = 'Error al cargar la aplicación<br><small>' + 
+          e.message.substring(0, 100) + '...</small>';
+        loadingText.style.color = '#ff3860';
+      }
+    });
+    
+    // Reporte de inicialización correcta
+    window.addEventListener('load', function() {
+      console.log('✅ Aplicación cargada correctamente');
+    });
+  </script>
+</body>
+</html>`;
+}
+
+/**
+ * Genera las etiquetas script HTML para los archivos JS
+ * @param {Array} jsFiles - Lista de archivos JS
+ * @param {string} basePath - Ruta base para los archivos
+ * @returns {string} - HTML con las etiquetas script
+ */
+function generateScriptTags(jsFiles, basePath) {
+  if (!jsFiles || jsFiles.length === 0) {
+    return '<!-- No se encontraron scripts JS -->';
+  }
+  
+  return jsFiles.map(file => {
+    const filePath = path.join(basePath, file).replace(/\\/g, '/');
+    return `<script src="/${filePath}" type="module"></script>`;
+  }).join('\n  ');
+}
+
+/**
+ * Genera las etiquetas link HTML para los archivos CSS
+ * @param {Array} cssFiles - Lista de archivos CSS
+ * @param {string} basePath - Ruta base para los archivos
+ * @returns {string} - HTML con las etiquetas link
+ */
+function generateCssTags(cssFiles, basePath) {
+  if (!cssFiles || cssFiles.length === 0) {
+    return '<!-- No se encontraron estilos CSS -->';
+  }
+  
+  return cssFiles.map(file => {
+    const filePath = path.join(basePath, file).replace(/\\/g, '/');
+    return `<link rel="stylesheet" href="/${filePath}">`;
+  }).join('\n  ');
+}
+
+/**
+ * Genera el código JavaScript para cargar scripts dinámicamente por sección
+ * @param {Object} sectionAssets - Objeto con los assets clasificados por sección
+ * @param {string} astroPath - Ruta a la carpeta _astro relativa a dist/client
+ * @returns {string} - Script JS para carga dinámica
+ */
+function generateDynamicLoader(sectionAssets, astroPath = '_astro') {
+  const sectionAssetsJSON = JSON.stringify(sectionAssets, null, 2);
+  
+  return `<script>
+  // Assets organizados por sección
+  const SECTION_ASSETS = ${sectionAssetsJSON};
+  
+  // Ruta base para los assets
+  const BASE_PATH = '${astroPath}';
+  
+  // Función para cargar un script dinámicamente
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.type = 'module';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  }
+  
+  // Función para cargar un CSS dinámicamente
+  function loadCSS(href) {
+    return new Promise((resolve) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      document.head.appendChild(link);
+    });
+  }
+  
+  // Función para cargar assets de una sección específica
+  async function loadSectionAssets(sectionName) {
+    if (!SECTION_ASSETS[sectionName]) {
+      console.warn('⚠️ Sección no encontrada:', sectionName);
+      return;
+    }
+    
+    const section = SECTION_ASSETS[sectionName];
+    
+    // Cargar CSS
+    if (section.css && section.css.length > 0) {
+      for (const cssFile of section.css) {
+        await loadCSS('/' + BASE_PATH + '/' + cssFile);
+        console.log('✅ CSS cargado:', cssFile);
+      }
+    }
+    
+    // Cargar JS
+    if (section.js && section.js.length > 0) {
+      for (const jsFile of section.js) {
+        await loadScript('/' + BASE_PATH + '/' + jsFile);
+        console.log('✅ Script cargado:', jsFile);
+      }
+    }
+  }
+  
+  // Detectar sección actual basado en la ruta
+  function detectCurrentSection() {
+    const path = window.location.pathname;
+    
+    if (path.includes('/login')) {
+      return 'LOGIN';
+    } else if (path.includes('/explotacion')) {
+      return 'EXPLOTACIONES';
+    } else if (path.includes('/animal')) {
+      return 'ANIMALES';
+    } else if (path.includes('/listado')) {
+      return 'LISTADOS';
+    } else if (path.includes('/user')) {
+      return 'USUARIOS';
+    } else if (path.includes('/import')) {
+      return 'IMPORTACION';
+    } else if (path.includes('/backup')) {
+      return 'BACKUPS';
+    } else {
+      // Por defecto cargar dashboard
+      return 'DASHBOARD';
+    }
+  }
+  
+  // Cargar assets de la sección actual
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const currentSection = detectCurrentSection();
+      console.log('🔍 Sección detectada:', currentSection);
+      await loadSectionAssets(currentSection);
+      console.log('✅ Assets de la sección cargados correctamente');
+    } catch (error) {
+      console.error('❌ Error al cargar assets de sección:', error);
+    }
+  });
+</script>`;
+}
+
+/**
+ * Filtra los assets por sección según patrones
+ * @param {Object} foundAssets - Assets encontrados
+ * @returns {Object} - Assets organizados por sección
+ */
+function organizeAssetsBySections(foundAssets) {
+  const result = {};
+  
+  // Organizar assets CSS por sección
+  Object.entries(SECTIONS).forEach(([sectionName, sectionConfig]) => {
+    result[sectionName] = { js: [], css: [] };
+    
+    // Filtrar CSS de la sección
+    if (sectionConfig.cssPatterns && foundAssets.cssFiles) {
+      result[sectionName].css = foundAssets.cssFiles.filter(file => {
+        return sectionConfig.cssPatterns.some(pattern => {
+          return file.toLowerCase().includes(pattern.toLowerCase());
+        });
+      });
+    }
+    
+    // Filtrar JS de la sección
+    if (sectionConfig.jsPatterns && foundAssets.jsFiles) {
+      // Para archivos JS clasificados
+      ['vendorFiles', 'configFiles', 'serviceFiles', 'clientFiles', 'otherFiles'].forEach(category => {
+        if (foundAssets[category]) {
+          const matchingFiles = foundAssets[category].filter(file => {
+            return sectionConfig.jsPatterns.some(pattern => {
+              return file.toLowerCase().includes(pattern.toLowerCase());
+            });
+          });
+          result[sectionName].js.push(...matchingFiles);
+        }
+      });
+      
+      // Para archivos JS generales
+      if (foundAssets.jsFiles) {
+        const matchingGeneralFiles = foundAssets.jsFiles.filter(file => {
+          return sectionConfig.jsPatterns.some(pattern => {
+            return file.toLowerCase().includes(pattern.toLowerCase());
+          });
+        });
+        
+        // Añadir solo archivos que no estén ya incluidos
+        matchingGeneralFiles.forEach(file => {
+          if (!result[sectionName].js.includes(file)) {
+            result[sectionName].js.push(file);
+          }
+        });
+      }
+    }
+  });
+  
+  return result;
+}
+
+/**
+ * Genera el HTML completo para la aplicación
+ * @param {Object} organizedAssets - Assets ya organizados por sección por section-loader.cjs
+ * @returns {string} - Contenido HTML completo
+ */
+function generateHtml(organizedAssets) {
+  // Generar HTML base
+  let html = generateBaseHtml();
+  
+  // Extraer ruta de los assets (originalmente en foundAssets)
+  const astroPath = organizedAssets.astroPath || '_astro';
+  
+  // Generar tags para CSS crítico (CORE)
+  const coreCSS = generateCssTags(organizedAssets.CORE?.css || [], astroPath);
+  html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS);
+  
+  // Generar tags para scripts críticos (CORE)
+  const coreScripts = generateScriptTags(organizedAssets.CORE?.js || [], astroPath);
+  html = html.replace('<!-- MARCADOR: SCRIPTS CRÍTICOS -->', coreScripts);
+  
+  // Generar cargador dinámico para scripts de sección
+  const dynamicLoader = generateDynamicLoader(organizedAssets, astroPath);
+  html = html.replace('<!-- MARCADOR: SCRIPTS SECCIONES -->', dynamicLoader);
+  
+  return html;
+}
+
+// Esta exportación se traslada al final del archivo
+
+/**
+ * Clasifica los scripts según su nombre para carga optimizada
+ * @param {Array} jsFiles - Array de archivos JS
+ * @return {Object} - Object con scripts clasificados
+ */
+function classifyScripts(jsFiles) {
+  if (!jsFiles || !jsFiles.length) return {};
+  
+  const classified = {
+    vendors: [],    // Scripts de bibliotecas externas
+    config: [],     // Scripts de configuración
+    services: [],   // Scripts de servicios (API, auth, etc)
+    core: [],       // Scripts principales de la aplicación
+    components: [], // Scripts de componentes UI
+    sections: {},   // Scripts por sección (login, dashboard, etc)
+    other: []       // Otros scripts no clasificados
+  };
+  
+  // Inicializar secciones
+  Object.keys(SECTIONS).forEach(section => {
+    if (section !== 'CORE') {
+      classified.sections[section] = [];
+    }
+  });
+  
+  // Clasificar cada script
+  jsFiles.forEach(file => {
+    const fileName = file.split('/').pop().toLowerCase();
+    
+    // 1. Detectar vendors
+    if (fileName.includes('vendor.')) {
+      classified.vendors.push(file);
+      return;
+    }
+    
+    // 2. Detectar config
+    if (fileName.includes('config.') || fileName.includes('apiconfig')) {
+      classified.config.push(file);
+      return;
+    }
+    
+    // 3. Detectar servicios
+    if (fileName.includes('service') || fileName.includes('api.')) {
+      classified.services.push(file);
+      return;
+    }
+    
+    // 4. Detectar scripts por sección
+    let assigned = false;
+    
+    // Para cada sección (excepto CORE)
+    Object.entries(SECTIONS).forEach(([sectionName, sectionConfig]) => {
+      if (sectionName === 'CORE') return;
+      
+      // Verificar si el archivo coincide con algún patrón de la sección
+      if (sectionConfig.jsPatterns && Array.isArray(sectionConfig.jsPatterns)) {
+        const matches = sectionConfig.jsPatterns.some(pattern => 
+          fileName.includes(pattern.toLowerCase())
+        );
+        
+        if (matches) {
+          classified.sections[sectionName].push(file);
+          assigned = true;
+          return;
+        }
+      }
+    });
+    
+    if (assigned) return;
+    
+    // 5. Detectar client o core
+    if (fileName.includes('client.')) {
+      classified.core.push(file);
+      return;
+    }
+    
+    // 6. El resto va a otros
+    classified.other.push(file);
+  });
+  
+  return classified;
+}
+
+/**
+ * Clasifica los CSS según su nombre
+ * @param {Array} cssFiles - Array de archivos CSS
+ * @return {Object} - Object con CSS clasificados
+ */
+function classifyStyles(cssFiles) {
+  if (!cssFiles || !cssFiles.length) return {};
+  
+  const classified = {
+    main: [],       // CSS principales
+    sections: {},   // CSS por sección
+    other: []       // Otros CSS
+  };
+  
+  // Inicializar secciones
+  Object.keys(SECTIONS).forEach(section => {
+    if (section !== 'CORE') {
+      classified.sections[section] = [];
+    }
+  });
+  
+  // Clasificar cada CSS
+  cssFiles.forEach(file => {
+    const fileName = file.split('/').pop().toLowerCase();
+    
+    // 1. Detectar main/vendor CSS
+    if (fileName.includes('index.') || fileName.includes('vendor.')) {
+      classified.main.push(file);
+      return;
+    }
+    
+    // 2. Detectar CSS por sección
+    let assigned = false;
+    
+    // Para cada sección (excepto CORE)
+    Object.entries(SECTIONS).forEach(([sectionName, sectionConfig]) => {
+      if (sectionName === 'CORE') return;
+      
+      if (sectionConfig.cssPatterns && Array.isArray(sectionConfig.cssPatterns)) {
+        const matches = sectionConfig.cssPatterns.some(pattern => 
+          fileName.includes(pattern.toLowerCase())
+        );
+        
+        if (matches) {
+          classified.sections[sectionName].push(file);
+          assigned = true;
+          return;
+        }
+      }
+    });
+    
+    if (assigned) return;
+    
+    // 3. El resto va a otros
+    classified.other.push(file);
+  });
   
   // 1. Scripts de vendor (bibliotecas, etc)
   if (assets.allVendorJs && assets.allVendorJs.length > 0) {
@@ -319,7 +740,17 @@ function generateHtmlContent(assets) {
 }
 
 module.exports = {
+  // Función principal requerida por build-index.cjs
+  generateHtml,
+  
+  // Exportamos también otras funciones útiles
   generateHtmlContent,
   generateScriptTags,
-  generateCssTags
+  generateCssTags,
+  organizeAssetsBySections,
+  generateDynamicLoader,
+  generateBaseHtml,
+  
+  // Constantes
+  SECTIONS
 };

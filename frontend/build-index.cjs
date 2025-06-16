@@ -11,7 +11,8 @@ const astroDir = path.join(clientDir, '_astro');
 
 // Módulos
 const { findAssets } = require('./build-modules/asset-finder.cjs');
-const { generateHtmlContent } = require('./build-modules/html-generator.cjs');
+const { generateHtml } = require('./build-modules/html-generator.cjs');
+const { detectSection, organizeSectionAssets } = require('./build-modules/section-loader.cjs');
 
 console.log('\n📂 GENERADOR INDEX.HTML PARA AMPLIFY');
 console.log('=====================================');
@@ -37,9 +38,15 @@ if (!fs.existsSync(modulesDir)) {
 console.log('\n🔍 Buscando archivos necesarios...');
 const foundAssets = findAssets(astroDir);
 
-// 4. Generar el HTML con los assets encontrados
+// 3.1. Organizar assets por secciones
+console.log('\n📂 Organizando assets por secciones...');
+const defaultSection = 'DASHBOARD'; // Sección por defecto (ruta principal)
+const organizedAssets = organizeSectionAssets(foundAssets, defaultSection);
+console.log(`✅ Assets organizados para ${Object.keys(organizedAssets).length} secciones`);
+
+// 4. Generar el HTML con los assets organizados por secciones
 console.log('\n📝 Generando index.html...');
-const htmlContent = generateHtmlContent(foundAssets);
+const htmlContent = generateHtml(organizedAssets);
 
 // 5. Guardar el archivo
 const outputPath = path.join(clientDir, 'index.html');
