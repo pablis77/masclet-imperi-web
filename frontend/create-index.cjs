@@ -40,7 +40,6 @@ const requiredTargets = {
   apiServiceJs: /apiService\.[A-Za-z0-9\-_]+\.js$|api[\-_]service\.[A-Za-z0-9\-_]+\.js$/,
   
   // Estilos críticos
-  loginCss: /[Ll]ogin\.[A-Za-z0-9\-_]+\.css$/,
   mainCss: /index\.[A-Za-z0-9\-_]+\.css$/,
 };
 
@@ -50,6 +49,7 @@ const optionalTargets = {
   authServiceJs: /authService\.[A-Za-z0-9_\-]+\.js$|auth[\-_]service\.[A-Za-z0-9_\-]+\.js$/,
   
   // Estilos adicionales
+  loginCss: /[Ll]ogin\.[A-Za-z0-9\-_]+\.css$/,
   logoutCss: /[Ll]ogout\.[A-Za-z0-9_\-]+\.css$/,
 };
 
