@@ -36,21 +36,21 @@ const requiredTargets = {
   // Código de aplicación
   clientJs: /client\.[A-Za-z0-9\-_]+\.js$/,
   configJs: /config\.[A-Za-z0-9\-_]+\.js$/,
-  apiConfigJs: /api\-config\.[A-Za-z0-9\-_]+\.js$/,
-  apiServiceJs: /api\-service\.[A-Za-z0-9\-_]+\.js$/,
+  apiConfigJs: /apiConfig\.[A-Za-z0-9\-_]+\.js$|api[\-_]config\.[A-Za-z0-9\-_]+\.js$/,
+  apiServiceJs: /apiService\.[A-Za-z0-9\-_]+\.js$|api[\-_]service\.[A-Za-z0-9\-_]+\.js$/,
   
   // Estilos críticos
-  loginCss: /login\.[A-Za-z0-9\-_]+\.css$/,
+  loginCss: /[Ll]ogin\.[A-Za-z0-9\-_]+\.css$/,
   mainCss: /index\.[A-Za-z0-9\-_]+\.css$/,
 };
 
 // Archivos importantes pero no críticos (la app puede funcionar sin ellos en algunos casos)
 const optionalTargets = {
   // Autenticación y servicios
-  authServiceJs: /authService\.[A-Za-z0-9_\-]+\.js$/,
+  authServiceJs: /authService\.[A-Za-z0-9_\-]+\.js$|auth[\-_]service\.[A-Za-z0-9_\-]+\.js$/,
   
   // Estilos adicionales
-  logoutCss: /logout\.[A-Za-z0-9_\-]+\.css$/,
+  logoutCss: /[Ll]ogout\.[A-Za-z0-9_\-]+\.css$/,
 };
 
 // Combinamos ambos para búsqueda
