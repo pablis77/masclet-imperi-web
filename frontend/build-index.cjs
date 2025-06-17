@@ -36,7 +36,17 @@ if (!fs.existsSync(modulesDir)) {
 
 // 3. Encontrar los assets críticos
 console.log('\n🔍 Buscando archivos necesarios...');
-const foundAssets = findAssets(astroDir);
+// Para entorno de producción en Amplify, los assets pueden estar directamente en clientDir
+// en lugar de astroDir (_astro), por lo que comprobamos ambas ubicaciones
+let foundAssets;
+try {
+  foundAssets = findAssets(astroDir);
+  console.log(`\u2705 Assets encontrados en ${astroDir}`);
+} catch (error) {
+  console.warn(`\u26a0️ No se encontraron assets en ${astroDir}, buscando en ${clientDir}...`);
+  foundAssets = findAssets(clientDir);
+  console.log(`\u2705 Assets encontrados en ${clientDir}`);
+}
 
 // 3.1. Organizar assets por secciones
 console.log('\n📂 Organizando assets por secciones...');

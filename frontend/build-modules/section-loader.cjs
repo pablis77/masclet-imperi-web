@@ -13,14 +13,16 @@ const SECTIONS = {
   CORE: {
     pattern: null, // No tiene patrón URL, siempre se carga
     jsFiles: [
-      'src/config/apiConfig.centralizado.ts',
-      'src/services/apiConfigAdapter.ts',
-      'src/services/apiService.ts',
-      'src/services/notificationService.ts',
-      'src/services/authService.js',
-      'node_modules/.vite/deps/axios.js',
-      'node_modules/.vite/deps/react.js',
-      'node_modules/.vite/deps/react-shared-subset.js'
+      // Archivos core principales - usar nombre base sin ruta
+      'apiConfig.js',
+      'apiConfigAdapter.js',
+      'apiService.js',
+      'notificationService.js', 
+      'authService.js',
+      'vendor.js',       // Vendor scripts
+      'client.js',       // Cliente Astro
+      'hoisted.js',      // Scripts elevados
+      'config.js'        // Configuración
     ],
     cssPattern: /(index|global|lemon-squeezy)/i,
     priority: 0 // Prioridad máxima (se carga primero)
@@ -41,11 +43,17 @@ const SECTIONS = {
   DASHBOARD: {
     pattern: ['/', '/dashboard', '/index', '/dashboard-direct', '/dashboard-simple', '/dashboard-test', '/dashboard2'],
     jsFiles: [
-      'src/components/dashboard/dashboardv2/cards/DashboardV2.tsx',
-      'src/components/dashboard/sections/PartosSection.tsx',
-      'src/components/dashboard/components/ResumenOriginalCard.tsx',
-      'src/components/dashboard/components/ChartComponents.tsx',
-      'src/components/dashboard/components/UIComponents.tsx'
+      // Componentes principales del dashboard
+      'DashboardV2.js',
+      'PartosSection.js',
+      'ChartComponents.js',
+      'UIComponents.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      'NotificationsMenu.js'
     ],
     cssPattern: /(dashboard|index)/i,
     priority: 2
@@ -55,7 +63,19 @@ const SECTIONS = {
   EXPLOTACIONES: {
     pattern: ['/explotaciones', '/explotaciones-react'], 
     jsFiles: [
-      'src/components/explotaciones-react/ExplotacionesPage.tsx'
+      // Componente principal
+      'ExplotacionesPage.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Scripts de bloqueo
+      'bloquear-acciones-listados.js',
+      'bloquear-actualizar-animal.js',
+      'bloquear-editar-parto.js',
+      'bloquear-eliminar-parto.js',
+      'permissions-ui.js'
     ],
     cssPattern: /(explotacion)/i,
     priority: 3
@@ -63,16 +83,28 @@ const SECTIONS = {
 
   // Animales
   ANIMALES: {
-    pattern: ['/animals', '/animal'], 
+    pattern: ['/animals', '/animales'], 
     jsFiles: [
-      'src/components/animals/AnimalFilters.tsx',
-      'src/components/animals/AnimalTable.tsx',
-      'src/components/animals/AnimalForm.astro',
-      'src/components/animals/HabitualesForm.astro',
-      'src/components/animals/CreateAnimalForm.astro',
-      'scripts/animal-history.js',
-      'scripts/editar-parto-v4.js',
-      'src/services/animalService.ts'
+      // Componentes específicos
+      'AnimalFilters.js',
+      'AnimalTable.js',
+      'animalService.js',
+      // Formularios y componentes
+      'AnimalDetailsForm.js',
+      'AnimalDetailsPartoForm.js',
+      'HabitualesForm.js',
+      'PartoModal.js',
+      'EditarPartoModal.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Scripts de bloqueo de acciones
+      'bloquear-actualizar-animal.js',
+      'bloquear-editar-parto.js',
+      'bloquear-eliminar-parto.js',
+      'permissions-ui.js'
     ],
     cssPattern: /(animal)/i,
     priority: 3
@@ -82,49 +114,126 @@ const SECTIONS = {
   LISTADOS: {
     pattern: '/listados',
     jsFiles: [
-      'src/services/listados-service.ts'
+      // Páginas y servicios
+      'index.js',
+      'visualizar.js',
+      'listadosService.js', 
+      'listados-service.js',
+      'bloquear-acciones-listados.js',
+      // Componentes específicos
+      'FilterControls.js',
+      'ListadoViewer.js',
+      'ListadosTable.js',
+      'ListadoSelector.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Utilidades y hooks
+      'useFilters.js',
+      'usePagination.js',
+      'useSorting.js'
     ],
     cssPattern: /(listado)/i,
     priority: 3
   },
 
-  // Usuarios
+  // Usuarios 
   USUARIOS: {
-    pattern: ['/users', '/user'],
+    pattern: '/users',
     jsFiles: [
-      'src/components/guards/RoleGuard.tsx',
-      'src/components/common/ConfirmDialog.tsx',
-      'src/components/common/Pagination.tsx',
-      'src/components/users/UserForm.tsx',
-      'src/components/users/UserTable.tsx',
-      'src/components/users/UsersManagement.tsx',
-      'src/services/roleService.ts',
-      'src/services/userServiceProxy.ts'
+      // Componentes y servicios
+      'UsersManagement.js',
+      'UserFormModal.js',
+      'UserTable.js',
+      'userServiceProxy.js',
+      'RoleGuard.js',
+      'ConfirmDialog.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Utilidades
+      'authHelpers.js',
+      'tokenService.js',
+      'permissions-ui.js'
     ],
     cssPattern: /(user)/i,
     priority: 4
   },
 
-  // Importación
-  IMPORTACION: {
-    pattern: ['/imports', '/import'],
+  // Importaciones
+  IMPORTACIONES: {
+    pattern: '/importaciones',
     jsFiles: [
-      'src/components/admin/ResetDatabaseButton.tsx',
-      'src/components/imports/ImportContainer.tsx',
-      'src/components/imports/ImportForm.tsx',
-      'src/components/imports/ImportHistory.tsx',
-      'src/services/importService.ts',
-      'src/services/adminService.ts'
+      // Componentes de importación
+      'ImportForm.js',
+      'ImportHistoryTable.js',
+      'ImportationsPage.js',
+      'importationService.js',
+      'ResetDatabaseButton.js',
+      'ImportContainer.js',
+      'ImportForm.js',
+      'ImportHistory.js',
+      'importService.js',
+      'adminService.js',
+      // Utilidades
+      'fileUploader.js',
+      'importFormatHelpers.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Scripts de permisos
+      'permissions-ui.js'
     ],
     cssPattern: /(import)/i,
     priority: 4
   },
 
+  // Extras y utilidades
+  EXTRAS: {
+    pattern: '/extras',
+    jsFiles: [
+      // Componentes de extras
+      'BackupComponent.js',
+      'ConfigurationComponent.js',
+      'LanguageSwitcher.js',
+      'MessageContainer.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Scripts de utilidades
+      'permissions-ui.js'
+    ],
+    cssPattern: /(extra|backup|config)/i,
+    priority: 5
+  },
+
   // Backups
   BACKUPS: {
-    pattern: '/backup',
+    pattern: ['/backup', '/copias-seguridad', '/copias'],
     jsFiles: [
-      'scripts/block-delete-button.js'
+      // Componentes específicos de backup
+      'BackupComponent.js',
+      'BackupCreationForm.js',
+      'BackupHistoryTable.js',
+      'BackupRestoreForm.js',
+      'backupService.js',
+      // Componentes de layout
+      'Footer.js',
+      'MainLayout.js',
+      'Navbar.js',
+      'Sidebar.js',
+      // Utilidades
+      'fileUploader.js',
+      'permissions-ui.js',
+      'block-delete-button.js'
     ],
     cssPattern: /(backup)/i,
     priority: 4
@@ -228,13 +337,39 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
     }
   };
 
+  // Función auxiliar para buscar coincidencia de nombre base
+  function matchesByBaseFilename(fullPath, baseFilename) {
+    // Extrae solo el nombre del archivo de la ruta completa
+    const pathParts = fullPath.split('/');
+    const filename = pathParts[pathParts.length - 1];
+    
+    // Obtén el nombre base del archivo que buscamos (sin extensión)
+    const searchName = baseFilename.replace(/\.js$/, '');
+    
+    // Estrategia 1: Coincidencia directa con inicio de nombre
+    const startsWithMatch = filename.startsWith(searchName + '.');
+    
+    // Estrategia 2: Coincidencia con nombre base ignorando hash
+    // Expresión que detecta cualquier patrón de hash en el nombre
+    const cleanedFilename = filename.replace(/\.([A-Za-z0-9_\-]+)\.js$/, '.js');
+    const cleanMatch = cleanedFilename === baseFilename;
+    
+    // Combinamos las estrategias
+    const fileMatches = startsWithMatch || cleanMatch;
+    
+    // Log para depuración
+    console.log(`Comparando: ${filename} con ${baseFilename} => ${fileMatches ? 'COINCIDE' : 'NO coincide'}`);
+    
+    return fileMatches;
+  }
+
   // 1. Procesar scripts CORE (siempre cargan)
   const coreConfig = SECTIONS.CORE;
   if (coreConfig.jsFiles && Array.isArray(coreConfig.jsFiles)) {
     // Buscar en todos los JS que coincidan con los archivos listados
     if (assets.allJs) {
       const matchingJs = assets.allJs.filter(jsPath => {
-        return coreConfig.jsFiles.some(jsFile => jsPath.includes(jsFile));
+        return coreConfig.jsFiles.some(jsFile => matchesByBaseFilename(jsPath, jsFile));
       });
       result.core.js.push(...matchingJs);
     }
@@ -253,54 +388,108 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
   const currentConfig = SECTIONS[currentSection] || SECTIONS.DASHBOARD;
   if (currentConfig && currentConfig.jsFiles && Array.isArray(currentConfig.jsFiles)) {
     if (assets.allJs) {
-      const matchingJs = assets.allJs.filter(jsPath => {
-        // Verificar que el archivo está en la lista de la sección actual
-        // y que no ha sido ya incluido en el core
-        return currentConfig.jsFiles.some(jsFile => jsPath.includes(jsFile)) && 
-               !result.core.js.includes(jsPath);
+      // Iterar por todos los scripts .js disponibles
+      Object.keys(assets.js).forEach(script => {
+        // Ignorar archivos de favicon que causan 404
+        if (script.includes('favicon.ico') || script.includes('favico.ico')) {
+          return; // Ignorar estos archivos
+        }
+        
+        // Determinar a qué sección pertenece este script
+        let sectionFound = false;
+
+        // Primero intentar por coincidencia exacta con jsFiles
+        Object.entries(SECTIONS).forEach(([sectionName, sectionConfig]) => {
+          if (sectionConfig.jsFiles && Array.isArray(sectionConfig.jsFiles)) {
+            if (sectionConfig.jsFiles.some(jsFile => matchesByBaseFilename(script, jsFile))) {
+              sectionFound = true;
+              if (sectionName === currentSection) {
+                result.current.js.push(script);
+              } else {
+                if (!result.other.sections) result.other.sections = {};
+                if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
+                result.other.sections[sectionName].js.push(script);
+              }
+            }
+          }
+        });
+
+        // Si no se encontró con comparación exacta, intentar por basename (sin hash)
+        if (!sectionFound && !script.includes('favicon.ico') && !script.includes('favico.ico')) {
+          Object.entries(SECTIONS).forEach(([sectionName, sectionConfig]) => {
+            if (sectionConfig.jsFiles && Array.isArray(sectionConfig.jsFiles)) {
+              const scriptName = script.replace(/\.([A-Za-z0-9_\-]+)\.js$/, '.js');
+              if (sectionConfig.jsFiles.some(jsFile => scriptName === jsFile)) {
+                sectionFound = true;
+                if (sectionName === currentSection) {
+                  result.current.js.push(script);
+                } else {
+                  if (!result.other.sections) result.other.sections = {};
+                  if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
+                  result.other.sections[sectionName].js.push(script);
+                }
+              }
+            }
+          });
+        }
       });
-      result.current.js.push(...matchingJs);
     }
     
-    if (assets.allCss && currentConfig.cssPattern) {
-      const matchingCss = assets.allCss.filter(css => 
-        currentConfig.cssPattern.test(css) && 
-        !result.core.css.includes(css)
-      );
-      result.current.css.push(...matchingCss);
+    // Procesar CSS específico de la sección actual
+    if (currentConfig.cssPattern) {
+      if (assets.allCss) {
+        const matchingCss = assets.allCss.filter(css => 
+          currentConfig.cssPattern.test(css) && 
+          !result.core.css.includes(css)
+        );
+        result.current.css.push(...matchingCss);
+      }
     }
   }
 
-  // 3. Resto de scripts que no son del CORE ni de la sección actual
-  if (assets.allJs) {
-    const otherJs = assets.allJs.filter(js => 
-      !result.core.js.includes(js) && 
-      !result.current.js.includes(js)
-    );
+  // 3. Procesar scripts de otras secciones (se cargan bajo demanda)
+  for (const sectionName in SECTIONS) {
+    if (sectionName === 'CORE' || sectionName === currentSection) continue;
     
-    // Limitamos a solo los que puedan ser útiles para no sobrecargar
-    // Estos se cargarán en diferido
-    if (otherJs.length > 0) {
-      result.other.js = otherJs.slice(0, 5); // Limitamos a 5 scripts adicionales
+    const sectionConfig = SECTIONS[sectionName];
+    
+    // Procesar JS de esta sección secundaria
+    if (sectionConfig.jsFiles && Array.isArray(sectionConfig.jsFiles)) {
+      if (assets.allJs) {
+        const matchingJs = assets.allJs.filter(jsPath => {
+          // No incluir en otras secciones scripts ya incluidos en core o sección actual
+          return sectionConfig.jsFiles.some(jsFile => matchesByBaseFilename(jsPath, jsFile)) && 
+                 !result.core.js.includes(jsPath) &&
+                 !result.current.js.includes(jsPath);
+        });
+        
+        // Agregar a la lista de scripts de otras secciones
+        if (matchingJs.length) {
+          console.log(`Sección ${sectionName}: Encontrados ${matchingJs.length} scripts específicos`);
+          if (!result.other.sections) result.other.sections = {};
+          if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
+          result.other.sections[sectionName].js.push(...matchingJs);
+        }
+      }
+      
+      // Procesar CSS secundarios
+      if (sectionConfig.cssPattern) {
+        if (assets.allCss) {
+          const matchingCss = assets.allCss.filter(css => 
+            sectionConfig.cssPattern.test(css) && 
+            !result.core.css.includes(css) && 
+            !result.current.css.includes(css)
+          );
+          
+          // Agregar a la lista de css de otras secciones
+          if (matchingCss.length) {
+            if (!result.other.sections) result.other.sections = {};
+            if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
+            result.other.sections[sectionName].css.push(...matchingCss);
+          }
+        }
+      }
     }
-  }
-
-  // 4. Procesar scripts críticos requeridos que no hayan sido detectados en las secciones anteriores
-  if (assets.required) {
-    Object.entries(assets.required).forEach(([key, path]) => {
-      // Solo JS
-      if (path.endsWith('.js')) {
-        if (!result.core.js.includes(path) && !result.current.js.includes(path)) {
-          result.core.js.push(path); // Lo consideramos crítico si está en required
-        }
-      }
-      // CSS
-      else if (path.endsWith('.css')) {
-        if (!result.core.css.includes(path) && !result.current.css.includes(path)) {
-          result.core.css.push(path);
-        }
-      }
-    });
   }
 
   return result;

@@ -63,6 +63,21 @@ function generateBaseHtml(title = 'Masclet Imperi') {
     // Reporte de inicialización correcta
     window.addEventListener('load', function() {
       console.log('✅ Aplicación cargada correctamente');
+      
+      // Ocultar el spinner cuando la aplicación esté cargada
+      const loadingSpinner = document.querySelector('.loading-spinner');
+      const loadingContainer = document.querySelector('.loading-container');
+      
+      if (loadingSpinner) {
+        loadingSpinner.style.display = 'none';
+      }
+      
+      if (loadingContainer) {
+        // Esperar un poco para mostrar una transición suave
+        setTimeout(() => {
+          loadingContainer.style.display = 'none';
+        }, 300);
+      }
     });
   </script>
 </body>
@@ -81,8 +96,16 @@ function generateScriptTags(jsFiles, basePath) {
   }
   
   return jsFiles.map(file => {
-    const filePath = path.join(basePath, file).replace(/\\/g, '/');
-    return `<script src="/${filePath}" type="module"></script>`;
+    // Eliminamos cualquier prefijo _astro/ que ya esté en el nombre del archivo
+    let cleanFile = file.replace(/^_astro\//, '');
+    
+    // Construimos la ruta final limpia evitando dobles prefijos
+    let src = basePath ? `/${basePath}/${cleanFile}` : `/${cleanFile}`;
+    
+    // Evitamos dobles barras
+    src = src.replace(/\/\//g, '/');
+    
+    return `<script src="${src}" type="module"></script>`;
   }).join('\n  ');
 }
 
@@ -106,10 +129,10 @@ function generateCssTags(cssFiles, basePath) {
 /**
  * Genera el código JavaScript para cargar scripts dinámicamente por sección
  * @param {Object} sectionAssets - Objeto con los assets clasificados por sección
- * @param {string} astroPath - Ruta a la carpeta _astro relativa a dist/client
+ * @param {string} astroPath - Ruta a la carpeta relativa a dist/client (vacía para assets en raíz)
  * @returns {string} - Script JS para carga dinámica
  */
-function generateDynamicLoader(sectionAssets, astroPath = '_astro') {
+function generateDynamicLoader(sectionAssets, astroPath = '') {
   const sectionAssetsJSON = JSON.stringify(sectionAssets, null, 2);
   
   return `<script>
@@ -154,7 +177,12 @@ function generateDynamicLoader(sectionAssets, astroPath = '_astro') {
     // Cargar CSS
     if (section.css && section.css.length > 0) {
       for (const cssFile of section.css) {
-        await loadCSS('/' + BASE_PATH + '/' + cssFile);
+        // Evitar añadir dos veces _astro/
+        let cleanCssFile = cssFile.replace(/^_astro\//, '');
+        let cssPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanCssFile : '/' + cleanCssFile;
+        // Eliminar dobles barras
+        cssPath = cssPath.replace(/\/\//g, '/');
+        await loadCSS(cssPath);
         console.log('✅ CSS cargado:', cssFile);
       }
     }
@@ -162,7 +190,12 @@ function generateDynamicLoader(sectionAssets, astroPath = '_astro') {
     // Cargar JS
     if (section.js && section.js.length > 0) {
       for (const jsFile of section.js) {
-        await loadScript('/' + BASE_PATH + '/' + jsFile);
+        // Evitar añadir dos veces _astro/
+        let cleanJsFile = jsFile.replace(/^_astro\//, '');
+        let jsPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanJsFile : '/' + cleanJsFile;
+        // Eliminar dobles barras
+        jsPath = jsPath.replace(/\/\//g, '/');
+        await loadScript(jsPath);
         console.log('✅ Script cargado:', jsFile);
       }
     }
@@ -266,31 +299,47 @@ function organizeAssetsBySections(foundAssets) {
  * @returns {string} - Contenido HTML completo
  */
 function generateHtml(organizedAssets) {
-  // Generar HTML base
-  let html = generateBaseHtml();
+  // 0. Limpiamos las rutas para evitar dobles _astro
+  // Hacemos una copia profunda para no modificar el original
+  let cleanedAssets = JSON.parse(JSON.stringify(organizedAssets));
   
-  // Extraer ruta de los assets (originalmente en foundAssets)
-  const astroPath = organizedAssets.astroPath || '_astro';
+  // Limpiamos todos los paths para eliminar prefijos _astro/ que se añadirán después
+  Object.keys(cleanedAssets).forEach(section => {
+    if (cleanedAssets[section].js) {
+      cleanedAssets[section].js = cleanedAssets[section].js.map(path => {
+        return path.replace(/^\/?_astro\//, '');
+      });
+    }
+    if (cleanedAssets[section].css) {
+      cleanedAssets[section].css = cleanedAssets[section].css.map(path => {
+        return path.replace(/^\/?_astro\//, '');
+      });
+    }
+  });
+
+  // 1. Obtener la plantilla base HTML
+  let html = generateBaseHtml('Masclet Imperi');
   
-  // Buscar la clave 'core' o 'CORE' - Arreglo IMPLEMENTACIÓN 27
-  const coreKey = 'core' in organizedAssets ? 'core' : ('CORE' in organizedAssets ? 'CORE' : null);
+  // 2. Buscar los core scripts y css (pueden estar como 'core', 'CORE' o 'Core')
+  let coreAssets = {};
+  const coreKey = Object.keys(cleanedAssets).find(key => key.toLowerCase() === 'core');
   
-  // Obtener CSS y scripts críticos
+  // Definir las variables para CSS y scripts críticos
   let coreCSS = '<!-- No se encontraron estilos CSS core -->';
   let coreScripts = '<!-- No se encontraron scripts JS core -->';
   
   if (coreKey) {
-    // Generar tags para CSS crítico
-    if (organizedAssets[coreKey]?.css?.length > 0) {
-      coreCSS = generateCssTags(organizedAssets[coreKey].css, astroPath);
+    coreAssets = cleanedAssets[coreKey];
+    console.log(`✅ Encontrados ${coreAssets.js ? coreAssets.js.length : 0} scripts core`);
+    console.log(`✅ Encontrados ${coreAssets.css ? coreAssets.css.length : 0} estilos core`);
+    
+    // Generar las etiquetas para los scripts y CSS core
+    if (coreAssets.js && coreAssets.js.length > 0) {
+      coreScripts = generateScriptTags(coreAssets.js, '_astro');
     }
     
-    // Generar tags para scripts críticos 
-    if (organizedAssets[coreKey]?.js?.length > 0) {
-      coreScripts = generateScriptTags(organizedAssets[coreKey].js, astroPath);
-      console.log(`✅ Generados ${organizedAssets[coreKey].js.length} scripts core`);
-    } else {
-      console.error('⚠️ No se encontraron scripts JS core');
+    if (coreAssets.css && coreAssets.css.length > 0) {
+      coreCSS = generateCssTags(coreAssets.css, '_astro');
     }
   } else {
     console.error('⚠️ No se encontró sección core/CORE en los assets');
@@ -301,7 +350,7 @@ function generateHtml(organizedAssets) {
   html = html.replace('<!-- MARCADOR: SCRIPTS CRÍTICOS -->', coreScripts);
   
   // Generar cargador dinámico para scripts de sección
-  const dynamicLoader = generateDynamicLoader(organizedAssets, astroPath);
+  const dynamicLoader = generateDynamicLoader(cleanedAssets, '_astro');
   html = html.replace('<!-- MARCADOR: SCRIPTS SECCIONES -->', dynamicLoader);
   
   return html;

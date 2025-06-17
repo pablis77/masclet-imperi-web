@@ -4,9 +4,11 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
+# Comentado para permitir tests de build:
+# build/
 develop-eggs/
-dist/
+# Comentados para permitir versionar dist/client en Amplify:
+# dist/
 downloads/
 eggs/
 .eggs/
@@ -20,6 +22,10 @@ wheels/
 .installed.cfg
 *.egg
 .pytest_cache/
+
+# Excepción para permitir tests E2E
+!new_tests/build/
+!new_tests/build/e2e/
 
 # Environment
 .env
