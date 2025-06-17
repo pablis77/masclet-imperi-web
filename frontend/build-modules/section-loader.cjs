@@ -327,7 +327,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
       js: [],
       css: []
     },
-    current: {
+    DASHBOARD: { // Cambiado de 'current' a 'DASHBOARD' para alinear con detectSection
       js: [],
       css: []
     },
@@ -338,29 +338,70 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
   };
 
   // Función auxiliar para buscar coincidencia de nombre base
-  function matchesByBaseFilename(fullPath, baseFilename) {
+  function matchesByBaseFilename(fullPath, baseFilename, sectionContext = null) {
     // Extrae solo el nombre del archivo de la ruta completa
     const pathParts = fullPath.split('/');
     const filename = pathParts[pathParts.length - 1];
     
+    // Detección inteligente de sección basada en nombre de archivo
+    const fileSection = detectSectionFromFilename(filename);
+    
+    // Si tenemos contexto de sección y no coincide con la sección del archivo, rechazamos inmediatamente
+    if (sectionContext && fileSection && sectionContext !== fileSection && 
+        sectionContext !== 'CORE' && fileSection !== 'CORE') {
+      // No comparamos archivos de secciones diferentes (excepto CORE que es común)
+      return false;
+    }
+    
     // Obtén el nombre base del archivo que buscamos (sin extensión)
     const searchName = baseFilename.replace(/\.js$/, '');
     
-    // Estrategia 1: Coincidencia directa con inicio de nombre
+    // Estrategia 1: Coincidencia exacta de nombre base (más segura)
+    const exactMatch = filename === baseFilename;
+    
+    // Estrategia 2: Coincidencia directa con inicio de nombre
     const startsWithMatch = filename.startsWith(searchName + '.');
     
-    // Estrategia 2: Coincidencia con nombre base ignorando hash
+    // Estrategia 3: Coincidencia con nombre base ignorando hash
     // Expresión que detecta cualquier patrón de hash en el nombre
     const cleanedFilename = filename.replace(/\.([A-Za-z0-9_\-]+)\.js$/, '.js');
     const cleanMatch = cleanedFilename === baseFilename;
     
     // Combinamos las estrategias
-    const fileMatches = startsWithMatch || cleanMatch;
+    const fileMatches = exactMatch || startsWithMatch || cleanMatch;
     
-    // Log para depuración
-    console.log(`Comparando: ${filename} con ${baseFilename} => ${fileMatches ? 'COINCIDE' : 'NO coincide'}`);
+    // Log para depuración (solo si hay coincidencia o es relevante)
+    if (fileMatches || (!sectionContext || sectionContext === fileSection)) {
+      console.log(`Comparando: ${filename} con ${baseFilename} => ${fileMatches ? 'COINCIDE' : 'NO coincide'}`);
+    }
     
     return fileMatches;
+  }
+  
+  // Función auxiliar para detectar sección basada en nombre de archivo
+  function detectSectionFromFilename(filename) {
+    const lowerFilename = filename.toLowerCase();
+    
+    // Patrones de detección por sección
+    if (/dashboard|panel/i.test(lowerFilename)) {
+      return 'DASHBOARD';
+    } else if (/explotacion/i.test(lowerFilename)) {
+      return 'EXPLOTACIONES';
+    } else if (/animal|vaca|toro|masclet/i.test(lowerFilename)) {
+      return 'ANIMALES';
+    } else if (/listado|report|informe/i.test(lowerFilename)) {
+      return 'LISTADOS';
+    } else if (/user|usuario|login|auth/i.test(lowerFilename)) {
+      return 'USUARIOS';
+    } else if (/import|csv|excel/i.test(lowerFilename)) {
+      return 'IMPORTACIONES';
+    } else if (/backup|copia|restore/i.test(lowerFilename)) {
+      return 'BACKUPS';
+    } else if (/api|config|vendor|lang|service|notifi|hoisted|common/i.test(lowerFilename)) {
+      return 'CORE'; // Componentes compartidos/core
+    }
+    
+    return null; // No se pudo determinar la sección
   }
 
   // 1. Procesar scripts CORE (siempre cargan)
@@ -389,7 +430,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
   if (currentConfig && currentConfig.jsFiles && Array.isArray(currentConfig.jsFiles)) {
     if (assets.allJs) {
       // Iterar por todos los scripts .js disponibles
-      Object.keys(assets.js).forEach(script => {
+      assets.allJs.forEach(script => {
         // Ignorar archivos de favicon que causan 404
         if (script.includes('favicon.ico') || script.includes('favico.ico')) {
           return; // Ignorar estos archivos
@@ -404,7 +445,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
             if (sectionConfig.jsFiles.some(jsFile => matchesByBaseFilename(script, jsFile))) {
               sectionFound = true;
               if (sectionName === currentSection) {
-                result.current.js.push(script);
+                result.DASHBOARD.js.push(script);
               } else {
                 if (!result.other.sections) result.other.sections = {};
                 if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
@@ -422,7 +463,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
               if (sectionConfig.jsFiles.some(jsFile => scriptName === jsFile)) {
                 sectionFound = true;
                 if (sectionName === currentSection) {
-                  result.current.js.push(script);
+                  result.DASHBOARD.js.push(script);
                 } else {
                   if (!result.other.sections) result.other.sections = {};
                   if (!result.other.sections[sectionName]) result.other.sections[sectionName] = { js: [], css: [] };
@@ -442,7 +483,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
           currentConfig.cssPattern.test(css) && 
           !result.core.css.includes(css)
         );
-        result.current.css.push(...matchingCss);
+        result.DASHBOARD.css.push(...matchingCss);
       }
     }
   }
@@ -460,7 +501,7 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
           // No incluir en otras secciones scripts ya incluidos en core o sección actual
           return sectionConfig.jsFiles.some(jsFile => matchesByBaseFilename(jsPath, jsFile)) && 
                  !result.core.js.includes(jsPath) &&
-                 !result.current.js.includes(jsPath);
+                 !result.DASHBOARD.js.includes(jsPath);
         });
         
         // Agregar a la lista de scripts de otras secciones

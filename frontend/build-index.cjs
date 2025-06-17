@@ -9,6 +9,10 @@ const path = require('path');
 const clientDir = path.join(__dirname, 'dist', 'client');
 const astroDir = path.join(clientDir, '_astro');
 
+// Ruta al favicon en los artefactos
+const faviconSourcePath = path.join(__dirname, '..', 'AWS_AMPLIFY', 'LOGS builds', 'Deployment-26-artifacts', 'favico.ico');
+const faviconTargetPath = path.join(clientDir, 'favicon.ico');
+
 // Módulos
 const { findAssets } = require('./build-modules/asset-finder.cjs');
 const { generateHtml } = require('./build-modules/html-generator.cjs');
@@ -62,5 +66,39 @@ const htmlContent = generateHtml(organizedAssets);
 const outputPath = path.join(clientDir, 'index.html');
 fs.writeFileSync(outputPath, htmlContent);
 console.log(`\n✅ index.html creado correctamente en ${outputPath}`);
+
+// 6. Copiar favicon.ico
+console.log('\n🖼️ Copiando favicon.ico...');
+try {
+  if (fs.existsSync(faviconSourcePath)) {
+    fs.copyFileSync(faviconSourcePath, faviconTargetPath);
+    console.log(`✅ favicon.ico copiado correctamente a ${faviconTargetPath}`);
+  } else {
+    console.warn(`⚠️ No se encontró el favicon en ${faviconSourcePath}`);
+    // Intentar buscar en otras ubicaciones
+    const alternativePaths = [
+      path.join(__dirname, '..', 'AWS_AMPLIFY', 'favico.ico'),
+      path.join(__dirname, '..', 'public', 'favicon.ico'),
+      path.join(__dirname, 'public', 'favicon.ico'),
+      path.join(__dirname, 'src', 'favicon.ico'),
+    ];
+    
+    let faviconCopied = false;
+    for (const altPath of alternativePaths) {
+      if (fs.existsSync(altPath)) {
+        fs.copyFileSync(altPath, faviconTargetPath);
+        console.log(`✅ favicon.ico copiado desde ubicación alternativa: ${altPath}`);
+        faviconCopied = true;
+        break;
+      }
+    }
+    
+    if (!faviconCopied) {
+      console.error(`❌ No se pudo encontrar favicon.ico en ninguna ubicación conocida`);
+    }
+  }
+} catch (error) {
+  console.error(`❌ Error al copiar favicon.ico: ${error.message}`);
+}
 
 console.log('\n🚀 Proceso completado con éxito');
