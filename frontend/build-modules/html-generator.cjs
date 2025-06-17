@@ -272,12 +272,32 @@ function generateHtml(organizedAssets) {
   // Extraer ruta de los assets (originalmente en foundAssets)
   const astroPath = organizedAssets.astroPath || '_astro';
   
-  // Generar tags para CSS crítico (CORE)
-  const coreCSS = generateCssTags(organizedAssets.CORE?.css || [], astroPath);
-  html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS);
+  // Buscar la clave 'core' o 'CORE' - Arreglo IMPLEMENTACIÓN 27
+  const coreKey = 'core' in organizedAssets ? 'core' : ('CORE' in organizedAssets ? 'CORE' : null);
   
-  // Generar tags para scripts críticos (CORE)
-  const coreScripts = generateScriptTags(organizedAssets.CORE?.js || [], astroPath);
+  // Obtener CSS y scripts críticos
+  let coreCSS = '<!-- No se encontraron estilos CSS core -->';
+  let coreScripts = '<!-- No se encontraron scripts JS core -->';
+  
+  if (coreKey) {
+    // Generar tags para CSS crítico
+    if (organizedAssets[coreKey]?.css?.length > 0) {
+      coreCSS = generateCssTags(organizedAssets[coreKey].css, astroPath);
+    }
+    
+    // Generar tags para scripts críticos 
+    if (organizedAssets[coreKey]?.js?.length > 0) {
+      coreScripts = generateScriptTags(organizedAssets[coreKey].js, astroPath);
+      console.log(`✅ Generados ${organizedAssets[coreKey].js.length} scripts core`);
+    } else {
+      console.error('⚠️ No se encontraron scripts JS core');
+    }
+  } else {
+    console.error('⚠️ No se encontró sección core/CORE en los assets');
+  }
+  
+  // Insertar en el HTML
+  html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS);
   html = html.replace('<!-- MARCADOR: SCRIPTS CRÍTICOS -->', coreScripts);
   
   // Generar cargador dinámico para scripts de sección
