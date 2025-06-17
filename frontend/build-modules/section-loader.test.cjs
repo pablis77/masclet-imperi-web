@@ -58,7 +58,7 @@ function testOrganizeSectionAssets() {
   const result = sectionLoader.organizeSectionAssets(testAssets, 'DASHBOARD');
   
   // Verificar que se cargaron los assets del core
-  const coreJsCount = result.core.js.length;
+  const coreJsCount = result.core && result.core.js ? result.core.js.length : 0;
   console.log(`- Assets JS del core cargados: ${coreJsCount}`);
   if (coreJsCount < 1) {
     console.error('ERROR: No se cargaron assets JS del core');
@@ -67,7 +67,7 @@ function testOrganizeSectionAssets() {
   }
   
   // Verificar que se cargaron los assets de la sección actual (DASHBOARD)
-  const dashboardJsCount = result.current.js.length;
+  const dashboardJsCount = result.DASHBOARD && result.DASHBOARD.js ? result.DASHBOARD.js.length : 0;
   console.log(`- Assets JS del dashboard cargados: ${dashboardJsCount}`);
   if (dashboardJsCount < 1) {
     console.error('ERROR: No se cargaron assets JS del dashboard');
@@ -76,8 +76,11 @@ function testOrganizeSectionAssets() {
   }
   
   // Verificar que no se cargaron archivos que no deberían estar
-  const otroComponenteIncluido = result.core.js.some(js => js.includes('ComponenteNoListado')) || 
-                               result.current.js.some(js => js.includes('ComponenteNoListado'));
+  const coreHasComponent = result.core && result.core.js ? 
+                          result.core.js.some(js => js.includes('ComponenteNoListado')) : false;
+  const dashboardHasComponent = result.DASHBOARD && result.DASHBOARD.js ? 
+                          result.DASHBOARD.js.some(js => js.includes('ComponenteNoListado')) : false;
+  const otroComponenteIncluido = coreHasComponent || dashboardHasComponent;
   if (otroComponenteIncluido) {
     console.error('ERROR: Se incluyó un componente que no debería estar en la sección');
   } else {

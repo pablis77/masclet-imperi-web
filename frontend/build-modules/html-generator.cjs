@@ -181,7 +181,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
         let cleanCssFile = cssFile.replace(/^_astro\//, '');
         let cssPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanCssFile : '/' + cleanCssFile;
         // Eliminar dobles barras
-        cssPath = cssPath.replace(/\/\//g, '/');
+        cssPath = cssPath.replace(new RegExp('//','g'), '/');
         await loadCSS(cssPath);
         console.log('✅ CSS cargado:', cssFile);
       }
@@ -194,7 +194,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
         let cleanJsFile = jsFile.replace(/^_astro\//, '');
         let jsPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanJsFile : '/' + cleanJsFile;
         // Eliminar dobles barras
-        jsPath = jsPath.replace(/\/\//g, '/');
+        jsPath = jsPath.replace(new RegExp('//','g'), '/');
         await loadScript(jsPath);
         console.log('✅ Script cargado:', jsFile);
       }
@@ -204,7 +204,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
   // Detectar sección actual basado en la ruta
   function detectCurrentSection() {
     const path = window.location.pathname;
-    
+
     if (path.includes('/login')) {
       return 'LOGIN';
     } else if (path.includes('/explotacion')) {
@@ -216,9 +216,9 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
     } else if (path.includes('/user')) {
       return 'USUARIOS';
     } else if (path.includes('/import')) {
-      return 'IMPORTACION';
+      return 'IMPORTACIONES';
     } else if (path.includes('/backup')) {
-      return 'BACKUPS';
+      return 'BACKUP';
     } else {
       // Por defecto cargar dashboard
       return 'DASHBOARD';
@@ -328,6 +328,12 @@ function generateHtml(organizedAssets) {
   let coreCSS = '<!-- No se encontraron estilos CSS core -->';
   let coreScripts = '<!-- No se encontraron scripts JS core -->';
   
+  // INYECTAR MANUALMENTE LOS CSS CRÍTICOS
+  // Esta es una solución de emergencia para garantizar que los CSS críticos siempre estén presentes
+  coreCSS = `<link rel="stylesheet" href="/_astro/index.DJoSdzOi.css">
+  <link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
+  <link rel="stylesheet" href="/_astro/_id_.CtbIiy9S.css">`;
+  
   if (coreKey) {
     coreAssets = cleanedAssets[coreKey];
     console.log(`✅ Encontrados ${coreAssets.js ? coreAssets.js.length : 0} scripts core`);
@@ -346,8 +352,20 @@ function generateHtml(organizedAssets) {
   }
   
   // Insertar en el HTML
-  html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS);
+  html = html.replace('<!-- CSS Crítico -->', '<!-- CSS Crítico -->\n  ' + coreCSS);
+  html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS); // Para compatibilidad con versiones anteriores
   html = html.replace('<!-- MARCADOR: SCRIPTS CRÍTICOS -->', coreScripts);
+  
+  // VERIFICACIÓN DE EMERGENCIA: Asegurar que los CSS críticos están presentes
+  if (!html.includes('index.DJoSdzOi.css') || !html.includes('vendor.DJv9yYup.css')) {
+    console.warn('⚠️ ADVERTENCIA: No se detectaron CSS críticos en el HTML generado');
+    console.log('🔧 Aplicando parche de emergencia para CSS críticos...');
+    const cssEmergencia = `<link rel="stylesheet" href="/_astro/index.DJoSdzOi.css">
+  <link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
+  <link rel="stylesheet" href="/_astro/_id_.CtbIiy9S.css">`;
+    html = html.replace('</head>', cssEmergencia + '\n</head>');
+    console.log('✅ CSS críticos insertados manualmente');
+  }
   
   // Generar cargador dinámico para scripts de sección
   const dynamicLoader = generateDynamicLoader(cleanedAssets, '_astro');

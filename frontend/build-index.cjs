@@ -10,8 +10,8 @@ const clientDir = path.join(__dirname, 'dist', 'client');
 const astroDir = path.join(clientDir, '_astro');
 
 // Ruta al favicon en los artefactos
-const faviconSourcePath = path.join(__dirname, '..', 'AWS_AMPLIFY', 'LOGS builds', 'Deployment-26-artifacts', 'favico.ico');
-const faviconTargetPath = path.join(clientDir, 'favicon.ico');
+const favicoSourcePath = path.join(__dirname, '..', 'AWS_AMPLIFY', 'LOGS builds', 'Deployment-26-artifacts', 'favico.ico');
+const favicoTargetPath = path.join(clientDir, 'favico.ico');
 
 // Módulos
 const { findAssets } = require('./build-modules/asset-finder.cjs');
@@ -56,6 +56,25 @@ try {
 console.log('\n📂 Organizando assets por secciones...');
 const defaultSection = 'DASHBOARD'; // Sección por defecto (ruta principal)
 const organizedAssets = organizeSectionAssets(foundAssets, defaultSection);
+
+// Mostrar información de depuración detallada
+console.log('DEBUG - Claves de organizedAssets:', Object.keys(organizedAssets));
+Object.keys(organizedAssets).forEach(key => {
+  const jsCount = organizedAssets[key].js ? organizedAssets[key].js.length : 0;
+  const cssCount = organizedAssets[key].css ? organizedAssets[key].css.length : 0;
+  console.log(`Sección ${key}: Encontrados ${jsCount} scripts y ${cssCount} estilos`);
+  
+  // Mostrar los nombres específicos para LOGIN y DASHBOARD que son prioritarios
+  if (key === 'LOGIN' || key === 'DASHBOARD' || key === 'core') {
+    if (organizedAssets[key].js && organizedAssets[key].js.length > 0) {
+      console.log(`Scripts de ${key}:`, organizedAssets[key].js.map(script => {
+        const parts = script.split('/');
+        return parts[parts.length - 1]; // Extraer solo el nombre del archivo
+      }));
+    }
+  }
+});
+
 console.log(`✅ Assets organizados para ${Object.keys(organizedAssets).length} secciones`);
 
 // 4. Generar el HTML con los assets organizados por secciones
@@ -67,38 +86,38 @@ const outputPath = path.join(clientDir, 'index.html');
 fs.writeFileSync(outputPath, htmlContent);
 console.log(`\n✅ index.html creado correctamente en ${outputPath}`);
 
-// 6. Copiar favicon.ico
-console.log('\n🖼️ Copiando favicon.ico...');
+// 6. Copiar favico.ico
+console.log('\n🖼️ Copiando favico.ico...');
 try {
-  if (fs.existsSync(faviconSourcePath)) {
-    fs.copyFileSync(faviconSourcePath, faviconTargetPath);
-    console.log(`✅ favicon.ico copiado correctamente a ${faviconTargetPath}`);
+  if (fs.existsSync(favicoSourcePath)) {
+    fs.copyFileSync(favicoSourcePath, favicoTargetPath);
+    console.log(`✅ favico.ico copiado correctamente a ${favicoTargetPath}`);
   } else {
-    console.warn(`⚠️ No se encontró el favicon en ${faviconSourcePath}`);
+    console.warn(`⚠️ No se encontró el favicon en ${favicoSourcePath}`);
     // Intentar buscar en otras ubicaciones
     const alternativePaths = [
       path.join(__dirname, '..', 'AWS_AMPLIFY', 'favico.ico'),
-      path.join(__dirname, '..', 'public', 'favicon.ico'),
-      path.join(__dirname, 'public', 'favicon.ico'),
-      path.join(__dirname, 'src', 'favicon.ico'),
+      path.join(__dirname, '..', 'public', 'favico.ico'),
+      path.join(__dirname, 'public', 'favico.ico'),
+      path.join(__dirname, 'src', 'favico.ico'),
     ];
     
     let faviconCopied = false;
     for (const altPath of alternativePaths) {
       if (fs.existsSync(altPath)) {
-        fs.copyFileSync(altPath, faviconTargetPath);
-        console.log(`✅ favicon.ico copiado desde ubicación alternativa: ${altPath}`);
+        fs.copyFileSync(altPath, favicoTargetPath);
+        console.log(`✅ favico.ico copiado desde ubicación alternativa: ${altPath}`);
         faviconCopied = true;
         break;
       }
     }
     
     if (!faviconCopied) {
-      console.error(`❌ No se pudo encontrar favicon.ico en ninguna ubicación conocida`);
+      console.error(`❌ No se pudo encontrar favico.ico en ninguna ubicación conocida`);
     }
   }
 } catch (error) {
-  console.error(`❌ Error al copiar favicon.ico: ${error.message}`);
+  console.error(`❌ Error al copiar favico.ico: ${error.message}`);
 }
 
 console.log('\n🚀 Proceso completado con éxito');

@@ -61,9 +61,13 @@ top/
 │       │   │   │   ├── PartosSection.tsx
 │       │   │   │   └── PartosSection.tsx
 │       │   │   └── dashboardv2/
+│       │   │       ├── DashboardV2.tsx
+│       │   │   │ └── DashboardV2.tsx
 │       │   │       ├── cards/
-│       │   │       │   ├── DashboardV2.tsx
-│       │   │       │   └── DashboardV2.tsx
+│       │   │       │   ├── DiagnosticoDataCard.tsx
+                        ├── DiagnosticoDataCard.tsx
+                        ├── ResumenOriginalCard.tsx
+│       │   │       │   └── ResumenOriginalCard.tsx
 │       │   ├── layout/
 │       │   │   ├── Footer.astro
 │       │   │   ├── Footer.astro?astro&type=script&index=0&lang.ts
