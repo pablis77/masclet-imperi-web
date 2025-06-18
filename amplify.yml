@@ -9,6 +9,7 @@ frontend:
       commands:
         - npm run build
         - node build-index.cjs
+        - node copy-css.cjs
   artifacts:
     baseDirectory: frontend/dist/client
     files:

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico Masclet Imperi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .diagnostic-box {
+      border: 2px solid #007bff;
+      background-color: #f0f8ff;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    .test-element {
+      background-color: #ff6b6b;
+      color: white;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 3px;
+    }
+    #app-content-test {
+      background-color: #4ecdc4;
+      padding: 15px;
+      margin-top: 20px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Diagnóstico de Visualización</h1>
+  
+  <div class="diagnostic-box">
+    <h2>Test 1: HTML básico visible</h2>
+    <p>Si puedes ver este texto, el HTML básico se está cargando correctamente.</p>
+    <div class="test-element">Este elemento debería verse con fondo rojo</div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 2: Simulación estructura app</h2>
+    <div id="app">
+      <div class="sidebar-test" style="width: 200px; height: 100px; background-color: #6c5ce7; color: white; padding: 10px;">
+        Simulación Sidebar
+      </div>
+      <div class="navbar-test" style="width: 100%; height: 50px; background-color: #0984e3; color: white; padding: 10px;">
+        Simulación Navbar
+      </div>
+      <div id="app-content-test">
+        Contenido principal de la aplicación
+      </div>
+    </div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 3: JavaScript básico</h2>
+    <p>Estado JS: <span id="js-status">Esperando...</span></p>
+  </div>
+
+  <script>
+    // Test básico de JavaScript
+    document.getElementById('js-status').textContent = 'JavaScript funcionando correctamente';
+    
+    // Comprobar si tenemos visibilidad CSS
+    setTimeout(() => {
+      const bodyStyle = window.getComputedStyle(document.body);
+      const appStyle = window.getComputedStyle(document.getElementById('app'));
+      
+      console.log('[Diagnóstico] Body visible:', bodyStyle.display !== 'none' && bodyStyle.visibility !== 'hidden');
+      console.log('[Diagnóstico] App visible:', appStyle.display !== 'none' && appStyle.visibility !== 'hidden');
+      
+      // Insertar resultados en la página
+      const diagBox = document.createElement('div');
+      diagBox.className = 'diagnostic-box';
+      diagBox.innerHTML = `
+        <h2>Resultados CSS</h2>
+        <p>Body display: ${bodyStyle.display}</p>
+        <p>Body visibility: ${bodyStyle.visibility}</p>
+        <p>App display: ${appStyle.display}</p>
+        <p>App visibility: ${appStyle.visibility}</p>
+      `;
+      document.body.appendChild(diagBox);
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -1,5 +1,17 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250618_020031.sql",
+        "date": "2025-06-18 02:00:31",
+        "timestamp": "20250618_020031",
+        "backup_type": "daily",
+        "size": "126.14 KB",
+        "size_bytes": 129167,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup diario programado (18/06/2025)",
+        "reference_id": null
+    },
+    {
         "filename": "backup_masclet_imperi_20250617_020021.sql",
         "date": "2025-06-17 02:00:21",
         "timestamp": "20250617_020021",
@@ -70,18 +82,6 @@
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal elsa (ID: 63)",
         "reference_id": "63"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250615_190423.sql",
-        "date": "2025-06-15 19:04:24",
-        "timestamp": "20250615_190423",
-        "backup_type": "animal_updated",
-        "size": "125.03 KB",
-        "size_bytes": 128031,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras eliminación del animal angel (ID: 62)",
-        "reference_id": "62"
     },
     {
         "filename": "backup_masclet_imperi_20250607_020044.sql",

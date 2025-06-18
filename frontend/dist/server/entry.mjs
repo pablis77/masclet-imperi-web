@@ -1,6 +1,6 @@
 import { e as renderers, j as createExports } from './chunks/vendor_B30v18IX.mjs';
 import { s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_DIH1zQyS.mjs';
-import { manifest } from './manifest_s9xyz3T-.mjs';
+import { manifest } from './manifest_BDdcyweb.mjs';
 
 const _page0 = () => import('./pages/_image.astro.mjs');
 const _page1 = () => import('./pages/animals/edit/_id_.astro.mjs');
