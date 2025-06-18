@@ -178,7 +178,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
     if (section.css && section.css.length > 0) {
       for (const cssFile of section.css) {
         // Evitar añadir dos veces _astro/
-        let cleanCssFile = cssFile.replace(/^_astro\//, '');
+        let cleanCssFile = cssFile.replace(/^_astro\\//, '');
         let cssPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanCssFile : '/' + cleanCssFile;
         // Eliminar dobles barras
         cssPath = cssPath.replace(new RegExp('//','g'), '/');
@@ -191,7 +191,7 @@ function generateDynamicLoader(sectionAssets, astroPath = '') {
     if (section.js && section.js.length > 0) {
       for (const jsFile of section.js) {
         // Evitar añadir dos veces _astro/
-        let cleanJsFile = jsFile.replace(/^_astro\//, '');
+        let cleanJsFile = jsFile.replace(/^_astro\\//, '');
         let jsPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanJsFile : '/' + cleanJsFile;
         // Eliminar dobles barras
         jsPath = jsPath.replace(new RegExp('//','g'), '/');
