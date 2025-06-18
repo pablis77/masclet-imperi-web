@@ -1,8 +1,5 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/.vercel/output",
-  "framework": "astro",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/entry" }
-  ]
+  "framework": "astro"
 }
