@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico Masclet Imperi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .diagnostic-box {
+      border: 2px solid #007bff;
+      background-color: #f0f8ff;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    .test-element {
+      background-color: #ff6b6b;
+      color: white;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 3px;
+    }
+    #app-content-test {
+      background-color: #4ecdc4;
+      padding: 15px;
+      margin-top: 20px;
+      color: white;
+    }
+    .result-success {
+      color: green;
+      font-weight: bold;
+    }
+    .result-failure {
+      color: red;
+      font-weight: bold;
+    }
+    .code-snippet {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .component-box {
+      margin-bottom: 15px;
+      border: 1px dashed #ccc;
+      padding: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Diagnóstico Avanzado de Visualización - Masclet Imperi</h1>
+  
+  <div class="diagnostic-box">
+    <h2>Test 1: HTML básico visible</h2>
+    <p>Si puedes ver este texto, el HTML básico se está cargando correctamente.</p>
+    <div class="test-element">Este elemento debería verse con fondo rojo</div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 2: Simulación estructura app</h2>
+    <div id="app">
+      <div class="sidebar-test" style="width: 200px; height: 100px; background-color: #6c5ce7; color: white; padding: 10px;">
+        Simulación Sidebar
+      </div>
+      <div class="navbar-test" style="width: 100%; height: 50px; background-color: #0984e3; color: white; padding: 10px;">
+        Simulación Navbar
+      </div>
+      <div id="app-content-test">
+        Contenido principal de la aplicación
+      </div>
+    </div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 3: CSS y Estilos</h2>
+    <p>Estado de visibilidad: <span id="css-status">Analizando...</span></p>
+    <div id="css-details"></div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 4: JavaScript básico</h2>
+    <p>Estado JS: <span id="js-status">Esperando...</span></p>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 5: Verificación de Componentes Estructurales</h2>
+    <p>Este test verifica la presencia de los componentes estructurales en index.html y la carga de sus estilos y scripts.</p>
+    <div id="structural-components">Analizando componentes...</div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 6: Diagnóstico de Scripts</h2>
+    <p>Este test verifica la carga de scripts en el orden correcto.</p>
+    <div id="script-diagnostics">Analizando scripts...</div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 7: Estructura DOM</h2>
+    <p>Este test analiza la estructura real del DOM comparada con la esperada.</p>
+    <div id="dom-structure">Analizando DOM...</div>
+  </div>
+
+  <div class="diagnostic-box">
+    <h2>Test 8: Enlaces CSS</h2>
+    <p>Este test verifica los enlaces CSS cargados en la página.</p>
+    <div id="css-links">Analizando enlaces CSS...</div>
+  </div>
+  
+  <div class="diagnostic-box">
+    <h2>Errores en Consola</h2>
+    <p>Registro de errores capturados:</p>
+    <div id="console-errors">Ningún error registrado hasta ahora</div>
+  </div>
+
+  <script>
+    // Captura errores de consola
+    const errorLog = [];
+    window.onerror = function(message, source, lineno, colno, error) {
+      errorLog.push({ message, source, lineno, colno });
+      updateErrorLog();
+      return false;
+    };
+
+    // Actualiza el log de errores en la UI
+    function updateErrorLog() {
+      const errorContainer = document.getElementById('console-errors');
+      if (errorLog.length === 0) {
+        errorContainer.innerHTML = '<span class="result-success">Ningún error registrado</span>';
+      } else {
+        let errorHTML = '<ul>';
+        errorLog.forEach(err => {
+          errorHTML += `<li class="result-failure">${err.message} <br><small>En ${err.source} (línea ${err.lineno}:${err.colno})</small></li>`;
+        });
+        errorHTML += '</ul>';
+        errorContainer.innerHTML = errorHTML;
+      }
+    }
+
+    // Test básico de JavaScript
+    document.getElementById('js-status').textContent = 'JavaScript funcionando correctamente';
+    
+    // Comprobar si tenemos visibilidad CSS
+    setTimeout(() => {
+      const bodyStyle = window.getComputedStyle(document.body);
+      const appStyle = window.getComputedStyle(document.getElementById('app'));
+      const appChildren = document.getElementById('app').children;
+      
+      const bodyVisible = bodyStyle.display !== 'none' && bodyStyle.visibility !== 'hidden';
+      const appVisible = appStyle.display !== 'none' && appStyle.visibility !== 'hidden';
+      
+      // Insertar resultados en la página
+      const cssStatus = document.getElementById('css-status');
+      cssStatus.className = (bodyVisible && appVisible) ? 'result-success' : 'result-failure';
+      cssStatus.textContent = (bodyVisible && appVisible) ? 'Todos los elementos son visibles' : 'Problema de visibilidad detectado';
+      
+      const cssDetails = document.getElementById('css-details');
+      cssDetails.innerHTML = `
+        <table>
+          <tr><th>Elemento</th><th>Display</th><th>Visibility</th><th>Position</th><th>Z-Index</th><th>Opacity</th></tr>
+          <tr>
+            <td>body</td>
+            <td>${bodyStyle.display}</td>
+            <td>${bodyStyle.visibility}</td>
+            <td>${bodyStyle.position}</td>
+            <td>${bodyStyle.zIndex}</td>
+            <td>${bodyStyle.opacity}</td>
+          </tr>
+          <tr>
+            <td>#app</td>
+            <td>${appStyle.display}</td>
+            <td>${appStyle.visibility}</td>
+            <td>${appStyle.position}</td>
+            <td>${appStyle.zIndex}</td>
+            <td>${appStyle.opacity}</td>
+          </tr>
+        </table>
+      `;
+
+      // Analizar componentes estructurales
+      const componentsContainer = document.getElementById('structural-components');
+      const expectedComponents = ['MainLayout', 'Navbar', 'Sidebar', 'Footer'];
+      let componentsHTML = '<ul>';
+      
+      // Busca en la página scripts que contengan nombres de estos componentes
+      const scripts = document.querySelectorAll('script');
+      const loadedComponents = [];
+      
+      scripts.forEach(script => {
+        const src = script.src || '';
+        expectedComponents.forEach(comp => {
+          if (src.toLowerCase().includes(comp.toLowerCase())) {
+            loadedComponents.push({
+              name: comp,
+              src: src
+            });
+          }
+        });
+      });
+      
+      // Agregar resultados de componentes estructurales
+      if (loadedComponents.length === 0) {
+        componentsHTML += `<li class="result-failure">No se detectaron componentes estructurales en los scripts cargados</li>`;
+      } else {
+        loadedComponents.forEach(comp => {
+          componentsHTML += `<li>${comp.name}: <span class="result-success">Detectado</span> en ${comp.src}</li>`;
+        });
+      }
+      
+      // Verificar si hay elementos faltantes
+      const missingComponents = expectedComponents.filter(comp => 
+        !loadedComponents.some(loaded => loaded.name === comp)
+      );
+      
+      if (missingComponents.length > 0) {
+        componentsHTML += `<li class="result-failure">Componentes faltantes: ${missingComponents.join(', ')}</li>`;
+      }
+      
+      componentsHTML += '</ul>';
+      componentsContainer.innerHTML = componentsHTML;
+
+      // Analizar scripts cargados
+      const scriptDiag = document.getElementById('script-diagnostics');
+      let scriptHTML = '<ul>';
+      const scriptElements = Array.from(document.querySelectorAll('script'));
+      
+      // Mostrar los primeros 5 scripts (o menos si hay menos)
+      const displayCount = Math.min(scriptElements.length, 5);
+      
+      for (let i = 0; i < displayCount; i++) {
+        const script = scriptElements[i];
+        const src = script.src || 'Script en línea';
+        scriptHTML += `<li>Script ${i+1}: ${src}</li>`;
+      }
+      
+      if (scriptElements.length > 5) {
+        scriptHTML += `<li>... y ${scriptElements.length - 5} scripts más</li>`;
+      }
+      
+      scriptHTML += `<li>Total de scripts: <strong>${scriptElements.length}</strong></li>`;
+      scriptHTML += '</ul>';
+      scriptDiag.innerHTML = scriptHTML;
+
+      // Analizar estructura DOM
+      const domAnalysis = document.getElementById('dom-structure');
+      let domHTML = '';
+      
+      // Buscar el div#app real en la página
+      const realApp = document.getElementById('app');
+      if (!realApp) {
+        domHTML = '<p class="result-failure">No se encontró el elemento #app en la página</p>';
+      } else {
+        // Obtener los primeros 3 niveles de la estructura DOM
+        function getSimplifiedDOM(element, level = 0, maxLevel = 2) {
+          if (level > maxLevel) return '';
+          
+          let result = '&nbsp;'.repeat(level * 4) + `<strong>${element.tagName.toLowerCase()}</strong>`;
+          if (element.id) result += `#${element.id}`;
+          if (element.className) result += `.${element.className.replace(/\s+/g, '.')}`;
+          result += '<br>';
+          
+          for (let i = 0; i < Math.min(element.children.length, 5); i++) {
+            result += getSimplifiedDOM(element.children[i], level + 1, maxLevel);
+          }
+          
+          if (element.children.length > 5) {
+            result += '&nbsp;'.repeat((level + 1) * 4) + `... y ${element.children.length - 5} elementos más<br>`;
+          }
+          
+          return result;
+        }
+        
+        domHTML = '<div class="code-snippet">' + getSimplifiedDOM(document.body) + '</div>';
+      }
+      
+      domAnalysis.innerHTML = domHTML;
+
+      // Analizar enlaces CSS
+      const cssLinksContainer = document.getElementById('css-links');
+      const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
+      
+      if (cssLinks.length === 0) {
+        cssLinksContainer.innerHTML = '<p class="result-failure">No se encontraron enlaces CSS en la página</p>';
+      } else {
+        let cssLinksHTML = '<ul>';
+        cssLinks.forEach(link => {
+          cssLinksHTML += `<li>${link.href}</li>`;
+        });
+        cssLinksHTML += `</ul><p>Total CSS: <strong>${cssLinks.length}</strong></p>`;
+        cssLinksContainer.innerHTML = cssLinksHTML;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

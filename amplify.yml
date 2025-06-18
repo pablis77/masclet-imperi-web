@@ -7,14 +7,20 @@ frontend:
         - npm ci
     build:
       commands:
+        # Simplificamos el build para evitar conflictos con SSR
         - npm run build
-        - node build-index.cjs
-        - node copy-css.cjs
   artifacts:
-    baseDirectory: frontend/dist/client
+    # Usa el directorio raíz de dist que contiene tanto client como server
+    baseDirectory: frontend/dist
     files:
       - '**/*'
+  # Configuración específica para SSR - esto es lo más importante
+  buildConfig:
+    appRoot: frontend
   cache:
     paths:
       - node_modules/**/*
-    appRoot: .
+  # Configuración para despliegue serverless (SST)
+  serverless:
+    # SST genera este archivo en dist/sst.buildMeta.json, no en .astro/ssr-manifest.json
+    cloudformationTemplateFilename: frontend/dist/sst.buildMeta.json

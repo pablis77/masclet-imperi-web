@@ -1,0 +1,2 @@
+import"./hoisted.Aq9NsjF5.js";import"./LanguageSwitcher.astro_astro_type_script_index_0_lang.DhuIQNJ0.js";import"./vendor.DPE1g--N.js";console.log("🔍 Página dashboard-direct.astro cargada");setTimeout(()=>{const o=document.querySelector(".container");console.log(o?"✅ Componente Dashboard2 montado correctamente en dashboard-direct":"❌ Componente Dashboard2 no se ha montado en dashboard-direct")},2e3);
+//# sourceMappingURL=hoisted.Fk6Xf_yn.js.map

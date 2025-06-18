@@ -1,0 +1,781 @@
+---
+// Importar el layout y sistema de traducción
+import MainLayout from '../../components/layout/MainLayout.astro';
+import PermissionsManager from '../../components/permissions/PermissionsManager.astro';
+import { t, getCurrentLanguage } from '../../i18n/config';
+
+// Obtener el idioma del usuario usando el sistema global de i18n
+const currentLang = getCurrentLanguage();
+
+// Detectar el rol del usuario desde el token (ejecución en servidor)
+let userRole = 'guest';
+const token = Astro.cookies.get('token')?.value;
+if (token) {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length > 1) {
+      const payload = JSON.parse(atob(tokenParts[1]));
+      userRole = payload.role || 'guest';
+    }
+  } catch (e) {
+    console.error('Error al decodificar token:', e);
+  }
+}
+
+// Verificar acceso - Solo admin y Ramon pueden acceder a esta página
+const isEditor = userRole.toLowerCase() === 'editor';
+const hasAccess = !isEditor;
+
+// Definir título para la página
+const title = t('backup.title', currentLang);
+
+---
+
+<MainLayout title={title} userRole={userRole} currentPath="/backup">
+  <!-- Bloqueo total para usuarios no autorizados -->
+  <script is:inline>
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+            console.log('ACCESO DENEGADO: Redirigiendo...');
+            window.location.href = '/';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  
+  <PermissionsManager />
+  
+  <!-- Script para actualizar textos estáticos cuando carga la página -->
+  <script>
+    // Esperar a que el sistema de i18n esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        // Importar el sistema de traducción
+        import('../../i18n/config.js').then(({ t, getCurrentLanguage }) => {
+          const clientLang = getCurrentLanguage();
+          console.log('Idioma detectado en cliente:', clientLang);
+          
+          // Actualizar elementos estáticos con ID
+          const updateElement = (id, key) => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.textContent = t(key, clientLang);
+            }
+          };
+          
+          // Actualizar elementos principales
+          updateElement('page-title', 'backup.title');
+          updateElement('page-subtitle', 'backup.subtitle');
+          
+          // También actualizar otros elementos estáticos que necesiten traducción
+          document.querySelectorAll('[data-i18n-key]').forEach(el => {
+            const key = el.getAttribute('data-i18n-key');
+            if (key) {
+              el.textContent = t(key, clientLang);
+            }
+          });
+          
+          // Actualizar título principal de la página
+          document.title = t('backup.title', clientLang) + ' - Masclet Imperi';
+          
+          // Actualizar los encabezados de la tabla
+          const tableHeaders = document.querySelectorAll('th');
+          if (tableHeaders && tableHeaders.length > 0) {
+            // Traducir encabezados estándar de la tabla
+            const headerTranslations = {
+              'Fecha': clientLang === 'ca' ? 'Data' : 'Fecha',
+              'Tamaño': clientLang === 'ca' ? 'Mida' : 'Tamaño',
+              'Usuario': clientLang === 'ca' ? 'Usuari' : 'Usuario',
+              'Tipo': clientLang === 'ca' ? 'Tipus' : 'Tipo',
+              'Descripción': clientLang === 'ca' ? 'Descripció' : 'Descripción',
+              'Acciones': clientLang === 'ca' ? 'Accions' : 'Acciones',
+              'Historial de copias de seguridad': clientLang === 'ca' ? 'Historial de còpies de seguretat' : 'Historial de copias de seguridad'
+            };
+            
+            // Traducir encabezado de la tabla
+            const tableTitle = document.querySelector('.bg-gray-50.dark\\:bg-gray-700.text-lg');
+            if (tableTitle && tableTitle.textContent) {
+              const originalText = tableTitle.textContent.trim();
+              if (headerTranslations[originalText]) {
+                tableTitle.textContent = headerTranslations[originalText];
+              }
+            }
+            
+            // Traducir encabezados de columnas
+            tableHeaders.forEach(th => {
+              const originalText = th.textContent.trim();
+              if (headerTranslations[originalText]) {
+                th.textContent = headerTranslations[originalText];
+              }
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Error al actualizar traducciones estáticas:', error);
+      }
+    });
+  </script>
+
+  <!-- Leyenda del sistema de backups -->
+  <div class="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-6 rounded shadow-sm">
+    <h2 data-i18n-key="backup.protocol" class="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">{t('backup.protocol', currentLang)}</h2>
+    <div class="text-sm text-blue-700 dark:text-blue-200 space-y-2">
+      <p><strong data-i18n-key="backup.automatic">{t('backup.automatic', currentLang)}:</strong> <span data-i18n-key="backup.automaticDesc">{t('backup.automaticDesc', currentLang)}</span></p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li data-i18n-key="backup.autoDaily">{t('backup.autoDaily', currentLang)}</li>
+        <li data-i18n-key="backup.autoNewAnimals">{t('backup.autoNewAnimals', currentLang)}</li>
+        <li data-i18n-key="backup.autoEditedAnimals">{t('backup.autoEditedAnimals', currentLang)}</li>
+        <li data-i18n-key="backup.autoAfterImport">{t('backup.autoAfterImport', currentLang)}</li>
+      </ul>
+      <p class="mt-2"><strong data-i18n-key="backup.retentionPolicy">{t('backup.retentionPolicy', currentLang)}:</strong> <span data-i18n-key="backup.retentionDesc">{t('backup.retentionDesc', currentLang)}</span></p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li data-i18n-key="backup.retentionDaily">{t('backup.retentionDaily', currentLang)}</li>
+        <li data-i18n-key="backup.retentionWeekly">{t('backup.retentionWeekly', currentLang)}</li>
+      </ul>
+      <p class="mt-2"><strong data-i18n-key="backup.storage">{t('backup.storage', currentLang)}:</strong> <span data-i18n-key="backup.storageDesc">{t('backup.storageDesc', currentLang)}</span></p>
+      <p class="mt-2"><strong data-i18n-key="backup.manualBackups">{t('backup.manualBackups', currentLang)}:</strong> <span data-i18n-key="backup.manualDesc">{t('backup.manualDesc', currentLang)}</span></p>
+    </div>
+  </div>
+
+  <!-- Alerta para mostrar mensajes de operaciones -->
+  <div id="alert-container" class="hidden mb-4">
+    <div id="alert" class="p-4 rounded-md text-center">
+      <span id="alert-message"></span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Crear backup -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+      <h2 data-i18n-key="backup.createBackup" class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">{t('backup.createBackup', currentLang)}</h2>
+      <p data-i18n-key="backup.createDesc" class="text-gray-600 dark:text-gray-300 mb-4">{t('backup.createDesc', currentLang)}</p>
+      <div class="space-y-4">
+        <div>
+          <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+            <input type="checkbox" id="include-animals" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <span data-i18n-key="backup.includeAnimals">{t('backup.includeAnimals', currentLang)}</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+            <input type="checkbox" id="include-births" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <span data-i18n-key="backup.includeBirths">{t('backup.includeBirths', currentLang)}</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+            <input type="checkbox" id="include-config" checked class="form-checkbox text-primary dark:border-gray-600" />
+            <span data-i18n-key="backup.includeConfig">{t('backup.includeConfig', currentLang)}</span>
+          </label>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button id="create-backup-btn" class="w-full bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light">
+          <span data-i18n-key="backup.createButton">{t('backup.createButton', currentLang)}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Restaurar backup -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700">
+      <h2 data-i18n-key="backup.restoreBackup" class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">{t('backup.restoreBackup', currentLang)}</h2>
+
+      {userRole !== "administrador" && (
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-700">
+                Esta función de restauración solo está disponible para administradores. Puedes ver y descargar los backups pero no restaurarlos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <p class="text-gray-600 dark:text-gray-300 mb-4">
+        <span data-i18n-key="backup.restoreDesc">{t('backup.restoreDesc', currentLang)}</span>
+        <span data-i18n-key="backup.warning" class="font-semibold text-amber-600 dark:text-amber-400">{t('backup.warning', currentLang)}</span>
+      </p>
+      <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 mb-4 text-center" id="restore-section">
+        <div id="selected-backup-container" class="hidden">
+          <p class="mb-2" data-i18n-key="backup.selectFile">{t('backup.selectFile', currentLang)}: <span id="selected-backup-name" class="font-semibold"></span></p>
+          <button id="change-backup-btn" class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors" 
+                 data-requires-admin="true" data-i18n-key="backup.selectButton">{t('backup.selectButton', currentLang)}</button>
+        </div>
+        <div id="no-selected-backup-container" class="text-gray-500 dark:text-gray-400">
+          <p class="mb-2" data-i18n-key="backup.selectFile">{t('backup.selectFile', currentLang)}</p>
+          <p class="text-sm" data-i18n-key="backup.or">{t('backup.or', currentLang)}</p>
+          <button id="select-backup-btn" class="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors"
+                 data-requires-admin="true" data-i18n-key="backup.selectButton">{t('backup.selectButton', currentLang)}</button>
+        </div>
+      </div>
+      <button id="restore-backup-btn" class="w-full px-4 py-2 bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors opacity-50 cursor-not-allowed" 
+             disabled data-requires-admin="true" data-i18n-key="backup.restoreButton">{t('backup.restoreButton', currentLang)}</button>
+    </div>
+  </div>
+
+  <!-- Historial de backups -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700">
+    <h3 class="px-6 py-4 bg-gray-50 dark:bg-gray-700 text-lg font-semibold text-gray-800 dark:text-white">{t('backup.historyTitle', currentLang)}</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.date', currentLang)}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.size', currentLang)}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.createdBy', currentLang)}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.type', currentLang) || 'Tipo'}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.description', currentLang) || 'Descripción'}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('backup.actions', currentLang)}</th>
+          </tr>
+        </thead>
+        <tbody id="backups-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- Aquí se cargarán los backups dinámicamente -->
+          <tr class="text-center">
+            <td colspan="5" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{t('backup.loading', currentLang)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex space-x-2">
+                <button class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{t('backup.download', currentLang)}</button>
+                <button class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">{t('backup.restore', currentLang)}</button>
+                <button class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">{t('backup.delete', currentLang)}</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  
+  <script>
+    // Importar servicios para manejar backups
+    import { getBackupsList, createBackup, restoreBackup, deleteBackup, getBackupDownloadUrl } from '../../services/backupService.js';
+    import { t as translate, getCurrentLanguage } from '../../i18n/config.ts';
+    
+    // Obtener el idioma actual usando el sistema global
+    const currentLang = getCurrentLanguage();
+    
+    // Función auxiliar para obtener traducciones con fallback
+    const t = (key, lang = currentLang) => {
+      // Intentar obtener la traducción del sistema global
+      const translation = translate(key, lang);
+      
+      // Si la traducción retorna la key original, es que no se encontró
+      if (translation === key) {
+        // Traducciones hardcodeadas como fallback
+        const hardcodedTranslations = {
+          'backup.download': lang === 'ca' ? 'Descarregar' : 'Descargar',
+          'backup.restore': lang === 'ca' ? 'Restaurar' : 'Restaurar',
+          'backup.delete': lang === 'ca' ? 'Eliminar' : 'Eliminar',
+          'backup.loading': lang === 'ca' ? 'Carregant...' : 'Cargando...',
+          'backup.no_backups': lang === 'ca' ? 'No hi ha còpies de seguretat disponibles' : 'No hay copias de seguridad disponibles',
+          'backup.backup_created': lang === 'ca' ? 'Còpia de seguretat creada amb èxit' : 'Copia de seguridad creada con éxito',
+          'backup.backup_error': lang === 'ca' ? 'Error al crear la còpia de seguretat' : 'Error al crear la copia de seguridad',
+          'backup.restore_success': lang === 'ca' ? 'Sistema restaurat correctament' : 'Sistema restaurado correctamente',
+          'backup.restore_error': lang === 'ca' ? 'Error al restaurar el sistema' : 'Error al restaurar el sistema',
+          'backup.deleteSuccess': lang === 'ca' ? 'Còpia de seguretat eliminada correctament' : 'Copia de seguridad eliminada correctamente',
+          'backup.deleteInProgress': lang === 'ca' ? 'Eliminant...' : 'Eliminando...',
+          'backup.restoreInProgress': lang === 'ca' ? 'Restaurant sistema...' : 'Restaurando sistema...',
+          'backup.backupInProgress': lang === 'ca' ? 'Creant còpia de seguretat...' : 'Creando copia de seguridad...',
+          'backup.error': lang === 'ca' ? 'Error' : 'Error'
+        };
+        
+        // Retornar traducción hardcodeada o la key como último recurso
+        return hardcodedTranslations[key] || key;
+      }
+      
+      return translation;
+    };
+    
+    // Variables globales
+    let selectedBackup = null;
+    let backupsList = [];
+    
+    // Elementos DOM
+    const alertContainer = document.getElementById('alert-container');
+    const alertElement = document.getElementById('alert');
+    const alertMessage = document.getElementById('alert-message');
+    let createBackupBtn = document.getElementById('create-backup-btn');
+    let restoreBackupBtn = document.getElementById('restore-backup-btn');
+    let selectBackupBtn = document.getElementById('select-backup-btn');
+    let changeBackupBtn = document.getElementById('change-backup-btn');
+    const selectedBackupContainer = document.getElementById('selected-backup-container');
+    const noSelectedBackupContainer = document.getElementById('no-selected-backup-container');
+    const selectedBackupName = document.getElementById('selected-backup-name');
+    const backupsTableBody = document.getElementById('backups-table-body');
+    const includeAnimals = document.getElementById('include-animals');
+    const includeBirths = document.getElementById('include-births');
+    const includeConfig = document.getElementById('include-config');
+    
+    // Funciones auxiliares
+    function showAlert(message, type = 'success') {
+      alertContainer.classList.remove('hidden');
+      alertMessage.innerText = message;
+      
+      alertElement.className = 'p-4 rounded-md text-center';
+      
+      if (type === 'success') {
+        alertElement.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
+      } else if (type === 'error') {
+        alertElement.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+      } else if (type === 'warning') {
+        alertElement.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-200');
+      } else if (type === 'info') {
+        alertElement.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+      }
+      
+      // Auto-ocultar después de 5 segundos
+      setTimeout(() => {
+        alertContainer.classList.add('hidden');
+      }, 5000);
+    }
+    
+    function setLoading(button, isLoading, text) {
+      if (isLoading) {
+        button.disabled = true;
+        button.originalText = button.innerText;
+        button.innerText = text || t('backup.loading', currentLang);
+        button.classList.add('opacity-70');
+      } else {
+        button.disabled = false;
+        button.innerText = button.originalText || button.innerText;
+        button.classList.remove('opacity-70');
+      }
+    }
+    
+    function updateSelectedBackup(backup) {
+      selectedBackup = backup;
+      
+      if (backup) {
+        selectedBackupName.innerText = backup.filename;
+        selectedBackupContainer.classList.remove('hidden');
+        noSelectedBackupContainer.classList.add('hidden');
+        restoreBackupBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        restoreBackupBtn.disabled = false;
+      } else {
+        selectedBackupContainer.classList.add('hidden');
+        noSelectedBackupContainer.classList.remove('hidden');
+        restoreBackupBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        restoreBackupBtn.disabled = true;
+      }
+    }
+    
+    function getBackupTypeLabel(backup) {
+      // Si tenemos información de tipo de backup, usarla
+      if (backup.backup_type) {
+        switch (backup.backup_type) {
+          case 'daily':
+            return 'Backup diario programado';
+          case 'animal_created':
+            return 'Backup tras crear animal';
+          case 'animal_updated':
+            return 'Backup tras modificar animal';
+          case 'import':
+            return 'Backup tras importación';
+          case 'manual':
+            return t('backup.manualBackup', currentLang);
+          default:
+            return backup.backup_type;
+        }
+      }
+
+      // Compatibilidad con versiones anteriores
+      if (backup.filename.includes('diario-auto')) {
+        return t('backup.autoBackup', currentLang);
+      } else if (backup.filename.includes('cambio-sistema')) {
+        return t('backup.systemBackup', currentLang);
+      } else {
+        return t('backup.manualBackup', currentLang);
+      }
+    }
+    
+    function getBackupTypeColor(backupType) {
+      // Asignar colores según el tipo de backup para mejorar la visualización
+      switch (backupType) {
+        case 'animal_created':
+          return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+        case 'animal_updated':
+          return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200';
+        case 'daily':
+          return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+        case 'import':
+          return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+        case 'manual':
+          return 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200';
+        default:
+          return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
+      }
+    }
+    
+    // Cargar la lista de backups
+    async function loadBackupsList() {
+      try {
+        backupsList = await getBackupsList();
+        
+        // Debug: Imprimir los datos recibidos en la consola
+        console.log('Datos de backups recibidos:', backupsList);
+        console.log('Número de backups:', backupsList.length);
+        
+        // Debug: Mostrar un mensaje en la página para verificar que la función se está ejecutando
+        const debugMsg = document.createElement('div');
+        debugMsg.id = 'debug-message';
+        debugMsg.style.padding = '10px';
+        debugMsg.style.margin = '10px 0';
+        debugMsg.style.backgroundColor = '#f0f0f0';
+        debugMsg.style.border = '1px solid #ccc';
+        debugMsg.style.borderRadius = '4px';
+        debugMsg.innerHTML = `Datos recibidos: ${backupsList.length} copias de seguridad<br>Último log: ${new Date().toLocaleTimeString()}`;
+        
+        // Insertar el mensaje de debug antes de la tabla
+        const backupsTable = document.querySelector('#backups-table');
+        if (backupsTable && !document.getElementById('debug-message')) {
+          backupsTable.parentNode.insertBefore(debugMsg, backupsTable);
+        }
+        
+        // Actualizar la tabla de backups
+        if (backupsList.length === 0) {
+          backupsTableBody.innerHTML = `
+            <tr class="text-center">
+              <td colspan="5" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">${t('backup.no_backups', currentLang)}</td>
+            </tr>
+          `;
+          return;
+        }
+        
+        backupsTableBody.innerHTML = backupsList.map(backup => `
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700" data-filename="${backup.filename}">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.size}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${backup.created_by}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getBackupTypeColor(backup.backup_type)}">
+                ${backup.backup_type || 'manual'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
+              ${backup.description || ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex space-x-2">
+                <a href="${getBackupDownloadUrl(backup.filename)}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200" download>${t('backup.download', currentLang)}</a>
+                <button class="restore-btn text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">
+                  ${t('backup.restore', currentLang)}
+                </button>
+                <button class="delete-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">
+                  ${t('backup.delete', currentLang)}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+        
+        // Agregar event listeners a los botones de la tabla
+        document.querySelectorAll('.restore-btn').forEach(btn => {
+          btn.addEventListener('click', handleRestoreFromTable);
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', handleDeleteFromTable);
+        });
+        
+      } catch (error) {
+        console.error('Error al cargar la lista de backups:', error);
+        // Mostrar mensaje de error
+        showAlert(`${t('backup.error')}: ${error.message}`, 'error');
+        
+        // Asegurarse de que la tabla muestra un mensaje amigable en caso de error
+        backupsTableBody.innerHTML = `
+          <tr class="text-center">
+            <td colspan="5" class="px-6 py-4 text-sm text-red-500 dark:text-red-300">${t('backup.error', currentLang)}: ${error.message}</td>
+          </tr>
+        `;
+      }
+    }
+    // Manejadores de eventos
+    function initEventListeners() {
+      // Botón de crear backup
+      createBackupBtn.addEventListener('click', handleCreateBackup);
+    }
+    
+    // Función para manejar la creación de backups
+    async function handleCreateBackup() {
+      console.log('Botón de backup clickeado');
+      
+      // Obtener opciones de backup
+      const options = {
+        include_animals: includeAnimals.checked,
+        include_births: includeBirths.checked,
+        include_config: includeConfig.checked,
+        created_by: 'usuario'
+      };
+      
+      // Desactivar el botón mientras se crea el backup
+      setLoading(createBackupBtn, true, t('backup.backupInProgress', currentLang));
+      
+      try {
+        // Usar el servicio centralizado de backup
+        const result = await createBackup(options);
+        console.log('Backup creado correctamente:', result);
+        
+        // Mostrar mensaje de éxito
+        showAlert(t('backup.backup_created', currentLang), 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+      } catch (error) {
+        console.error('Error al crear backup:', error);
+        
+        // Si vemos un error de HTML en la respuesta, probablemente el backup sí se creó
+        if (error.message && error.message.includes('<!DOCTYPE')) {
+          console.log('El backup probablemente se creó correctamente a pesar del error de parseo');
+          showAlert(t('backup.backup_created', currentLang), 'success');
+          
+          // Recargar la lista después de un breve retraso
+          setTimeout(() => loadBackupsList(), 1000);
+        } else {
+          // Solo mostrar errores que no sean de parser HTML
+          showAlert(`${t('backup.backup_error', currentLang)}: ${error.message || 'Error desconocido'}`, 'error');
+        }
+      } finally {
+        // Siempre reactivar el botón
+        setLoading(createBackupBtn, false);
+      }
+    }
+    
+    async function handleRestoreBackup() {
+      if (!selectedBackup) return;
+      
+      try {
+        setLoading(restoreBackupBtn, true, t('backup.restoreInProgress', currentLang));
+        
+        await restoreBackup(selectedBackup.filename);
+        showAlert(t('backup.restore_success', currentLang), 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+        
+        // Limpiar selección
+        updateSelectedBackup(null);
+        
+      } catch (error) {
+        console.error('Error al restaurar backup:', error);
+        showAlert(`${t('backup.error', currentLang)}: ${error.message}`, 'error');
+      } finally {
+        setLoading(restoreBackupBtn, false);
+      }
+    }
+    
+    function handleSelectBackup() {
+      // Mostrar una lista modal o dropdown con los backups disponibles
+      // Para simplicidad, usamos el primer backup de la lista
+      if (backupsList.length > 0) {
+        updateSelectedBackup(backupsList[0]);
+      } else {
+        showAlert(t('backup.no_backups', currentLang), 'warning');
+      }
+    }
+    
+    function handleChangeBackup() {
+      // Volver a mostrar la selección
+      updateSelectedBackup(null);
+    }
+    
+    function handleRestoreFromTable(event) {
+      const row = event.target.closest('tr');
+      const filename = row.dataset.filename;
+      const backup = backupsList.find(b => b.filename === filename);
+      
+      if (backup) {
+        updateSelectedBackup(backup);
+        // Desplazar a la sección de restauración
+        document.getElementById('restore-backup-btn').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    
+    async function handleDeleteFromTable(event) {
+      const row = event.target.closest('tr');
+      const filename = row.dataset.filename;
+      
+      try {
+        // Desactivar botón mientras se elimina
+        event.target.disabled = true;
+        event.target.textContent = t('backup.deleteInProgress', currentLang);
+        
+        await deleteBackup(filename);
+        showAlert(t('backup.deleteSuccess', currentLang), 'success');
+        
+        // Recargar la lista de backups
+        await loadBackupsList();
+        
+        // Si el backup eliminado era el seleccionado, limpiamos la selección
+        if (selectedBackup && selectedBackup.filename === filename) {
+          updateSelectedBackup(null);
+        }
+        
+      } catch (error) {
+        console.error('Error al eliminar backup:', error);
+        showAlert(`${t('backup.error', currentLang)}: ${error.message}`, 'error');
+        event.target.disabled = false;
+        event.target.textContent = t('backup.delete', currentLang);
+      }
+    }
+    
+    // Función para inicializar la página
+    function initPage() {
+      console.log('Inicializando página de backup...');
+      
+      // Verificar que todos los elementos existen
+      if (!createBackupBtn) {
+        console.error('No se encontró el botón de crear backup');
+        createBackupBtn = document.getElementById('create-backup-btn');
+      }
+      
+      if (!restoreBackupBtn) {
+        console.error('No se encontró el botón de restaurar backup');
+        restoreBackupBtn = document.getElementById('restore-backup-btn');
+      }
+      
+      if (!selectBackupBtn) {
+        console.error('No se encontró el botón de seleccionar backup');
+        selectBackupBtn = document.getElementById('select-backup-btn');
+      }
+      
+      if (!changeBackupBtn) {
+        console.error('No se encontró el botón de cambiar backup');
+        changeBackupBtn = document.getElementById('change-backup-btn');
+      }
+      
+      // Cargar la lista de backups
+      loadBackupsList();
+      
+      // Agregar event listeners si los elementos existen
+      if (createBackupBtn) {
+        console.log('Añadiendo event listener al botón de crear backup');
+        createBackupBtn.addEventListener('click', handleCreateBackup);
+      }
+      
+      if (restoreBackupBtn) {
+        restoreBackupBtn.addEventListener('click', handleRestoreBackup);
+      }
+      
+      if (selectBackupBtn) {
+        selectBackupBtn.addEventListener('click', handleSelectBackup);
+      }
+      
+      if (changeBackupBtn) {
+        changeBackupBtn.addEventListener('click', handleChangeBackup);
+      }
+    }
+    
+    // Intentar inicializar la página de varias formas para asegurar que funciona
+    document.addEventListener('DOMContentLoaded', initPage);
+    
+    // También intentar inicializar después de un pequeño retraso
+    setTimeout(initPage, 1000);
+    
+    // Y también intentar inicializar ahora mismo
+    try {
+      initPage();
+    } catch (error) {
+      console.error('Error al inicializar la página:', error);
+    }
+    
+    // La inicialización de permisos ahora se maneja a través del componente PermissionsManager
+  </script>
+  
+  <!-- Script específico para bloquear el botón de selección de backup para el rol Ramon -->
+  <script is:inline>
+    // Ejecutar inmediatamente cuando carga la página
+    (function() {
+      // Verificar si el usuario es Ramon
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userRole = payload.role;
+        
+        if (userRole === 'Ramon') {
+          console.log('⚠️ Usuario Ramon detectado - Aplicando restricciones específicas...');
+          
+          // Función para bloquear completamente el botón
+          function bloquearBotonSelectBackup() {
+            const btn = document.getElementById('select-backup-btn');
+            if (!btn) {
+              console.log('Botón no encontrado, reintentando en 500ms...');
+              setTimeout(bloquearBotonSelectBackup, 500);
+              return;
+            }
+            
+            // Aplicar múltiples capas de bloqueo
+            btn.disabled = true;
+            btn.setAttribute('disabled', 'disabled');
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'No tienes permisos para restaurar copias de seguridad';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('hover:bg-gray-300', 'dark:hover:bg-gray-600');
+            
+            // Agregar icono de candado
+            const lockIcon = document.createElement('span');
+            lockIcon.innerHTML = ' 🔒';
+            lockIcon.className = 'ml-2';
+            btn.appendChild(lockIcon);
+            
+            // Sobrescribir handlers
+            btn.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Intento de acceso bloqueado');
+              return false;
+            };
+            
+            // También bloquear el botón change-backup-btn si existe
+            const changeBtn = document.getElementById('change-backup-btn');
+            if (changeBtn) {
+              changeBtn.disabled = true;
+              changeBtn.style.opacity = '0.5';
+              changeBtn.style.pointerEvents = 'none';
+              changeBtn.style.cursor = 'not-allowed';
+            }
+            
+            console.log('✅ Botón de selección de backup bloqueado exitosamente para Ramon');
+          }
+          
+          // Ejecutar la función inmediatamente
+          bloquearBotonSelectBackup();
+          
+          // Y también después de un retraso para asegurarnos
+          setTimeout(bloquearBotonSelectBackup, 500);
+          setTimeout(bloquearBotonSelectBackup, 1000);
+          setTimeout(bloquearBotonSelectBackup, 2000);
+          
+          // Ejecutar una última vez cuando la ventana esté completamente cargada
+          window.addEventListener('load', function() {
+            setTimeout(bloquearBotonSelectBackup, 100);
+          });
+        }
+      } catch (e) {
+        console.error('Error al verificar permisos:', e);
+      }
+    })();
+  </script>
+</MainLayout>

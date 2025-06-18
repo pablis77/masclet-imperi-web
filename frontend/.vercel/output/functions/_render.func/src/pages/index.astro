@@ -1,0 +1,145 @@
+---
+// Importar el layout completo
+import MainLayout from '../components/layout/MainLayout.astro';
+
+// Importar core-entry para asegurar la inclusión de componentes estructurales en el build
+import '../utils/core-entry';
+
+// Importar wrappers de componentes estructurales para forzar inclusión en build
+import '../components/wrappers/MainLayoutWrapper.astro';
+import '../components/wrappers/NavbarWrapper.astro';
+import '../components/wrappers/SidebarWrapper.astro';
+import '../components/wrappers/FooterWrapper.astro';
+
+// Importar el componente DashboardV2 optimizado y funcional
+import DashboardV2 from '../components/dashboardv2/DashboardV2';
+
+// Definir rol de usuario
+const userRole = "administrador";
+
+// Importar funciones de i18n
+import { t, getCurrentLanguage } from '../i18n/config';
+
+// Obtener el idioma actual para el servidor
+const currentLang = getCurrentLanguage();
+
+// El texto de bienvenida según idioma utilizando el sistema i18n y valores predeterminados como respaldo
+// Usamos valores fijos como respaldo para garantizar que siempre se muestre correctamente
+let welcomeText = t('common.welcome', currentLang);
+// Si el texto es igual a la clave, significa que la traducción no se encontró
+if (welcomeText === 'common.welcome') {
+  // Usamos valores predeterminados según el idioma
+  welcomeText = currentLang === 'ca' ? 'Benvingut a Masclet Imperi' : 'Bienvenido a Masclet Imperi';
+}
+
+// Crear script para actualizar el título cuando cambie el idioma con valores predeterminados garantizados
+const updateWelcomeScript = `
+document.addEventListener('DOMContentLoaded', () => {
+  const welcomeElement = document.querySelector('h1.welcome-title');
+  if (welcomeElement) {
+    // Actualizar título cuando cambie el idioma
+    const updateTitle = () => {
+      const lang = localStorage.getItem('userLanguage') || 'es';
+      
+      // Usar valores predeterminados garantizados según el idioma
+      // Esto asegura que siempre se muestre correctamente incluso si falla la traducción
+      let welcomeText = 'Bienvenido a Masclet Imperi';
+      if (lang === 'ca') {
+        welcomeText = 'Benvingut a Masclet Imperi';
+      }
+      
+      // Intentar obtener traducciones desde la API i18n como respaldo
+      try {
+        const i18n = window.i18next || { t: (key) => key };
+        const translatedText = i18n.t('common.welcome');
+        // Solo usar la traducción si no es igual a la clave (indica que la traducción funcionó)
+        if (translatedText && translatedText !== 'common.welcome') {
+          welcomeText = translatedText;
+        }
+      } catch (error) {
+        console.warn('Error al traducir texto de bienvenida:', error);
+      }
+      
+      // Aplicar el texto
+      welcomeElement.textContent = welcomeText;
+    };
+    
+    // Actualizar inmediatamente
+    updateTitle();
+    
+    // Escuchar cambios en el almacenamiento
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'userLanguage') {
+        updateTitle();
+      }
+    });
+  }
+});
+`;
+---
+
+<!-- Script para crear token JWT automáticamente en desarrollo con comprobación mejorada -->
+<script>
+  // Crear token JWT para desarrollo - versión mejorada
+  window.addEventListener('DOMContentLoaded', () => {
+    // DESACTIVADO: Ya no eliminamos tokens para permitir login real
+    // localStorage.removeItem('token');
+    
+    // NOTA: Código de inyección de token para desarrollo deshabilitado
+    // Este código estaba sobreescribiendo tokens válidos con uno hardcodeado inválido
+    // Para habilitar el flujo normal de autenticación, se ha comentado
+    // -----------------------------------------------------------------
+    // // Crear token nuevo para asegurar funcionamiento correcto
+    // console.log('Configurando token JWT para desarrollo');
+    // localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    // console.log('Token JWT creado correctamente');
+    // 
+    // // Comprobar que realmente se guardó
+    // const token = localStorage.getItem('token');
+    // if (token) {
+    //   console.log('✅ Token verificado en localStorage');
+    // } else {
+    //   console.error('❌ Error: No se pudo guardar el token');
+    //   // Intentar de nuevo
+    //   localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x');
+    // }
+    
+    // Verificar si hay un token existente (autenticación real)
+    const token = localStorage.getItem('token');
+    if (token) {
+      console.log('✅ Token JWT existente encontrado - usando autenticación real');
+    }
+  });
+</script>
+
+<!-- Script para actualizar el título cuando cambia el idioma -->
+<script set:html={updateWelcomeScript}></script>
+
+<!-- Script adicional para forzar la traducción directa como respaldo total -->
+<script>
+  // Este script garantiza que el título se muestre correctamente incluso si falla todo lo demás
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const welcomeElement = document.querySelector('h1.welcome-title');
+      if (welcomeElement) {
+        const content = welcomeElement.textContent;
+        // Si el contenido es la clave o está vacío, aplicar texto predeterminado
+        if (!content || content === 'common.welcome') {
+          const lang = localStorage.getItem('userLanguage') || 'es';
+          welcomeElement.textContent = lang === 'ca' ? 'Benvingut a Masclet Imperi' : 'Bienvenido a Masclet Imperi';
+        }
+      }
+    }, 500); // Dar tiempo a que otros scripts se ejecuten primero
+  });
+</script>
+
+<MainLayout title={`${t('dashboard.title', currentLang)} - Masclet Imperi`} userRole={userRole} currentPath="/">
+  <div class="mx-auto px-4 py-6 bg-white dark:bg-gray-900">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8 welcome-title">{welcomeText}</h1>
+    
+    <!-- Componente DashboardV2 optimizado - Renderizado solo en el cliente -->
+    <DashboardV2 client:only="react" />
+    
+    <!-- Botones de prueba eliminados -->
+  </div>
+</MainLayout>

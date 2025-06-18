@@ -2,18 +2,25 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
-// Reemplazamos node por sst para AWS
-import sst from 'astro-sst';
+// Adaptador de Vercel para SSR
+import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
     // Permitir todas las conexiones
     output: 'server',
     
-    // Configuración del adaptador SST para AWS con ajustes específicos para Amplify
-    adapter: sst({
-        // Ajustes para asegurar compatibilidad con AWS Amplify
-        prodBuildPath: '/_astro/', // Asegurar que los assets se sirvan desde la ruta correcta
-        deploymentTarget: 'amplify'
+    // Configuración del adaptador Vercel para SSR
+    adapter: vercel({
+        analytics: true,  // Para obtener estadísticas de rendimiento
+        imagesConfig: {
+            sizes: [640, 750, 828, 1080, 1200],
+            minimumCacheTTL: 60
+        },
+        includeFiles: [
+            './public/**/*'  // Incluir todos los archivos estáticos
+        ],
+        // Regiones (Europa - más cercana a tu EC2)
+        regions: ["cdg1"],
     }),
     
     // Directorio base donde se servirá la aplicación (si es en subpath)
@@ -59,12 +66,8 @@ export default defineConfig({
         }),
     ],
 
-    // Adaptador SST para AWS Amplify (compatible con Astro 4)
-    adapter: sst({
-        // La configuración de SST es más sencilla
-        // Agregamos soporte para health check via custom headers en amplify.yml
-        // No se necesita configuración adicional aquí para el funcionamiento básico
-    }),
+    // Ya configurado el adaptador Vercel al inicio del archivo
+    // No se necesita duplicar la configuración del adaptador
 
     // Configuración de vite (bundler usado por Astro)
     vite: {
@@ -90,6 +93,8 @@ export default defineConfig({
       build: {
         // Optimizaciones para producción
         minify: true,
+        // Aumentar el límite de advertencia para chunks grandes
+        chunkSizeWarningLimit: 2000, // 2MB en lugar de 500KB por defecto
         cssMinify: true,
         // Desactivar mapas de código fuente en producción
         sourcemap: process.env.NODE_ENV !== 'production',

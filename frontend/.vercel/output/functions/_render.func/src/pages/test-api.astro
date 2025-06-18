@@ -1,0 +1,158 @@
+---
+import DefaultLayout from '../layouts/DefaultLayout.astro';
+
+// Configuración para el layout
+const userRole = 'admin';
+const title = 'Prueba de API - Masclet Imperi';
+---
+
+<DefaultLayout title={title} userRole={userRole} currentPath="/test-api">
+  <main class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Prueba de API</h1>
+      <p class="text-gray-600 dark:text-gray-300 mb-4">Esta página prueba directamente la comunicación con el backend</p>
+    </div>
+    
+    <div class="mb-8 bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden p-4">
+      <div class="mb-4">
+        <label for="api-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL de la API</label>
+        <div class="flex gap-2">
+          <input 
+            type="text" 
+            id="api-url" 
+            class="flex-1 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-800 dark:text-white"
+            value="/api/v1/dashboard/stats"
+          />
+          <button 
+            id="test-button"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+          >
+            Probar API
+          </button>
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <div class="flex items-center mb-2">
+          <div class="w-3 h-3 rounded-full mr-2" id="status-indicator"></div>
+          <span id="status-text" class="text-gray-700 dark:text-gray-300">Esperando prueba...</span>
+        </div>
+      </div>
+      
+      <div class="mt-4 hidden" id="loading-indicator">
+        <div class="flex items-center justify-center p-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <span class="ml-2 text-gray-700 dark:text-gray-300">Realizando petición...</span>
+        </div>
+      </div>
+      
+      <pre id="output-box" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto text-sm text-gray-800 dark:text-gray-200 max-h-96"></pre>
+      
+      <div class="mt-6">
+        <h2 class="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Lista de endpoints disponibles</h2>
+        <ul class="space-y-2 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+          <li><code>/api/v1/dashboard/stats</code> - Estadísticas completas</li>
+          <li><code>/api/v1/dashboard/resumen</code> - Resumen del dashboard</li>
+          <li><code>/api/v1/dashboard/partos</code> - Estadísticas de partos</li>
+          <li><code>/api/v1/dashboard/combined</code> - Vista combinada</li>
+          <li><code>/api/v1/animals</code> - Listado de animales</li>
+          <li><code>/api/v1/animals/1</code> - Detalle del animal con ID 1</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</DefaultLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const testButton = document.getElementById('test-button');
+    const urlInput = document.getElementById('api-url');
+    const outputBox = document.getElementById('output-box');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    
+    // Función para formatear JSON
+    function formatJSON(obj) {
+      return JSON.stringify(obj, null, 2);
+    }
+    
+    // Función para actualizar el indicador de estado
+    function updateStatus(success, message) {
+      if (success) {
+        statusIndicator.className = 'w-3 h-3 rounded-full mr-2 bg-green-500';
+        statusText.className = 'text-green-700 dark:text-green-300';
+      } else {
+        statusIndicator.className = 'w-3 h-3 rounded-full mr-2 bg-red-500';
+        statusText.className = 'text-red-700 dark:text-red-300';
+      }
+      statusText.textContent = message;
+    }
+    
+    // Función para probar la API
+    async function testAPI() {
+      const url = urlInput.value.trim();
+      
+      // Mostrar indicador de carga
+      loadingIndicator.classList.remove('hidden');
+      outputBox.textContent = 'Esperando respuesta...';
+      
+      try {
+        console.log('Realizando petición a:', url);
+        
+        // Añadir parámetro para evitar caché
+        const timestamp = new Date().getTime();
+        const separator = url.includes('?') ? '&' : '?';
+        const urlWithCache = `${url}${separator}_cache=${timestamp}`;
+        
+        // Configurar la petición con encabezados
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer token-desarrollo-12345'
+        };
+        
+        // Realizar la petición
+        const response = await fetch(urlWithCache, { 
+          method: 'GET',
+          headers
+        });
+        
+        console.log('Respuesta recibida:', response);
+        
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+        }
+        
+        // Intentar parsear la respuesta como JSON
+        const data = await response.json();
+        
+        // Actualizar el estado a éxito
+        updateStatus(true, `Éxito: ${response.status} ${response.statusText}`);
+        
+        // Mostrar la respuesta
+        outputBox.textContent = formatJSON(data);
+      } catch (error) {
+        console.error('Error en la petición:', error);
+        
+        // Actualizar el estado a error
+        updateStatus(false, `Error: ${error.message}`);
+        
+        // Mostrar el error
+        outputBox.textContent = `Error al realizar la petición:\n${error.message}`;
+      } finally {
+        // Ocultar indicador de carga
+        loadingIndicator.classList.add('hidden');
+      }
+    }
+    
+    // Añadir evento al botón
+    testButton.addEventListener('click', testAPI);
+    
+    // Permitir presionar Enter en el input
+    urlInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        testAPI();
+      }
+    });
+  });
+</script>

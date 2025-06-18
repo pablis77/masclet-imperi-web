@@ -1,0 +1,325 @@
+---
+// Importar el layout
+import MainLayout from '../../components/layout/MainLayout.astro';
+import ImportContainer from '../../components/imports/ImportContainer';
+import ResetDatabaseButton from '../../components/admin/ResetDatabaseButton';
+import PermissionsManager from '../../components/permissions/PermissionsManager.astro';
+import { decode } from 'js-base64';
+
+// Obtener el idioma del usuario (del localStorage en el cliente)
+let currentLang = 'es'; // Valor predeterminado
+
+// Detectar el rol del usuario desde el token (ejecución en servidor)
+let userRole = 'guest';
+const token = Astro.cookies.get('token')?.value;
+if (token) {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length > 1) {
+      const payload = JSON.parse(atob(tokenParts[1]));
+      userRole = payload.role || 'guest';
+    }
+  } catch (e) {
+    console.error('Error al decodificar token:', e);
+  }
+}
+
+// Verificar acceso - Solo admin y Ramon pueden acceder a esta página
+const isEditor = userRole.toLowerCase() === 'editor';
+const hasAccess = !isEditor;
+
+// Definir traducciones
+const translations = {
+  es: {
+    title: "Importación de Datos",
+    subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
+    importAnimals: "Importar Animales",
+    selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
+    downloadTemplate: "Descargar Plantilla",
+    reset: "Reiniciar",
+    import: "Importar"
+  },
+  ca: {
+    title: "Importació de Dades",
+    subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
+    importAnimals: "Importar Animals",
+    selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
+    downloadTemplate: "Descarregar Plantilla",
+    reset: "Reiniciar",
+    import: "Importar"
+  }
+};
+
+// Definir título para la página
+const pageTitle = translations[currentLang].title;
+---
+
+<MainLayout title={pageTitle} userRole={userRole} currentPath="/imports">
+  <!-- Bloqueo total para usuarios no autorizados -->
+  <script is:inline>
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userRole = payload.role || 'guest';
+          if (userRole.toLowerCase() !== 'administrador' && userRole.toLowerCase() !== 'ramon') {
+            console.log('ACCESO DENEGADO: Redirigiendo...');
+            window.location.href = '/';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        console.error('Error:', e);
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  
+  <!-- Script de limpieza de mensajes duplicados - Se ejecuta inmediatamente -->
+  <script is:inline>
+    // Función para eliminar mensajes duplicados
+    function limpiarMensajesDuplicados() {
+      // Seleccionar todos los mensajes de advertencia
+      const mensajes = document.querySelectorAll('.bg-yellow-50.border-l-4.border-yellow-400.p-4.mb-4');
+      
+      // Si hay más de uno, eliminar todos excepto el primero
+      if (mensajes.length > 1) {
+        console.log(`Eliminando ${mensajes.length - 1} mensajes duplicados`);
+        for (let i = 1; i < mensajes.length; i++) {
+          mensajes[i].remove();
+        }
+      }
+    }
+    
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', limpiarMensajesDuplicados);
+    
+    // También ejecutar cuando la ventana esté completamente cargada
+    window.addEventListener('load', limpiarMensajesDuplicados);
+    
+    // Ejecutar de nuevo después de un breve retraso para capturar mensajes añadidos dinámicamente
+    setTimeout(limpiarMensajesDuplicados, 500);
+    setTimeout(limpiarMensajesDuplicados, 1000);
+    setTimeout(limpiarMensajesDuplicados, 2000);
+    
+    // Observar cambios en el DOM para eliminar mensajes duplicados que se añadan dinámicamente
+    const observer = new MutationObserver(() => {
+      limpiarMensajesDuplicados();
+    });
+    
+    // Iniciar observación cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  </script>
+  
+  <!-- Componente para gestionar permisos de UI basados en rol (versión modificada) -->
+  <script src="/scripts/permissions-ui.js" is:inline></script>
+  
+  <div class="mb-6">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white" id="imports-title">{translations[currentLang].title}</h1>
+    <p class="text-sm md:text-base text-gray-600 dark:text-gray-300" id="imports-subtitle">{translations[currentLang].subtitle}</p>
+  </div>
+
+  <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+    <!-- Importación de Animales -->
+    <div class="import-container">
+      <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white" id="import-animals-title">{translations[currentLang].importAnimals}</h2>
+      <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4" id="import-animals-desc">{translations[currentLang].selectFile}</p>
+      
+      <!-- Botones de acción para importación - Reorganizados según la imagen -->
+      <div class="flex flex-wrap justify-between mb-6">
+        <!-- Grupo de botones izquierda -->
+        <div class="flex flex-wrap gap-3 mb-3 sm:mb-0">
+          <a href="/templates/plantilla_animales.csv" download class="import-btn download-btn">
+            <span class="icon">📥</span>
+            <span class="text" id="download-template">{translations[currentLang].downloadTemplate}</span>
+          </a>
+          
+          <button id="reset-import" class="import-btn reset-btn">
+            <span class="icon">🔄</span>
+            <span class="text" id="reset-text">{translations[currentLang].reset}</span>
+          </button>
+        </div>
+        
+        <!-- Grupo de botones derecha -->
+        <div class="flex flex-wrap gap-3">
+          <button id="import-btn" class="import-btn import-action-btn">
+            <span class="icon">✅</span>
+            <span class="text" id="import-text">{translations[currentLang].import}</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Componente React para la importación y el historial -->
+      <ImportContainer client:load />
+    </div>
+  </div>
+  </div>
+
+  <!-- Sección de Administración -->
+  <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+    <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-gray-800 dark:text-white">Opciones Avanzadas (Administrador)</h2>
+    <p class="text-sm md:text-base text-red-600 dark:text-red-400 mb-4">
+      ⚠️ Advertencia: Estas operaciones son irreversibles y solo deben ser usadas por administradores.
+    </p>
+    <ResetDatabaseButton client:load />
+  </div>
+
+
+  <script>
+    // Obtener el idioma del usuario del localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      const updateLanguage = () => {
+        const userLang = localStorage.getItem('userLanguage') || 'es';
+        
+        // Textos traducibles
+        const translations = {
+          es: {
+            title: "Importación de Datos",
+            subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
+            importAnimals: "Importar Animales",
+            selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
+            downloadTemplate: "Descargar Plantilla",
+            reset: "Reiniciar",
+            import: "Importar"
+          },
+          ca: {
+            title: "Importació de Dades",
+            subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
+            importAnimals: "Importar Animals",
+            selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
+            downloadTemplate: "Descarregar Plantilla",
+            reset: "Reiniciar",
+            import: "Importar"
+          }
+        };
+        
+        // Aplicar traducciones
+        document.getElementById('imports-title').textContent = translations[userLang].title;
+        document.getElementById('imports-subtitle').textContent = translations[userLang].subtitle;
+        document.getElementById('import-animals-title').textContent = translations[userLang].importAnimals;
+        document.getElementById('import-animals-desc').textContent = translations[userLang].selectFile;
+        document.getElementById('download-template').textContent = translations[userLang].downloadTemplate;
+        document.getElementById('reset-text').textContent = translations[userLang].reset;
+        document.getElementById('import-text').textContent = translations[userLang].import;
+      };
+      
+      // Actualizar idioma inmediatamente
+      updateLanguage();
+      
+      // Escuchar cambios de idioma
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'userLanguage') {
+          updateLanguage();
+        }
+      });
+    });
+  </script>
+</MainLayout>
+
+<style>
+  /* Estilos mejorados para los botones de importación */
+  .import-btn {
+    @apply px-4 py-2.5 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+    @apply flex items-center justify-center min-w-[140px] border-2 shadow-sm;
+    @apply md:min-w-[160px] md:text-base;
+  }
+  
+  .import-btn .icon {
+    @apply mr-2 text-lg;
+  }
+  
+  .import-btn .text {
+    @apply font-medium;
+  }
+  
+  /* Botón de descarga */
+  .download-btn {
+    @apply bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100;
+    @apply dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800/50;
+  }
+  
+  /* Botón de reinicio */
+  .reset-btn {
+    @apply bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100;
+    @apply dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700;
+  }
+  
+  /* Botón de importación directa */
+  .direct-btn {
+    @apply bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100;
+    @apply dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 dark:hover:bg-purple-800/50;
+  }
+  
+  /* Botón de importar */
+  .import-action-btn {
+    @apply bg-green-50 text-green-700 border-green-300 hover:bg-green-100;
+    @apply dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800/50;
+  }
+  
+  /* Estilos antiguos mantenidos por compatibilidad */
+  .btn {
+    @apply px-3 py-2 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/80 focus:ring-primary;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+  
+  .btn-info {
+    @apply bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500;
+  }
+  
+  .btn-outline {
+    @apply bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700;
+  }
+</style>
+
+<script>
+  // Script para manejar la actualización del historial después de una importación
+  document.addEventListener('DOMContentLoaded', () => {
+    const importForm = document.querySelector('import-form');
+    const importHistory = document.querySelector('import-history');
+    
+    // Botones de acción
+    const resetBtn = document.getElementById('reset-import');
+    const importBtn = document.getElementById('import-btn');
+    
+    // Función para actualizar el historial
+    const refreshHistory = () => {
+      if (importHistory) {
+        // Disparar un evento para actualizar el historial
+        const event = new CustomEvent('refresh-history');
+        importHistory.dispatchEvent(event);
+      }
+    };
+    
+    // Escuchar eventos de importación completada
+    if (importForm) {
+      importForm.addEventListener('import-complete', () => {
+        // Esperar un momento para que el backend procese la importación
+        setTimeout(refreshHistory, 1000);
+      });
+    }
+    
+    // Conectar botones con el componente React
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('reset-import'));
+      });
+    }
+    
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('import-btn-click'));
+      });
+    }
+  });
+</script>

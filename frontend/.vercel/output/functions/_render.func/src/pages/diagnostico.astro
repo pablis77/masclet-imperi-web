@@ -1,0 +1,81 @@
+---
+// Importar el layout principal
+import MainLayout from '../components/layout/MainLayout.astro';
+import LoginDebugger from '../components/debug/LoginDebugger';
+---
+
+<MainLayout title="Diagnóstico de Roles">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Diagnóstico de Sistema de Roles</h1>
+    
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-4">Información de la sesión actual</h2>
+      
+      <LoginDebugger client:load />
+      
+      <div class="mt-6">
+        <h3 class="font-semibold mb-2">Instrucciones:</h3>
+        <ol class="list-decimal pl-5 space-y-2">
+          <li>Revisa la información de arriba para ver si tu rol detectado coincide con tu usuario</li>
+          <li>Si el rol no coincide, cierra sesión y vuelve a entrar</li>
+          <li>Si sigue sin funcionar, prueba a borrar el localStorage: 
+            <button id="clearStorage" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded ml-2 text-sm">
+              Borrar datos de sesión
+            </button>
+          </li>
+        </ol>
+      </div>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">Prueba de rutas de acceso</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Dashboard</div>
+          <div class="text-sm text-gray-500">Acceso: Todos los roles</div>
+        </a>
+        
+        <a href="/animals" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Animales</div>
+          <div class="text-sm text-gray-500">Acceso: Todos los roles</div>
+        </a>
+        
+        <a href="/explotaciones-react" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Explotaciones</div>
+          <div class="text-sm text-gray-500">Acceso: Todos los roles</div>
+        </a>
+        
+        <a href="/users" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Usuarios</div>
+          <div class="text-sm text-gray-500">Acceso: administrador, Ramon</div>
+        </a>
+        
+        <a href="/imports" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Importación</div>
+          <div class="text-sm text-gray-500">Acceso: Solo administrador</div>
+        </a>
+        
+        <a href="/backup" class="block p-4 border rounded hover:bg-gray-50 transition">
+          <div class="font-medium">Backup</div>
+          <div class="text-sm text-gray-500">Acceso: Solo administrador</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  // Script para borrar el localStorage
+  document.addEventListener('DOMContentLoaded', () => {
+    const clearButton = document.getElementById('clearStorage');
+    if (clearButton) {
+      clearButton.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        alert('Datos de sesión eliminados. Por favor, vuelve a iniciar sesión.');
+        window.location.href = '/login';
+      });
+    }
+  });
+</script>
