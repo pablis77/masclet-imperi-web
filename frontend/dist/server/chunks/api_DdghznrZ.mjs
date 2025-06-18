@@ -260,3 +260,4 @@ api.handleApiError = handleApiError;
 api.patchData = patchData;
 
 export { api as a };
+//# sourceMappingURL=api_DdghznrZ.mjs.map

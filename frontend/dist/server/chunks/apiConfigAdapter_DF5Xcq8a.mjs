@@ -44,3 +44,4 @@ const isProduction = environment === "production";
 const TOKEN_NAME = AUTH_CONFIG.tokenName;
 
 export { API_BASE_URL as A, TOKEN_NAME as T, API_DEFAULT_HEADERS as a, API_TIMEOUT as b, environment as e, isProduction as i };
+//# sourceMappingURL=apiConfigAdapter_DF5Xcq8a.mjs.map

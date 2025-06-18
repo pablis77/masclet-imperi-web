@@ -1,7 +1,7 @@
-import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$DefaultLayout } from '../chunks/DefaultLayout_sfsXaPHw.mjs';
+import { $ as $$DefaultLayout } from '../chunks/DefaultLayout_xC5OqFKB.mjs';
 
 const $$LoginTest = createComponent(async ($$result, $$props, $$slots) => {
   return renderTemplate`${renderComponent($$result, "DefaultLayout", $$DefaultLayout, { "title": "Test Login - Masclet Imperi" }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"> <div class="max-w-md w-full space-y-8"> <div> <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -34,3 +34,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=login-test.astro.mjs.map

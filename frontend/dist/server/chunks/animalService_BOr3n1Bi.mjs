@@ -646,3 +646,4 @@ const animalService = {
 };
 
 export { animalService as a };
+//# sourceMappingURL=animalService_BOr3n1Bi.mjs.map

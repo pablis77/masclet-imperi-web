@@ -1,4 +1,4 @@
-export { e as renderers } from '../../chunks/vendor_B30v18IX.mjs';
+export { e as renderers } from '../../chunks/vendor_XrHmsJ5B.mjs';
 
 // Astro API endpoint para autenticación (formato Astro v4)
 async function POST({ request }) {
@@ -215,3 +215,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=auth-proxy.astro2.mjs.map

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { FEATURES } from '../config/features';
 
 /**
  * Interfaces para las notificaciones
@@ -40,10 +41,13 @@ export interface NotificationSettings {
  * Servicio para gestionar notificaciones
  */
 class NotificationService {
+  // Flag para habilitar notificaciones solo cuando se ponga en producción
+  private isEnabled = FEATURES.ENABLE_NOTIFICATIONS;
   // Método de compatibilidad para código compilado
   t(): boolean {  
+    if (!this.isEnabled) return false;
     console.warn('DEPRECATED: llamada a método t() en notificationService');
-    return true;
+    return false;
   }
   private baseUrl = 'http://localhost:8000/api/v1/notifications';
   private pollingInterval: number | null = null;
@@ -52,6 +56,9 @@ class NotificationService {
    * Obtiene todas las notificaciones del usuario
    */
   async getNotifications(unreadOnly = false, limit = 10, skip = 0): Promise<NotificationResponse> {
+    if (!this.isEnabled) {
+      return { items: [], total: 0, unread_count: 0, has_more: false };
+    }
     try {
       const params = new URLSearchParams();
       params.append('unread_only', unreadOnly.toString());
@@ -84,6 +91,7 @@ class NotificationService {
    * Marca una notificación como leída
    */
   async markAsRead(notificationId: number): Promise<boolean> {
+    if (!this.isEnabled) return true;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
@@ -104,6 +112,7 @@ class NotificationService {
    * Marca todas las notificaciones como leídas
    */
   async markAllAsRead(): Promise<boolean> {
+    if (!this.isEnabled) return true;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
@@ -124,6 +133,7 @@ class NotificationService {
    * Elimina una notificación
    */
   async deleteNotification(notificationId: number): Promise<boolean> {
+    if (!this.isEnabled) return true;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
@@ -144,6 +154,7 @@ class NotificationService {
    * Elimina todas las notificaciones
    */
   async deleteAllNotifications(): Promise<boolean> {
+    if (!this.isEnabled) return true;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
@@ -164,6 +175,11 @@ class NotificationService {
    * Configura el polling para obtener notificaciones periódicamente
    */
   startPolling(callback: (notifications: Notification[]) => void, interval = 30000): number {
+    // Si el servicio está deshabilitado, no iniciar polling
+    if (!this.isEnabled) {
+      console.info('Servicio de notificaciones deshabilitado: No se inicia polling');
+      return 0;
+    }
     // Hacemos una primera llamada inmediatamente
     this.getNotifications().then(response => {
       callback(response.items);
@@ -188,6 +204,7 @@ class NotificationService {
    * Detiene el polling de notificaciones
    */
   stopPolling(): void {
+    if (!this.isEnabled) return;
     if (this.pollingInterval !== null) {
       window.clearInterval(this.pollingInterval);
       this.pollingInterval = null;
@@ -198,6 +215,7 @@ class NotificationService {
    * Crea una notificación de prueba (solo para desarrollo)
    */
   async createTestNotification(): Promise<boolean> {
+    if (!this.isEnabled) return true;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};

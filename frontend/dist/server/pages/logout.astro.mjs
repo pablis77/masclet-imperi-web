@@ -1,5 +1,5 @@
-import { c as createComponent, a as createAstro, d as addAttribute, g as renderHead, h as renderSlot, b as renderTemplate, r as renderComponent } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, a as createAstro, d as addAttribute, g as renderHead, h as renderSlot, b as renderTemplate, r as renderComponent } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
 import 'clsx';
 /* empty css                                  */
@@ -46,3 +46,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=logout.astro.mjs.map

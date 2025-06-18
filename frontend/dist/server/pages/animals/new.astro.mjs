@@ -1,9 +1,9 @@
-import { c as createComponent, a as createAstro, m as maybeRenderHead, d as addAttribute, u as unescapeHTML, b as renderTemplate, r as renderComponent } from '../../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, a as createAstro, m as maybeRenderHead, d as addAttribute, u as unescapeHTML, b as renderTemplate, r as renderComponent } from '../../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../../chunks/MainLayout_Dr98ukQ7.mjs';
+import { $ as $$MainLayout } from '../../chunks/MainLayout_CQEYGpDK.mjs';
 import 'clsx';
-import { $ as $$MessageContainer } from '../../chunks/MessageContainer_Cvb20uVw.mjs';
+import { $ as $$MessageContainer } from '../../chunks/MessageContainer_CzI8Lzk8.mjs';
 import { a as animalService } from '../../chunks/animalService_BOr3n1Bi.mjs';
 
 const $$Astro$2 = createAstro();
@@ -121,3 +121,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=new.astro.mjs.map

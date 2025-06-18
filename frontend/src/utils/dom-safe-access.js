@@ -38,6 +38,11 @@ export function safeGetElement(selector, waitForLoad = false, callback = null) {
  * @param {Function} callback - Función a ejecutar
  */
 export function onDOMReady(callback) {
+  if (typeof document === 'undefined') {
+    // En SSR no hay document, no ejecutamos nada
+    return;
+  }
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', callback);
   } else {
@@ -111,14 +116,16 @@ export function waitForElement(selector, maxAttempts = 10, interval = 300) {
 }
 
 // Exportar un objeto global que puede ser accedido desde cualquier script
-window.DOMSafeAccess = {
-  safeGetElement,
-  onDOMReady,
-  withElement,
-  withElements,
-  elementExists,
-  waitForElement
-};
+if (typeof window !== 'undefined') {
+  window.DOMSafeAccess = {
+    safeGetElement,
+    onDOMReady,
+    withElement,
+    withElements,
+    elementExists,
+    waitForElement
+  };
+}
 
 export default {
   safeGetElement,

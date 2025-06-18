@@ -1,6 +1,6 @@
-import { e as renderers, j as createExports } from './chunks/vendor_B30v18IX.mjs';
-import { s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_DIH1zQyS.mjs';
-import { manifest } from './manifest_BDdcyweb.mjs';
+import { e as renderers, j as createExports } from './chunks/vendor_XrHmsJ5B.mjs';
+import { s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_B1Bo7v70.mjs';
+import { manifest } from './manifest_0dkW2jdL.mjs';
 
 const _page0 = () => import('./pages/_image.astro.mjs');
 const _page1 = () => import('./pages/animals/edit/_id_.astro.mjs');
@@ -40,7 +40,7 @@ const _page34 = () => import('./pages/users.astro.mjs');
 const _page35 = () => import('./pages/index.astro.mjs');
 
 const pageMap = new Map([
-    ["node_modules/astro/dist/assets/endpoint/node.js", _page0],
+    ["node_modules/astro/dist/assets/endpoint/generic.js", _page0],
     ["src/pages/animals/edit/[id].astro", _page1],
     ["src/pages/animals/new.astro", _page2],
     ["src/pages/animals/partos/edit/[id].astro", _page3],
@@ -85,20 +85,14 @@ const _manifest = Object.assign(manifest, {
     middleware: () => import('./_noop-middleware.mjs')
 });
 const _args = {
-    "mode": "standalone",
-    "host": "0.0.0.0",
-    "port": 3000,
-    "client": "file:///C:/Proyectos/claude/masclet-imperi-web/frontend/dist/client/",
-    "server": "file:///C:/Proyectos/claude/masclet-imperi-web/frontend/dist/server/",
-    "assets": "_astro"
+    "responseMode": "buffer"
 };
 const _exports = createExports(_manifest, _args);
 const handler = _exports['handler'];
-const startServer = _exports['startServer'];
-const options = _exports['options'];
 const _start = 'start';
 if (_start in serverEntrypointModule) {
 	serverEntrypointModule[_start](_manifest, _args);
 }
 
-export { handler, options, pageMap, startServer };
+export { handler, pageMap };
+//# sourceMappingURL=entry.mjs.map

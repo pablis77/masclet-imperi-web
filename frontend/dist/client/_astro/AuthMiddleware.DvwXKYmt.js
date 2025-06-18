@@ -1,1 +1,2 @@
 import{r as t,a as r}from"./vendor.DPE1g--N.js";const i=({children:o})=>{const[s,e]=t.useState(!0);return t.useEffect(()=>{try{localStorage.getItem("token")||(localStorage.setItem("token","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDEwMjQ0NDgwMH0.x"),console.log("Token JWT de desarrollo generado automáticamente")),e(!0)}catch(a){console.error("Error en AuthMiddleware:",a),e(!0)}},[]),r.jsx(r.Fragment,{children:o})};export{i as default};
+//# sourceMappingURL=AuthMiddleware.DvwXKYmt.js.map

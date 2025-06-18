@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-export { e as renderers } from '../../chunks/vendor_B30v18IX.mjs';
+export { e as renderers } from '../../chunks/vendor_XrHmsJ5B.mjs';
 
 // Proxy API para evitar problemas de CORS
 
@@ -390,3 +390,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=proxy.astro.mjs.map

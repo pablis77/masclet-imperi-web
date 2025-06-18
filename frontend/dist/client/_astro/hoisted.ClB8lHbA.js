@@ -1,0 +1,2 @@
+import"./hoisted.Aq9NsjF5.js";import"./LanguageSwitcher.astro_astro_type_script_index_0_lang.DhuIQNJ0.js";import"./vendor.DPE1g--N.js";document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("clearStorage");e&&e.addEventListener("click",()=>{localStorage.removeItem("token"),localStorage.removeItem("user"),alert("Datos de sesión eliminados. Por favor, vuelve a iniciar sesión."),window.location.href="/login"})});
+//# sourceMappingURL=hoisted.ClB8lHbA.js.map

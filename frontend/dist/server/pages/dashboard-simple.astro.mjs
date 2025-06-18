@@ -1,5 +1,5 @@
-import { c as createComponent, g as renderHead, r as renderComponent, b as renderTemplate } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, g as renderHead, r as renderComponent, b as renderTemplate } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
 
 const $$DashboardSimple = createComponent(($$result, $$props, $$slots) => {
@@ -19,3 +19,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=dashboard-simple.astro.mjs.map

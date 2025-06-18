@@ -22,3 +22,4 @@ console.log(`[API Config] Base URL: ${API_CONFIG.baseURL}`);
 console.log(`[API Config] Es entorno local: ${isLocal ? "SÍ" : "NO"}`);
 
 export { API_CONFIG as A };
+//# sourceMappingURL=apiConfig_Qu2HXU2s.mjs.map

@@ -1,4 +1,4 @@
-export { e as renderers } from '../../chunks/vendor_B30v18IX.mjs';
+export { e as renderers } from '../../chunks/vendor_XrHmsJ5B.mjs';
 
 const POST = async ({ request }) => {
   try {
@@ -136,3 +136,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=auth-proxy.astro3.mjs.map

@@ -2,11 +2,15 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
-import node from '@astrojs/node';
+// Reemplazamos node por sst para AWS
+import sst from 'astro-sst';
 
 export default defineConfig({
     // Permitir todas las conexiones
     output: 'server',
+    
+    // Configuración del adaptador SST para AWS
+    adapter: sst(),
     
     // Directorio base donde se servirá la aplicación (si es en subpath)
     base: '/',
@@ -57,24 +61,11 @@ export default defineConfig({
         }),
     ],
 
-    // Configuración para modo completamente de servidor
-    output: 'server',
-    
-    // Adaptador para servidor Node.js (requerido para modo híbrido)
-    adapter: node({
-        mode: 'standalone',
-        host: '0.0.0.0', // IMPORTANTE: Escuchar en todas las interfaces, no solo localhost
-        port: process.env.PORT || 10000,
-        // Añadimos middleware personalizado para el health check
-        middleware: async (context, next) => {
-            // Interceptamos las peticiones al endpoint de health check
-            if (context.url.pathname === '/health') {
-                console.log('✅ Health check solicitado - respondiendo 200 OK');
-                return new Response('OK', { status: 200 });
-            }
-            // Para el resto de rutas, continuamos con el flujo normal
-            return next();
-        }
+    // Adaptador SST para AWS Amplify (compatible con Astro 4)
+    adapter: sst({
+        // La configuración de SST es más sencilla
+        // Agregamos soporte para health check via custom headers en amplify.yml
+        // No se necesita configuración adicional aquí para el funcionamiento básico
     }),
 
     // Configuración de vite (bundler usado por Astro)

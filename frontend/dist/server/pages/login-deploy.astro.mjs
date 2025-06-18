@@ -1,7 +1,7 @@
-import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$LoginLayout } from '../chunks/LoginLayout_B4apchGS.mjs';
+import { $ as $$LoginLayout } from '../chunks/LoginLayout_DlROZiB5.mjs';
 
 const $$LoginDeploy = createComponent(async ($$result, $$props, $$slots) => {
   return renderTemplate`${renderComponent($$result, "LoginLayout", $$LoginLayout, { "title": "Login - Masclet Imperi" }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"> <div class="max-w-md w-full space-y-8">  ${renderComponent($$result2, "PasswordErrorModal", null, { "client:only": "react", "isOpen": false, "onClose": () => {
@@ -33,3 +33,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=login-deploy.astro.mjs.map

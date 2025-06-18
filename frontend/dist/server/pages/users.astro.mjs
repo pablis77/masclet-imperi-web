@@ -1,13 +1,13 @@
-import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, r as renderComponent, b as renderTemplate, m as maybeRenderHead } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../chunks/MainLayout_Dr98ukQ7.mjs';
+import { $ as $$MainLayout } from '../chunks/MainLayout_CQEYGpDK.mjs';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
 import { a as api } from '../chunks/api_DdghznrZ.mjs';
 import { A as API_CONFIG } from '../chunks/apiConfig_Qu2HXU2s.mjs';
-import { d as getStoredUser, a as getCurrentLanguage, t, i as isAuthenticated } from '../chunks/Footer_B0t0tl4F.mjs';
-import { g as getCurrentRole } from '../chunks/roleService_8DcGpmU3.mjs';
+import { d as getStoredUser, a as getCurrentLanguage, t, i as isAuthenticated } from '../chunks/Footer_CbdEWwuE.mjs';
+import { g as getCurrentRole } from '../chunks/roleService_CiKfFVFf.mjs';
 
 const userServiceProxy = {
   // Obtiene una lista paginada de usuarios
@@ -1220,3 +1220,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=users.astro.mjs.map

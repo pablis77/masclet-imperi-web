@@ -1,9 +1,9 @@
-import { c as createComponent, a as createAstro, b as renderTemplate, r as renderComponent, m as maybeRenderHead } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, a as createAstro, b as renderTemplate, r as renderComponent, m as maybeRenderHead } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../chunks/MainLayout_Dr98ukQ7.mjs';
+import { $ as $$MainLayout } from '../chunks/MainLayout_CQEYGpDK.mjs';
 import 'clsx';
-import { a as getCurrentLanguage, t } from '../chunks/Footer_B0t0tl4F.mjs';
+import { a as getCurrentLanguage, t } from '../chunks/Footer_CbdEWwuE.mjs';
 
 var __freeze$1 = Object.freeze;
 var __defProp$1 = Object.defineProperty;
@@ -498,3 +498,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=backup.astro.mjs.map

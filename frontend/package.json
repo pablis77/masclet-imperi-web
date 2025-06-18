@@ -42,6 +42,7 @@
         "@types/react": "^18.2.48",
         "@types/react-dom": "^18.2.18",
         "astro": "^4.0.3",
+        "astro-sst": "^2.45.2",
         "postcss-nesting": "^13.0.1",
         "sharp": "^0.34.1",
         "stylelint": "^16.15.0",

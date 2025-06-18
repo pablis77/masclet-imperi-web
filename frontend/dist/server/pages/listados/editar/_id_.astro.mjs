@@ -1,8 +1,8 @@
-import { c as createComponent, a as createAstro, r as renderComponent, b as renderTemplate, m as maybeRenderHead, d as addAttribute } from '../../../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../../../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, a as createAstro, r as renderComponent, b as renderTemplate, m as maybeRenderHead, d as addAttribute } from '../../../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../../../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../../../chunks/MainLayout_Dr98ukQ7.mjs';
-import { a as getCurrentLanguage } from '../../../chunks/Footer_B0t0tl4F.mjs';
+import { $ as $$MainLayout } from '../../../chunks/MainLayout_CQEYGpDK.mjs';
+import { a as getCurrentLanguage } from '../../../chunks/Footer_CbdEWwuE.mjs';
 
 const $$Astro = createAstro();
 const $$id = createComponent(async ($$result, $$props, $$slots) => {
@@ -55,3 +55,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=_id_.astro.mjs.map

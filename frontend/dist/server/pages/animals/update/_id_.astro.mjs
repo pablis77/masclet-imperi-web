@@ -1,9 +1,9 @@
-import { c as createComponent, a as createAstro, b as renderTemplate, d as addAttribute, m as maybeRenderHead, f as defineScriptVars, r as renderComponent } from '../../../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../../../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, a as createAstro, b as renderTemplate, d as addAttribute, m as maybeRenderHead, f as defineScriptVars, r as renderComponent } from '../../../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../../../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../../../chunks/MainLayout_Dr98ukQ7.mjs';
+import { $ as $$MainLayout } from '../../../chunks/MainLayout_CQEYGpDK.mjs';
 import 'clsx';
-import { a as getCurrentLanguage, t } from '../../../chunks/Footer_B0t0tl4F.mjs';
+import { a as getCurrentLanguage, t } from '../../../chunks/Footer_CbdEWwuE.mjs';
 import { a as animalService } from '../../../chunks/animalService_BOr3n1Bi.mjs';
 
 var __freeze$1 = Object.freeze;
@@ -247,3 +247,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=_id_.astro.mjs.map

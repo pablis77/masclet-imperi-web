@@ -1,10 +1,10 @@
-import { c as createComponent, m as maybeRenderHead, r as renderComponent, b as renderTemplate, u as unescapeHTML } from '../chunks/vendor_B30v18IX.mjs';
-export { e as renderers } from '../chunks/vendor_B30v18IX.mjs';
+import { c as createComponent, m as maybeRenderHead, r as renderComponent, b as renderTemplate, u as unescapeHTML } from '../chunks/vendor_XrHmsJ5B.mjs';
+export { e as renderers } from '../chunks/vendor_XrHmsJ5B.mjs';
 import 'kleur/colors';
-import { $ as $$MainLayout } from '../chunks/MainLayout_Dr98ukQ7.mjs';
+import { $ as $$MainLayout } from '../chunks/MainLayout_CQEYGpDK.mjs';
 import 'react/jsx-runtime';
 import 'react';
-import { a as getCurrentLanguage, t } from '../chunks/Footer_B0t0tl4F.mjs';
+import { a as getCurrentLanguage, t } from '../chunks/Footer_CbdEWwuE.mjs';
 
 /**
  * Utilidad para acceso seguro al DOM
@@ -46,6 +46,11 @@ function safeGetElement(selector, waitForLoad = false, callback = null) {
  * @param {Function} callback - Función a ejecutar
  */
 function onDOMReady(callback) {
+  if (typeof document === 'undefined') {
+    // En SSR no hay document, no ejecutamos nada
+    return;
+  }
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', callback);
   } else {
@@ -119,14 +124,16 @@ function waitForElement(selector, maxAttempts = 10, interval = 300) {
 }
 
 // Exportar un objeto global que puede ser accedido desde cualquier script
-window.DOMSafeAccess = {
-  safeGetElement,
-  onDOMReady,
-  withElement,
-  withElements,
-  elementExists,
-  waitForElement
-};
+if (typeof window !== 'undefined') {
+  window.DOMSafeAccess = {
+    safeGetElement,
+    onDOMReady,
+    withElement,
+    withElements,
+    elementExists,
+    waitForElement
+  };
+}
 
 /**
  * Protección global contra errores de DOM
@@ -296,3 +303,4 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 const page = () => _page;
 
 export { page };
+//# sourceMappingURL=index.astro.mjs.map
