@@ -9,8 +9,12 @@ export default defineConfig({
     // Permitir todas las conexiones
     output: 'server',
     
-    // Configuración del adaptador SST para AWS
-    adapter: sst(),
+    // Configuración del adaptador SST para AWS con ajustes específicos para Amplify
+    adapter: sst({
+        // Ajustes para asegurar compatibilidad con AWS Amplify
+        prodBuildPath: '/_astro/', // Asegurar que los assets se sirvan desde la ruta correcta
+        deploymentTarget: 'amplify'
+    }),
     
     // Directorio base donde se servirá la aplicación (si es en subpath)
     base: '/',
@@ -33,14 +37,8 @@ export default defineConfig({
                 secure: false,
                 // No reescribir la ruta, mantener tal cual
                 rewrite: (path) => path
-            },
-            // Proxy para el túnel - esto facilita las conexiones remotas
-            '/.netloc/api/v1': {
-                target: 'https://api-masclet-imperi.loca.lt',
-                changeOrigin: true,
-                secure: false,
-                rewrite: (path) => path.replace('/.netloc', '')
             }
+            
         }
     },
 
@@ -83,10 +81,8 @@ export default defineConfig({
               'localhost',
               '127.0.0.1',
               '0.0.0.0',
-              '192.168.68.54',
-              'masclet-imperi-web-frontend-2025.loca.lt',
-              '.loca.lt'
-          ],
+              '192.168.68.54'
+              ],
           // CRUCIAL: DESACTIVAR HMR para túneles - esto es lo que causa el problema
           hmr: false
       },

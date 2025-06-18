@@ -121,8 +121,13 @@ function generateCssTags(cssFiles, basePath) {
   }
   
   return cssFiles.map(file => {
-    const filePath = path.join(basePath, file).replace(/\\/g, '/');
-    return `<link rel="stylesheet" href="/${filePath}">`;
+    // Eliminamos cualquier prefijo que ya esté en el nombre del archivo
+    let cleanFile = file.replace(/^_astro\//, '');
+    cleanFile = cleanFile.replace(/^styles\//, '');
+    
+    // Para mantener la coherencia con los archivos JS, usamos siempre /_astro/ en producción
+    const filePath = '/_astro/' + cleanFile;
+    return `<link rel="stylesheet" href="${filePath}">`;
   }).join('\n  ');
 }
 
