@@ -128,3 +128,4 @@ AWS_AMPLIFY/varios\ previos/output-sources-web/
 AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/javascript/sonar-javascript-plugin-10.23.0.32711-multi.jar
 AWS_AMPLIFY/sonarqube-data/web/deploy/plugins/cpp/sonar-cfamily-plugin-6.67.0.84717.jar
 AWS_AMPLIFY/analisis-codigo-fuente/analisis-2025-06-12T16-57-47.062Z/analisis-completo.json
+.vercel

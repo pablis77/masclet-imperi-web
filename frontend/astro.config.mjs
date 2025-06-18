@@ -14,11 +14,14 @@ export default defineConfig({
         analytics: true,  // Para obtener estadísticas de rendimiento
         imagesConfig: {
             sizes: [640, 750, 828, 1080, 1200],
-            minimumCacheTTL: 60
+            minimumCacheTTL: 60,
+            // Añadido array domains que se requiere para evitar el error "imagesConfig.domains is not iterable"
+            domains: ['masclet-imperi.vercel.app', 'localhost']
         },
-        includeFiles: [
-            './public/**/*'  // Incluir todos los archivos estáticos
-        ],
+        // Eliminado includeFiles para evitar error ENOENT
+        // Si hay archivos que agregar en el futuro, restaurar esta sección
+        // includeFiles: ['./public/**/*'],
+        
         // Regiones (Europa - más cercana a tu EC2)
         regions: ["cdg1"],
     }),
