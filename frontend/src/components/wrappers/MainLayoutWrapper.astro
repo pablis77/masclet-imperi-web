@@ -1,0 +1,11 @@
+---
+// MainLayoutWrapper.astro - Fuerza la inclusión del componente React MainLayout en el build
+import MainLayoutReact from '../layout/MainLayout';
+---
+
+<!-- Este componente no se usa directamente en la interfaz, solo existe para forzar que MainLayout.tsx se incluya en el build -->
+<div style="display:none" id="main-layout-wrapper">
+    <MainLayoutReact client:only="react">
+        <p>Contenido placeholder</p>
+    </MainLayoutReact>
+</div>

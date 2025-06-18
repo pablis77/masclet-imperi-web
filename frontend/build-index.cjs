@@ -18,6 +18,9 @@ const { findAssets } = require('./build-modules/asset-finder.cjs');
 const { generateHtml } = require('./build-modules/html-generator.cjs');
 const { detectSection, organizeSectionAssets } = require('./build-modules/section-loader.cjs');
 
+// Importar el manifiesto de secciones
+const sectionManifest = require('./build-modules/section-manifest.json');
+
 console.log('\n📂 GENERADOR INDEX.HTML PARA AMPLIFY');
 console.log('=====================================');
 
@@ -55,7 +58,9 @@ try {
 // 3.1. Organizar assets por secciones
 console.log('\n📂 Organizando assets por secciones...');
 const defaultSection = 'DASHBOARD'; // Sección por defecto (ruta principal)
-const organizedAssets = organizeSectionAssets(foundAssets, defaultSection);
+console.log('🔄 Utilizando section-manifest.json para la organización de assets');
+// Usamos el manifiesto estático para mejor precisión
+const organizedAssets = organizeSectionAssets(foundAssets, defaultSection, sectionManifest);
 
 // Mostrar información de depuración detallada
 console.log('DEBUG - Claves de organizedAssets:', Object.keys(organizedAssets));

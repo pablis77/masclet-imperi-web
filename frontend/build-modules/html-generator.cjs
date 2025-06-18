@@ -325,14 +325,8 @@ function generateHtml(organizedAssets) {
   const coreKey = Object.keys(cleanedAssets).find(key => key.toLowerCase() === 'core');
   
   // Definir las variables para CSS y scripts críticos
-  let coreCSS = '<!-- No se encontraron estilos CSS core -->';
-  let coreScripts = '<!-- No se encontraron scripts JS core -->';
-  
-  // INYECTAR MANUALMENTE LOS CSS CRÍTICOS
-  // Esta es una solución de emergencia para garantizar que los CSS críticos siempre estén presentes
-  coreCSS = `<link rel="stylesheet" href="/_astro/index.DJoSdzOi.css">
-  <link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
-  <link rel="stylesheet" href="/_astro/_id_.CtbIiy9S.css">`;
+  let coreCSS = '';
+  let coreScripts = '';
   
   if (coreKey) {
     coreAssets = cleanedAssets[coreKey];
@@ -356,15 +350,34 @@ function generateHtml(organizedAssets) {
   html = html.replace('<!-- MARCADOR: CSS CRÍTICO -->', coreCSS); // Para compatibilidad con versiones anteriores
   html = html.replace('<!-- MARCADOR: SCRIPTS CRÍTICOS -->', coreScripts);
   
-  // VERIFICACIÓN DE EMERGENCIA: Asegurar que los CSS críticos están presentes
-  if (!html.includes('index.DJoSdzOi.css') || !html.includes('vendor.DJv9yYup.css')) {
-    console.warn('⚠️ ADVERTENCIA: No se detectaron CSS críticos en el HTML generado');
-    console.log('🔧 Aplicando parche de emergencia para CSS críticos...');
-    const cssEmergencia = `<link rel="stylesheet" href="/_astro/index.DJoSdzOi.css">
-  <link rel="stylesheet" href="/_astro/vendor.DJv9yYup.css">
-  <link rel="stylesheet" href="/_astro/_id_.CtbIiy9S.css">`;
-    html = html.replace('</head>', cssEmergencia + '\n</head>');
-    console.log('✅ CSS críticos insertados manualmente');
+  // En lugar de verificar y aplicar un parche de emergencia, asegurémonos de que los CSS
+  // estén correctamente insertados desde el principio
+  
+  // Verificamos si los CSS críticos ya están presentes en el HTML generado
+  let cssPresentes = false;
+  
+  if (coreAssets.css && coreAssets.css.length > 0) {
+    // Para cada archivo CSS del core, verificamos si está incluido en el HTML
+    cssPresentes = coreAssets.css.every(cssFile => {
+      const nombreArchivo = cssFile.split('/').pop(); // Obtener solo el nombre del archivo
+      return html.includes(nombreArchivo);
+    });
+  }
+  
+  // Solo si los CSS no están presentes, los insertamos
+  if (!cssPresentes) {
+    console.log('ℹ️ Insertando CSS críticos en el head...');
+    
+    // Generar etiquetas dinámicamente con los assets detectados
+    const cssCore = coreAssets.css && coreAssets.css.length > 0 
+      ? generateCssTags(coreAssets.css, '_astro')
+      : '<!-- No se encontraron estilos CSS core -->';
+      
+    // Reemplazar el marcador por las etiquetas generadas
+    html = html.replace('<!-- CSS Crítico -->', '<!-- CSS Crítico -->\n  ' + cssCore);
+    console.log('✅ CSS críticos insertados correctamente');
+  } else {
+    console.log('✅ CSS críticos ya presentes en el HTML');
   }
   
   // Generar cargador dinámico para scripts de sección

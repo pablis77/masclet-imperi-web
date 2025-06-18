@@ -40,6 +40,11 @@ export interface NotificationSettings {
  * Servicio para gestionar notificaciones
  */
 class NotificationService {
+  // Método de compatibilidad para código compilado
+  t(): boolean {  
+    console.warn('DEPRECATED: llamada a método t() en notificationService');
+    return true;
+  }
   private baseUrl = 'http://localhost:8000/api/v1/notifications';
   private pollingInterval: number | null = null;
   
@@ -213,8 +218,13 @@ class NotificationService {
 // Exportamos una única instancia del servicio
 const notificationService = new NotificationService();
 
+// El método t() ya está definido en la clase NotificationService
+
 // Exportar como default (para import notificationService from './notificationService')
 export default notificationService;
 
 // Exportar también con nombre (para import { notificationService } from './notificationService')
 export { notificationService };
+
+// Exportar con alias 'n' para compatibilidad con código compilado que usa import { n }
+export const n = notificationService;

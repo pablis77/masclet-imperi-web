@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplicación de Gestión Ganadera Masclet Imperi">
+  <title>Masclet Imperi</title>
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/favico.ico" type="image/x-icon">
+  <!-- CSS Crítico -->
+  
+  
+  
+  
+  <!-- CSS por sección -->
+  <!-- MARCADOR: CSS SECCIONES -->
+</head>
+<body>
+  <div id="app">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Cargando aplicación...</p>
+      <noscript>
+        <p class="error-message">Esta aplicación requiere JavaScript para funcionar. Por favor, habilítalo en tu navegador.</p>
+      </noscript>
+    </div>
+  </div>
+  
+  <!-- Scripts críticos -->
+  <script src="/_astro/apiConfig.BYL0hBvc.js" type="module"></script>
+  <script src="/_astro/apiService.DFT83caO.js" type="module"></script>
+  <script src="/_astro/apiConfigAdapter.B0N4Zv2p.js" type="module"></script>
+  <script src="/_astro/authService.CvC7CJU-.js" type="module"></script>
+  <script src="/_astro/config.DUTcyYPh.js" type="module"></script>
+  <script src="/_astro/client.c0oeVLJH.js" type="module"></script>
+  <script src="/_astro/vendor.DPE1g--N.js" type="module"></script>
+  <script src="/_astro/Footer.DhX8wwRk.js" type="module"></script>
+  <script src="/_astro/MainLayout.DTGkdaJn.js" type="module"></script>
+  <script src="/_astro/Navbar.C2uKcpYW.js" type="module"></script>
+  <script src="/_astro/Sidebar.C3PG_rYZ.js" type="module"></script>
+  
+  <!-- Scripts por sección (carga dinámica) -->
+  <script>
+  // Assets organizados por sección
+  const SECTION_ASSETS = {
+  "core": {
+    "js": [
+      "apiConfig.BYL0hBvc.js",
+      "apiService.DFT83caO.js",
+      "apiConfigAdapter.B0N4Zv2p.js",
+      "authService.CvC7CJU-.js",
+      "config.DUTcyYPh.js",
+      "client.c0oeVLJH.js",
+      "vendor.DPE1g--N.js",
+      "Footer.DhX8wwRk.js",
+      "MainLayout.DTGkdaJn.js",
+      "Navbar.C2uKcpYW.js",
+      "Sidebar.C3PG_rYZ.js"
+    ],
+    "css": [
+      "index.DJoSdzOi.css",
+      "vendor.DJv9yYup.css",
+      "_id_.CtbIiy9S.css"
+    ]
+  },
+  "other": {
+    "js": [],
+    "css": []
+  },
+  "LOGIN": {
+    "js": [
+      "PasswordErrorModal.DuiGlcIB.js",
+      "AuthMiddleware.DvwXKYmt.js",
+      "RoleGuard.tjAvEQFC.js",
+      "LoginDebugger.BOITnVDY.js",
+      "ClearLocalStorage.BrTZnTk7.js"
+    ],
+    "css": []
+  },
+  "DASHBOARD": {
+    "js": [
+      "DashboardV2.oP-JI5qg.js",
+      "Dashboard2.CExZmQRp.js",
+      "DashboardNew.CExZmQRp.js",
+      "NotificationsMenu.f0hI2UPq.js"
+    ],
+    "css": []
+  },
+  "EXPLOTACIONES": {
+    "js": [
+      "ExplotacionesPage.CjlCDm9n.js"
+    ],
+    "css": []
+  },
+  "ANIMALES": {
+    "js": [
+      "AnimalFilters.BAcREw7U.js",
+      "AnimalTable.Ci58NXSq.js",
+      "animalService.sWoyKksn.js"
+    ],
+    "css": []
+  },
+  "LISTADOS": {
+    "js": [
+      "listados-service.BvIhkIE3.js"
+    ],
+    "css": []
+  },
+  "USUARIOS": {
+    "js": [
+      "UsersManagement.BOWlt6zH.js",
+      "RoleGuard.tjAvEQFC.js"
+    ],
+    "css": []
+  },
+  "IMPORTACIONES": {
+    "js": [
+      "ResetDatabaseButton.Bo0HKCdg.js",
+      "ImportContainer.ZmpF6N7R.js"
+    ],
+    "css": []
+  },
+  "BACKUP": {
+    "js": [
+      "LanguageSwitcher.astro_astro_type_script_index_0_lang.CXyVlJeA.js",
+      "NotificationsMenu.f0hI2UPq.js"
+    ],
+    "css": []
+  },
+  "NOTIFICACIONES": {
+    "js": [
+      "NotificationsMenu.f0hI2UPq.js",
+      "notificationService.BW46MYz-.js"
+    ],
+    "css": []
+  },
+  "PERFIL": {
+    "js": [
+      "ProfileManagement.DIl2-pb6.js"
+    ],
+    "css": []
+  },
+  "AJUSTES": {
+    "js": [
+      "LanguageSwitcher.astro_astro_type_script_index_0_lang.CXyVlJeA.js"
+    ],
+    "css": []
+  }
+};
+  
+  // Ruta base para los assets
+  const BASE_PATH = '_astro';
+  
+  // Función para cargar un script dinámicamente
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.type = 'module';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  }
+  
+  // Función para cargar un CSS dinámicamente
+  function loadCSS(href) {
+    return new Promise((resolve) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      document.head.appendChild(link);
+    });
+  }
+  
+  // Función para cargar assets de una sección específica
+  async function loadSectionAssets(sectionName) {
+    if (!SECTION_ASSETS[sectionName]) {
+      console.warn('⚠️ Sección no encontrada:', sectionName);
+      return;
+    }
+    
+    const section = SECTION_ASSETS[sectionName];
+    
+    // Cargar CSS
+    if (section.css && section.css.length > 0) {
+      for (const cssFile of section.css) {
+        // Evitar añadir dos veces _astro/
+        let cleanCssFile = cssFile.replace(/^_astro\//, '');
+        let cssPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanCssFile : '/' + cleanCssFile;
+        // Eliminar dobles barras
+        cssPath = cssPath.replace(new RegExp('//','g'), '/');
+        await loadCSS(cssPath);
+        console.log('✅ CSS cargado:', cssFile);
+      }
+    }
+    
+    // Cargar JS
+    if (section.js && section.js.length > 0) {
+      for (const jsFile of section.js) {
+        // Evitar añadir dos veces _astro/
+        let cleanJsFile = jsFile.replace(/^_astro\//, '');
+        let jsPath = BASE_PATH ? '/' + BASE_PATH + '/' + cleanJsFile : '/' + cleanJsFile;
+        // Eliminar dobles barras
+        jsPath = jsPath.replace(new RegExp('//','g'), '/');
+        await loadScript(jsPath);
+        console.log('✅ Script cargado:', jsFile);
+      }
+    }
+  }
+  
+  // Detectar sección actual basado en la ruta
+  function detectCurrentSection() {
+    const path = window.location.pathname;
+
+    if (path.includes('/login')) {
+      return 'LOGIN';
+    } else if (path.includes('/explotacion')) {
+      return 'EXPLOTACIONES';
+    } else if (path.includes('/animal')) {
+      return 'ANIMALES';
+    } else if (path.includes('/listado')) {
+      return 'LISTADOS';
+    } else if (path.includes('/user')) {
+      return 'USUARIOS';
+    } else if (path.includes('/import')) {
+      return 'IMPORTACIONES';
+    } else if (path.includes('/backup')) {
+      return 'BACKUP';
+    } else {
+      // Por defecto cargar dashboard
+      return 'DASHBOARD';
+    }
+  }
+  
+  // Cargar assets de la sección actual
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const currentSection = detectCurrentSection();
+      console.log('🔍 Sección detectada:', currentSection);
+      await loadSectionAssets(currentSection);
+      console.log('✅ Assets de la sección cargados correctamente');
+    } catch (error) {
+      console.error('❌ Error al cargar assets de sección:', error);
+    }
+  });
+</script>
+  
+  <!-- Script de diagnóstico y carga -->
+  <script>
+    // Muestra mensajes de diagnóstico en caso de error
+    window.addEventListener('error', function(e) {
+      console.error('⚠️ Error en la carga:', e);
+      const loadingText = document.querySelector('.loading-text');
+      if (loadingText) {
+        loadingText.innerHTML = 'Error al cargar la aplicación<br><small>' + 
+          e.message.substring(0, 100) + '...</small>';
+        loadingText.style.color = '#ff3860';
+      }
+    });
+    
+    // Reporte de inicialización correcta
+    window.addEventListener('load', function() {
+      console.log('✅ Aplicación cargada correctamente');
+      
+      // Ocultar el spinner cuando la aplicación esté cargada
+      const loadingSpinner = document.querySelector('.loading-spinner');
+      const loadingContainer = document.querySelector('.loading-container');
+      
+      if (loadingSpinner) {
+        loadingSpinner.style.display = 'none';
+      }
+      
+      if (loadingContainer) {
+        // Esperar un poco para mostrar una transición suave
+        setTimeout(() => {
+          loadingContainer.style.display = 'none';
+        }, 300);
+      }
+    });
+  </script>
+</body>
+</html>

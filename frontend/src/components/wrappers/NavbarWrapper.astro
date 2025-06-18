@@ -1,0 +1,9 @@
+---
+// NavbarWrapper.astro - Fuerza la inclusión del componente React Navbar en el build
+import NavbarReact from '../layout/Navbar';
+---
+
+<!-- Este componente no se usa directamente en la interfaz, solo existe para forzar que Navbar.tsx se incluya en el build -->
+<div style="display:none" id="navbar-wrapper">
+    <NavbarReact client:only="react" />
+</div>

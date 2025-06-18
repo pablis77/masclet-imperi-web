@@ -1,0 +1,9 @@
+---
+// FooterWrapper.astro - Fuerza la inclusión del componente React Footer en el build
+import FooterReact from '../layout/Footer';
+---
+
+<!-- Este componente no se usa directamente en la interfaz, solo existe para forzar que Footer.tsx se incluya en el build -->
+<div style="display:none" id="footer-wrapper">
+    <FooterReact client:only="react" />
+</div>

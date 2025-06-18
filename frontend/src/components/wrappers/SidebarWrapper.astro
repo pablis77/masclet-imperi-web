@@ -1,0 +1,9 @@
+---
+// SidebarWrapper.astro - Fuerza la inclusión del componente React Sidebar en el build
+import SidebarReact from '../layout/Sidebar';
+---
+
+<!-- Este componente no se usa directamente en la interfaz, solo existe para forzar que Sidebar.tsx se incluya en el build -->
+<div style="display:none" id="sidebar-wrapper">
+    <SidebarReact client:only="react" />
+</div>

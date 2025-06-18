@@ -1,0 +1,190 @@
+{
+  "core": {
+    "pattern": null,
+    "jsFiles": [
+      "apiConfig.js",
+      "apiService.js", 
+      "apiConfigAdapter.js", 
+      "authService.js", 
+      "config.js", 
+      "client.js",
+      "vendor.js",
+      "dom-safe-access.js",
+      "dom-protection.js",
+      "Footer.js", 
+      "MainLayout.js",
+      "Navbar.js",
+      "Sidebar.js",
+      "hoisted.1V3GKfbn.js",
+      "hoisted.a0A2-I9N.js",
+      "hoisted.BaUD3TW-.js",
+      "hoisted.BIqjo7BV.js"
+    ],
+    "cssFiles": [
+      "index.css",
+      "vendor.css",
+      "_id_.css"
+    ],
+    "priority": 0
+  },
+  "LOGIN": {
+    "pattern": "/login",
+    "jsFiles": [
+      "login.js",
+      "LoginForm.js",
+      "PasswordErrorModal.js",
+      "AuthMiddleware.js",
+      "RoleGuard.js",
+      "LoginDebugger.js",
+      "ClearLocalStorage.js"
+    ],
+    "cssFiles": [
+      "logout.css"
+    ],
+    "priority": 1
+  },
+  "DASHBOARD": {
+    "pattern": ["/", "/dashboard", "/index", "/dashboard-direct", "/dashboard-simple", "/dashboard-test", "/dashboard2"],
+    "jsFiles": [
+      "DashboardV2.js",
+      "Dashboard2.js",
+      "DashboardNew.js",
+      "PartosSection.js",
+      "ChartComponents.js",
+      "UIComponents.js",
+      "DiagnosticoDataCard.js",
+      "ResumenOriginalCard.js",
+      "ResumenCard.js",
+      "NotificationsMenu.js"
+    ],
+    "cssFiles": [],
+    "priority": 2
+  },
+  "EXPLOTACIONES": {
+    "pattern": ["/explotaciones", "/explotaciones-react"],
+    "jsFiles": [
+      "ExplotacionesPage.js",
+      "bloquear-acciones-listados.js",
+      "bloquear-actualizar-animal.js",
+      "bloquear-editar-parto.js",
+      "bloquear-eliminar-parto.js",
+      "permissions-ui.js"
+    ],
+    "cssFiles": [],
+    "priority": 3
+  },
+  "ANIMALES": {
+    "pattern": ["/animals", "/animales"],
+    "jsFiles": [
+      "AnimalFilters.js",
+      "AnimalTable.js",
+      "animalService.js",
+      "AnimalDetailsForm.js",
+      "AnimalDetailsPartoForm.js",
+      "HabitualesForm.js",
+      "PartoModal.js",
+      "EditarPartoModal.js",
+      "bloquear-actualizar-animal.js",
+      "bloquear-editar-parto.js",
+      "bloquear-eliminar-parto.js",
+      "permissions-ui.js"
+    ],
+    "cssFiles": [],
+    "priority": 3
+  },
+  "LISTADOS": {
+    "pattern": "/listados",
+    "jsFiles": [
+      "index.js",
+      "visualizar.js",
+      "listadosService.js",
+      "listados-service.js",
+      "bloquear-acciones-listados.js",
+      "FilterControls.js",
+      "ListadoViewer.js",
+      "ListadosTable.js",
+      "ListadoSelector.js",
+      "useFilters.js",
+      "usePagination.js",
+      "useSorting.js"
+    ],
+    "cssFiles": [],
+    "priority": 3
+  },
+  "USUARIOS": {
+    "pattern": "/users",
+    "jsFiles": [
+      "UsersManagement.js",
+      "UserFormModal.js",
+      "UserTable.js",
+      "userServiceProxy.js",
+      "RoleGuard.js",
+      "ConfirmDialog.js",
+      "authHelpers.js",
+      "tokenService.js",
+      "permissions-ui.js"
+    ],
+    "cssFiles": [],
+    "priority": 4
+  },
+  "IMPORTACIONES": {
+    "pattern": "/importaciones",
+    "jsFiles": [
+      "ImportForm.js",
+      "ImportHistoryTable.js",
+      "ImportationsPage.js",
+      "importationService.js",
+      "ResetDatabaseButton.js",
+      "ImportContainer.js",
+      "ImportForm.js",
+      "ImportHistory.js",
+      "importService.js",
+      "adminService.js",
+      "fileUploader.js",
+      "importFormatHelpers.js",
+      "permissions-ui.js"
+    ],
+    "cssFiles": [],
+    "priority": 4
+  },
+  "BACKUP": {
+    "pattern": ["/backup", "/copias-seguridad", "/copias"],
+    "jsFiles": [
+      "backup/index.js",
+      "backupService.js",
+      "block-delete-button.js",
+      "permissions-ui.js",
+      "LanguageSwitcher.js",
+      "NotificationsMenu.js"
+    ],
+    "cssFiles": [],
+    "priority": 4
+  },
+  "NOTIFICACIONES": {
+    "pattern": "/notifications",
+    "jsFiles": [
+      "NotificationsMenu.js",
+      "notificationService.js"
+    ],
+    "cssFiles": [],
+    "priority": 5
+  },
+  "PERFIL": {
+    "pattern": "/profile",
+    "jsFiles": [
+      "ProfileManagement.js",
+      "userServiceProxy.js"
+    ],
+    "cssFiles": [],
+    "priority": 5
+  },
+  "AJUSTES": {
+    "pattern": "/settings",
+    "jsFiles": [
+      "ConfigurationComponent.js",
+      "LanguageSwitcher.js"
+    ],
+    "cssFiles": [],
+    "priority": 5
+  }
+}

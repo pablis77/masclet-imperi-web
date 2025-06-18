@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnimalIconProps } from './types';
+import type { AnimalIconProps, AnimalType } from '.';
 import BullIcon from './BullIcon';
 import CowIcon from './CowIcon';
 import NursingCowIcon from './NursingCowIcon';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MainLayoutProps } from './types';
+import type { MainLayoutProps } from '.';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import Footer from './Footer';

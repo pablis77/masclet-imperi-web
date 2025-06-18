@@ -2,6 +2,15 @@
 // Importar el layout completo
 import MainLayout from '../components/layout/MainLayout.astro';
 
+// Importar core-entry para asegurar la inclusión de componentes estructurales en el build
+import '../utils/core-entry';
+
+// Importar wrappers de componentes estructurales para forzar inclusión en build
+import '../components/wrappers/MainLayoutWrapper.astro';
+import '../components/wrappers/NavbarWrapper.astro';
+import '../components/wrappers/SidebarWrapper.astro';
+import '../components/wrappers/FooterWrapper.astro';
+
 // Importar el componente DashboardV2 optimizado y funcional
 import DashboardV2 from '../components/dashboardv2/DashboardV2';
 

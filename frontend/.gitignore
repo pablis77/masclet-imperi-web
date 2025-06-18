@@ -56,9 +56,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build
-/build
-/dist
-frontend/dist/
+# Se comenta temporalmente para permitir acceso durante depuración
+#/build
+#/dist
+#frontend/dist/
 frontend/public/assets/css/masclet-bundle*.css
 
 # Archivos de seguridad y respaldo

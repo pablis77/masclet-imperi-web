@@ -17,10 +17,14 @@ import { getCurrentLanguage, setLanguage, supportedLanguages } from '../i18n/con
 </div>
 
 <script>
-  // Script mejorado para manejar el cambio de idioma
-  document.addEventListener('DOMContentLoaded', () => {
-    const selector = document.getElementById('language-selector');
-    const indicator = document.getElementById('current-lang-indicator');
+  // Importar las utilidades de acceso seguro al DOM
+  import { safeGetElement, onDOMReady } from '../utils/dom-safe-access';
+
+  // Script mejorado para manejar el cambio de idioma usando acceso seguro al DOM
+  onDOMReady(() => {
+    // Usar acceso seguro al DOM
+    const selector = safeGetElement('#language-selector');
+    const indicator = safeGetElement('#current-lang-indicator');
     
     if (selector) {
       // Establecer el valor inicial desde localStorage
@@ -75,7 +79,8 @@ import { getCurrentLanguage, setLanguage, supportedLanguages } from '../i18n/con
         window.location.href = cleanUrl.toString();
       }
     } else {
-      console.error('[LanguageSwitcher] No se encontró el selector de idioma');
+      // Mensaje informativo en lugar de error (podría ser normal que no esté en todas las páginas)
+      console.info('[LanguageSwitcher] Selector de idioma no disponible en esta página');
     }
   });
 </script>
