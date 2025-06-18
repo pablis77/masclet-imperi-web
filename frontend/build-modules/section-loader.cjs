@@ -478,23 +478,58 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
   // Función auxiliar para detectar sección basada en nombre de archivo
   function detectSectionFromFilename(filename) {
     const lowerFilename = filename.toLowerCase();
+    const pathParts = filename.split('/');
     
-    // Patrones de detección por sección
-    if (/dashboard|panel/i.test(lowerFilename)) {
+    // Si está en una ruta específica, usar esa información
+    if (pathParts.length > 2) {
+      // Patrones de ruta específicos tienen prioridad sobre nombres
+      if (pathParts.some(part => part === 'dashboard' || part === 'dashboardv2')) {
+        return 'DASHBOARD';
+      }
+      if (pathParts.some(part => part === 'explotaciones' || part === 'explotacion')) {
+        return 'EXPLOTACIONES';
+      }
+      if (pathParts.some(part => part === 'animal' || part === 'animales')) {
+        return 'ANIMALES';
+      }
+      if (pathParts.some(part => part === 'listado' || part === 'listados')) {
+        return 'LISTADOS';
+      }
+      if (pathParts.some(part => part === 'usuario' || part === 'usuarios' || part === 'user')) {
+        return 'USUARIOS';
+      }
+      if (pathParts.some(part => part === 'importaciones' || part === 'import')) {
+        return 'IMPORTACIONES';
+      }
+      if (pathParts.some(part => part === 'backup' || part === 'copias-seguridad')) {
+        return 'BACKUPS';
+      }
+    }
+    
+    // Patrones de detección estrictos por prefijo del nombre de archivo
+    // SOLO detectamos por prefijo, no por substrings en cualquier parte
+    if (lowerFilename.startsWith('dashboard') || lowerFilename.startsWith('panel')) {
       return 'DASHBOARD';
-    } else if (/explotacion/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('explotacion')) {
       return 'EXPLOTACIONES';
-    } else if (/animal|vaca|toro|masclet/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('animal') || lowerFilename.startsWith('vaca') || 
+               lowerFilename.startsWith('toro')) {
       return 'ANIMALES';
-    } else if (/listado|report|informe/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('listado') || lowerFilename.startsWith('report') || 
+               lowerFilename.startsWith('informe')) {
       return 'LISTADOS';
-    } else if (/user|usuario|login|auth/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('user') || lowerFilename.startsWith('usuario') || 
+               lowerFilename.startsWith('login') || lowerFilename.startsWith('auth')) {
       return 'USUARIOS';
-    } else if (/import|csv|excel/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('import')) {
       return 'IMPORTACIONES';
-    } else if (/backup|copia|restore/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('backup') || lowerFilename.startsWith('copia') || 
+               lowerFilename.startsWith('restore')) {
       return 'BACKUPS';
-    } else if (/api|config|vendor|lang|service|notifi|hoisted|common/i.test(lowerFilename)) {
+    } else if (lowerFilename.startsWith('api') || lowerFilename.startsWith('config') || 
+               lowerFilename.startsWith('vendor') || lowerFilename.startsWith('lang') || 
+               lowerFilename.startsWith('service') || lowerFilename.startsWith('notifi') || 
+               lowerFilename.startsWith('hoisted') || lowerFilename.startsWith('common')) {
       return 'CORE'; // Componentes compartidos/core
     }
     
@@ -528,9 +563,35 @@ function organizeSectionAssets(assets, currentSection = 'DASHBOARD') {
 
   // 2. Procesar scripts específicos para la sección actual
   const currentConfig = SECTIONS[currentSection] || SECTIONS.DASHBOARD;
+  
+  // IMPORTANTE: Garantizar que los scripts de la sección actual se procesen PRIMERO
+  // antes que cualquier otra sección para evitar mezcla
   if (currentConfig && currentConfig.jsFiles && Array.isArray(currentConfig.jsFiles)) {
+    // Array para guardar scripts específicos de la sección actual
+    const currentSectionScripts = [];
+    
     if (assets.allJs) {
-      // Iterar por todos los scripts .js disponibles
+      // Primero seleccionamos los scripts de la sección actual
+      assets.allJs.forEach(script => {
+        // Ignorar archivos de favicon que causan 404
+        if (script.includes('favicon.ico') || script.includes('favico.ico')) {
+          return; // Ignorar estos archivos
+        }
+        
+        // Verificar si el script pertenece a la sección actual por nombre exacto
+        if (currentConfig.jsFiles.some(jsFile => matchesByBaseFilename(script, jsFile, currentSection))) {
+          currentSectionScripts.push(script);
+        }
+      });
+      
+      // Ahora procesar estos scripts prioritarios
+      currentSectionScripts.forEach(script => {
+        if (!result[currentSection]) result[currentSection] = { js: [], css: [] };
+        addScriptToSection(currentSection, script);
+      });
+      
+      // Ahora continuamos con el resto de scripts como antes
+      // Iterar por todos los scripts .js disponibles para otras secciones
       assets.allJs.forEach(script => {
         // Ignorar archivos de favicon que causan 404
         if (script.includes('favicon.ico') || script.includes('favico.ico')) {
