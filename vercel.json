@@ -1,18 +1,8 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "outputDirectory": "frontend/.vercel/output",
   "framework": "astro",
   "rewrites": [
-    { "source": "/_astro/(.*)", "destination": "/_astro/$1" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/icons/(.*)", "destination": "/icons/$1" },
-    { "source": "/images/(.*)", "destination": "/images/$1" },
-    { "source": "/scripts/(.*)", "destination": "/scripts/$1" },
-    { "source": "/styles/(.*)", "destination": "/styles/$1" },
-    { "source": "/templates/(.*)", "destination": "/templates/$1" },
-    { "source": "/(.*)\\.(ico|jpg|jpeg|png|gif|svg|css|js|txt)", "destination": "/$1.$2" },
-    { "source": "/favico.ico", "destination": "/favico.ico" },
-    { "source": "/index.html", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/(.*)", "destination": "/api/entry" }
   ]
 }
