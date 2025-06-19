@@ -9,7 +9,7 @@
     "scripts": {
         "dev": "astro dev",
         "start": "node fix-server.js",
-        "build": "astro build && node build-index.cjs && node post-build.js",
+        "build": "astro build",
         "preview": "astro preview",
         "astro": "astro"
     },
