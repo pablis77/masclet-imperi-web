@@ -2,66 +2,34 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
-// Adaptador de Vercel para SSR
 import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
-    // Permitir todas las conexiones
     output: 'server',
+    adapter: vercel(),
     
-    // Configuración del adaptador Vercel para SSR
-    adapter: vercel({
-        analytics: true,  // Para obtener estadísticas de rendimiento
-        imagesConfig: {
-            sizes: [640, 750, 828, 1080, 1200],
-            minimumCacheTTL: 60,
-            // Añadido array domains que se requiere para evitar el error "imagesConfig.domains is not iterable"
-            domains: ['masclet-imperi.vercel.app', 'localhost']
-        },
-        // Eliminado includeFiles para evitar error ENOENT
-        // Si hay archivos que agregar en el futuro, restaurar esta sección
-        // includeFiles: ['./public/**/*'],
-        
-        // Regiones (Europa - más cercana a tu EC2)
-        regions: ["cdg1"],
-    }),
-    
-    // Directorio base donde se servirá la aplicación (si es en subpath)
     base: '/',
 
-    // Configuración unificada del servidor de desarrollo
+    // Configuración de desarrollo local
     server: {
-        port: 3000,
-        host: '0.0.0.0',
-        cors: {
-            origin: ['*']
-        },
-        headers: {
-            'Access-Control-Allow-Origin': '*'
-        },
-        // Configuración del proxy para comunicación con backend
+        port: 3000,  // Solo para dev local
+        host: '0.0.0.0',  // Solo para dev local
+        
+        // IMPORTANTE: El proxy SÍ funciona en producción
         proxy: {
             '/api/v1': {
-                target: 'http://localhost:8000',
+                target: 'http://34.253.203.194:8000',  // Tu API en EC2
                 changeOrigin: true,
-                secure: false,
-                // No reescribir la ruta, mantener tal cual
-                rewrite: (path) => path
+                secure: false
             }
-            
         }
     },
 
-    // Integraciones
     integrations: [
-        // Integración con React
         react(),
-        // Integración con Tailwind CSS
         tailwind({
-            // Configurar con archivo personalizado
             config: { path: './tailwind.config.mjs' },
         }),
-        // Integración con astro-icon
         icon({
             include: {
                 mdi: ['*']
@@ -69,58 +37,30 @@ export default defineConfig({
         }),
     ],
 
-    // Ya configurado el adaptador Vercel al inicio del archivo
-    // No se necesita duplicar la configuración del adaptador
-
-    // Configuración de vite (bundler usado por Astro)
     vite: {
-      // Configuración específica para entorno de desarrollo
-      server: {
-          watch: {
-              usePolling: true
-          },
-          // IMPORTANTE: Permitir explícitamente el host de LocalTunnel
-          host: '0.0.0.0',
-          cors: true,
-          strictPort: true,
-          allowedHosts: [
-              'localhost',
-              '127.0.0.1',
-              '0.0.0.0',
-              '192.168.68.54'
-              ],
-          // CRUCIAL: DESACTIVAR HMR para túneles - esto es lo que causa el problema
-          hmr: false
-      },
-      // Excluir archivos de prueba
-      build: {
-        // Optimizaciones para producción
-        minify: true,
-        // Aumentar el límite de advertencia para chunks grandes
-        chunkSizeWarningLimit: 2000, // 2MB en lugar de 500KB por defecto
-        cssMinify: true,
-        // Desactivar mapas de código fuente en producción
-        sourcemap: process.env.NODE_ENV !== 'production',
-        // Comprimir el output
-        assetsInlineLimit: 4096, // Inline assets menores a 4kb
-        rollupOptions: {
-          external: [
-            // Excluir todos los archivos que comienzan con _test
-            /\/src\/.*\/_test.*\.astro$/
-          ],
-          output: {
-            // CONSOLIDACIÓN DE CHUNKS: Unificamos todos en vendor para evitar errores de inicialización
-            manualChunks: (id) => {
-              // Todos los módulos de node_modules en un chunk separado
-              if (id.includes('node_modules')) {
-                // FIX para "ReferenceError: Cannot access 'X' before initialization"
-                // Unificamos todos los chunks en un solo vendor para evitar problemas
-                // de dependencias circulares e inicialización fuera de orden
-                return 'vendor';
-              }
+        server: {
+            watch: {
+                usePolling: true
+            },
+            host: '0.0.0.0',
+            cors: true,
+            strictPort: true,
+            hmr: false
+        },
+        build: {
+            minify: true,
+            cssMinify: true,
+            sourcemap: false,
+            assetsInlineLimit: 4096,
+            rollupOptions: {
+                output: {
+                    manualChunks: (id) => {
+                        if (id.includes('node_modules')) {
+                            return 'vendor';
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
 });
