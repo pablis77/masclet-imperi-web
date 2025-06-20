@@ -4,7 +4,7 @@
  */
 
 import { AUTH_CONFIG } from '../config/apiConfig.centralizado';
-import apiService from './apiService.centralizado';
+import apiServiceDefault, { apiService } from './apiService.centralizado';
 
 // Definición de tipos
 export interface LoginRequest {

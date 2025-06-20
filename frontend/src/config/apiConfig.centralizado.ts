@@ -7,6 +7,7 @@
 // Detección del entorno actual
 const IS_PRODUCTION = import.meta.env.PROD || false;
 const IS_DEVELOPMENT = !IS_PRODUCTION;
+const IS_VERCEL = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
 
 /**
  * Detecta si estamos en una red local (localhost, 127.0.0.1, etc)
@@ -26,7 +27,7 @@ export const isLocalEnvironment = (): boolean => {
 };
 
 /**
- * Detecta si estamos en un ambiente de producción (AWS Amplify)
+ * Detecta si estamos en un ambiente de producción (AWS Amplify, Vercel, etc)
  */
 export const isProductionEnvironment = (): boolean => {
   if (typeof window === 'undefined') return false;
@@ -44,13 +45,14 @@ export const getApiBaseUrl = (): string => {
     return configuredApiUrl;
   }
   
-  // 2. En producción (AWS Amplify): usar URL relativa (mismo dominio)
-  if (IS_PRODUCTION || isProductionEnvironment()) {
-    // La API está en el mismo dominio, pero en la ruta /api/v1
+  // 2. En producción (Vercel, AWS Amplify, etc): usar URL relativa (mismo dominio)
+  if (IS_PRODUCTION || isProductionEnvironment() || IS_VERCEL) {
+    console.log('✅ Modo producción detectado (Vercel/Amplify): usando proxy /api/v1');
     return '/api/v1';
   }
   
   // 3. En desarrollo local: siempre usar localhost
+  console.log('✅ Modo desarrollo local: conectando a localhost:8000');
   return 'http://localhost:8000/api/v1';
 };
 
@@ -130,6 +132,11 @@ export const API_CONFIG = {
     }
   },
 };
+
+// Log de diagnóstico
+console.log(`[API Config Centralizado] Entorno: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+console.log(`[API Config Centralizado] Es Vercel: ${IS_VERCEL ? 'SÍ' : 'NO'}`);
+console.log(`[API Config Centralizado] URL base API: ${getApiBaseUrl()}`);
 
 export default {
   API_CONFIG,
