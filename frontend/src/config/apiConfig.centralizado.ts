@@ -75,7 +75,9 @@ export const AUTH_CONFIG = {
   
   // Endpoints específicos
   endpoints: {
-    login: `${getApiBaseUrl()}/auth/login`,
+    login: IS_PRODUCTION || isProductionEnvironment() || IS_VERCEL 
+      ? '/v1/auth/login'  // En producción, usar el proxy
+      : 'http://localhost:8000/api/v1/auth/login',  // En local, directo al backend
     logout: `${getApiBaseUrl()}/auth/logout`,
     refresh: `${getApiBaseUrl()}/auth/refresh`,
     me: `${getApiBaseUrl()}/users/me`,
