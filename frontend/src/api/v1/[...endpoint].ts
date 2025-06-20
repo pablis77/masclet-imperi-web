@@ -1,17 +1,20 @@
 import type { APIRoute } from 'astro';
 
 export const ALL: APIRoute = async ({ params, request, url }) => {
-  const { endpoint } = params;
-  const apiUrl = `http://34.253.203.194:8000/api/v1/${endpoint}`;
+  // Capturar todo el path después de /api/v1/
+  const endpoint = params.endpoint || '';
+  const fullEndpoint = Array.isArray(endpoint) ? endpoint.join('/') : endpoint;
+  
+  const apiUrl = `http://34.253.203.194:8000/api/v1/${fullEndpoint}`;
   
   // Preservar query parameters
-  const searchParams = new URLSearchParams(url.search);
-  const fullUrl = searchParams.toString() 
-    ? `${apiUrl}?${searchParams}`
-    : apiUrl;
+  const searchParams = url.searchParams.toString();
+  const finalUrl = searchParams ? `${apiUrl}?${searchParams}` : apiUrl;
+
+  console.log(`[Proxy] ${request.method} ${fullEndpoint} → ${finalUrl}`);
 
   try {
-    const response = await fetch(fullUrl, {
+    const response = await fetch(finalUrl, {
       method: request.method,
       headers: {
         'Content-Type': 'application/json',
@@ -30,6 +33,7 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
       },
     });
   } catch (error) {
+    console.error('[Proxy] Error:', error);
     return new Response(JSON.stringify({ error: 'Proxy error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
