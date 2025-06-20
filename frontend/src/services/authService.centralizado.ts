@@ -68,18 +68,17 @@ class AuthService {
       
       console.log('🔑 Intentando login para usuario:', username);
       
-      // Preparar datos para enviar al API
-      const formData = new URLSearchParams();
+      // Preparar datos para enviar al API como FormData (multipart)
+      const formData = new FormData();
       formData.append('username', username);
       formData.append('password', password);
       
       // Hacer petición al endpoint de login
+      // No especificamos Content-Type para que el navegador configure
+      // automáticamente el boundary correcto para multipart/form-data
       const response = await fetch(AUTH_CONFIG.endpoints.login, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData,
+        body: formData, // FormData establece automáticamente el Content-Type correcto
       });
       
       if (!response.ok) {
