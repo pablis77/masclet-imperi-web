@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": ".vercel/output",
+  "outputDirectory": "",
   "installCommand": "cd frontend && npm install",
   "framework": "astro",
   "devCommand": "cd frontend && npm run dev"
