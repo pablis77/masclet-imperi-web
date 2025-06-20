@@ -2,11 +2,8 @@
  * Servicio para gestionar backups del sistema
  */
 
-// Importar la configuración centralizada de API
-import API_CONFIG from '../config/apiConfig';
-
-// URL base de la API - usamos la configuración centralizada
-const API_URL = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+import { API_CONFIG } from '../config/apiConfig.centralizado';
+const API_URL = API_CONFIG.baseUrl;
 
 // Registrar la URL para depuración
 console.log('BackupService inicializado - URL de API:', API_URL);
