@@ -47,8 +47,8 @@ export const getApiBaseUrl = (): string => {
   
   // 2. En producción (Vercel, AWS Amplify, etc): usar URL relativa (mismo dominio)
   if (IS_PRODUCTION || isProductionEnvironment() || IS_VERCEL) {
-    console.log('✅ Modo producción detectado (Vercel/Amplify): usando proxy /v1');
-    return '/v1';
+    console.log('✅ Modo producción detectado (Vercel/Amplify): usando proxy /api/v1');
+    return '/api/v1';
   }
   
   // 3. En desarrollo local: siempre usar localhost
