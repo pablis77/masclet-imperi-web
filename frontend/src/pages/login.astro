@@ -66,8 +66,8 @@ import PasswordErrorModal from '../components/modals/PasswordErrorModal';
 </LoginLayout>
 
 <script>
-  // Importar servicio de autenticación centralizado
-  import { login } from '../services/authService.centralizado';
+  // Importar servicio de autenticación centralizado (instancia singleton)
+  import { authService } from '../services/authService.centralizado';
 
   // Definimos una variable global para el estado del modal
   window.showPasswordErrorModal = function() {
@@ -107,7 +107,7 @@ import PasswordErrorModal from '../components/modals/PasswordErrorModal';
       const password = document.getElementById('password').value;
       
       try {
-        const response = await login({ username, password });
+        const response = await authService.login({ username, password });
         
         // Verificar la estructura de la respuesta para obtener el token
         const token = response.data?.access_token || response.access_token;
