@@ -6,20 +6,7 @@ import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
     output: 'server',
-    adapter: vercel({
-        webAnalytics: {
-            enabled: true
-        },
-        // Configuración explícita para depurar
-        devMode: false,
-        functionPerRoute: false,
-        build: {
-            client: '.vercel/output/static',
-            server: '.vercel/output',
-            serverEntry: 'entry.mjs',
-            redirects: false,
-        }
-    }),
+    adapter: vercel(),  // Sin configuración adicional
     
     base: '/',
 
