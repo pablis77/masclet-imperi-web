@@ -312,6 +312,15 @@ const pageTitle = translations[currentLang].title;
         }
       }
 
+      // Logs simplificados para debug (ELIMINADAS LAS LLAMADAS A setupPermissionsUI)
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM cargado completamente - Sistema de permisos gestionado automáticamente');
+      });
+
+      window.addEventListener('load', function() {
+        console.log('Ventana cargada completamente - Sistema de permisos gestionado automáticamente');
+      });
+
       // Inicializar sistemas
       initializeLanguageSystem();
       initializeImportSystem();
