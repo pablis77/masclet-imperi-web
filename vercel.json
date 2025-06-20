@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "http://34.253.203.194:8000/api/v1/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

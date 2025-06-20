@@ -1,5 +1,17 @@
 [
     {
+        "filename": "backup_masclet_imperi_20250620_155031.sql",
+        "date": "2025-06-20 15:50:31",
+        "timestamp": "20250620_155031",
+        "backup_type": "animal_updated",
+        "size": "125.89 KB",
+        "size_bytes": 128911,
+        "created_by": "sistema",
+        "retention_category": "daily",
+        "description": "Backup tras eliminación del animal Pablo (ID: 64)",
+        "reference_id": "64"
+    },
+    {
         "filename": "backup_masclet_imperi_20250618_020031.sql",
         "date": "2025-06-18 02:00:31",
         "timestamp": "20250618_020031",
@@ -66,18 +78,6 @@
         "backup_type": "animal_updated",
         "size": "125.59 KB",
         "size_bytes": 128600,
-        "created_by": "sistema",
-        "retention_category": "daily",
-        "description": "Backup tras modificación (PATCH) del animal elsa (ID: 63)",
-        "reference_id": "63"
-    },
-    {
-        "filename": "backup_masclet_imperi_20250615_190435.sql",
-        "date": "2025-06-15 19:04:35",
-        "timestamp": "20250615_190435",
-        "backup_type": "animal_updated",
-        "size": "125.81 KB",
-        "size_bytes": 128825,
         "created_by": "sistema",
         "retention_category": "daily",
         "description": "Backup tras modificación (PATCH) del animal elsa (ID: 63)",

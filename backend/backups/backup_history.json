@@ -475,5 +475,14 @@
     "description": "Backup manual creado el 20/6/2025, 15:14:06",
     "size_bytes": 129167,
     "size": "126.14 KB"
+  },
+  {
+    "filename": "backup_masclet_imperi_20250620_155031.sql",
+    "date": "20/06/2025 15:50",
+    "backup_type": "animal_updated",
+    "created_by": "sistema",
+    "description": "Backup tras eliminación del animal Pablo (ID: 64)",
+    "size_bytes": 128911,
+    "size": "125.89 KB"
   }
 ]
