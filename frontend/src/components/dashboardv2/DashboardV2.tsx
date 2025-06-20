@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import apiService from '../../services/apiService';
+import { apiService } from '../../services/apiService.centralizado';
 
 // Importar y registrar los componentes de Chart.js
 import { registerChartComponents } from '../../utils/chartConfig';
