@@ -123,16 +123,14 @@ export async function get<T = any>(endpoint: string): Promise<T> {
     // Normalizar endpoint asegurando que empiece con /
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     
-    // IMPORTANTE: Ya no añadimos prefijo /api/v1 porque apiConfig.centralizado ya lo maneja correctamente
+    // IMPORTANTE: Añadir prefijo /api/v1 si no está presente y no hay ya un prefijo en la URL base
     let apiEndpoint = normalizedEndpoint;
-    // Verificamos si el prefijo ya está en la URL base o en el endpoint
-    // COMENTADO: Ya no añadimos prefijo manualmente para evitar duplicación /v1/api/v1/
-    // const baseUrlHasPrefix = apiBaseUrl.includes('/api/v1');
-    // if (!apiEndpoint.startsWith('/api/v1') && !baseUrlHasPrefix) {
-    //   apiEndpoint = `/api/v1${normalizedEndpoint}`;
-    //   console.log(`Añadiendo prefijo a endpoint: ${normalizedEndpoint} -> ${apiEndpoint}`);
-    // }
-    console.log(`Usando URL base API: ${apiBaseUrl}, endpoint: ${normalizedEndpoint}`)
+    // Comprobar si ya hay un prefijo en la URL base (config.baseURL) o si ya hay un prefijo en el endpoint
+    const baseUrlHasPrefix = apiBaseUrl.includes('/api/v1');
+    if (!apiEndpoint.startsWith('/api/v1') && !baseUrlHasPrefix) {
+      apiEndpoint = `/api/v1${normalizedEndpoint}`;
+      console.log(`Añadiendo prefijo a endpoint: ${normalizedEndpoint} -> ${apiEndpoint}`);
+    }
     
     // Quitar / al final si el endpoint lo tiene y no contiene query params
     const finalEndpoint = (!apiEndpoint.includes('?') && apiEndpoint.endsWith('/')) 
