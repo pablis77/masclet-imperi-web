@@ -1,2 +1,0 @@
-const e=()=>"/api/v1",o={tokenName:"token"},n={baseUrl:e(),timeout:3e4,defaultHeaders:{"Content-Type":"application/json",Accept:"application/json"}},i=n.baseUrl,c=n.timeout,r=n.defaultHeaders,s=()=>{if(typeof window>"u")return"server";const t=window.location.hostname;return t==="localhost"||t==="127.0.0.1"||t.includes("192.168.")||t.startsWith("10.")||t.indexOf(".local")>-1||t.indexOf(".internal")>-1?"local":"production"},a=s(),l=a==="production",d=o.tokenName;export{i as A,d as T,r as a,c as b,a as e,l as i};
-//# sourceMappingURL=apiConfigAdapter.B0N4Zv2p.js.map
