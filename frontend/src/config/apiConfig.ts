@@ -26,13 +26,13 @@ export const API_CONFIG = {
   baseURL: '/api/v1',  // Prefijo unificado: /api/v1 en todos los entornos
   timeout: 15000,  // Tiempo máximo de espera para peticiones (en ms)
   withCredentials: true,  // Permite enviar cookies en peticiones cross-origin
-  backendURL: (IS_PRODUCTION || IS_RENDER || IS_VERCEL) && !isLocalEnvironment() ? '' : 'http://127.0.0.1:8000'  // URL directa para importaciones y casos especiales
+  backendURL: (IS_PRODUCTION || IS_VERCEL) && !isLocalEnvironment() ? '' : 'http://127.0.0.1:8000'  // URL directa para importaciones y casos especiales
 };
 
 // Log para saber qué configuración estamos usando
 const isLocal = isLocalEnvironment();
 console.log(`[API Config] Hostname: ${typeof window !== 'undefined' ? window.location.hostname : 'N/A'}`);
-console.log(`[API Config] Usando modo: ${(IS_PRODUCTION || IS_RENDER || IS_VERCEL) && !isLocal ? 'PRODUCCIÓN' : 'DESARROLLO LOCAL'}`);
+console.log(`[API Config] Usando modo: ${(IS_PRODUCTION || IS_VERCEL) && !isLocal ? 'PRODUCCIÓN' : 'DESARROLLO LOCAL'}`);
 console.log(`[API Config] BackendURL: ${API_CONFIG.backendURL || 'relativo'}`); 
 console.log(`[API Config] Base URL: ${API_CONFIG.baseURL}`); 
 console.log(`[API Config] Es entorno local: ${isLocal ? 'SÍ' : 'NO'}`);

@@ -1,6 +1,6 @@
 import api from './api';
 import type { UserRole } from './authService';
-import { API_CONFIG } from '../config/apiConfig';
+import { API_CONFIG } from '../config/apiConfig.centralizado';
 
 // Interfaces
 export interface User {
@@ -88,7 +88,7 @@ const userServiceProxy = {
         // Usar la configuración centralizada de apiConfig.ts
         let fullUrl;
         // Construir la URL base usando API_CONFIG
-        const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+        const baseUrl = API_CONFIG.baseUrl;
         // Asegurar que siempre usamos users/ con barra final para consistencia con el backend
         fullUrl = `${baseUrl}/users/?${params.toString()}`;
         console.log('URL de la API construida desde configuración centralizada:', fullUrl);
@@ -288,7 +288,7 @@ const userServiceProxy = {
       }
       
       // Usar la configuración centralizada en lugar de api.post directo
-      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      const baseUrl = API_CONFIG.baseUrl;
       // IMPORTANTE: Para crear usuarios el endpoint es /users/ (CON barra al final, como los demás recursos)
       const url = `${baseUrl}/users/`;
       
@@ -327,7 +327,7 @@ const userServiceProxy = {
       
       // Usar la configuración centralizada en lugar de api.put directo
       const token = localStorage.getItem('token');
-      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      const baseUrl = API_CONFIG.baseUrl;
       const url = `${baseUrl}/users/${id}/`;
       
       console.log('Usando URL construida desde API_CONFIG:', url);
@@ -363,7 +363,7 @@ const userServiceProxy = {
       
       // Usar la configuración centralizada en lugar de api.delete directo
       const token = localStorage.getItem('token');
-      const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+      const baseUrl = API_CONFIG.baseUrl;
       const url = `${baseUrl}/users/${id}/`;
       
       console.log('Usando URL construida desde API_CONFIG para eliminar:', url);
