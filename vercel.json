@@ -1,5 +1,6 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "installCommand": "cd frontend && npm install",
-  "framework": "astro"
+  "framework": "astro",
+  "ignoreCommand": "exit 1"
 }
