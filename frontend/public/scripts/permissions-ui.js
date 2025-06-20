@@ -3,13 +3,25 @@
  * Este script oculta botones y añade mensajes informativos para funciones restringidas
  */
 
+// Variable global para evitar múltiples inicializaciones
+let permissionsUIInitialized = false;
+
 // Función principal para gestionar permisos en la UI
 function setupPermissionsUI() {
+  // Evitar múltiples ejecuciones
+  if (permissionsUIInitialized) {
+    console.log("Permisos UI ya inicializados, saltando...");
+    return;
+  }
+  
   console.log("Inicializando gestión de permisos en UI...");
   
   // 1. Verificar el rol del usuario desde localStorage
   const token = localStorage.getItem('token');
-  if (!token) return;
+  if (!token) {
+    console.log("No hay token, saltando inicialización de permisos");
+    return;
+  }
   
   try {
     // Obtener el rol del usuario
@@ -55,6 +67,9 @@ function setupPermissionsUI() {
         };
       });
     }
+    
+    // Marcar como inicializado
+    permissionsUIInitialized = true;
     
   } catch (e) {
     console.error('Error al procesar permisos de UI:', e);
@@ -131,8 +146,28 @@ function handleBackupPageRestrictions() {
   }
 }
 
+// Función para resetear la inicialización (útil para navegación SPA)
+function resetPermissionsUI() {
+  permissionsUIInitialized = false;
+}
+
 // Inicializar cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', setupPermissionsUI);
+document.addEventListener('DOMContentLoaded', function() {
+  // Usar setTimeout para evitar conflictos con otros scripts
+  setTimeout(setupPermissionsUI, 100);
+});
 
 // También ejecutar cuando se navegue mediante SPA (si aplica)
-document.addEventListener('astro:page-load', setupPermissionsUI);
+document.addEventListener('astro:page-load', function() {
+  // Resetear y reinicializar en navegación SPA
+  resetPermissionsUI();
+  setTimeout(setupPermissionsUI, 100);
+});
+
+// Exportar funciones si se usa como módulo
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    setupPermissionsUI,
+    resetPermissionsUI
+  };
+}

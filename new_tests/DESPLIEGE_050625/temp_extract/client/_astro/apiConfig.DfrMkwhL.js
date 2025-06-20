@@ -1,1 +1,0 @@
-typeof window<"u"&&window.location.hostname.includes("render.com");const o={baseURL:"/api/v1",timeout:15e3,withCredentials:!0,backendURL:""};console.log("[API Config] Usando modo: PRODUCCIÓN");console.log(`[API Config] Base URL: ${o.baseURL}`);export{o as A};

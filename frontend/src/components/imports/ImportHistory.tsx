@@ -1,12 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import importService from '../../services/importService';
 import type { ImportHistoryItem, ImportHistoryFilters } from '../../services/importService';
 
 interface ImportHistoryProps {
   className?: string;
   defaultFilters?: ImportHistoryFilters;
-  refreshTrigger?: number; // Un valor que cambia para forzar la actualización
+  refreshTrigger?: number;
 }
+
+// Hook personalizado para debounce
+const useDebounce = (value: any, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const ImportHistory: React.FC<ImportHistoryProps> = ({ 
   className = '', 
@@ -22,6 +39,13 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10);
   const [currentLang, setCurrentLang] = useState<string>('es');
+  const [lastLoadTime, setLastLoadTime] = useState<number>(0);
+
+  // Debounce para el refreshTrigger para evitar llamadas múltiples
+  const debouncedRefreshTrigger = useDebounce(refreshTrigger, 300);
+
+  // Rate limiting: mínimo 1 segundo entre llamadas
+  const RATE_LIMIT_MS = 1000;
 
   // Traducciones
   const translations = {
@@ -75,33 +99,42 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
   
   // Efecto para detectar cambios de idioma
   useEffect(() => {
-    // Obtener el idioma inicial
     const storedLang = localStorage.getItem('userLanguage') || 'es';
     setCurrentLang(storedLang);
 
-    // Función para actualizar el idioma cuando cambia en localStorage
     const handleLangChange = (e: StorageEvent) => {
       if (e.key === 'userLanguage') {
         setCurrentLang(e.newValue || 'es');
       }
     };
 
-    // Escuchar cambios
     window.addEventListener('storage', handleLangChange);
-
-    // Limpiar
     return () => {
       window.removeEventListener('storage', handleLangChange);
     };
   }, []);
 
-  // Cargar historial de importaciones
-  const loadHistory = async () => {
+  // Función de carga con rate limiting
+  const loadHistory = useCallback(async (force = false) => {
+    const now = Date.now();
+    
+    // Rate limiting: no cargar si ha pasado menos de 1 segundo desde la última carga
+    if (!force && (now - lastLoadTime) < RATE_LIMIT_MS) {
+      console.log('[ImportHistory] Rate limit aplicado, saltando carga');
+      return;
+    }
+
+    // Evitar múltiples cargas simultáneas
+    if (isLoading) {
+      console.log('[ImportHistory] Ya está cargando, saltando carga');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    setLastLoadTime(now);
     
     try {
-      // Preparar los filtros para la API
       const apiFilters: ImportHistoryFilters = {
         ...filters,
         page: currentPage,
@@ -110,30 +143,42 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       
       console.log('[ImportHistory] Consultando API con filtros:', apiFilters);
       
-      // Llamar al servicio real
       const response = await importService.getImportHistory(apiFilters);
       
-      // Actualizar el estado con los datos reales
       setHistory(response.items);
       setTotalItems(response.total);
       setTotalPages(response.totalPages);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error al cargar el historial de importaciones:', err);
-      setError(translations[currentLang as keyof typeof translations]?.loadingError || translations.es.loadingError);
+      
+      // Manejo específico para error 429
+      if (err.response?.status === 429) {
+        setError('Demasiadas solicitudes. Esperando antes de reintentar...');
+        // Reintentar después de 3 segundos
+        setTimeout(() => {
+          loadHistory(true);
+        }, 3000);
+      } else {
+        setError(translations[currentLang as keyof typeof translations]?.loadingError || translations.es.loadingError);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters, currentPage, limit, lastLoadTime, isLoading, currentLang]);
 
-  // Cargar datos cuando cambian los filtros, la página o el refreshTrigger
+  // Efecto para cargar datos con debounce
   useEffect(() => {
-    loadHistory();
-  }, [filters, currentPage, refreshTrigger]);
+    const timer = setTimeout(() => {
+      loadHistory();
+    }, 300); // Debounce de 300ms
 
-  // Cambiar página
-  const handlePageChange = (page: number) => {
+    return () => clearTimeout(timer);
+  }, [filters, currentPage, debouncedRefreshTrigger]);
+
+  // Cambiar página con rate limiting
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   // Formatear fecha
   const formatDate = (dateString: string) => {
@@ -182,10 +227,7 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       default:
         bgColor = 'bg-gray-100 dark:bg-gray-700';
         textColor = 'text-gray-800 dark:text-gray-100';
-        // Para estados desconocidos, mostrar de forma más amigable
-        text = status
-          .replace('_', ' ')
-          .replace(/\b\w/g, l => l.toUpperCase()); // Capitalizar cada palabra
+        text = status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
     
     return (
@@ -195,12 +237,11 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
     );
   };
 
-  // Descargar errores
-  const handleDownloadErrors = async (importId: number) => {
+  // Descargar errores con rate limiting
+  const handleDownloadErrors = useCallback(async (importId: number) => {
     try {
       setIsLoading(true);
       
-      // Crear un archivo CSV de errores de ejemplo
       const headers = ['Línea', 'Columna', 'Valor', 'Error'];
       const data = [
         { 'Línea': '2', 'Columna': 'Genere', 'Valor': 'X', 'Error': 'Valor no válido para género. Use M o F.' },
@@ -208,11 +249,9 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
         { 'Línea': '5', 'Columna': 'Mare', 'Valor': '999', 'Error': 'Animal madre no encontrado' }
       ];
       
-      // Crear CSV
       let csvContent = headers.join(';') + '\n';
       data.forEach(row => {
         const values = headers.map(header => {
-          // Utilizar indexación con tipo correctamente
           const value = row[header as keyof typeof row] || '';
           return typeof value === 'string' && (value.includes(';') || value.includes('"')) 
             ? `"${value.replace(/"/g, '""')}"` 
@@ -221,7 +260,6 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
         csvContent += values.join(';') + '\n';
       });
       
-      // Crear blob y descargar
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -230,14 +268,15 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
     } catch (err) {
       console.error('Error al descargar errores:', err);
-      setError(translations[currentLang as keyof typeof translations]?.loadingError || translations.es.loadingError);
+      setError('Error al descargar el archivo de errores');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   return (
     <div className={`${className}`}>
@@ -255,7 +294,9 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
       ) : history.length === 0 ? (
         <div className="p-8 text-center text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
           <div className="text-4xl mb-3">📋</div>
-          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">{translations[currentLang as keyof typeof translations]?.noImports || translations.es.noImports}</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+            {translations[currentLang as keyof typeof translations]?.noImports || translations.es.noImports}
+          </p>
           <p className="text-gray-500 dark:text-gray-400">Las importaciones que realices aparecerán aquí.</p>
         </div>
       ) : (
@@ -264,25 +305,41 @@ const ImportHistory: React.FC<ImportHistoryProps> = ({
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.filename || translations.es.filename}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.importDate || translations.es.importDate}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.records || translations.es.records}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.status || translations.es.status}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translations[currentLang as keyof typeof translations]?.actions || translations.es.actions}</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {translations[currentLang as keyof typeof translations]?.filename || translations.es.filename}
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {translations[currentLang as keyof typeof translations]?.importDate || translations.es.importDate}
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {translations[currentLang as keyof typeof translations]?.records || translations.es.records}
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {translations[currentLang as keyof typeof translations]?.status || translations.es.status}
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {translations[currentLang as keyof typeof translations]?.actions || translations.es.actions}
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {history.map((item, index) => (
                   <tr key={item.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{item.id}</td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {item.id}
+                    </td>
                     <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{item.filename}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">Por: {item.user_name || 'Sistema'}</span>
                       </div>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(item.created_at)}</td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {formatDate(item.created_at)}
+                    </td>
                     <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm text-gray-900 dark:text-white">Total: {item.total_records}</span>

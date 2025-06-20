@@ -77,42 +77,71 @@ const pageTitle = translations[currentLang].title;
     })();
   </script>
   
-  <!-- Script de limpieza de mensajes duplicados - Se ejecuta inmediatamente -->
+  <!-- Script de limpieza de mensajes duplicados - CORREGIDO -->
   <script is:inline>
-    // Función para eliminar mensajes duplicados
-    function limpiarMensajesDuplicados() {
-      // Seleccionar todos los mensajes de advertencia
-      const mensajes = document.querySelectorAll('.bg-yellow-50.border-l-4.border-yellow-400.p-4.mb-4');
-      
-      // Si hay más de uno, eliminar todos excepto el primero
-      if (mensajes.length > 1) {
-        console.log(`Eliminando ${mensajes.length - 1} mensajes duplicados`);
-        for (let i = 1; i < mensajes.length; i++) {
-          mensajes[i].remove();
+    (function() {
+      // Variable para evitar múltiples inicializaciones
+      if (window.importsCleanupInitialized) {
+        return;
+      }
+      window.importsCleanupInitialized = true;
+
+      // Función para eliminar mensajes duplicados
+      function limpiarMensajesDuplicados() {
+        // Seleccionar todos los mensajes de advertencia
+        const mensajes = document.querySelectorAll('.bg-yellow-50.border-l-4.border-yellow-400.p-4.mb-4');
+        
+        // Si hay más de uno, eliminar todos excepto el primero
+        if (mensajes.length > 1) {
+          console.log(`Eliminando ${mensajes.length - 1} mensajes duplicados`);
+          for (let i = 1; i < mensajes.length; i++) {
+            mensajes[i].remove();
+          }
         }
       }
-    }
-    
-    // Ejecutar al cargar la página
-    document.addEventListener('DOMContentLoaded', limpiarMensajesDuplicados);
-    
-    // También ejecutar cuando la ventana esté completamente cargada
-    window.addEventListener('load', limpiarMensajesDuplicados);
-    
-    // Ejecutar de nuevo después de un breve retraso para capturar mensajes añadidos dinámicamente
-    setTimeout(limpiarMensajesDuplicados, 500);
-    setTimeout(limpiarMensajesDuplicados, 1000);
-    setTimeout(limpiarMensajesDuplicados, 2000);
-    
-    // Observar cambios en el DOM para eliminar mensajes duplicados que se añadan dinámicamente
-    const observer = new MutationObserver(() => {
-      limpiarMensajesDuplicados();
-    });
-    
-    // Iniciar observación cuando el DOM esté listo
-    document.addEventListener('DOMContentLoaded', () => {
-      observer.observe(document.body, { childList: true, subtree: true });
-    });
+      
+      // Variable para el observer (evita redeclaración)
+      let duplicateMessageObserver = null;
+      
+      // Función para inicializar el observer
+      function initObserver() {
+        if (duplicateMessageObserver) {
+          duplicateMessageObserver.disconnect();
+        }
+        
+        duplicateMessageObserver = new MutationObserver(() => {
+          limpiarMensajesDuplicados();
+        });
+        
+        if (document.body) {
+          duplicateMessageObserver.observe(document.body, { childList: true, subtree: true });
+        }
+      }
+      
+      // Ejecutar al cargar la página
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          limpiarMensajesDuplicados();
+          initObserver();
+        });
+      } else {
+        limpiarMensajesDuplicados();
+        initObserver();
+      }
+      
+      // También ejecutar cuando la ventana esté completamente cargada
+      window.addEventListener('load', function() {
+        limpiarMensajesDuplicados();
+        if (!duplicateMessageObserver) {
+          initObserver();
+        }
+      });
+      
+      // Ejecutar de nuevo después de un breve retraso para capturar mensajes añadidos dinámicamente
+      setTimeout(limpiarMensajesDuplicados, 500);
+      setTimeout(limpiarMensajesDuplicados, 1000);
+      setTimeout(limpiarMensajesDuplicados, 2000);
+    })();
   </script>
   
   <!-- Componente para gestionar permisos de UI basados en rol (versión modificada) -->
@@ -157,7 +186,6 @@ const pageTitle = translations[currentLang].title;
       <ImportContainer client:load />
     </div>
   </div>
-  </div>
 
   <!-- Sección de Administración -->
   <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-100 dark:border-gray-700">
@@ -168,55 +196,126 @@ const pageTitle = translations[currentLang].title;
     <ResetDatabaseButton client:load />
   </div>
 
-
+  <!-- Script para manejar idiomas y eventos - CORREGIDO -->
   <script>
-    // Obtener el idioma del usuario del localStorage
-    document.addEventListener('DOMContentLoaded', function() {
-      const updateLanguage = () => {
-        const userLang = localStorage.getItem('userLanguage') || 'es';
-        
-        // Textos traducibles
-        const translations = {
-          es: {
-            title: "Importación de Datos",
-            subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
-            importAnimals: "Importar Animales",
-            selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
-            downloadTemplate: "Descargar Plantilla",
-            reset: "Reiniciar",
-            import: "Importar"
-          },
-          ca: {
-            title: "Importació de Dades",
-            subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
-            importAnimals: "Importar Animals",
-            selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
-            downloadTemplate: "Descarregar Plantilla",
-            reset: "Reiniciar",
-            import: "Importar"
-          }
+    (function() {
+      // Evitar múltiples inicializaciones
+      if (window.importsScriptInitialized) {
+        return;
+      }
+      window.importsScriptInitialized = true;
+
+      // Obtener el idioma del usuario del localStorage
+      function initializeLanguageSystem() {
+        const updateLanguage = () => {
+          const userLang = localStorage.getItem('userLanguage') || 'es';
+          
+          // Textos traducibles
+          const translations = {
+            es: {
+              title: "Importación de Datos",
+              subtitle: "Importa datos masivos desde archivos CSV - Todos los derechos reservados",
+              importAnimals: "Importar Animales",
+              selectFile: "Selecciona un archivo CSV con el formato correcto para importar animales al sistema.",
+              downloadTemplate: "Descargar Plantilla",
+              reset: "Reiniciar",
+              import: "Importar"
+            },
+            ca: {
+              title: "Importació de Dades",
+              subtitle: "Importa dades massives des d'arxius CSV - Tots els drets reservats",
+              importAnimals: "Importar Animals",
+              selectFile: "Selecciona un arxiu CSV amb el format correcte per importar animals al sistema.",
+              downloadTemplate: "Descarregar Plantilla",
+              reset: "Reiniciar",
+              import: "Importar"
+            }
+          };
+          
+          // Aplicar traducciones con verificación de existencia
+          const elements = [
+            { id: 'imports-title', text: translations[userLang].title },
+            { id: 'imports-subtitle', text: translations[userLang].subtitle },
+            { id: 'import-animals-title', text: translations[userLang].importAnimals },
+            { id: 'import-animals-desc', text: translations[userLang].selectFile },
+            { id: 'download-template', text: translations[userLang].downloadTemplate },
+            { id: 'reset-text', text: translations[userLang].reset },
+            { id: 'import-text', text: translations[userLang].import }
+          ];
+          
+          elements.forEach(({ id, text }) => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.textContent = text;
+            }
+          });
         };
         
-        // Aplicar traducciones
-        document.getElementById('imports-title').textContent = translations[userLang].title;
-        document.getElementById('imports-subtitle').textContent = translations[userLang].subtitle;
-        document.getElementById('import-animals-title').textContent = translations[userLang].importAnimals;
-        document.getElementById('import-animals-desc').textContent = translations[userLang].selectFile;
-        document.getElementById('download-template').textContent = translations[userLang].downloadTemplate;
-        document.getElementById('reset-text').textContent = translations[userLang].reset;
-        document.getElementById('import-text').textContent = translations[userLang].import;
-      };
-      
-      // Actualizar idioma inmediatamente
-      updateLanguage();
-      
-      // Escuchar cambios de idioma
-      window.addEventListener('storage', function(e) {
-        if (e.key === 'userLanguage') {
+        // Actualizar idioma inmediatamente si el DOM está listo
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', updateLanguage);
+        } else {
           updateLanguage();
         }
-      });
-    });
+        
+        // Escuchar cambios de idioma
+        window.addEventListener('storage', function(e) {
+          if (e.key === 'userLanguage') {
+            updateLanguage();
+          }
+        });
+      }
+
+      // Script para manejar la actualización del historial después de una importación
+      function initializeImportSystem() {
+        const setupEventHandlers = () => {
+          const importForm = document.querySelector('import-form');
+          const importHistory = document.querySelector('import-history');
+          
+          // Botones de acción
+          const resetBtn = document.getElementById('reset-import');
+          const importBtn = document.getElementById('import-btn');
+          
+          // Función para actualizar el historial
+          const refreshHistory = () => {
+            if (importHistory) {
+              const event = new CustomEvent('refresh-history');
+              importHistory.dispatchEvent(event);
+            }
+          };
+          
+          // Escuchar eventos de importación completada
+          if (importForm) {
+            importForm.addEventListener('import-complete', () => {
+              setTimeout(refreshHistory, 1000);
+            });
+          }
+          
+          // Conectar botones con el componente React
+          if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+              document.dispatchEvent(new CustomEvent('reset-import'));
+            });
+          }
+          
+          if (importBtn) {
+            importBtn.addEventListener('click', () => {
+              document.dispatchEvent(new CustomEvent('import-btn-click'));
+            });
+          }
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupEventHandlers);
+        } else {
+          setupEventHandlers();
+        }
+      }
+
+      // Inicializar sistemas
+      initializeLanguageSystem();
+      initializeImportSystem();
+    })();
   </script>
 </MainLayout>
 
@@ -281,45 +380,3 @@ const pageTitle = translations[currentLang].title;
     @apply bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700;
   }
 </style>
-
-<script>
-  // Script para manejar la actualización del historial después de una importación
-  document.addEventListener('DOMContentLoaded', () => {
-    const importForm = document.querySelector('import-form');
-    const importHistory = document.querySelector('import-history');
-    
-    // Botones de acción
-    const resetBtn = document.getElementById('reset-import');
-    const importBtn = document.getElementById('import-btn');
-    
-    // Función para actualizar el historial
-    const refreshHistory = () => {
-      if (importHistory) {
-        // Disparar un evento para actualizar el historial
-        const event = new CustomEvent('refresh-history');
-        importHistory.dispatchEvent(event);
-      }
-    };
-    
-    // Escuchar eventos de importación completada
-    if (importForm) {
-      importForm.addEventListener('import-complete', () => {
-        // Esperar un momento para que el backend procese la importación
-        setTimeout(refreshHistory, 1000);
-      });
-    }
-    
-    // Conectar botones con el componente React
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('reset-import'));
-      });
-    }
-    
-    if (importBtn) {
-      importBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('import-btn-click'));
-      });
-    }
-  });
-</script>

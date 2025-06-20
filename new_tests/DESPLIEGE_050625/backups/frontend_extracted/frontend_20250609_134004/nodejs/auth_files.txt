@@ -1,4 +1,0 @@
-/app/client/_astro/authService.CvC7CJU-.js
-/app/client/js/fix/solucion_login.js
-/app/client/js/fix/authService.js
-/app/node_modules/caniuse-lite/data/features/webauthn.js
