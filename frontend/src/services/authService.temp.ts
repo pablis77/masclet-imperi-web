@@ -1,8 +1,8 @@
 import axios from 'axios'; 
 import api from './api';
 import { post, get } from './apiService';
-import authApi from '../api/authApi';
-import type { LoginResponse as ApiLoginResponse } from '../api/authApi';
+import authApi from '../api/authApi.ts.old';
+import type { LoginResponse as ApiLoginResponse } from '../api/authApi.ts.old';
 
 // Verificar si estamos en un entorno de navegador
 const isBrowser = typeof window !== 'undefined';
