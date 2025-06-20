@@ -5,7 +5,7 @@ import type { User } from '../../services/userServiceProxy';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Pagination } from '../common/Pagination';
 import { t, getCurrentLanguage } from '../../i18n/config';
-import { API_CONFIG } from '../../config/apiConfig';
+import { API_CONFIG } from '../../config/apiConfig.centralizado';
 
 // Variable para saber si es el primer renderizado (SSR) o no (cliente)
 let isFirstRender = typeof window === 'undefined';
@@ -71,7 +71,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onEdit, onRefresh, forceLa
         const token = localStorage.getItem('token');
         
         // Construir URL con base en API_CONFIG y asegurar que use barra diagonal final (/)
-        const baseUrl = `${API_CONFIG.backendURL || ''}${API_CONFIG.baseURL}`;
+        const baseUrl = API_CONFIG.baseUrl;
         const directUrl = `${baseUrl}/users/?page=${currentPage}&size=${pageSize}`;
         console.log('DEBUG: URL completa construida desde API_CONFIG:', directUrl);
         
