@@ -1,8 +1,8 @@
 // Servicio para gestionar las importaciones
 
-// Importar servicios y configuraciones
-import apiService from './apiService';
-import apiConfig from '../config/apiConfig';
+// Importar servicios y configuraciones CENTRALIZADAS (como las demás páginas)
+import { apiService } from './apiService.centralizado';
+import { getApiBaseUrl } from '../config/apiConfig.centralizado';
 
 // Interfaces y tipos
 export interface ImportResult {
@@ -61,18 +61,6 @@ const checkAuthStatus = (): { isAuthenticated: boolean; canImport: boolean; mess
   };
 };
 
-/**
- * Obtener token de autenticación
- */
-const getAuthToken = (): string | null => {
-  try {
-    return localStorage.getItem('auth_token');
-  } catch (error) {
-    console.error('Error al obtener token:', error);
-    return null;
-  }
-};
-
 // Interfaces para filtros de historial
 export interface ImportHistoryFilters {
   status?: ImportStatus;
@@ -92,6 +80,50 @@ export interface ImportHistoryResponse {
   totalPages: number;
 }
 
+// Rate limiting global para evitar múltiples llamadas
+class RateLimiter {
+  private lastCallTime: number = 0;
+  private readonly minInterval: number = 2000; // 2 segundos mínimo entre llamadas
+  private pendingCall: Promise<any> | null = null;
+
+  async executeWithRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    const timeSinceLastCall = now - this.lastCallTime;
+
+    // Si hay una llamada pendiente, esperar a que termine
+    if (this.pendingCall) {
+      console.log('[RateLimiter] Esperando llamada pendiente...');
+      try {
+        await this.pendingCall;
+      } catch (e) {
+        // Ignorar errores de llamadas pendientes
+      }
+    }
+
+    // Si no ha pasado suficiente tiempo, esperar
+    if (timeSinceLastCall < this.minInterval) {
+      const waitTime = this.minInterval - timeSinceLastCall;
+      console.log(`[RateLimiter] Esperando ${waitTime}ms antes de la siguiente llamada`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+
+    this.lastCallTime = Date.now();
+    this.pendingCall = fn();
+
+    try {
+      const result = await this.pendingCall;
+      this.pendingCall = null;
+      return result;
+    } catch (error) {
+      this.pendingCall = null;
+      throw error;
+    }
+  }
+}
+
+// Instancia global del rate limiter
+const rateLimiter = new RateLimiter();
+
 // Servicio de importaciones
 const importService = {
   /**
@@ -99,57 +131,73 @@ const importService = {
    * @param filters Filtros a aplicar (opcionales)
    */
   async getImportHistory(filters: ImportHistoryFilters = {}): Promise<ImportHistoryResponse> {
-    try {
-      // Construir query string para los filtros
-      const queryParams = new URLSearchParams();
-      
-      if (filters.status) {
-        queryParams.append('status', filters.status);
-      }
-      
-      if (filters.startDate) {
-        queryParams.append('start_date', filters.startDate);
-      }
-      
-      if (filters.endDate) {
-        queryParams.append('end_date', filters.endDate);
-      }
-      
-      if (filters.fileName) {
-        queryParams.append('file_name', filters.fileName);
-      }
-      
-      // Paginación
-      const page = filters.page || 1;
-      const limit = filters.limit || 10;
-      queryParams.append('page', page.toString());
-      queryParams.append('limit', limit.toString());
-      
-      // Usamos apiService que funciona correctamente con todos los demás endpoints
-      console.log(`[ImportService] Consultando historial de importaciones`);
-      
-      // Usamos el mismo patrón que los demás componentes funcionales
-      const endpoint = `/imports/?${queryParams.toString()}`;
-      const response = await apiService.get(endpoint);
-      
-      // apiService devuelve directamente los datos (no hay response.data)
-      // apiService.get devuelve directamente el objeto con los datos
-      // Lo vemos en la consola: items, total, page, size, totalPages
-      
-      // Si hay datos, convertirlos al formato esperado por el componente
-      if (response && response.items) {
-        return {
-          items: response.items || [],
-          total: response.total || 0,
-          page: response.page || 1,
-          limit: response.size || 10, // En la API se llama 'size', no 'limit'
-          totalPages: response.totalPages || 1
-        };
-      } else {
-        // Si no hay datos, informar de forma clara
-        console.error('Error: Formato de respuesta inesperado:', response);
+    return rateLimiter.executeWithRateLimit(async () => {
+      try {
+        // Construir query string para los filtros
+        const queryParams = new URLSearchParams();
         
-        // Devolver una respuesta vacía pero válida
+        if (filters.status) {
+          queryParams.append('status', filters.status);
+        }
+        
+        if (filters.startDate) {
+          queryParams.append('start_date', filters.startDate);
+        }
+        
+        if (filters.endDate) {
+          queryParams.append('end_date', filters.endDate);
+        }
+        
+        if (filters.fileName) {
+          queryParams.append('file_name', filters.fileName);
+        }
+        
+        // Paginación
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+        
+        console.log(`[ImportService] Consultando historial de importaciones con sistema centralizado`);
+        
+        // USAR SISTEMA CENTRALIZADO como las demás páginas
+        const endpoint = `/imports/?${queryParams.toString()}`;
+        const response = await apiService.get(endpoint);
+        
+        // El sistema centralizado devuelve directamente los datos
+        if (response && response.items) {
+          return {
+            items: response.items || [],
+            total: response.total || 0,
+            page: response.page || 1,
+            limit: response.size || 10, // En la API se llama 'size', no 'limit'
+            totalPages: response.totalPages || 1
+          };
+        } else {
+          console.warn('Respuesta vacía o sin formato esperado:', response);
+          return {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1
+          };
+        }
+      } catch (error: any) {
+        console.error('Error al obtener historial de importaciones:', error);
+        
+        // Manejo específico para diferentes tipos de error
+        if (error.response?.status === 429) {
+          console.warn('Rate limit excedido, devolviendo respuesta vacía temporal');
+          return {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1
+          };
+        }
+        
         return {
           items: [],
           total: 0,
@@ -158,16 +206,7 @@ const importService = {
           totalPages: 1
         };
       }
-    } catch (error: any) {
-      console.error('Error general al obtener historial de importaciones:', error);
-      return {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 1
-      };
-    }
+    });
   },
   
   /**
@@ -189,20 +228,6 @@ const importService = {
         };
       }
       
-      // Obtener token de autenticación
-      const token = getAuthToken();
-      console.log('Token de autenticación:', token ? 'Presente' : 'No hay token');
-      
-      // Configurar headers con token de autenticación
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        // Para desarrollo, usar token de desarrollo
-        headers['Authorization'] = 'Bearer test_token_for_development';
-        console.log('Usando token de desarrollo para pruebas');
-      }
-      
       // Extraer información del archivo para depuración
       let fileInfo = 'FormData sin archivo';
       const fileEntry = formData.get('file');
@@ -210,53 +235,77 @@ const importService = {
         fileInfo = `Archivo: ${fileEntry.name}, ${fileEntry.size} bytes, tipo: ${fileEntry.type}`;
       }
       
-      // Usar la URL del backend de configuración centralizada
-      const BACKEND_URL = apiConfig.backendURL;
-      console.log('Enviando petición directa al backend:', `${BACKEND_URL}/api/v1/imports/csv`);
-      console.log('Contenido del FormData:', fileInfo);
+      console.log('[ImportService] Enviando petición de importación...');
+      console.log('[ImportService] Contenido del FormData:', fileInfo);
       
-      // Usar directamente la URL absoluta al backend en lugar de depender del proxy
+      // USAR SISTEMA CENTRALIZADO como las demás páginas
       try {
-        const response = await fetch(`${BACKEND_URL}/api/v1/imports/csv`, {
-          method: 'POST',
-          body: formData,
-          headers: headers
-        });
+        console.log('[ImportService] Usando sistema centralizado (apiService.centralizado)');
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Respuesta exitosa desde el backend:', data);
-          return data;
+        // El sistema centralizado maneja automáticamente headers, auth y rutas
+        const response = await apiService.post('/imports/csv', formData);
+        
+        console.log('[ImportService] Respuesta exitosa desde sistema centralizado:', response);
+        return response;
+        
+      } catch (centralizedError: any) {
+        console.error('[ImportService] Error en sistema centralizado:', centralizedError);
+        
+        // Si el sistema centralizado falla, usar método directo como backup para compatibilidad local
+        console.log('[ImportService] Intentando método directo como backup...');
+        
+        const baseUrl = getApiBaseUrl();
+        const directUrl = baseUrl.includes('/v1') 
+          ? `${baseUrl}/imports/csv`  // Si baseUrl ya tiene /v1, no duplicar
+          : `${baseUrl}/api/v1/imports/csv`;  // Si no, añadir la ruta completa
+        
+        console.log('[ImportService] Backup: URL directa:', directUrl);
+        
+        try {
+          const response = await fetch(directUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token') || 'test_token_for_development'}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('[ImportService] Backup: Respuesta exitosa:', data);
+            return data;
+          }
+          
+          const errorText = await response.text();
+          console.error('[ImportService] Backup: Error en petición:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          
+          return {
+            success: false,
+            message: `Error HTTP ${response.status}: ${response.statusText}`,
+            total_processed: 0,
+            total_imported: 0,
+            total_errors: 1,
+            errors: [`Fallo al comunicarse con el backend: ${response.status}`]
+          };
+          
+        } catch (fetchError: any) {
+          console.error('[ImportService] Backup: Error en fetch:', fetchError);
+          return {
+            success: false,
+            message: `Error de red: ${fetchError.message}`,
+            total_processed: 0,
+            total_imported: 0,
+            total_errors: 1,
+            errors: ['Error de conexión con el servidor']
+          };
         }
-        
-        const errorText = await response.text();
-        console.error('Error en la petición al backend:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText
-        });
-        
-        return {
-          success: false,
-          message: `Error HTTP ${response.status}: ${response.statusText}`,
-          total_processed: 0,
-          total_imported: 0,
-          total_errors: 1,
-          errors: [`Fallo al comunicarse con el backend: ${response.status}`]
-        };
-      } catch (fetchError: any) {
-        console.error('Error en la petición fetch:', fetchError);
-        return {
-          success: false,
-          message: `Error de red: ${fetchError.message}`,
-          total_processed: 0,
-          total_imported: 0,
-          total_errors: 1,
-          errors: ['Error de conexión con el servidor']
-        };
       }
     } catch (error: any) {
-      console.error('Error general al importar animales:', error);
+      console.error('[ImportService] Error general al importar animales:', error);
       return {
         success: false,
         message: error.message || 'Error desconocido al importar animales',
